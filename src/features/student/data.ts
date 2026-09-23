@@ -1,0 +1,28 @@
+import 'server-only';
+import { redirect } from 'next/navigation';
+import { createClient,isConfigured } from '@/lib/supabase/server';
+import { descendantIds,idSchema,type Locale } from './domain';
+export type Named={id:string;name_ar:string;name_en:string;parent_id?:string|null};
+export type Teacher={id:string;full_name:string;headline:string;bio:string};
+export type Group={id:string;teacher_id:string;name:string;description:string;capacity:number;status:string;location:string;offering:{id:string;subject:Named;node:Named}|null};
+export type Slot={id:string;group_id:string;weekday:number;start_time:string;end_time:string;timezone:string};
+export type Enrollment={id:string;group_id:string;status:string;group:Group|null};
+export type Lesson={id:string;group_id:string;title:string;starts_at:string;ends_at:string;status:string;notes:string};
+export type Material={id:string;lesson_id:string;kind:string;title:string;url:string|null;content:string|null;storage_path:string|null};
+const groupFields='id,teacher_id,name,description,capacity,status,location,offering:offerings(id,subject:subjects(id,name_ar,name_en),node:education_nodes(id,name_ar,name_en))';
+export async function viewer(){if(!isConfigured())return null;const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)return null;const {data:profile}=await db.from('profiles').select('id,role,status').eq('id',user.id).maybeSingle();return profile?{db,id:user.id,role:profile.role as string,status:profile.status as string}:null}
+export async function student(locale:Locale){const me=await viewer();if(!me)redirect(`/${locale}/login`);if(me.role!=='student'||me.status!=='active')redirect(`/${locale}/dashboard`);return me}
+export async function discovery(filters:{subject?:string;education?:string;teacher?:string;page?:number}={}){
+ const db=await createClient();const [subjects,nodes,teachers]=await Promise.all([db.from('subjects').select('id,name_ar,name_en').order('name_en'),db.from('education_nodes').select('id,parent_id,name_ar,name_en').order('name_en'),db.rpc('public_teachers')]);
+ let query=db.from('groups').select(groupFields).eq('status','published').order('created_at',{ascending:false}).order('id');
+ const visibleTeachers=(teachers.data||[]) as Teacher[];
+ if(filters.teacher)query=query.eq('teacher_id',filters.teacher);
+ if(filters.subject||filters.education){let offerings=db.from('offerings').select('id');if(filters.subject)offerings=offerings.eq('subject_id',filters.subject);if(filters.education)offerings=offerings.in('node_id',descendantIds(nodes.data||[],filters.education));const selected=await offerings;if(selected.error)return {groups:[],subjects:[],nodes:[],teachers:[],error:true,more:false};query=query.in('offering_id',(selected.data||[]).map(x=>x.id));}
+ const page=Math.max(1,filters.page||1);const groups=await query.range((page-1)*12,page*12);
+ // RLS is authoritative; filtering against the safe public RPC also avoids owner-visible drafts/hidden teachers.
+ const rows=((groups.data||[]) as unknown as Group[]).filter(g=>visibleTeachers.some(t=>t.id===g.teacher_id));
+ return {groups:rows.slice(0,12),subjects:(subjects.data||[]) as Named[],nodes:(nodes.data||[]) as Named[],teachers:visibleTeachers,error:!!(subjects.error||nodes.error||teachers.error||groups.error),more:rows.length>12};
+}
+export async function classDetail(id:string){if(!idSchema.safeParse(id).success)return null;const db=await createClient();const [group,teachers,slots]=await Promise.all([db.from('groups').select(groupFields).eq('id',id).maybeSingle(),db.rpc('public_teachers'),db.from('group_schedule_slots').select('*').eq('group_id',id).order('weekday').order('start_time')]);if(group.error||teachers.error||slots.error)throw new Error('Class lookup failed');if(!group.data)return null;return {group:group.data as unknown as Group,teacher:((teachers.data||[]) as Teacher[]).find(t=>t.id===group.data.teacher_id),slots:(slots.data||[]) as Slot[]}}
+export async function learning(locale:Locale){const me=await student(locale);const enrollments=await me.db.from('enrollments').select(`id,group_id,status,group:groups(${groupFields})`).eq('student_id',me.id).order('updated_at',{ascending:false});const rows=(enrollments.data||[]) as unknown as Enrollment[];const ids=rows.filter(e=>e.status==='accepted').map(e=>e.group_id);if(!ids.length)return {enrollments:rows,lessons:[] as Lesson[],slots:[] as Slot[],error:!!enrollments.error};const [lessons,slots]=await Promise.all([me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,notes').in('group_id',ids).order('starts_at').limit(500),me.db.from('group_schedule_slots').select('*').in('group_id',ids).order('weekday').order('start_time')]);return {enrollments:rows,lessons:(lessons.data||[]) as Lesson[],slots:(slots.data||[]) as Slot[],error:!!(enrollments.error||lessons.error||slots.error)}}
+export async function lessonDetail(locale:Locale,id:string){const me=await student(locale);if(!idSchema.safeParse(id).success)return null;const lesson=await me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,notes').eq('id',id).maybeSingle();if(lesson.error)throw new Error('Lesson lookup failed');if(!lesson.data)return null;const membership=await me.db.from('enrollments').select('id').eq('student_id',me.id).eq('group_id',lesson.data.group_id).eq('status','accepted').maybeSingle();if(membership.error||!membership.data)return null;const materials=await me.db.from('lesson_materials').select('id,lesson_id,kind,title,url,content,storage_path').eq('lesson_id',id).order('created_at');return {lesson:lesson.data as Lesson,materials:(materials.data||[]) as Material[],error:!!materials.error}}
