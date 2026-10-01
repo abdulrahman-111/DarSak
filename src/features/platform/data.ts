@@ -2,7 +2,18 @@ import { createClient } from '@/lib/supabase/server';
 import type { Group, Teacher, Profile, Slot, Lesson } from '@/lib/supabase/types';
 export async function currentUser(){ const supabase=await createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user)return null; const {data:profile}=await supabase.from('profiles').select('*').eq('id',user.id).single(); return {user,profile:profile as Profile|null}; }
 export async function publicTeachers(){ const db=await createClient(); const {data,error}=await db.rpc('public_teachers'); return {data:(data||[]) as Teacher[],error}; }
-export async function publicGroups(){ const db=await createClient(); const [groups,teachers]=await Promise.all([db.from('groups').select('*, offering:offerings(id,subject:subjects(name_ar,name_en))').eq('status','published').order('created_at',{ascending:false}),db.rpc('public_teachers')]); const safeTeachers=(teachers.data||[]) as Teacher[]; const data=((groups.data||[]) as Group[]).filter(group=>safeTeachers.some(teacher=>teacher.id===group.teacher_id)).map(group=>({...group,teacher:safeTeachers.find(teacher=>teacher.id===group.teacher_id)})); return {data,error:groups.error||teachers.error}; }
+export async function publicGroups(){
+ const db=await createClient();
+ const {data,error}=await db.rpc('public_groups');
+ const groups=((data||[]) as Array<any>).map(group=>({
+  id:group.id,teacher_id:group.teacher_id,offering_id:group.offering_id,name:group.name,
+  description:group.description,capacity:group.capacity,status:group.status,location:group.location,
+  created_at:group.created_at,
+  teacher:{id:group.teacher_id,full_name:group.teacher_name,headline:null,bio:null,avatar_path:null},
+  offering:{id:group.offering_id,subject:{name_ar:group.subject_name_ar,name_en:group.subject_name_en}},
+ })) as Group[];
+ return {data:groups,error};
+}
 export async function groupById(id:string){ const db=await createClient(); return db.from('groups').select('*, offering:offerings(id,subject:subjects(name_ar,name_en))').eq('id',id).single(); }
 export async function teacherById(id:string){ const db=await createClient(); return db.rpc('public_teachers').eq('id',id).single(); }
 export async function catalogue(){ const db=await createClient(); const [nodes,subjects,offerings]=await Promise.all([db.from('education_nodes').select('*').order('name_en'),db.from('subjects').select('*').order('name_en'),db.from('offerings').select('*,subject:subjects(*)').order('id')]); return {nodes:nodes.data||[],subjects:subjects.data||[],offerings:offerings.data||[]}; }
