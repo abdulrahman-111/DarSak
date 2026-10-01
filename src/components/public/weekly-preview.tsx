@@ -1,0 +1,51 @@
+import { Check } from 'lucide-react';
+import { publicCopy, type PublicLocale } from './copy';
+
+const blocks = [
+  { column: '1', row: '2 / span 2', kind: 'chemistry', tone: 'bg-[#dfedd5] text-[#2c5620]' },
+  { column: '1', row: '5 / span 2', kind: 'maths', tone: 'bg-[#d5ebe6] text-[#0d4a4b]' },
+  { column: '2', row: '4 / span 2', kind: 'physics', tone: 'bg-[#dde5f4] text-[#1e3c78]' },
+  { column: '3', row: '2 / span 2', kind: 'chemistry', tone: 'bg-[#dfedd5] text-[#2c5620]' },
+  { column: '4', row: '5 / span 2', kind: 'maths', tone: 'bg-[#d5ebe6] text-[#0d4a4b]' },
+] as const;
+
+export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
+  const c = publicCopy[locale];
+  const ar = locale === 'ar';
+  const days = ar ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'] : ['SUN', 'MON', 'TUE', 'WED', 'THU'];
+  const subjects = ar
+    ? { chemistry: 'كيمياء ٤:٠٠ م', maths: 'رياضيات ٦:٠٠ م', physics: 'فيزياء ٥:٠٠ م' }
+    : { chemistry: 'Chemistry 4:00', maths: 'Maths 6:00', physics: 'Physics 5:00' };
+
+  return (
+    <div className="relative pb-10" aria-label={c.thisWeek}>
+      <div className="rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-4 shadow-[0_30px_60px_-40px_rgba(14,74,75,.5)] sm:p-6">
+        <div className="mb-4 flex items-baseline justify-between gap-3">
+          <p className="text-lg font-bold text-teal">{c.thisWeek}</p>
+          <p className="text-xs text-muted">{c.cairo}</p>
+        </div>
+        <div className="mb-2 grid grid-cols-5 gap-1.5 text-[10px] font-bold text-muted sm:text-xs">
+          {days.map(day => <span key={day}>{day}</span>)}
+        </div>
+        <div className="grid grid-cols-5 grid-rows-[repeat(8,2rem)] gap-1.5 bg-[repeating-linear-gradient(to_bottom,transparent_0_37px,#efe6d6_37px_38px)] sm:grid-rows-[repeat(8,2.125rem)]">
+          {blocks.map((block, index) => (
+            <div
+              key={`${block.kind}-${index}`}
+              className={`overflow-hidden rounded-lg p-1.5 text-[10px] font-bold leading-tight sm:p-2 sm:text-xs ${block.tone}`}
+              style={{ gridColumn: block.column, gridRow: block.row }}
+            >
+              {subjects[block.kind]}
+            </div>
+          ))}
+          <div className="col-start-5 row-start-3 row-end-6 rounded-lg border-2 border-dashed border-orange p-1.5 text-[10px] font-bold leading-tight text-[#83390c] sm:p-2 sm:text-xs">
+            {ar ? 'موعد معدّل · أدب' : 'Rescheduled · Literature'}
+          </div>
+        </div>
+      </div>
+      <div className="absolute bottom-0 start-2 flex max-w-[19rem] items-center gap-3 rounded-2xl bg-teal px-4 py-3 text-cream shadow-[0_20px_40px_-20px_rgba(14,74,75,.8)] sm:-start-3">
+        <span className="grid size-8 flex-none place-items-center rounded-full bg-[#8fd1b5] text-teal"><Check size={17} strokeWidth={3}/></span>
+        <div className="text-sm leading-snug"><strong>{c.accepted}</strong><p className="text-[#cfe3de]">{c.acceptedDetail}</p></div>
+      </div>
+    </div>
+  );
+}

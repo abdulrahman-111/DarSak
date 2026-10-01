@@ -1,0 +1,5 @@
+import { ensureLocale } from '@/i18n/config';
+import { learning } from '@/features/student/data';
+import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
+
+export default async function StudentMaterials({params}:{params:Promise<{locale:string}>}){const {locale:raw}=await params;const locale=ensureLocale(raw),ar=locale==='ar';const data=await learning(locale);return <><ScreenTitle eyebrow={ar?'للطلاب المسجلين':'Enrolled students'} title={ar?'الحصص والمواد':'Lessons and materials'} description={ar?'افتح الحصة للوصول إلى الملاحظات والروابط والملفات الخاصة.':'Open a lesson to access its private notes, links, and files.'}/><Panel>{data.lessons.length?<div className="grid gap-3">{data.lessons.map(lesson=><RowLink key={lesson.id} href={`/${locale}/student/lessons/${lesson.id}`} title={lesson.title} meta={cairoDate(lesson.starts_at,locale)} trailing={<Status value={lesson.status} locale={locale}/>}/>)}</div>:<EmptyState>{ar?'لم يضف المعلم حصصًا بعد.':'Your teachers have not scheduled lessons yet.'}</EmptyState>}</Panel></>}

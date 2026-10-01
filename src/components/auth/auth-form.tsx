@@ -1,0 +1,129 @@
+'use client';
+
+import { useActionState, useId, useState } from 'react';
+import { Eye, EyeOff, GraduationCap, Presentation, ShieldCheck } from 'lucide-react';
+import { loginAction, signupAction } from '@/features/auth/actions';
+import { authCopy, type AuthLocale } from './copy';
+
+type Props = {
+  locale: AuthLocale;
+  mode: 'login' | 'signup';
+  labels: Record<string, string>;
+  initialRole?: 'student' | 'teacher';
+};
+
+const inputClass = 'mt-2 h-12 w-full rounded-xl border border-[#d8ccb8] bg-white px-4 text-ink outline-none transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
+
+export function AuthForm({ locale, mode, labels, initialRole = 'student' }: Props) {
+  const copy = authCopy[locale];
+  const action = mode === 'login' ? loginAction.bind(null, locale) : signupAction.bind(null, locale);
+  const [state, formAction, pending] = useActionState(action, null);
+  const [role, setRole] = useState<'student' | 'teacher'>(initialRole);
+  const [passwordVisible, setPasswordVisible] = useState(false);
+  const passwordHintId = useId();
+  const errorId = useId();
+
+  return (
+    <form action={formAction} className="space-y-5" aria-describedby={state?.error ? errorId : undefined}>
+      {mode === 'signup' && (
+        <fieldset>
+          <legend className="mb-3 font-bold text-ink">{copy.joinAs}</legend>
+          <div className="grid grid-cols-2 gap-3">
+            <RoleCard
+              checked={role === 'student'}
+              description={copy.studentBody}
+              icon={GraduationCap}
+              onChange={() => setRole('student')}
+              title={copy.studentTitle}
+              value="student"
+            />
+            <RoleCard
+              checked={role === 'teacher'}
+              description={copy.teacherBody}
+              icon={Presentation}
+              onChange={() => setRole('teacher')}
+              title={copy.teacherTitle}
+              value="teacher"
+            />
+          </div>
+        </fieldset>
+      )}
+
+      {mode === 'signup' && (
+        <label className="block text-sm font-bold text-ink">
+          {labels.fullName}
+          <input className={inputClass} name="fullName" required minLength={2} maxLength={100} autoComplete="name"/>
+        </label>
+      )}
+
+      <label className="block text-sm font-bold text-ink">
+        {labels.email}
+        <input className={inputClass} name="email" type="email" dir="ltr" required autoComplete="email" inputMode="email"/>
+      </label>
+
+      <label className="block text-sm font-bold text-ink">
+        {labels.password}
+        <span className="mt-2 flex h-12 overflow-hidden rounded-xl border border-[#d8ccb8] bg-white transition focus-within:border-teal focus-within:ring-2 focus-within:ring-teal/15">
+          <input
+            className="min-w-0 flex-1 bg-transparent px-4 outline-none"
+            name="password"
+            type={passwordVisible ? 'text' : 'password'}
+            dir="ltr"
+            required
+            minLength={mode === 'signup' ? 8 : 1}
+            maxLength={mode === 'signup' ? 72 : 256}
+            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+            aria-describedby={mode === 'signup' ? passwordHintId : undefined}
+          />
+          <button
+            className="grid min-w-12 place-items-center border-s border-[#e3d9c8] bg-[#f6f0e4] px-3 text-teal transition hover:bg-[#efe6d5]"
+            type="button"
+            onClick={() => setPasswordVisible(value => !value)}
+            aria-label={passwordVisible ? copy.hidePassword : copy.showPassword}
+            aria-pressed={passwordVisible}
+          >
+            {passwordVisible ? <EyeOff size={18}/> : <Eye size={18}/>}
+          </button>
+        </span>
+        {mode === 'signup' && <span id={passwordHintId} className="mt-2 block text-xs font-normal text-muted">{copy.passwordHint}</span>}
+      </label>
+
+      {mode === 'signup' && role === 'teacher' && (
+        <div className="flex gap-3 rounded-xl bg-[#e0eeec] p-4 text-sm leading-6 text-[#0e3b3c]" role="note">
+          <ShieldCheck className="mt-0.5 flex-none" size={19}/><span>{copy.approval}</span>
+        </div>
+      )}
+
+      {state?.error && <p id={errorId} role="alert" className="rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{state.error}</p>}
+
+      <button
+        className="h-[52px] w-full rounded-[.9rem] bg-orange px-5 text-base font-bold text-white transition hover:bg-[#c4561a] disabled:cursor-wait disabled:opacity-60"
+        disabled={pending}
+        type="submit"
+      >
+        {pending ? (mode === 'login' ? copy.signingIn : copy.creating) : (mode === 'login' ? copy.signIn : copy.create)}
+      </button>
+    </form>
+  );
+}
+
+function RoleCard({ checked, description, icon: Icon, onChange, title, value }: {
+  checked: boolean;
+  description: string;
+  icon: typeof GraduationCap;
+  onChange: () => void;
+  title: string;
+  value: 'student' | 'teacher';
+}) {
+  return (
+    <label className={`relative cursor-pointer rounded-[.9rem] border-2 p-4 transition ${checked ? 'border-teal bg-[#e0eeec]' : 'border-[#d8ccb8] bg-white hover:border-[#9eb7b4]'}`}>
+      <input className="sr-only" type="radio" name="role" value={value} checked={checked} onChange={onChange}/>
+      <span className="mb-4 flex items-center justify-between gap-2">
+        <span className={`grid size-9 place-items-center rounded-xl ${checked ? 'bg-teal text-white' : 'bg-[#f6f0e4] text-teal'}`}><Icon size={18}/></span>
+        <span className={`size-4 rounded-full border-2 border-teal ${checked ? 'bg-teal shadow-[inset_0_0_0_3px_#e0eeec]' : 'bg-white'}`}/>
+      </span>
+      <strong className="block text-start text-base text-teal">{title}</strong>
+      <span className="mt-1 block text-start text-xs font-normal leading-5 text-[#4d473f]">{description}</span>
+    </label>
+  );
+}

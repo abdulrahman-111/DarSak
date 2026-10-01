@@ -1,6 +1,5 @@
 begin;
 create extension if not exists pgcrypto;
-create extension if not exists btree_gist;
 
 create type public.user_role as enum ('student','teacher','admin');
 create type public.user_status as enum ('active','suspended');
@@ -272,8 +271,8 @@ grant select on public.education_nodes,public.subjects,public.offerings,public.g
 grant select on public.profiles,public.teacher_profiles,public.student_profiles,public.teacher_specializations,public.groups,public.group_schedule_slots,public.enrollments,public.lessons,public.lesson_materials,public.notifications,public.reports to authenticated;
 grant insert,update on public.profiles,public.teacher_profiles,public.student_profiles,public.teacher_specializations,public.groups,public.group_schedule_slots,public.lesson_materials,public.reports to authenticated;
 grant update on public.enrollments,public.notifications to authenticated;
+revoke all on function public.current_role(),public.is_active_user(uuid),public.is_group_owner(uuid),public.is_group_member(uuid) from public,anon,authenticated;
 grant execute on function public.public_teachers() to anon,authenticated;
-grant execute on function public.current_role(),public.is_active_user(uuid),public.is_group_owner(uuid),public.is_group_member(uuid) to anon,authenticated;
 grant execute on function public.request_enrollment(uuid),public.decide_enrollment(uuid,text),public.cancel_enrollment(uuid),public.save_schedule_slot(uuid,int,time,time,uuid),public.create_lesson(uuid,text,timestamptz,timestamptz,text,uuid),public.generate_lessons(uuid,date,date),public.admin_update_user(uuid,text,boolean),public.group_students(uuid) to authenticated;
 
 alter table public.profiles enable row level security;
@@ -323,9 +322,9 @@ on conflict(id) do update set public=false,file_size_limit=10485760,allowed_mime
 create or replace function public.storage_lesson_access(object_name text,write_access boolean default false) returns boolean language sql stable security definer set search_path=pg_catalog,public as $$
 select exists(select 1 from public.lesson_materials m join public.lessons l on l.id=m.lesson_id join public.groups g on g.id=l.group_id join public.profiles p on p.id=g.teacher_id
 where m.storage_path=object_name and p.status='active' and ((write_access and (g.teacher_id=auth.uid() or public.current_role()='admin')) or (not write_access and (g.teacher_id=auth.uid() or public.is_group_member(g.id) or public.current_role()='admin')))) $$;
+revoke all on function public.storage_lesson_access(text,boolean) from public,anon,authenticated;
 create policy lesson_objects_read on storage.objects for select using(bucket_id='lesson-materials' and public.storage_lesson_access(name,false));
 create policy lesson_objects_insert on storage.objects for insert with check(bucket_id='lesson-materials' and split_part(name,'/',1)::uuid=auth.uid() and public.storage_lesson_access(name,true));
 create policy lesson_objects_update on storage.objects for update using(bucket_id='lesson-materials' and public.storage_lesson_access(name,true)) with check(bucket_id='lesson-materials' and public.storage_lesson_access(name,true));
 create policy lesson_objects_delete on storage.objects for delete using(bucket_id='lesson-materials' and public.storage_lesson_access(name,true));
-grant execute on function public.storage_lesson_access(text,boolean) to anon,authenticated;
 commit;

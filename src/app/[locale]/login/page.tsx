@@ -1,2 +1,29 @@
-import Link from 'next/link'; import { getDictionary } from '@/i18n/config'; import { AuthForm } from '@/components/forms';
-export default async function Login({params}:{params:Promise<{locale:'ar'|'en'}>}){const {locale}=await params;const t=await getDictionary(locale);return <div className="container flex min-h-[70vh] items-center justify-center py-16"><div className="w-full max-w-md"><p className="mb-2 text-sm font-bold text-orange">{t.brand}</p><h1 className="mb-8 text-4xl font-black text-teal">{t.login}</h1><AuthForm locale={locale} mode="login" t={t}/><p className="mt-6 text-sm text-muted">{t.register}? <Link className="font-bold text-orange" href={`/${locale}/register`}>{t.register}</Link></p></div></div>}
+import Link from 'next/link';
+import { getDictionary } from '@/i18n/config';
+import { AuthAside } from '@/components/auth/auth-aside';
+import { AuthForm } from '@/components/auth/auth-form';
+import { authCopy } from '@/components/auth/copy';
+
+export default async function Login({ params }: { params: Promise<{ locale: 'ar' | 'en' }> }) {
+  const { locale } = await params;
+  const labels = await getDictionary(locale);
+  const copy = authCopy[locale];
+
+  return (
+    <div className="bg-[#f6f0e4]">
+      <div className="container grid min-h-[calc(100vh-9rem)] gap-8 py-10 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.72fr)] md:items-stretch md:py-16">
+        <section className="flex items-center">
+          <div className="w-full max-w-xl rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 sm:p-9">
+            <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{copy.loginEyebrow}</p>
+            <h1 className="mt-3 text-4xl font-black tracking-[-.03em] text-teal md:text-5xl">{copy.loginTitle}</h1>
+            <p className="mt-4 max-w-lg leading-7 text-[#4d473f]">{copy.loginBody}</p>
+            <div className="mt-8"><AuthForm locale={locale} mode="login" labels={labels}/></div>
+            <p className="mt-6 text-center text-sm text-muted">{copy.needAccount} <Link className="font-bold text-orange" href={`/${locale}/register`}>{labels.register}</Link></p>
+            <p className="mt-3 text-center text-sm"><Link className="font-bold text-teal" href={`/${locale}/teachers`}>{copy.explore}</Link></p>
+          </div>
+        </section>
+        <AuthAside locale={locale}/>
+      </div>
+    </div>
+  );
+}

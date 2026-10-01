@@ -15,13 +15,16 @@ export async function adminAction(locale:string,operation:string,_state:AdminSta
  const payload=userSchema.parse({id,status:value('status'),approved:form.has('approved')?value('approved')==='true':undefined});
  const {data:target}=await db.from('profiles').select('id,role').eq('id',id).single();if(!target||!canManageUser(user.id,target))return {error:t.self};
  result=await db.rpc('admin_update_user',{p_user_id:payload.id,p_status:payload.status,p_approved:target.role==='teacher'?payload.approved??null:null});
- }else if(['node','subject','offering'].includes(operation)){
- const raw=Object.fromEntries(form);const payload=operation==='node'?nodeSchema.parse({...raw,id:id||undefined,parent_id:value('parent_id')||null}):operation==='subject'?subjectSchema.parse({...raw,id:id||undefined}):offeringSchema.parse({...raw,id:id||undefined});
- if(operation==='node'){
+ }else if(operation==='node'){
+ const payload=nodeSchema.parse({...Object.fromEntries(form),id:id||undefined,parent_id:value('parent_id')||null});
  const {data:nodes,error}=await db.from('education_nodes').select('*');if(error)return {error:t.failed};if(!validHierarchy(payload as Node,(nodes||[]) as Node[]))return {error:t.blocked};
- }
- const table=operation==='node'?'education_nodes':operation==='subject'?'subjects':'offerings';
- result=id?await db.from(table).update(payload).eq('id',id).select('id').single():await db.from(table).insert(payload).select('id').single();
+ result=id?await db.from('education_nodes').update(payload).eq('id',id).select('id').single():await db.from('education_nodes').insert(payload).select('id').single();
+ }else if(operation==='subject'){
+ const payload=subjectSchema.parse({...Object.fromEntries(form),id:id||undefined});
+ result=id?await db.from('subjects').update(payload).eq('id',id).select('id').single():await db.from('subjects').insert(payload).select('id').single();
+ }else if(operation==='offering'){
+ const payload=offeringSchema.parse({...Object.fromEntries(form),id:id||undefined});
+ result=id?await db.from('offerings').update(payload).eq('id',id).select('id').single():await db.from('offerings').insert(payload).select('id').single();
  }else if(operation.startsWith('delete-')){
  if(value('confirm')!=='yes')return {error:t.invalid};const table={'delete-node':'education_nodes','delete-subject':'subjects','delete-offering':'offerings'}[operation];if(!table)return {error:t.invalid};z.uuid().parse(id);result=await db.from(table).delete().eq('id',id).select('id').single();
  }else if(operation==='group'){

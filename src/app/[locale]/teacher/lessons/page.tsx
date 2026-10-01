@@ -1,0 +1,5 @@
+import { ensureLocale } from '@/i18n/config';
+import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
+import { teacherLessons } from '@/features/teacher/data';
+
+export default async function TeacherLessons({params}:{params:Promise<{locale:string}>}){const {locale:raw}=await params;const locale=ensureLocale(raw),ar=locale==='ar';const data=await teacherLessons(locale);return <><ScreenTitle eyebrow={ar?'تقويم المعلم':'Teacher calendar'} title={ar?'الحصص':'Lessons'} description={ar?'افتح مساحة الحصة لتعديل التفاصيل ومراجعة المواد.':'Open a lesson workspace to update details and review its materials.'}/><Panel>{data.lessons.length?<div className="grid gap-3">{data.lessons.map(lesson=>{const group=Array.isArray(lesson.group)?lesson.group[0]:lesson.group;return <RowLink key={lesson.id} href={`/${locale}/teacher/lessons/${lesson.id}`} title={lesson.title} meta={`${group?.name||'—'} · ${cairoDate(lesson.starts_at,locale)}`} trailing={<Status value={lesson.status} locale={locale}/>}/>})}</div>:<EmptyState>{ar?'أنشئ حصة من صفحة إحدى المجموعات.':'Create a lesson from one of your group pages.'}</EmptyState>}</Panel></>}

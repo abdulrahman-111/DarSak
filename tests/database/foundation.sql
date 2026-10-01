@@ -9,7 +9,7 @@ begin
 end $$;
 do $$
 begin
- if exists(select 1 from information_schema.routine_columns where routine_schema='public' and routine_name='public_teachers' and column_name in ('role','status')) then raise exception 'unsafe public projection'; end if;
+ if (select coalesce(proargnames,'{}'::text[]) && array['role','status'] from pg_proc where oid='public.public_teachers()'::regprocedure) then raise exception 'unsafe public projection'; end if;
  if not exists(select 1 from pg_policies where schemaname='public' and tablename='profiles' and policyname='profile_self_update') then raise exception 'profile update policy missing'; end if;
  if not exists(select 1 from pg_policies where schemaname='storage' and tablename='objects' and policyname='lesson_objects_read') then raise exception 'storage read policy missing'; end if;
  if position('for update' in lower((select prosrc from pg_proc where oid='public.decide_enrollment(uuid,text)'::regprocedure)))=0 then raise exception 'enrollment RPC does not lock capacity'; end if;

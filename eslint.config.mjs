@@ -1,2 +1,7 @@
 import nextVitals from 'eslint-config-next/core-web-vitals';
-export default nextVitals;
+const config = [
+  { ignores: ['*.dc.html', 'dars-core.js', 'support.js'] },
+  ...nextVitals,
+];
+
+export default config;

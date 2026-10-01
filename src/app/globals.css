@@ -1,2 +1,47 @@
-@tailwind base; @tailwind components; @tailwind utilities;
-:root{color-scheme:light} *{box-sizing:border-box} body{margin:0;background:#fbf7ef;color:#173334;font-family:Arial,Tahoma,sans-serif} button,input,textarea,select{font:inherit} a{color:inherit;text-decoration:none} .container{width:min(1120px,calc(100% - 32px));margin:auto}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --canvas: #f6f0e4;
+  --surface: #fffdf8;
+  --teal: #0e4a4b;
+  --orange: #c4561a;
+  --ink: #23211e;
+  --muted: #6b6358;
+  --line: #e3d9c8;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: "Instrument Sans", "IBM Plex Sans Arabic", Arial, sans-serif;
+  text-rendering: optimizeLegibility;
+}
+button, input, textarea, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+a { color: inherit; text-decoration: none; }
+::selection { background: rgba(196, 86, 26, .2); }
+:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
+.container { width: min(1180px, calc(100% - 32px)); margin-inline: auto; }
+.display { font-family: "Bricolage Grotesque", "IBM Plex Sans Arabic", Arial, sans-serif; }
+.surface { background: var(--surface); border: 1px solid var(--line); }
+.screen-enter { animation: screen-enter .52s cubic-bezier(.22, 1, .36, 1) both; }
+
+@keyframes screen-enter {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}

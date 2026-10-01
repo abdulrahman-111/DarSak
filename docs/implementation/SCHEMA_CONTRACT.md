@@ -25,14 +25,18 @@ RPCs (server actions call with authenticated supabase client):
 - cancel_enrollment(p_enrollment_id uuid) returns void. Student owns pending/accepted -> cancelled.
 - save_schedule_slot(p_group_id uuid,p_weekday int,p_start_time time,p_end_time time,p_slot_id uuid default null) returns uuid. Transaction lock teacher, conflict validation. Edits cannot silently corrupt existing dated lessons.
 - create_lesson(p_group_id uuid,p_title text,p_starts_at timestamptz,p_ends_at timestamptz,p_notes text default '',p_lesson_id uuid default null) returns uuid. Validates owner/admin and conflicts, updates when ID supplied.
+- set_lesson_status(p_lesson_id uuid,p_status text) returns void. Owner/admin only; accepts scheduled, cancelled, or completed and locks the lesson before changing status.
 - generate_lessons(p_group_id uuid,p_from date,p_until date) returns integer. At most 90 days, Cairo conversion, idempotent (group/slot/local date uniqueness), rollback on conflicts. User explicitly triggers.
 - admin_update_user(p_user_id uuid,p_status text,p_approved boolean default null) returns void. Admin only, updates status and teacher approval; no public role granting.
 - group_students(p_group_id uuid) returns table(enrollment_id uuid,student_id uuid,full_name text,status text). Owner/admin only.
 - public_teachers() returns table(id uuid,full_name text,headline text,bio text,avatar_path text). Approved active only.
+- public_groups() returns published group fields plus approved active teacher name, bilingual subject/context names, accepted_count, and available_seats. Safe for anonymous discovery; it never returns private profiles or roster identities.
 
 Auth trigger creates profile from full_name and requested_role metadata, only student/teacher permitted, never admin. Never authorize via editable metadata. Teacher remains unapproved until operator/admin review. `bootstrap-admin` operator script uses service key only outside application runtime. User cannot alter profile.role/status or teacher.approved through direct UPDATE.
 
 Storage bucket `lesson-materials`, private, 10 MB cap PDF/JPEG/PNG/WebP. Object path `${teacherId}/${lessonId}/${randomUuid}.${extension}`. Metadata insert must match path ownership and lesson owner. Accepted students may read only when corresponding lesson_materials row exists. Teacher owner/admin manage; suspended denied. Profile picture upload can be deferred to a safe configured avatar URL/path field, but do not expose arbitrary storage.
+
+Security hardening: accepted membership requires an active student profile on every protected read, including Storage. Recurring schedule writes go through `save_schedule_slot`; direct authenticated slot writes are revoked. Slot and lesson update IDs must already belong to the supplied group, and a lesson's recurring slot must belong to that same group. Initial file upload is authorized from the opaque teacher/lesson object path before metadata exists; later reads, replacement, and deletion require the metadata relation. File cleanup after metadata failure remains an application responsibility. Link and note metadata has no storage path. Catalogue and platform-setting mutations require an active administrator through RLS.
 
 Public queries: education_nodes,subjects,offerings; groups published + approved active teacher. Teacher full name via public_teachers RPC, not profiles. Owner can read draft groups. Accepted students can read their group's content even if unpublished (archived remains historical read).
 

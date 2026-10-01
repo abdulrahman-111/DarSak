@@ -1,0 +1,6 @@
+import { ensureLocale } from '@/i18n/config';
+import { learning } from '@/features/student/data';
+import { EnrollmentForm } from '@/features/student/forms';
+import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
+
+export default async function StudentClasses({params}:{params:Promise<{locale:string}>}){const {locale:raw}=await params;const locale=ensureLocale(raw),ar=locale==='ar';const data=await learning(locale);return <><ScreenTitle eyebrow={ar?'رحلتك التعليمية':'Your learning'} title={ar?'مجموعاتي وطلباتي':'My classes and requests'} description={ar?'تابع حالة طلباتك ووصولك إلى الحصص والموارد.':'Track enrollment decisions and access to lessons and resources.'}/><div className="grid gap-4">{data.enrollments.length?data.enrollments.map(enrollment=><Panel key={enrollment.id}><div className="flex flex-wrap items-start justify-between gap-4"><div><h2 className="text-xl font-black text-teal">{enrollment.group?.name||'—'}</h2><p className="mt-2 text-sm text-muted">{enrollment.group?.location||'—'}</p></div><Status value={enrollment.status} locale={locale}/></div>{['pending','accepted'].includes(enrollment.status)&&<div className="mt-5"><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></div>}</Panel>):<EmptyState>{ar?'لم تطلب الانضمام إلى مجموعة بعد.':'You have not requested a class yet.'}</EmptyState>}</div></>}

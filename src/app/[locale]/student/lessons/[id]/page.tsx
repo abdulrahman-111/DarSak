@@ -1,0 +1,9 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ensureLocale } from '@/i18n/config';
+import { lessonDetail } from '@/features/student/data';
+import { DownloadForm } from '@/features/student/forms';
+import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
+import { safeLink } from '@/features/student/domain';
+
+export default async function StudentLesson({params}:{params:Promise<{locale:string;id:string}>}){const {locale:raw,id}=await params;const locale=ensureLocale(raw),ar=locale==='ar';const data=await lessonDetail(locale,id);if(!data)notFound();return <><ScreenTitle eyebrow={ar?'حصة خاصة':'Private lesson'} title={data.lesson.title} description={cairoDate(data.lesson.starts_at,locale)} action={<Status value={data.lesson.status} locale={locale}/>}/>{data.lesson.notes&&<Panel className="mb-6"><h2 className="font-black text-teal">{ar?'ملاحظات الحصة':'Lesson notes'}</h2><p className="mt-3 whitespace-pre-wrap text-muted">{data.lesson.notes}</p></Panel>}<Panel><h2 className="mb-4 text-xl font-black text-teal">{ar?'المواد التعليمية':'Learning resources'}</h2>{data.materials.length?<div className="grid gap-3">{data.materials.map(material=><div key={material.id} className="rounded-2xl border border-line p-4"><strong className="text-teal">{material.title}</strong>{material.kind==='note'&&<p className="mt-2 whitespace-pre-wrap text-sm text-muted">{material.content}</p>}{material.kind==='link'&&safeLink(material.url)&&<p className="mt-3"><Link href={safeLink(material.url)!} target="_blank" rel="noopener noreferrer" className="font-bold text-orange underline">{ar?'فتح الرابط':'Open resource'}</Link></p>}{material.kind==='file'&&<DownloadForm locale={locale} id={material.id}/>}</div>)}</div>:<EmptyState>{ar?'لا توجد مواد لهذه الحصة بعد.':'No resources for this lesson yet.'}</EmptyState>}</Panel></>}

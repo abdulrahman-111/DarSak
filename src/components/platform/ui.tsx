@@ -1,0 +1,16 @@
+import Link from 'next/link';
+
+export function ScreenTitle({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: React.ReactNode }) {
+  return <header className="mb-7 flex flex-wrap items-end justify-between gap-4"><div>{eyebrow && <p className="mb-2 text-xs font-black uppercase tracking-[.18em] text-orange">{eyebrow}</p>}<h1 className="text-3xl font-black tracking-tight text-teal md:text-5xl">{title}</h1>{description && <p className="mt-3 max-w-2xl text-muted">{description}</p>}</div>{action}</header>;
+}
+export function Panel({ children, className = '' }: { children: React.ReactNode; className?: string }) { return <section className={`rounded-[1.5rem] border border-line bg-white p-5 shadow-[0_12px_35px_rgba(6,59,59,.05)] ${className}`}>{children}</section>; }
+export function Metric({ label, value, hint }: { label: string; value: number | string; hint?: string }) { return <Panel><p className="text-sm text-muted">{label}</p><p className="mt-2 text-3xl font-black text-teal">{value}</p>{hint && <p className="mt-1 text-xs text-orange">{hint}</p>}</Panel>; }
+export function EmptyState({ children }: { children: React.ReactNode }) { return <div className="rounded-2xl border border-dashed border-line px-5 py-10 text-center text-muted">{children}</div>; }
+export function Status({ value, locale }: { value: string; locale: string }) {
+  const ar = locale === 'ar'; const labels: Record<string, [string, string]> = { pending: ['Awaiting review','بانتظار المراجعة'], accepted: ['Accepted','مقبول'], rejected: ['Declined','مرفوض'], cancelled: ['Cancelled','ملغى'], removed: ['Removed','تمت الإزالة'], published: ['Published','منشورة'], draft: ['Draft','مسودة'], archived: ['Archived','مؤرشفة'], scheduled: ['Scheduled','مجدولة'], completed: ['Completed','مكتملة'], open: ['Open','مفتوح'], resolved: ['Resolved','تم الحل'], active: ['Active','نشط'], suspended: ['Suspended','موقوف'] };
+  const tone = ['accepted','published','completed','active'].includes(value) ? 'bg-green-100 text-green-800' : ['rejected','removed','suspended'].includes(value) ? 'bg-red-100 text-red-800' : 'bg-orange/10 text-orange';
+  return <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${tone}`}>{labels[value]?.[ar ? 1 : 0] || value}</span>;
+}
+export function RowLink({ href, title, meta, trailing }: { href: string; title: string; meta?: string; trailing?: React.ReactNode }) { return <Link href={href} className="flex items-center gap-4 rounded-2xl border border-line p-4 hover:border-orange/50"><span className="min-w-0 flex-1"><strong className="block truncate text-teal">{title}</strong>{meta && <span className="mt-1 block text-sm text-muted">{meta}</span>}</span>{trailing}</Link>; }
+export function cairoDate(value: string, locale: string) { return new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB',{dateStyle:'medium',timeStyle:'short',timeZone:'Africa/Cairo'}).format(new Date(value)); }
+export const weekday = (day: number, locale: string) => new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB',{weekday:'long',timeZone:'Africa/Cairo'}).format(new Date(Date.UTC(2026, 0, 4 + day)));
