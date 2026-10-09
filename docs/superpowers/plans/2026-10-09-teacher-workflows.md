@@ -80,14 +80,16 @@ Use Node 22 via `PATH=/workspace/.dars-tools/node_modules/.bin:$PATH`. Unit comm
 
 ## Task 3 — private avatars and public teacher detail
 
-**Files:** new avatar migration and SQL/API tests; profile domain/actions/data/forms; `src/app/[locale]/teachers/[id]/page.tsx`; public profile links; schema contract.
+**Files:** new avatar/public-specialization migration and SQL/API tests; `next.config.ts`; profile domain/actions/data/forms; `src/app/[locale]/teachers/[id]/page.tsx`; public profile links; schema contract.
 **Produces:** private bucket `teacher-avatars`, 2097152-byte JPEG/PNG/WebP cap; paths `${teacherId}/${randomUuid}.jpg|png|webp`. Profile avatar path constraint enforces own UUID prefix and supported format. `can_read_teacher_avatar(p_name text) returns boolean` permits active owner/admin or the currently referenced avatar of an approved active teacher, explicitly callable by anon/authenticated for the Storage policy. Initial INSERT requires active owner path; subsequent owner DELETE allows compensation even before metadata exists. No lesson bucket policy changes.
 
-`uploadTeacherAvatar(locale,state,form)` uploads then saves `avatar_path`; remove new object if save fails; remove old object only after new reference commits. `removeTeacherAvatar(locale)` clears reference before removal. `publicTeacherDetail(id)` fetches safe public teacher fields/catalogue plus separately authorized contacts and a 300-second signed image URL; owner editor gets own signed image before approval.
+`public_teacher_specializations(p_teacher_id uuid) returns table(offering_id uuid)` is an explicit narrow SECURITY DEFINER projection, fixed search path, approved active teacher filter, EXECUTE only to anon/authenticated. Public detail uses this RPC plus public catalogue labels; do not direct-read `teacher_specializations` or broaden its owner/admin write policy.
 
-- [ ] Add/run avatar access matrix, size/type/path mismatch, unreferenced public object denial, active/unapproved owner upload, suspended denial, and old/new metadata failure compensation tests.
+`uploadTeacherAvatar(locale,state,form)` uploads then saves `avatar_path`; remove new object if save fails; remove old object only after new reference commits. `removeTeacherAvatar(locale)` clears reference before removal. `publicTeacherDetail(id)` fetches safe public teacher fields/catalogue plus separately authorized contacts and a 300-second signed image URL; owner editor gets own signed image before approval. Set Next Server Actions `bodySizeLimit: '12mb'` in `next.config.ts` to admit multipart overhead for existing 10 MB materials and new 2 MB photos; retain both independent domain and Storage caps.
+
+- [ ] Add/run avatar access matrix, size/type/path mismatch, unreferenced public object denial, active/unapproved owner upload, suspended denial, and old/new metadata failure compensation tests. Assert public specialization RPC hides suspended/unapproved teachers and direct foreign writes remain denied.
 - [ ] Implement bucket/policies and upload lifecycle; do not cache signed URLs or protected contacts globally. Show safe tel/wa.me/mailto links built from validated values and omit absent channels.
-- [ ] Verify public teacher route excludes suspended/unapproved teachers and contacts default privacy, browser broken-image fallback, English/Arabic/mobile; run SQL/API and UI checks. Short-lived already-issued signed URLs remain usable until expiry; report this normal limit.
+- [ ] Verify public teacher route excludes suspended/unapproved teachers and contacts default privacy, browser broken-image fallback, English/Arabic/mobile; submit actual files near 2 MB avatar and 10 MB material caps through browser transport, reject files beyond their domain caps, and run SQL/API/UI checks. Short-lived already-issued signed URLs remain usable until expiry; report this normal limit.
 
 ## Task 4 — authoritative candidates and strict Cairo conversion
 
@@ -102,12 +104,14 @@ Use Node 22 via `PATH=/workspace/.dars-tools/node_modules/.bin:$PATH`. Unit comm
 
 ## Task 5 — exclusions, generation and occurrence identity
 
-**Files:** new migration; generation SQL/API tests; `create_lesson` replacement; schema contract.
+**Files:** new migration; generation SQL/API tests; replacements for `save_schedule_slot`, `create_lesson`, and `set_lesson_status`; schema contract.
 **Consumes:** Task 4 shared candidates. **Produces:** `set_lesson_exclusions(p_group_id uuid,p_dates date[]) returns void` atomically replaces saved distinct dates under the teacher calendar lock, owner/admin only, max 366 dates, no NULL entries; direct table writes denied. Empty array explicitly clears holidays.
 
 Keep `generate_lessons(uuid,date,date) returns integer`, now honoring saved exclusions and strict candidate rules. Final generation recomputes while locked; any conflicting row rejects entire batch. Existing insert predicate fix remains. Updating a generated lesson via `create_lesson` preserves original `slot_id/local_date`; manual lessons continue deriving local date from new start.
 
-- [ ] Add/run tests for exclusion persistence/clear, excluded occurrence not inserted, concurrent exclusion/generation serialization, null-safe manual overlap, cancelled/completed identity, stale preview, parallel generation, and conflict after an earlier ready row causing zero partial inserts.
+Task 5 also replaces existing `save_schedule_slot`, `create_lesson`, and `set_lesson_status` to make mutation lock order consistent: authorized teacher lookup, teacher-calendar advisory lock, then group/target-row locks and a fresh authorization/ownership check. Never hold a slot/lesson row lock while waiting for the calendar lock. Slot save retains the cross-group-ID and overlap guards; lesson update retains its same-group guard. Status changes to `scheduled` or `completed` must check dated overlap excluding the lesson itself while locked, including restoration from cancelled; cancellation takes the same lock but needs no overlap check. Exclusion/generation and later delete/publish RPCs use the same advisory-before-row order.
+
+- [ ] Add/run tests for exclusion persistence/clear, excluded occurrence not inserted, concurrent exclusion/generation serialization, null-safe manual overlap, cancelled/completed identity, stale preview, parallel generation, and conflict after an earlier ready row causing zero partial inserts. Add real parallel reschedule/generation and slot-edit/generation checks with bounded statement timeout; assert no deadlocks/overlapping commits. Restoring a cancelled overlapping lesson to either scheduled or completed must fail; restoration without overlap succeeds.
 - [ ] Implement wrappers and occurrence-preserving lesson update, explicit ACLs, date bounds and locking; no browser-provided timestamps used in generation.
 - [ ] Verify move-and-repeat leaves one original generated identity at the new actual time and does not recreate old date. Run SQL/API; review before publish integration.
 

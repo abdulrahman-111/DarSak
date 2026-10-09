@@ -4,18 +4,25 @@ Date: 2026-10-09. User approved the [design](../superpowers/specs/2026-10-09-tea
 
 ## Current execution
 
-- Task 0 recurrence fix/regression is running under the parent's bounded Luna assignment; outcome and review pending.
+- Task 0 recurrence fix/regression passed Sol review and is committed as `dcc33dd`.
+  SQL test observed red `42P10` before migration, then passed; 20 unit tests pass.
+  The newly reached anonymous schedule `401/42501` was repaired separately;
+  Sol reviewed the policy boundary and parent independently ran the complete
+  local API suite: all 44 assertions passed. Task 1 contacts is running.
 - Sol completed repository exploration and approved-scope planning; docs only changed by the planning worker.
 - Implementation is authorized; no additional design or execution-method confirmation is pending.
 - Existing dependencies and healthy local backend are retained. Old `PROGRESS.md` worker handles are historical and must not be treated as live sessions.
 - Supabase changelog HTTP fetch returned 403 because the destination is restricted; connector documentation supplied current private-bucket/RLS/signed-URL guidance. This is a documentation-fetch limitation, not evidence of an implementation failure.
+- Sol read-only scheduling preflight identified required Task 5 advisory-before-row lock ordering for slot save/lesson save/status RPCs and an overlap check when restoring a cancelled lesson. These are authoritative conflict guarantees within the approved scheduling scope.
+- Task 3 includes Server Actions transport limit `12mb` while retaining 2 MB avatar and 10 MB material domain/Storage caps, and a safe public-specialization projection instead of broadening private table access. Both close verified interface gaps in the approved workflows.
+- Parent reports browser tooling outside product dependencies at `/workspace/.dars-browser-tools` with Chromium `/usr/bin/chromium`; verify installation/readiness before browser checks.
 
 ## Task ledger
 
 | Task | Phase / deliverable | State | Review / evidence |
 | --- | --- | --- | --- |
-| 0 | Recurrence predicate fix and regression | In progress | API baseline reproduces 42P10; Luna outcome pending |
-| 1 | Contact/profile persistence and raw API privacy | Pending | Depends on 0 review |
+| 0 | Recurrence predicate fix and regression | Complete | `dcc33dd`; SQL red/green, unit20 pass; full API44 pass after separate reviewed schedule policy repair |
+| 1 | Contact/profile persistence and raw API privacy | In progress | Luna contacts worker; schema/RLS/API first |
 | 2 | Profile editor and specializations | Pending | Depends on 1 |
 | 3 | Private avatars and public teacher detail | Pending | Depends on 1–2 |
 | 4 | Shared DB candidates and strict Cairo times | Pending | Depends on 0 |
@@ -51,3 +58,16 @@ These checks describe the pre-change baseline. Do not cite them as verification 
 ## Delivery constraints
 
 Draft PR only; no merge or deployment. Attendance, new schedule-change notifications, calendar export and reminders remain deferred. Report any unavailable check or unresolved failure explicitly.
+
+## Rulings
+
+- Ruling: retain the managed checkout and create a dedicated feature branch —
+  saved startup helpers and local backend target this path; unrelated working
+  changes were only the supplied recommendations and our design. No worktree or
+  dependency reinstall is needed.
+- Ruling: user approval of the concrete design and Luna execution authorizes
+  task-plan execution — no redundant plan confirmation gate.
+- Ruling: repair the newly reached anonymous schedule policy failure in a separate
+  commit before features — it blocks existing discovery and complete API validation.
+  Scope old policies to authenticated and give anonymous readers only the safe
+  published-group projection, without private-profile grants.
