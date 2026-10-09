@@ -70,7 +70,7 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
     </div>;
   };
 
-  return <form action={action} className="space-y-6">
+  return <form action={action} onReset={event => event.preventDefault()} className="space-y-6">
     <div className="grid gap-5 md:grid-cols-2">
       <div>
         <label htmlFor="profile-full-name" className="block text-sm font-bold">{t.fullName}</label>

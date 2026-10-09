@@ -33,8 +33,8 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
 export function PlatformShell({ locale, role, name, children }: { locale: string; role: PlatformRole; name: string; children: React.ReactNode }) {
   const ar = locale === 'ar';
   const items = navigation(locale, role);
-  return <div className="container grid gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-    <aside className="rounded-[1.75rem] bg-teal p-4 text-cream lg:sticky lg:top-24">
+  return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
+    <aside className="min-w-0 rounded-[1.75rem] bg-teal p-4 text-cream lg:sticky lg:top-24">
       <Link href={`/${locale}/${role}`} className="flex items-center gap-3 px-3 py-3">
         <span className="grid size-10 place-items-center rounded-xl bg-cream font-black text-teal">د</span>
         <span><strong className="block text-lg">{ar ? 'درس' : 'Dars'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
