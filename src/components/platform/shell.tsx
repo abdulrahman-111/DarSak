@@ -7,6 +7,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
   const ar = locale === 'ar';
   if (role === 'teacher') return [
     { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
+    { href: `/${locale}/teacher/profile`, label: ar ? 'الملف الشخصي' : 'Profile' },
     { href: `/${locale}/teacher/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
