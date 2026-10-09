@@ -1,0 +1,21 @@
+import Link from 'next/link';
+import { ensureLocale } from '@/i18n/config';
+import { Panel, ScreenTitle } from '@/components/platform/ui';
+import { teacherGroupSetup } from '@/features/teacher/setup-data';
+import { GroupDetailsForm } from '@/features/teacher/setup-forms';
+
+export default async function NewTeacherGroupPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale: raw } = await params;
+  const locale = ensureLocale(raw);
+  const ar = locale === 'ar';
+  const data = await teacherGroupSetup(locale);
+  return <>
+    <ScreenTitle eyebrow={ar ? 'إعداد التدريس' : 'Teaching setup'} title={ar ? 'إنشاء مجموعة' : 'Create a group'} description={ar ? 'احفظ تفاصيل مجموعتك كمسودة، ثم أكمل إعداد الجدول قبل النشر.' : 'Save your group details as a draft, then continue to its schedule before publishing.'} />
+    <div className="mx-auto max-w-3xl">
+      <Panel>
+        {data.error ? <p role="alert" className="text-sm text-red-800">{data.error}</p> : <GroupDetailsForm locale={locale} catalogue={data.catalogue} />}
+        <Link href={`/${locale}/teacher/groups`} className="mt-5 inline-block text-sm font-bold text-teal underline">{ar ? 'العودة إلى مجموعاتي' : 'Back to my groups'}</Link>
+      </Panel>
+    </div>
+  </>;
+}
