@@ -3,8 +3,10 @@ import { ensureLocale } from '@/i18n/config';
 import { Panel, ScreenTitle, Status } from '@/components/platform/ui';
 import { idSchema } from '@/features/student/domain';
 import { teacherGroupSetup } from '@/features/teacher/setup-data';
-import { GroupDetailsForm, GroupSetupPlaceholder, GroupSetupSteps, WeeklyScheduleStepForm } from '@/features/teacher/setup-forms';
+import { GroupDetailsForm, GroupSetupSteps, WeeklyScheduleStepForm } from '@/features/teacher/setup-forms';
 import { normalizeSetupStep } from '@/features/teacher/setup-domain';
+import { PublishReviewForm } from '@/features/teacher/publish-form';
+import { publishReviewKey } from '@/features/teacher/publish-domain';
 
 export default async function TeacherGroupSetupPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ step?: string | string[] }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
@@ -29,7 +31,15 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
           ? <GroupDetailsForm locale={locale} values={data.values} groupId={id} catalogue={data.catalogue} />
           : step === 'schedule'
             ? <WeeklyScheduleStepForm locale={locale} groupId={id} slots={data.slots} />
-            : <GroupSetupPlaceholder locale={locale} />}
+            : <PublishReviewForm
+              key={publishReviewKey(data.group, data.slots, data.exclusions)}
+              locale={locale}
+              group={data.group}
+              catalogue={data.catalogue}
+              slots={data.slots}
+              exclusions={data.exclusions}
+              approved={Boolean(data.me.teacher?.approved)}
+            />}
       </Panel>
     </div>
   </>;
