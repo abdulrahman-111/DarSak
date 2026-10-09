@@ -9,6 +9,8 @@ assert(anon && service, 'Supply local SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROL
 const users = [];
 const suffix = randomUUID().slice(0, 8);
 const uploadedPaths = [];
+const uploadedAvatarPaths = [];
+const signBody = {expiresIn:60};
 let passed = 0;
 async function request(path, {token = anon, method = 'GET', body, headers = {}} = {}) {
   const response = await fetch(`${origin}${path}`, {
@@ -24,6 +26,16 @@ async function success(path, options) {
   const r = await request(path, options);
   assert(r.ok, `${path}: ${r.status} ${JSON.stringify(r.data)}`);
   return r.data;
+}
+async function uploadAvatar(path, mime, bytes, token) {
+  const response = await fetch(`${origin}/storage/v1/object/teacher-avatars/${path.split('/').map(encodeURIComponent).join('/')}`, {
+    method: 'POST',
+    headers: {apikey: token === service ? service : anon, Authorization: `Bearer ${token}`, 'Content-Type': mime, 'x-upsert': 'false'},
+    body: bytes,
+  });
+  const raw = await response.text();
+  let data; try { data = JSON.parse(raw); } catch { data = raw; }
+  return {status: response.status, ok: response.ok, data};
 }
 function check(condition, message) { assert(condition, message); passed++; console.log(`PASS ${message}`); }
 async function signup(role) {
@@ -185,6 +197,64 @@ try {
   const protectedApproval = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=approved`,{token:teacher.token});
   const loginUser = await success(`/auth/v1/admin/users/${teacher.id}`,{token:service});
   check(protectedFields[0].role==='teacher' && protectedFields[0].status==='active' && protectedApproval[0].approved && loginUser.email.startsWith('integration-teacher-'),'profile save preserves role, status, approval, and Auth email');
+  const pngBytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aWQAAAAASUVORK5CYII=', 'base64');
+  const avatarPath = `${teacher.id}/${randomUUID()}.png`;
+  const avatarUpload = await uploadAvatar(avatarPath, 'image/png', pngBytes, teacher.token);
+  assert(avatarUpload.ok, `Valid avatar upload failed: ${avatarUpload.status} ${JSON.stringify(avatarUpload.data)}`);
+  uploadedAvatarPaths.push(avatarPath);
+  await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{avatar_path:avatarPath}});
+  const publicAvatarAccess = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:avatarPath}});
+  check(publicAvatarAccess===true,'anonymous avatar helper permits the currently referenced approved teacher image');
+  const publicAvatarRead = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{method:'POST',body:signBody});
+  check(publicAvatarRead.ok,'anonymous can sign the currently referenced approved teacher avatar');
+  const ownerAvatarRead = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:teacher.token,method:'POST',body:signBody});
+  check(ownerAvatarRead.ok,'active owner can sign their currently referenced avatar');
+  const unrelatedAvatarRead = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:otherTeacher.token,method:'POST',body:signBody});
+  check(unrelatedAvatarRead.ok,'unrelated active user can sign the publicly referenced approved avatar');
+  const ownUnreferencedPath = `${teacher.id}/${randomUUID()}.png`;
+  const ownUnreferenced = await uploadAvatar(ownUnreferencedPath,'image/png',pngBytes,teacher.token);
+  assert(ownUnreferenced.ok,`Active owner could not upload an unreferenced avatar: ${ownUnreferenced.status} ${JSON.stringify(ownUnreferenced.data)}`);
+  uploadedAvatarPaths.push(ownUnreferencedPath);
+  const anonUnreferenced = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:ownUnreferencedPath}});
+  const anonUnreferencedSign = await request(`/storage/v1/object/sign/teacher-avatars/${ownUnreferencedPath}`,{method:'POST',body:signBody});
+  const ownerUnreferenced = await request(`/storage/v1/object/sign/teacher-avatars/${ownUnreferencedPath}`,{token:teacher.token,method:'POST',body:signBody});
+  check(anonUnreferenced===false && !anonUnreferencedSign.ok && ownerUnreferenced.ok,'unreferenced avatar is private to anonymous viewers while its active owner can access it');
+  const ownerDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[ownUnreferencedPath]}});
+  assert(ownerDelete.ok,`Owner avatar cleanup failed: ${ownerDelete.status} ${JSON.stringify(ownerDelete.data)}`);
+  assert(Array.isArray(ownerDelete.data) && ownerDelete.data.some(row=>row.name===ownUnreferencedPath),`Owner delete did not return the deleted object: ${JSON.stringify(ownerDelete.data)}`);
+  check(ownerDelete.ok,'owner can delete an unreferenced avatar for upload compensation');
+  uploadedAvatarPaths.splice(uploadedAvatarPaths.indexOf(ownUnreferencedPath),1);
+  const foreignPath = `${otherTeacher.id}/${randomUUID()}.png`;
+  const foreignUpload = await uploadAvatar(foreignPath,'image/png',pngBytes,teacher.token);
+  check(!foreignUpload.ok,'teacher cannot upload under another teacher UUID prefix');
+  const invalidPath = `${teacher.id}/not-a-uuid.svg`;
+  const invalidPathUpload = await uploadAvatar(invalidPath,'image/svg+xml',pngBytes,teacher.token);
+  check(!invalidPathUpload.ok,'avatar storage rejects SVG and malformed object paths');
+  const mismatchedPath = `${teacher.id}/${randomUUID()}.jpg`;
+  const mismatchedUpload = await uploadAvatar(mismatchedPath,'image/png',pngBytes,teacher.token);
+  check(!mismatchedUpload.ok,'avatar storage rejects an extension and MIME mismatch');
+  const tooLargePath = `${teacher.id}/${randomUUID()}.png`;
+  const tooLargeUpload = await uploadAvatar(tooLargePath,'image/png',Buffer.alloc(2097153),teacher.token);
+  check(!tooLargeUpload.ok,'avatar storage enforces the 2 MiB upload cap');
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
+  await success('/rest/v1/teacher_specializations',{token:service,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id}});
+  const hiddenSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(hiddenSpecializations.length===0,'public specialization RPC hides an unapproved teacher');
+  const unapprovedAvatarPath = `${otherTeacher.id}/${randomUUID()}.png`;
+  const unapprovedUpload = await uploadAvatar(unapprovedAvatarPath,'image/png',pngBytes,otherTeacher.token);
+  assert(unapprovedUpload.ok,`Active unapproved teacher upload failed: ${unapprovedUpload.status} ${JSON.stringify(unapprovedUpload.data)}`);
+  uploadedAvatarPaths.push(unapprovedAvatarPath);
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{avatar_path:unapprovedAvatarPath}});
+  const unapprovedPublicAccess = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:unapprovedAvatarPath}});
+  const unapprovedPublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${unapprovedAvatarPath}`,{method:'POST',body:signBody});
+  check(unapprovedPublicAccess===false && !unapprovedPublicRead.ok,'unapproved teacher avatar remains hidden from anonymous viewers when referenced');
+  const unapprovedOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${unapprovedAvatarPath}`,{token:otherTeacher.token,method:'POST',body:signBody});
+  check(unapprovedOwnerRead.ok,'active unapproved teacher can sign their own avatar');
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:true}});
+  const approvedPublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${unapprovedAvatarPath}`,{method:'POST',body:signBody});
+  check(approvedPublicRead.ok,'referenced avatar becomes public after its teacher is approved');
+  const visibleSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(visibleSpecializations.some(row=>row.offering_id===offerings[0].id),'public specialization RPC exposes offerings for an approved active teacher');
   const privateLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:pending.token});
   check(privateLessons.length===0,'pending student cannot read private lessons');
   const memberLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:member.token});
@@ -194,9 +264,10 @@ try {
   assert(upload.ok, `Teacher upload failed: ${upload.status} ${await upload.text()}`);
   uploadedPaths.push(objectPath);
   await success('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'file',title:'Test PDF',storage_path:objectPath,file_size:14,mime_type:'application/pdf',uploaded_by:teacher.id}});
-  const signBody = {expiresIn:60};
   const memberDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{token:member.token,method:'POST',body:signBody});
   check(memberDownload.ok,'accepted student can obtain a private download');
+  const anonymousLessonDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{method:'POST',body:signBody});
+  check(!anonymousLessonDownload.ok,'anonymous viewers cannot obtain a private lesson download');
   const pendingDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{token:pending.token,method:'POST',body:signBody});
   check(!pendingDownload.ok,'pending student cannot obtain a private download');
   const goodLink = (await success('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'link',title:'Reference',url:'https://example.com/lesson',uploaded_by:teacher.id}}))[0];
@@ -246,6 +317,16 @@ try {
   const hiddenSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${otherGroup.id}`);
   check(hiddenSlots.length===0,'published slots disappear when their teacher is suspended');
   await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedAvatarOwner = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:teacher.token,method:'POST',body:signBody});
+  const suspendedAvatarPublic = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:avatarPath}});
+  const suspendedAvatarPublicSign = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{method:'POST',body:signBody});
+  const suspendedAvatarDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[avatarPath]}});
+  assert(suspendedAvatarDelete.ok,`Suspended avatar delete request failed: ${suspendedAvatarDelete.status} ${JSON.stringify(suspendedAvatarDelete.data)}`);
+  check(!Array.isArray(suspendedAvatarDelete.data) || !suspendedAvatarDelete.data.some(row=>row.name===avatarPath),'suspended owner cannot delete their avatar through Storage');
+  const retainedSuspendedAvatar = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:service,method:'POST',body:signBody});
+  assert(retainedSuspendedAvatar.ok,'denied suspended owner deletion leaves the avatar for cleanup');
+  const suspendedAvatarUpload = await uploadAvatar(`${teacher.id}/${randomUUID()}.png`,'image/png',pngBytes,teacher.token);
+  check(!suspendedAvatarOwner.ok && suspendedAvatarPublic===false && !suspendedAvatarPublicSign.ok && !suspendedAvatarUpload.ok,'suspension blocks avatar reads and uploads');
   const suspendedWrite = await request('/rest/v1/rpc/create_lesson',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_title:'Should fail',p_starts_at:'2027-01-04T16:00:00Z',p_ends_at:'2027-01-04T18:00:00Z'}});
   check(!suspendedWrite.ok,'suspension blocks a previously authenticated session');
   console.log(`Verified ${passed} real API assertions.`);
@@ -253,6 +334,10 @@ try {
   if (uploadedPaths.length) {
     const cleanup = await request('/storage/v1/object/lesson-materials',{token:service,method:'DELETE',body:{prefixes:uploadedPaths}});
     if (!cleanup.ok) console.error(`Storage fixture cleanup failed: ${cleanup.status}`);
+  }
+  if (uploadedAvatarPaths.length) {
+    const cleanup = await request('/storage/v1/object/teacher-avatars',{token:service,method:'DELETE',body:{prefixes:uploadedAvatarPaths}});
+    if (!cleanup.ok) console.error(`Avatar fixture cleanup failed: ${cleanup.status}`);
   }
   for (const id of users.reverse()) {
     const result = await request(`/auth/v1/admin/users/${id}`,{token:service,method:'DELETE'});
