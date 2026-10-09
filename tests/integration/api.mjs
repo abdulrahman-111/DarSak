@@ -12,10 +12,11 @@ const uploadedPaths = [];
 const uploadedAvatarPaths = [];
 const signBody = {expiresIn:60};
 let passed = 0;
-async function request(path, {token = anon, method = 'GET', body, headers = {}} = {}) {
+async function request(path, {token = anon, method = 'GET', body, headers = {}, timeoutMs = 10000} = {}) {
   const response = await fetch(`${origin}${path}`, {
     method,
     headers: {apikey: token === service ? service : anon, Authorization: `Bearer ${token}`, 'Content-Type': 'application/json', Prefer: 'return=representation', ...headers},
+    signal: AbortSignal.timeout(timeoutMs),
     body: body === undefined ? undefined : JSON.stringify(body),
   });
   const raw = await response.text();
@@ -99,13 +100,28 @@ try {
   await success('/rest/v1/group_schedule_slots',{token:service,method:'POST',body:{group_id:draftGroup.id,weekday:2,start_time:'12:00',end_time:'13:00'}});
   const draftPublicSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${draftGroup.id}`);
   check(draftPublicSlots.length===0,'anonymous cannot read schedule slots for a draft group');
+  const draftSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${draftGroup.id}`,{token:teacher.token});
+  const anonDraftDelete = await request('/rest/v1/rpc/delete_schedule_slot',{method:'POST',body:{p_group_id:draftGroup.id,p_slot_id:draftSlots[0].id}});
+  check(!anonDraftDelete.ok,'anonymous cannot execute schedule slot deletion');
+  const foreignDraftDelete = await request('/rest/v1/rpc/delete_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:draftGroup.id,p_slot_id:draftSlots[0].id}});
+  check(!foreignDraftDelete.ok,'foreign teacher cannot delete a draft schedule slot');
+  await success('/rest/v1/rpc/delete_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:draftGroup.id,p_slot_id:draftSlots[0].id}});
+  const afterDraftDelete = await success(`/rest/v1/group_schedule_slots?group_id=eq.${draftGroup.id}`,{token:teacher.token});
+  check(afterDraftDelete.length===0,'owner can delete the last schedule slot from a draft group');
   const otherSlot = await success('/rest/v1/rpc/save_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_weekday:1,p_start_time:'12:00',p_end_time:'13:00'}});
+  const otherExtraSlot = await success('/rest/v1/rpc/save_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_weekday:3,p_start_time:'12:00',p_end_time:'13:00'}});
+  const deleteOtherExtra = await request('/rest/v1/rpc/delete_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_slot_id:otherExtraSlot}});
+  const denyDeletePublishedLast = await request('/rest/v1/rpc/delete_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_slot_id:otherSlot}});
+  const publishedRemainingSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${otherGroup.id}`,{token:otherTeacher.token});
+  check(deleteOtherExtra.ok && !denyDeletePublishedLast.ok && publishedRemainingSlots.some(row=>row.id===otherSlot),'published owner can remove a non-last slot but not the last slot');
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
   const unapprovedPublicSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${otherGroup.id}`);
   check(unapprovedPublicSlots.length===0,'anonymous cannot read schedule slots for an unapproved teacher');
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:true}});
   const stealSlot = await request('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_weekday:2,p_start_time:'12:00',p_end_time:'13:00',p_slot_id:otherSlot}});
   check(!stealSlot.ok, 'teacher cannot move another teacher slot into their group');
+  const foreignDeleteSlot = await request('/rest/v1/rpc/delete_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_slot_id:otherSlot}});
+  check(!foreignDeleteSlot.ok,'teacher cannot delete a slot from another group');
   const directSlot = await request('/rest/v1/group_schedule_slots',{token:teacher.token,method:'POST',body:{group_id:group.id,weekday:3,start_time:'12:00',end_time:'13:00'}});
   check(!directSlot.ok, 'direct slot writes cannot bypass conflict RPC');
   const overlap = await request('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_weekday:0,p_start_time:'19:00',p_end_time:'21:00'}});
@@ -299,6 +315,9 @@ try {
   const firstGeneration = await success('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-02-01',p_until:'2027-02-14'}});
   const occurrences = await success(`/rest/v1/lessons?group_id=eq.${group.id}&slot_id=eq.${slot}&local_date=gte.2027-02-01&local_date=lte.2027-02-14&order=local_date.asc`,{token:teacher.token});
   check(firstGeneration===2 && occurrences.length===2 && occurrences.map(row=>row.local_date).join(',')==='2027-02-07,2027-02-14','generation creates each Sunday occurrence on its Cairo-local date');
+  const referencedDelete = await request('/rest/v1/rpc/delete_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_slot_id:slot}});
+  const retainedReferencedSlot = await success(`/rest/v1/group_schedule_slots?id=eq.${slot}`,{token:teacher.token});
+  check(!referencedDelete.ok && retainedReferencedSlot.length===1,'owner cannot delete a schedule slot referenced by generated lessons');
   check(occurrences[0].starts_at==='2027-02-07T16:00:00+00:00' && occurrences[0].ends_at==='2027-02-07T18:00:00+00:00' && occurrences[1].starts_at==='2027-02-14T16:00:00+00:00' && occurrences[1].ends_at==='2027-02-14T18:00:00+00:00','generated timestamps match the Africa/Cairo slot');
   const secondGeneration = await success('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-02-01',p_until:'2027-02-14'}});
   const repeatedOccurrences = await success(`/rest/v1/lessons?group_id=eq.${group.id}&slot_id=eq.${slot}&local_date=gte.2027-02-01&local_date=lte.2027-02-14&order=local_date.asc`,{token:teacher.token});
@@ -309,6 +328,71 @@ try {
   check(overlappingGeneration===1 && afterOverlap.length===3 && afterOverlap[1].id===occurrences[1].id && afterOverlap[1].status==='cancelled' && afterOverlap[2].local_date==='2027-02-21','overlapping ranges add only new dates and do not restore a cancelled occurrence');
   const parallelGeneration = await Promise.all(Array.from({length:3},()=>request('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-02-28',p_until:'2027-02-28'}})));
   check(parallelGeneration.every(r=>r.ok) && parallelGeneration.reduce((sum,r)=>sum+r.data,0)===1,'parallel identical generation inserts one occurrence');
+  const feb28Occurrence = (await success(`/rest/v1/lessons?group_id=eq.${group.id}&slot_id=eq.${slot}&local_date=eq.2027-02-28`,{token:teacher.token}))[0];
+  const concurrentReschedule = await Promise.all([
+    request('/rest/v1/rpc/create_lesson',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_lesson_id:feb28Occurrence.id,p_title:'Moved generated occurrence',p_starts_at:'2027-02-28T17:00:00Z',p_ends_at:'2027-02-28T19:00:00Z'}}),
+    request('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-02-28',p_until:'2027-02-28'}}),
+  ]);
+  const movedOccurrence = (await success(`/rest/v1/lessons?id=eq.${feb28Occurrence.id}`,{token:teacher.token}))[0];
+  check(concurrentReschedule.every(r=>r.ok) && movedOccurrence.slot_id===slot && movedOccurrence.local_date==='2027-02-28' && movedOccurrence.starts_at==='2027-02-28T17:00:00+00:00','parallel reschedule and generation preserve the original generated identity');
+  check(await success('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-02-28',p_until:'2027-02-28'}})===0,'rescheduled occurrence is not recreated at its original time');
+
+  const generationPeer = (await success('/rest/v1/groups',{token:service,method:'POST',body:{teacher_id:teacher.id,offering_id:offerings[0].id,name:`Generation peer ${suffix}`,capacity:4,status:'draft'}}))[0];
+  await success('/rest/v1/lessons',{token:service,method:'POST',body:{group_id:generationPeer.id,title:'February revival conflict',starts_at:'2027-02-14T16:30:00Z',ends_at:'2027-02-14T17:30:00Z'}});
+  const reviveScheduled = await request('/rest/v1/rpc/set_lesson_status',{token:teacher.token,method:'POST',body:{p_lesson_id:occurrences[1].id,p_status:'scheduled'}});
+  const reviveCompleted = await request('/rest/v1/rpc/set_lesson_status',{token:teacher.token,method:'POST',body:{p_lesson_id:occurrences[1].id,p_status:'completed'}});
+  check(!reviveScheduled.ok && !reviveCompleted.ok,'cancelled generated occurrence cannot be restored into an overlapping lesson');
+
+  const excludedDates = ['2027-03-07','2027-03-14','2027-03-07'];
+  await success('/rest/v1/rpc/set_lesson_exclusions',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_dates:excludedDates}});
+  const savedExclusions = await success(`/rest/v1/group_lesson_exclusions?group_id=eq.${group.id}&order=local_date.asc`,{token:teacher.token});
+  check(savedExclusions.map(row=>row.local_date).join(',')==='2027-03-07,2027-03-14','exclusions save distinct local dates');
+  const directExclusionWrite = await request('/rest/v1/group_lesson_exclusions',{token:teacher.token,method:'POST',body:{group_id:group.id,local_date:'2027-03-21'}});
+  check(!directExclusionWrite.ok,'teachers cannot write exclusions directly');
+  const skippedExclusions = await success('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-03-01',p_until:'2027-03-14'}});
+  const skippedRows = await success(`/rest/v1/lessons?group_id=eq.${group.id}&local_date=gte.2027-03-01&local_date=lte.2027-03-14`,{token:teacher.token});
+  check(skippedExclusions===0 && skippedRows.length===0,'generation skips all saved excluded occurrences');
+  await success('/rest/v1/rpc/set_lesson_exclusions',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_dates:[]}});
+  const afterClear = await success('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-03-07',p_until:'2027-03-07'}});
+  check(afterClear===1,'an empty exclusion list clears saved dates for generation');
+  const concurrentExclusionGeneration = await Promise.all([
+    request('/rest/v1/rpc/set_lesson_exclusions',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_dates:['2027-03-14']},timeoutMs:8000}),
+    request('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-03-14',p_until:'2027-03-14'},timeoutMs:8000}),
+  ]);
+  const concurrentExclusionRows = await success(`/rest/v1/lessons?group_id=eq.${group.id}&slot_id=eq.${slot}&local_date=eq.2027-03-14`,{token:teacher.token});
+  const concurrentSavedExclusions = await success(`/rest/v1/group_lesson_exclusions?group_id=eq.${group.id}&local_date=eq.2027-03-14`,{token:teacher.token});
+  const concurrentPreview = (await success('/rest/v1/rpc/preview_lesson_generation',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-03-14',p_until:'2027-03-14'}}))[0];
+  check(concurrentExclusionGeneration.every(r=>r.ok) && concurrentSavedExclusions.length===1 &&
+    ((concurrentExclusionRows.length===1 && concurrentExclusionGeneration[1].data===1 && concurrentPreview.state==='already_generated') ||
+     (concurrentExclusionRows.length===0 && concurrentExclusionGeneration[1].data===0 && concurrentPreview.state==='excluded')),
+    'concurrent exclusion and generation serialize to one coherent occurrence state');
+  await success('/rest/v1/rpc/set_lesson_exclusions',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_dates:[]}});
+
+  const previewBeforeConflict = await success('/rest/v1/rpc/preview_lesson_generation',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-04-04',p_until:'2027-04-11'}});
+  check(previewBeforeConflict.map(row=>row.state).join(',')==='ready,ready','initial preview reports both unoccupied dates as ready');
+  await success('/rest/v1/lessons',{token:service,method:'POST',body:{group_id:generationPeer.id,title:'Stale preview conflict',starts_at:'2027-04-11T16:30:00Z',ends_at:'2027-04-11T17:30:00Z'}});
+  const previewRows = await success('/rest/v1/rpc/preview_lesson_generation',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-04-04',p_until:'2027-04-11'}});
+  check(previewRows.map(row=>row.state).join(',')==='ready,conflicting','a fresh preview shows the stale row now conflicts');
+  const blockedBatch = await request('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-04-04',p_until:'2027-04-11'}});
+  const partialBatchRows = await success(`/rest/v1/lessons?group_id=eq.${group.id}&local_date=eq.2027-04-04`,{token:teacher.token});
+  check(!blockedBatch.ok && partialBatchRows.length===0,'a conflict after an earlier ready candidate rolls back the entire batch');
+
+  const lockOrderGroup = (await success('/rest/v1/groups',{token:service,method:'POST',body:{teacher_id:teacher.id,offering_id:offerings[0].id,name:`Lock order ${suffix}`,capacity:4,status:'draft'}}))[0];
+  const lockOrderSlot = await success('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:lockOrderGroup.id,p_weekday:0,p_start_time:'22:00',p_end_time:'23:00'}});
+  const concurrentSlotMutation = await Promise.all([
+    request('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:lockOrderGroup.id,p_weekday:0,p_start_time:'21:00',p_end_time:'22:00',p_slot_id:lockOrderSlot},timeoutMs:8000}),
+    request('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:lockOrderGroup.id,p_from:'2027-06-06',p_until:'2027-06-06'},timeoutMs:8000}),
+  ]);
+  const concurrentSlotRows = await success(`/rest/v1/lessons?group_id=eq.${lockOrderGroup.id}&slot_id=eq.${lockOrderSlot}&local_date=eq.2027-06-06`,{token:teacher.token});
+  const lockOrderSlotRow = (await success(`/rest/v1/group_schedule_slots?id=eq.${lockOrderSlot}`,{token:teacher.token}))[0];
+  const slotHasFinalTime = lockOrderSlotRow.start_time==='21:00:00' && lockOrderSlotRow.end_time==='22:00:00';
+  const generatedAtEitherSerializedTime =
+    (concurrentSlotRows[0]?.starts_at==='2027-06-06T18:00:00+00:00' && concurrentSlotRows[0]?.ends_at==='2027-06-06T19:00:00+00:00') ||
+    (concurrentSlotRows[0]?.starts_at==='2027-06-06T19:00:00+00:00' && concurrentSlotRows[0]?.ends_at==='2027-06-06T20:00:00+00:00');
+  if (!concurrentSlotMutation.every(r=>r.ok) || concurrentSlotRows.length!==1 || !slotHasFinalTime || !generatedAtEitherSerializedTime) {
+    console.error('Slot/generation race details:',JSON.stringify({concurrentSlotMutation,concurrentSlotRows,lockOrderSlotRow}));
+  }
+  check(concurrentSlotMutation.every(r=>r.ok) && concurrentSlotRows.length===1 && slotHasFinalTime && generatedAtEitherSerializedTime,'parallel slot edit and generation serialize without deadlock and retain a valid serialized lesson time');
   const forgedAdmin = await request('/rest/v1/rpc/admin_update_user',{token:student.token,method:'POST',body:{p_user_id:teacher.id,p_status:'suspended'}});
   check(!forgedAdmin.ok,'ordinary user cannot invoke admin suspension');
   await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
