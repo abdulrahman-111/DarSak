@@ -43,7 +43,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{data.name}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4d473f]">{data.description || c.detailIntro}</p>
 
-            {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-[#e3d9c8] p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><p className="font-bold text-teal">{detail.teacher.full_name}</p>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
+            {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-[#e3d9c8] p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><Link href={`/${locale}/teachers/${detail.teacher.id}`} className="font-bold text-teal underline decoration-teal/30 underline-offset-2">{detail.teacher.full_name}</Link>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
 
             <div className="mt-9 border-t border-[#efe6d6] pt-7">
               <h2 className="text-xl font-bold text-teal">{c.arrangement}</h2>

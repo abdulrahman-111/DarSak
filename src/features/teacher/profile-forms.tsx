@@ -1,7 +1,8 @@
 'use client';
 
 import { useActionState, useState } from 'react';
-import { saveTeacherProfile, type TeacherProfileActionState } from './profile-actions';
+import { removeTeacherAvatar, saveTeacherProfile, uploadTeacherAvatar, type TeacherProfileActionState } from './profile-actions';
+import { TeacherAvatarImage } from './profile-avatar-image';
 import type { Locale } from '@/features/student/domain';
 import type { ProfileFormValues } from './profile-domain';
 import type { ProfileCatalogueNode, ProfileCatalogueOffering, ProfileCatalogueSubject } from './profile-data';
@@ -31,6 +32,35 @@ type Props = {
   subjects: ProfileCatalogueSubject[];
   offerings: ProfileCatalogueOffering[];
 };
+
+export function TeacherAvatarEditor({ locale, avatarUrl, hasAvatar, fullName }: { locale: Locale; avatarUrl: string | null; hasAvatar: boolean; fullName: string }) {
+  const ar = locale === 'ar';
+  const [uploadState, uploadAction, uploadPending] = useActionState<TeacherProfileActionState, FormData>(uploadTeacherAvatar.bind(null, locale), null);
+  const [removeState, removeAction, removePending] = useActionState<TeacherProfileActionState, FormData>(removeTeacherAvatar.bind(null, locale), null);
+  const uploadCopy = ar ? 'رفع صورة' : 'Upload photo';
+  const savingCopy = ar ? 'جارٍ الرفع…' : 'Uploading…';
+  return <section aria-labelledby="teacher-avatar-heading" className="mb-6 flex flex-col gap-5 border-b border-line pb-6 sm:flex-row sm:items-center">
+    <TeacherAvatarImage src={avatarUrl} name={fullName}/>
+    <div className="min-w-0 flex-1">
+      <h2 id="teacher-avatar-heading" className="text-lg font-black text-teal">{ar ? 'الصورة الشخصية' : 'Profile photo'}</h2>
+      <p className="mt-1 text-sm text-muted">{ar ? 'JPG أو PNG أو WebP، بحد أقصى ٢ ميجابايت.' : 'JPG, PNG, or WebP, up to 2 MB.'}</p>
+      <form action={uploadAction} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <label className="min-w-0 flex-1 text-sm font-bold">
+          <span className="sr-only">{ar ? 'اختر صورة الملف الشخصي' : 'Choose a profile photo'}</span>
+          <input name="avatar" type="file" accept="image/jpeg,image/png,image/webp" required aria-label={ar ? 'اختر صورة الملف الشخصي' : 'Choose a profile photo'} className="block w-full min-w-0 text-sm file:me-3 file:rounded-lg file:border-0 file:bg-cream file:px-3 file:py-2 file:font-bold file:text-teal"/>
+        </label>
+        <button type="submit" disabled={uploadPending || removePending} className="shrink-0 rounded-xl bg-teal px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50">{uploadPending ? savingCopy : uploadCopy}</button>
+      </form>
+      {uploadState?.error && <p role="alert" className="mt-3 text-sm text-red-700">{uploadState.error}</p>}
+      {uploadState?.success && <p role="status" className="mt-3 text-sm font-bold text-teal">{uploadState.success}</p>}
+      {hasAvatar && <form action={removeAction} className="mt-3">
+        <button type="submit" disabled={removePending || uploadPending} className="rounded-lg border border-line px-3 py-2 text-sm font-bold text-muted disabled:opacity-50">{removePending ? (ar ? 'جارٍ الحذف…' : 'Removing…') : (ar ? 'إزالة الصورة' : 'Remove photo')}</button>
+      </form>}
+      {removeState?.error && <p role="alert" className="mt-2 text-sm text-red-700">{removeState.error}</p>}
+      {removeState?.success && <p role="status" className="mt-2 text-sm font-bold text-teal">{removeState.success}</p>}
+    </div>
+  </section>;
+}
 
 export function TeacherProfileForm({ locale, values, nodes, subjects, offerings }: Props) {
   const t = copy(locale);

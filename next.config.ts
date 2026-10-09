@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     // Next 16 defaults to the CLI type-checker. Its wrapper does not pass the
     // local TypeScript binary's arguments correctly in this environment.
     useTypeScriptCli: false,
+    serverActions: {
+      bodySizeLimit: '12mb',
+    },
+    proxyClientMaxBodySize: '12mb',
   },
 };
 export default nextConfig;
