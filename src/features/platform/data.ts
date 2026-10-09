@@ -1,22 +1,34 @@
+import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import type { Group, Teacher, Profile, Slot, Lesson } from '@/lib/supabase/types';
+import type { DiscoverGroupRow, Group, Teacher, Profile, Slot, Lesson } from '@/lib/supabase/types';
+import { discoveryRpcArgs, normalizeDiscoveryFilters, type DiscoveryFilters } from './discovery-domain';
 export async function currentUser(){ const supabase=await createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user)return null; const {data:profile}=await supabase.from('profiles').select('*').eq('id',user.id).single(); return {user,profile:profile as Profile|null}; }
 export async function publicTeachers(){ const db=await createClient(); const {data,error}=await db.rpc('public_teachers'); return {data:(data||[]) as Teacher[],error}; }
-export async function publicGroups(){
- const db=await createClient();
- const {data,error}=await db.rpc('public_groups');
- const groups=((data||[]) as Array<any>).map(group=>({
+function mapDiscoverGroup(group: DiscoverGroupRow): Group {
+ return {
   id:group.id,teacher_id:group.teacher_id,offering_id:group.offering_id,name:group.name,
   description:group.description,capacity:group.capacity,status:group.status,location:group.location,
-  created_at:group.created_at,
-  teacher:{id:group.teacher_id,full_name:group.teacher_name,headline:null,bio:null,avatar_path:null},
-  offering:{id:group.offering_id,subject:{name_ar:group.subject_name_ar,name_en:group.subject_name_en}},
- })) as Group[];
+  created_at:group.created_at,accepted_count:group.accepted_count,available_seats:group.available_seats,
+  weekdays:group.weekdays,next_lesson_at:group.next_lesson_at,
+  teacher:{id:group.teacher_id,full_name:group.teacher_name},
+  offering:{id:group.offering_id,subject:{name_ar:group.subject_name_ar,name_en:group.subject_name_en},node:{name_ar:group.node_name_ar,name_en:group.node_name_en}},
+ };
+}
+export async function publicGroups(filters:DiscoveryFilters=normalizeDiscoveryFilters({})):Promise<{data:Group[];error:PostgrestError|null}>{
+ const db=await createClient();
+ const {data,error}=await db.rpc('discover_groups',discoveryRpcArgs(filters));
+ const groups=((data??[]) as DiscoverGroupRow[]).map(mapDiscoverGroup);
  return {data:groups,error};
+}
+export async function publicGroupDetail(groupId:string):Promise<{data:Group|null;error:PostgrestError|null}>{
+ const db=await createClient();
+ const {data,error}=await db.rpc('public_group_detail',{p_group_id:groupId});
+ const row=((data??[]) as DiscoverGroupRow[])[0]??null;
+ return {data:row?mapDiscoverGroup(row):null,error};
 }
 export async function groupById(id:string){ const db=await createClient(); return db.from('groups').select('*, offering:offerings(id,subject:subjects(name_ar,name_en))').eq('id',id).single(); }
 export async function teacherById(id:string){ const db=await createClient(); return db.rpc('public_teachers').eq('id',id).single(); }
-export async function catalogue(){ const db=await createClient(); const [nodes,subjects,offerings]=await Promise.all([db.from('education_nodes').select('*').order('name_en'),db.from('subjects').select('*').order('name_en'),db.from('offerings').select('*,subject:subjects(*)').order('id')]); return {nodes:nodes.data||[],subjects:subjects.data||[],offerings:offerings.data||[]}; }
+export async function catalogue(){ const db=await createClient(); const [nodes,subjects,offerings]=await Promise.all([db.from('education_nodes').select('*').order('name_en'),db.from('subjects').select('*').order('name_en'),db.from('offerings').select('*,subject:subjects(*)').order('id')]); return {nodes:nodes.data||[],subjects:subjects.data||[],offerings:offerings.data||[],error:nodes.error||subjects.error||offerings.error}; }
 export async function myGroups(role:string){ const db=await createClient(); if(role==='teacher'){const {data:{user}}=await db.auth.getUser();if(!user)return {data:[],error:null};return db.from('groups').select('*, offering:offerings(id,subject:subjects(name_ar,name_en))').eq('teacher_id',user.id).order('created_at',{ascending:false});} return db.from('enrollments').select('status, group:groups(*, offering:offerings(id,subject:subjects(name_ar,name_en)))').in('status',['pending','accepted']).order('updated_at',{ascending:false}); }
 export async function myLessons(role:string){ const db=await createClient(); return role==='teacher'?db.from('lessons').select('*').order('starts_at'):db.from('lessons').select('*, groups!inner(*)').order('starts_at'); }
 export async function notifications(){ const me=await currentUser(); if(!me)return {data:[],error:null}; const db=await createClient(); return db.from('notifications').select('*').eq('user_id',me.user.id).order('created_at',{ascending:false}); }
