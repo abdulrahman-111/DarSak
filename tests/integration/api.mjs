@@ -75,9 +75,17 @@ try {
   await success(`/rest/v1/subjects?id=eq.${adminSubject.id}`, {token:spoof.token,method:'DELETE'});
   const offerings = await success('/rest/v1/offerings?limit=1');
   assert(offerings.length, 'Seed academic catalogue before integration');
-  const groupRows = await success('/rest/v1/groups', {token:teacher.token,method:'POST',body:{teacher_id:teacher.id,offering_id:offerings[0].id,name:`Integration ${suffix}`,capacity:1,status:'published'}});
+  const groupRows = await success('/rest/v1/groups', {token:teacher.token,method:'POST',body:{teacher_id:teacher.id,offering_id:offerings[0].id,name:`Integration ${suffix}`,capacity:1,status:'draft'}});
   const group = groupRows[0];
-  const otherGroup = (await success('/rest/v1/groups', {token:otherTeacher.token,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id,name:`Other ${suffix}`,capacity:4,status:'published'}}))[0];
+  const otherGroup = (await success('/rest/v1/groups', {token:otherTeacher.token,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id,name:`Other ${suffix}`,capacity:4,status:'draft'}}))[0];
+  const slot = await success('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_weekday:0,p_start_time:'18:00',p_end_time:'20:00'}});
+  const otherSlot = await success('/rest/v1/rpc/save_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_weekday:1,p_start_time:'12:00',p_end_time:'13:00'}});
+  const directPublish = await request(`/rest/v1/groups?id=eq.${group.id}`,{token:teacher.token,method:'PATCH',body:{status:'published'}});
+  const remainsDraft = await success(`/rest/v1/groups?id=eq.${group.id}`,{token:teacher.token});
+  check(!directPublish.ok && remainsDraft[0].status==='draft','direct Data API publication is rejected');
+  const publishedCount = await success('/rest/v1/rpc/publish_group',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:null,p_until:null}});
+  const otherPublishedCount = await success('/rest/v1/rpc/publish_group',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_from:null,p_until:null}});
+  check(publishedCount===0 && otherPublishedCount===0,'owner publishes scheduled groups atomically without generation');
   const otherEdit = await request(`/rest/v1/groups?id=eq.${group.id}`,{token:otherTeacher.token,method:'PATCH',body:{name:'Unauthorized'}});
   const unchanged = await success(`/rest/v1/groups?id=eq.${group.id}`,{token:teacher.token});
   check(!otherEdit.ok || unchanged[0].name === group.name, 'teacher cannot edit another teacher group');
@@ -90,7 +98,6 @@ try {
   check(accepted.length === 1 && acceptResults.filter(r=>r.ok).length === 1, 'concurrent last-seat approvals cannot overfill capacity');
   const publicGroup = await success(`/rest/v1/rpc/public_groups?id=eq.${group.id}`);
   check(publicGroup.length===1 && publicGroup[0].accepted_count===1 && publicGroup[0].available_seats===0 && publicGroup[0].teacher_name, 'anonymous discovery exposes safe capacity and teacher projection');
-  const slot = await success('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_weekday:0,p_start_time:'18:00',p_end_time:'20:00'}});
   assert(slot);
   const ownerSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${group.id}`,{token:teacher.token});
   check(ownerSlots.some(row=>row.id===slot),'authenticated group owner can read their schedule slot');
@@ -108,7 +115,6 @@ try {
   await success('/rest/v1/rpc/delete_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:draftGroup.id,p_slot_id:draftSlots[0].id}});
   const afterDraftDelete = await success(`/rest/v1/group_schedule_slots?group_id=eq.${draftGroup.id}`,{token:teacher.token});
   check(afterDraftDelete.length===0,'owner can delete the last schedule slot from a draft group');
-  const otherSlot = await success('/rest/v1/rpc/save_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_weekday:1,p_start_time:'12:00',p_end_time:'13:00'}});
   const otherExtraSlot = await success('/rest/v1/rpc/save_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_weekday:3,p_start_time:'12:00',p_end_time:'13:00'}});
   const deleteOtherExtra = await request('/rest/v1/rpc/delete_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_slot_id:otherExtraSlot}});
   const denyDeletePublishedLast = await request('/rest/v1/rpc/delete_schedule_slot',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_slot_id:otherSlot}});

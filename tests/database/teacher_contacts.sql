@@ -40,8 +40,16 @@ set local session_replication_role = replica;
 update public.teacher_profiles set approved=true where id='10000000-0000-4000-8000-000000000001';
 set local session_replication_role = origin;
 insert into public.groups(teacher_id,offering_id,name,capacity,status)
-select '10000000-0000-4000-8000-000000000001', id, 'Contact access group', 5, 'published'
+select '10000000-0000-4000-8000-000000000001', id, 'Contact access group', 5, 'draft'
 from public.offerings limit 1;
+insert into public.group_schedule_slots(group_id,weekday,start_time,end_time)
+select g.id,0,'10:00','11:00' from public.groups g
+where g.teacher_id='10000000-0000-4000-8000-000000000001' and g.name='Contact access group';
+set local role authenticated;
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
+select public.publish_group(g.id,null,null)
+from public.groups g where g.teacher_id='10000000-0000-4000-8000-000000000001' and g.name='Contact access group';
+reset role;
 insert into public.enrollments(group_id,student_id,status)
 select g.id, '10000000-0000-4000-8000-000000000002', 'accepted'
 from public.groups g where g.teacher_id='10000000-0000-4000-8000-000000000001' and g.name='Contact access group';

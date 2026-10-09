@@ -15,6 +15,7 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
 
 set local session_replication_role = replica;
 update public.profiles set role='admin' where id='56000000-0000-4000-8000-000000000003';
+update public.teacher_profiles set approved=true where id in ('56000000-0000-4000-8000-000000000001','56000000-0000-4000-8000-000000000002');
 set local session_replication_role = origin;
 
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
@@ -41,10 +42,9 @@ insert into public.lessons(id,group_id,slot_id,local_date,title,starts_at,ends_a
  ('56300000-0000-4000-8000-000000000002','56100000-0000-4000-8000-000000000001','56200000-0000-4000-8000-000000000002','2027-02-08','Cancelled occurrence','2027-02-08 06:00+00','2027-02-08 07:00+00','cancelled'),
  ('56300000-0000-4000-8000-000000000003','56100000-0000-4000-8000-000000000001','56200000-0000-4000-8000-000000000003','2027-02-09','Completed occurrence','2027-02-09 06:00+00','2027-02-09 07:00+00','completed');
 
--- Future publication checks may add guards; fixture state deliberately uses the same valid group/slot rows.
-set local session_replication_role = replica;
-update public.groups set status='published' where id='56100000-0000-4000-8000-000000000003';
-set local session_replication_role = origin;
+-- Publish through the same atomic path used by the application.
+set local request.jwt.claim.sub='56000000-0000-4000-8000-000000000001';
+select public.publish_group('56100000-0000-4000-8000-000000000003',null,null);
 
 do $$
 declare
