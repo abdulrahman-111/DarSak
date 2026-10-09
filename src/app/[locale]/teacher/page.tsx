@@ -41,7 +41,7 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
         <Metric label={copy.upcoming} value={data.counts.upcomingLessons} />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Panel>
           <h2 className="mb-4 text-xl font-black text-teal">{copy.todayHeading}</h2>
           {data.todayLessons.length ? <div className="grid gap-3">{data.todayLessons.map(lesson => <RowLink key={lesson.id} href={`/${locale}/teacher/lessons/${lesson.id}`} title={lesson.title} meta={cairoDate(lesson.starts_at, locale)} trailing={<Status value={lesson.status} locale={locale} />} />)}</div> : <EmptyState>{copy.noToday}</EmptyState>}
