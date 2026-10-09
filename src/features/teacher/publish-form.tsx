@@ -5,7 +5,7 @@ import { useActionState, useCallback, useState } from 'react';
 import type { Locale } from '@/features/student/domain';
 import { GenerationPreviewForm } from './generation-form';
 import { publishGroup, type TeacherPublishActionState } from './publish-actions';
-import { publishRangeSchema } from './publish-domain';
+import { publishRangeSchema, publishReviewKey } from './publish-domain';
 
 type GroupSummary = {
   id: string;
@@ -14,6 +14,7 @@ type GroupSummary = {
   offering_id: string;
   capacity: number;
   location: string;
+  status: string;
 };
 type CatalogueChoice = { id: string; subject: string; context: string; label: string };
 type SlotSummary = { id: string; weekday: number; start_time: string; end_time: string };
@@ -80,6 +81,7 @@ export function PublishReviewForm({
   const untilError = state?.fieldErrors?.until;
   const scheduleHref = `/${locale}/teacher/groups/${group.id}/setup?step=schedule`;
   const detailsHref = `/${locale}/teacher/groups/${group.id}/setup?step=details`;
+  const previewKey = publishReviewKey(group, slots, exclusions);
 
   return <div className="space-y-6">
     <p className="text-sm leading-6 text-muted">{t.reviewIntro}</p>
@@ -122,6 +124,7 @@ export function PublishReviewForm({
       {withRange && <div className="mt-4">
         <p className="mb-3 text-sm text-muted">{t.rangeHint}</p>
         <GenerationPreviewForm
+          key={previewKey}
           locale={locale}
           groupId={group.id}
           savedExclusions={exclusions}

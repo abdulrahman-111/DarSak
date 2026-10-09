@@ -6,7 +6,6 @@ import { teacherGroupSetup } from '@/features/teacher/setup-data';
 import { GroupDetailsForm, GroupSetupSteps, WeeklyScheduleStepForm } from '@/features/teacher/setup-forms';
 import { normalizeSetupStep } from '@/features/teacher/setup-domain';
 import { PublishReviewForm } from '@/features/teacher/publish-form';
-import { publishReviewKey } from '@/features/teacher/publish-domain';
 
 export default async function TeacherGroupSetupPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ step?: string | string[] }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
@@ -32,7 +31,7 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
           : step === 'schedule'
             ? <WeeklyScheduleStepForm locale={locale} groupId={id} slots={data.slots} />
             : <PublishReviewForm
-              key={publishReviewKey(data.group, data.slots, data.exclusions)}
+              key={data.group.id}
               locale={locale}
               group={data.group}
               catalogue={data.catalogue}
