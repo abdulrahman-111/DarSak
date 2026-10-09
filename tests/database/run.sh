@@ -14,3 +14,4 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_preview.s
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_generation.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/schedule_slot_deletion.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_publication.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_duplication.sql
