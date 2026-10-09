@@ -11,6 +11,15 @@ export type GroupDetailsFormValues = {
   location: string;
 };
 
+export type GroupScheduleSlot = {
+  id: string;
+  group_id: string;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  timezone: string;
+};
+
 const errorCopy = (locale: Locale) => locale === 'ar'
   ? 'تعذر تحميل إعدادات المجموعة. حاول مرة أخرى.'
   : 'Could not load group setup. Please try again.';
@@ -23,7 +32,7 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null) {
     group: null,
     values: null,
     catalogue: [],
-    slots: [],
+    slots: [] as GroupScheduleSlot[],
     exclusions: [],
     error: null as string | null,
     notFound: false,
@@ -76,7 +85,7 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null) {
     group,
     values,
     catalogue,
-    slots: slotsResult.data ?? [],
+    slots: (slotsResult.data ?? []) as GroupScheduleSlot[],
     exclusions: (exclusionsResult.data ?? []).map(row => row.local_date),
     error: null,
     notFound: false,

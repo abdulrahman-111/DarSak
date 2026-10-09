@@ -3,7 +3,7 @@ import { ensureLocale } from '@/i18n/config';
 import { Panel, ScreenTitle, Status } from '@/components/platform/ui';
 import { idSchema } from '@/features/student/domain';
 import { teacherGroupSetup } from '@/features/teacher/setup-data';
-import { GroupDetailsForm, GroupSetupPlaceholder, GroupSetupSteps } from '@/features/teacher/setup-forms';
+import { GroupDetailsForm, GroupSetupPlaceholder, GroupSetupSteps, WeeklyScheduleStepForm } from '@/features/teacher/setup-forms';
 import { normalizeSetupStep } from '@/features/teacher/setup-domain';
 
 export default async function TeacherGroupSetupPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ step?: string | string[] }> }) {
@@ -27,7 +27,9 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
       <Panel>
         {step === 'details'
           ? <GroupDetailsForm locale={locale} values={data.values} groupId={id} catalogue={data.catalogue} />
-          : <GroupSetupPlaceholder locale={locale} step={step} />}
+          : step === 'schedule'
+            ? <WeeklyScheduleStepForm locale={locale} groupId={id} slots={data.slots} />
+            : <GroupSetupPlaceholder locale={locale} />}
       </Panel>
     </div>
   </>;

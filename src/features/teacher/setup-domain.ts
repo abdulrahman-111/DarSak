@@ -2,6 +2,7 @@ import { z } from 'zod';
 import type { Locale } from '@/features/student/domain';
 
 const capacitySchema = z.preprocess(value => value === '' || value == null ? 10 : value, z.coerce.number().int().min(1).max(500));
+const optionalSlotId = z.preprocess(value => value === '' || value == null ? undefined : value, z.string().uuid().optional());
 
 export const groupDetailsSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -12,6 +13,17 @@ export const groupDetailsSchema = z.object({
 });
 
 export type GroupDetailsInput = z.infer<typeof groupDetailsSchema>;
+
+export const groupScheduleSlotSchema = z.object({
+  group_id: z.string().uuid(),
+  slot_id: optionalSlotId,
+  weekday: z.preprocess(value => value === '' || value == null ? Number.NaN : value, z.coerce.number().int().min(0).max(6)),
+  start_time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  end_time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+}).refine(value => value.start_time < value.end_time, { path: ['end_time'] });
+
+export type GroupScheduleSlotInput = z.infer<typeof groupScheduleSlotSchema>;
+
 export type SetupStep = 'details' | 'schedule' | 'review';
 
 export function normalizeSetupStep(value: string | string[] | undefined): SetupStep {
@@ -54,6 +66,12 @@ export function setupCatalogueChoices(
 }
 
 export function groupDetailsFieldErrors(error: z.ZodError): Record<string, string> {
+  const fieldErrors: Record<string, string> = {};
+  for (const issue of error.issues) fieldErrors[String(issue.path[0] ?? 'form')] ??= 'invalid';
+  return fieldErrors;
+}
+
+export function groupScheduleSlotFieldErrors(error: z.ZodError): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
   for (const issue of error.issues) fieldErrors[String(issue.path[0] ?? 'form')] ??= 'invalid';
   return fieldErrors;

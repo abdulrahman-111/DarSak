@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Locale } from '@/features/student/domain';
-import { saveGroupDraft, type GroupDraftActionState } from './setup-actions';
-import type { GroupDetailsFormValues } from './setup-data';
+import { deleteScheduleSlot, saveGroupDraft, saveScheduleSlot, type GroupDraftActionState, type ScheduleSlotActionState } from './setup-actions';
+import type { GroupDetailsFormValues, GroupScheduleSlot } from './setup-data';
 import type { SetupCatalogueChoice, SetupStep } from './setup-domain';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
@@ -13,13 +13,13 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   save: 'حفظ التفاصيل', saving: 'جارٍ الحفظ…', emptyCatalogue: 'لا توجد مواد وسياقات دراسية متاحة الآن. حاول مرة أخرى لاحقًا.',
   nameRequired: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 120 حرفاً.', descriptionBounds: 'يجب ألا يتجاوز الوصف 2000 حرف.',
   locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وسياقاً دراسياً.',
-  details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', schedulePending: 'أضف المواعيد الأسبوعية لمجموعتك هنا.', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
+  details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
 } : {
   name: 'Group name', description: 'Description', subject: 'Subject and education context', capacity: 'Capacity', location: 'Location',
   save: 'Save details', saving: 'Saving…', emptyCatalogue: 'No subjects and education contexts are available yet. Please try again later.',
   nameRequired: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 120 characters.', descriptionBounds: 'Description must be no longer than 2,000 characters.',
   locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose a subject and education context.',
-  details: 'Details', schedule: 'Schedule', review: 'Review', schedulePending: 'Add your group’s weekly times here.', reviewPending: 'Review your group setup here before publishing.',
+  details: 'Details', schedule: 'Schedule', review: 'Review', reviewPending: 'Review your group setup here before publishing.',
 };
 
 type Props = {
@@ -102,7 +102,116 @@ export function GroupSetupSteps({ locale, groupId, current }: { locale: Locale; 
   </nav>;
 }
 
-export function GroupSetupPlaceholder({ locale, step }: { locale: Locale; step: Exclude<SetupStep, 'details'> }) {
+const weekdayLabels = (locale: Locale) => locale === 'ar'
+  ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+  : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+const scheduleCopy = (locale: Locale) => locale === 'ar' ? {
+  title: 'المواعيد الأسبوعية', timezone: 'كل الأوقات بتوقيت القاهرة.',
+  description: 'أضف موعداً أو أكثر. لا يمكن أن يمتد الموعد إلى اليوم التالي.',
+  empty: 'لم تتم إضافة مواعيد أسبوعية بعد.', add: 'إضافة موعد أسبوعي', save: 'حفظ الموعد', saving: 'جارٍ الحفظ…',
+  remove: 'حذف الموعد', removing: 'جارٍ الحذف…', weekday: 'اليوم', start: 'وقت البداية', end: 'وقت النهاية',
+  back: 'العودة إلى التفاصيل', next: 'متابعة إلى المراجعة', conflict: 'اختر وقتاً آخر؛ لا يمكن أن تتداخل المواعيد الأسبوعية.',
+} : {
+  title: 'Weekly times', timezone: 'All times use Africa/Cairo.',
+  description: 'Add one or more weekly times. A time cannot continue into the next day.',
+  empty: 'No weekly times have been added yet.', add: 'Add weekly time', save: 'Save time', saving: 'Saving…',
+  remove: 'Remove time', removing: 'Removing…', weekday: 'Weekday', start: 'Start time', end: 'End time',
+  back: 'Back to details', next: 'Continue to review', conflict: 'Choose another time; weekly times cannot overlap.',
+};
+
+function SlotFields({ locale, idPrefix, weekday, start, end, onWeekday, onStart, onEnd, invalid }: {
+  idPrefix: string;
+  locale: Locale; weekday: number; start: string; end: string;
+  onWeekday: (value: number) => void; onStart: (value: string) => void; onEnd: (value: string) => void;
+  invalid?: Record<string, string>;
+}) {
+  const t = scheduleCopy(locale);
+  return <div className="grid gap-3 sm:grid-cols-3">
+    <div>
+      <label htmlFor={`slot-${idPrefix}-weekday`} className="block text-sm font-bold">{t.weekday}</label>
+      <select id={`slot-${idPrefix}-weekday`} name="weekday" value={weekday} onChange={event => onWeekday(Number(event.target.value))} required aria-invalid={!!invalid?.weekday} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+        {weekdayLabels(locale).map((label, value) => <option key={value} value={value}>{label}</option>)}
+      </select>
+    </div>
+    <div>
+      <label htmlFor={`slot-${idPrefix}-start`} className="block text-sm font-bold">{t.start}</label>
+      <input id={`slot-${idPrefix}-start`} name="start_time" type="time" value={start} onChange={event => onStart(event.target.value)} required aria-invalid={!!invalid?.start_time} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+    </div>
+    <div>
+      <label htmlFor={`slot-${idPrefix}-end`} className="block text-sm font-bold">{t.end}</label>
+      <input id={`slot-${idPrefix}-end`} name="end_time" type="time" value={end} onChange={event => onEnd(event.target.value)} required aria-invalid={!!invalid?.end_time} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+    </div>
+  </div>;
+}
+
+function ScheduleSlotEditor({ locale, groupId, slot, deleteAction, deletePending }: {
+  locale: Locale; groupId: string; slot: GroupScheduleSlot;
+  deleteAction: (form: FormData) => void; deletePending: boolean;
+}) {
+  const t = scheduleCopy(locale);
+  const [weekday, setWeekday] = useState(slot.weekday);
+  const [start, setStart] = useState(slot.start_time.slice(0, 5));
+  const [end, setEnd] = useState(slot.end_time.slice(0, 5));
+  const [state, action, pending] = useActionState<ScheduleSlotActionState, FormData>(saveScheduleSlot.bind(null, locale), null);
+
+  return <li className="rounded-2xl border border-line bg-white p-4">
+    <h3 className="mb-3 font-bold text-teal">{weekdayLabels(locale)[weekday]}</h3>
+    <form action={action} onReset={event => event.preventDefault()} className="grid gap-3">
+      <input type="hidden" name="group_id" value={groupId} />
+      <input type="hidden" name="slot_id" value={slot.id} />
+      <SlotFields idPrefix={slot.id} locale={locale} weekday={weekday} start={start} end={end} onWeekday={setWeekday} onStart={setStart} onEnd={setEnd} invalid={state?.fieldErrors} />
+      {state?.error && <p role="alert" className="text-sm text-red-800">{state.error}</p>}
+      {state?.success && <p role="status" aria-live="polite" className="text-sm text-teal">{state.success}</p>}
+      <button type="submit" disabled={pending || deletePending} className="w-full rounded-xl border border-teal px-4 py-2 font-bold text-teal disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.save}</button>
+    </form>
+    <form action={deleteAction} onReset={event => event.preventDefault()} className="mt-3">
+      <input type="hidden" name="group_id" value={groupId} />
+      <input type="hidden" name="slot_id" value={slot.id} />
+      <button type="submit" disabled={pending || deletePending} className="rounded-xl px-3 py-2 text-sm font-bold text-red-700 disabled:cursor-wait disabled:opacity-50">{deletePending ? t.removing : t.remove}</button>
+    </form>
+  </li>;
+}
+
+function AddScheduleSlotForm({ locale, groupId }: { locale: Locale; groupId: string }) {
+  const t = scheduleCopy(locale);
+  const [weekday, setWeekday] = useState(0);
+  const [start, setStart] = useState('18:00');
+  const [end, setEnd] = useState('19:00');
+  const [state, action, pending] = useActionState<ScheduleSlotActionState, FormData>(saveScheduleSlot.bind(null, locale), null);
+
+  return <form action={action} onReset={event => event.preventDefault()} className="mt-5 grid gap-4 rounded-2xl bg-cream p-4">
+    <h3 className="font-bold text-teal">{t.add}</h3>
+    <input type="hidden" name="group_id" value={groupId} />
+    <SlotFields idPrefix="new" locale={locale} weekday={weekday} start={start} end={end} onWeekday={setWeekday} onStart={setStart} onEnd={setEnd} invalid={state?.fieldErrors} />
+    {state?.error && <p role="alert" className="text-sm text-red-800">{state.error}</p>}
+    {state?.success && <p role="status" aria-live="polite" className="text-sm text-teal">{state.success}</p>}
+    <button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-4 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.add}</button>
+  </form>;
+}
+
+export function WeeklyScheduleStepForm({ locale, groupId, slots }: { locale: Locale; groupId: string; slots: GroupScheduleSlot[] }) {
+  const t = scheduleCopy(locale);
+  const [deleteState, deleteAction, deletePending] = useActionState<ScheduleSlotActionState, FormData>(deleteScheduleSlot.bind(null, locale), null);
+  return <section className="grid gap-4">
+    <div>
+      <h2 className="text-xl font-black text-teal">{t.title}</h2>
+      <p className="mt-1 text-sm text-muted">{t.timezone} {t.description}</p>
+    </div>
+    {deleteState?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{deleteState.error}</p>}
+    {deleteState?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-green-900">{deleteState.success}</p>}
+    {slots.length
+      ? <ul className="grid gap-3">{slots.map(slot => <ScheduleSlotEditor key={slot.id} locale={locale} groupId={groupId} slot={slot} deleteAction={deleteAction} deletePending={deletePending} />)}</ul>
+      : <p className="rounded-xl bg-cream p-4 text-sm text-muted">{t.empty}</p>}
+    <AddScheduleSlotForm locale={locale} groupId={groupId} />
+    <div className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:justify-between">
+      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=details`} className="rounded-xl border border-line px-4 py-3 text-center font-bold text-teal">{t.back}</Link>
+      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=review`} className="rounded-xl bg-teal px-4 py-3 text-center font-bold text-white">{t.next}</Link>
+    </div>
+  </section>;
+}
+
+export function GroupSetupPlaceholder({ locale }: { locale: Locale }) {
   const t = copy(locale);
-  return <p>{step === 'schedule' ? t.schedulePending : t.reviewPending}</p>;
+  return <p>{t.reviewPending}</p>;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { idSchema } from '@/features/student/domain';
-import { groupDetailsSchema, normalizeSetupStep, setupCatalogueChoices } from '@/features/teacher/setup-domain';
+import { groupDetailsSchema, groupScheduleSlotSchema, normalizeSetupStep, setupCatalogueChoices } from '@/features/teacher/setup-domain';
 
 const validDetails = {
   name: 'Algebra group',
@@ -53,5 +53,40 @@ describe('teacher group setup details', () => {
       { id: 'offering-uuid', subject: 'Mathematics', context: 'Secondary school › Grade 10', label: 'Mathematics · Secondary school › Grade 10' },
     ]);
     expect(setupCatalogueChoices('ar', nodes, subjects, offerings)[0].label).toBe('الرياضيات · المرحلة الثانوية › الصف العاشر');
+  });
+});
+
+describe('teacher weekly schedule slots', () => {
+  const slot = {
+    group_id: '22222222-2222-4222-8222-222222222222',
+    weekday: '0',
+    start_time: '18:00',
+    end_time: '20:00',
+  };
+
+  it('accepts a valid same-day slot and an optional saved slot ID', () => {
+    expect(groupScheduleSlotSchema.parse(slot)).toMatchObject({ weekday: 0, start_time: '18:00', end_time: '20:00' });
+    expect(groupScheduleSlotSchema.parse({ ...slot, slot_id: '33333333-3333-4333-8333-333333333333' }).slot_id).toBe('33333333-3333-4333-8333-333333333333');
+  });
+
+  it('rejects malformed group or slot IDs and weekdays outside Sunday through Saturday', () => {
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, group_id: 'bad-id' }).success).toBe(false);
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, slot_id: 'bad-id' }).success).toBe(false);
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, weekday: '-1' }).success).toBe(false);
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, weekday: '7' }).success).toBe(false);
+  });
+
+  it('rejects malformed or overnight times and requires the end after the start', () => {
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, start_time: '18:00:00' }).success).toBe(false);
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, end_time: '20:00:00' }).success).toBe(false);
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, end_time: '17:59' }).success).toBe(false);
+    expect(groupScheduleSlotSchema.safeParse({ ...slot, end_time: '18:00' }).success).toBe(false);
+  });
+
+  it('allows multiple separately saved slots on the same weekday', () => {
+    const morning = groupScheduleSlotSchema.parse({ ...slot, start_time: '09:00', end_time: '10:00' });
+    const evening = groupScheduleSlotSchema.parse({ ...slot, start_time: '18:00', end_time: '20:00' });
+    expect(morning.weekday).toBe(evening.weekday);
+    expect(morning.start_time).not.toBe(evening.start_time);
   });
 });
