@@ -5,7 +5,7 @@ import { useActionState, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Locale } from '@/features/student/domain';
 import { deleteScheduleSlot, saveGroupDraft, saveScheduleSlot, type GroupDraftActionState, type ScheduleSlotActionState } from './setup-actions';
-import type { GroupDetailsFormValues, GroupScheduleSlot } from './setup-data';
+import type { GroupDetailsFormValues, GroupScheduleProposal, GroupScheduleSlot } from './setup-data';
 import type { SetupCatalogueChoice, SetupStep } from './setup-domain';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
@@ -27,9 +27,10 @@ type Props = {
   values?: GroupDetailsFormValues | null;
   groupId?: string;
   catalogue: SetupCatalogueChoice[];
+  copyScheduleFrom?: string;
 };
 
-export function GroupDetailsForm({ locale, values, groupId, catalogue }: Props) {
+export function GroupDetailsForm({ locale, values, groupId, catalogue, copyScheduleFrom }: Props) {
   const t = copy(locale);
   const router = useRouter();
   const [formValues, setFormValues] = useState<GroupDetailsFormValues>({
@@ -42,8 +43,11 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue }: Props) 
   const [state, action, pending] = useActionState<GroupDraftActionState, FormData>(saveGroupDraft.bind(null, locale), null);
 
   useEffect(() => {
-    if (state?.id) router.push(`/${locale}/teacher/groups/${state.id}/setup?step=schedule`);
-  }, [locale, router, state?.id]);
+    if (state?.id) {
+      const source = copyScheduleFrom ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}` : '';
+      router.push(`/${locale}/teacher/groups/${state.id}/setup?step=schedule${source}`);
+    }
+  }, [copyScheduleFrom, locale, router, state?.id]);
 
   const fieldError = (field: string) => state?.fieldErrors?.[field];
   const fieldMessage = (field: string) => {
@@ -94,11 +98,14 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue }: Props) 
   </form>;
 }
 
-export function GroupSetupSteps({ locale, groupId, current }: { locale: Locale; groupId: string; current: SetupStep }) {
+export function GroupSetupSteps({ locale, groupId, current, copyScheduleFrom }: { locale: Locale; groupId: string; current: SetupStep; copyScheduleFrom?: string }) {
   const t = copy(locale);
   const steps: SetupStep[] = ['details', 'schedule', 'review'];
   return <nav aria-label={locale === 'ar' ? 'خطوات إعداد المجموعة' : 'Group setup steps'} className="mb-5 flex flex-wrap gap-2">
-    {steps.map(step => <Link key={step} aria-current={current === step ? 'step' : undefined} href={`/${locale}/teacher/groups/${groupId}/setup?step=${step}`} className={`rounded-full px-4 py-2 text-sm font-bold ${current === step ? 'bg-teal text-white' : 'border border-line bg-white text-teal'}`}>{t[step]}</Link>)}
+    {steps.map(step => {
+      const source = copyScheduleFrom ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}` : '';
+      return <Link key={step} aria-current={current === step ? 'step' : undefined} href={`/${locale}/teacher/groups/${groupId}/setup?step=${step}${source}`} className={`rounded-full px-4 py-2 text-sm font-bold ${current === step ? 'bg-teal text-white' : 'border border-line bg-white text-teal'}`}>{t[step]}</Link>;
+    })}
   </nav>;
 }
 
@@ -112,12 +119,16 @@ const scheduleCopy = (locale: Locale) => locale === 'ar' ? {
   empty: 'لم تتم إضافة مواعيد أسبوعية بعد.', add: 'إضافة موعد أسبوعي', save: 'حفظ الموعد', saving: 'جارٍ الحفظ…',
   remove: 'حذف الموعد', removing: 'جارٍ الحذف…', weekday: 'اليوم', start: 'وقت البداية', end: 'وقت النهاية',
   back: 'العودة إلى التفاصيل', next: 'متابعة إلى المراجعة', conflict: 'اختر وقتاً آخر؛ لا يمكن أن تتداخل المواعيد الأسبوعية.',
+  proposal: 'مواعيد مقترحة من', proposalHint: 'هذه المواعيد غير محفوظة. عدّل كل موعد حتى لا يتعارض مع جدولك الحالي، ثم احفظه.',
+  proposalError: 'تعذر تحميل الجدول المقترح. يمكنك إضافة المواعيد يدوياً.', proposalEmpty: 'المجموعة المصدر لا تحتوي على مواعيد أسبوعية.', clearProposal: 'إخفاء الاقتراح',
 } : {
   title: 'Weekly times', timezone: 'All times use Africa/Cairo.',
   description: 'Add one or more weekly times. A time cannot continue into the next day.',
   empty: 'No weekly times have been added yet.', add: 'Add weekly time', save: 'Save time', saving: 'Saving…',
   remove: 'Remove time', removing: 'Removing…', weekday: 'Weekday', start: 'Start time', end: 'End time',
   back: 'Back to details', next: 'Continue to review', conflict: 'Choose another time; weekly times cannot overlap.',
+  proposal: 'Suggested times from', proposalHint: 'These times are not saved. Adjust each one to avoid your current schedule, then save it.',
+  proposalError: 'Could not load the schedule proposal. You can add times manually.', proposalEmpty: 'The source group has no weekly times to suggest.', clearProposal: 'Hide suggestion',
 };
 
 function SlotFields({ locale, idPrefix, weekday, start, end, onWeekday, onStart, onEnd, invalid }: {
@@ -190,14 +201,54 @@ function AddScheduleSlotForm({ locale, groupId }: { locale: Locale; groupId: str
   </form>;
 }
 
-export function WeeklyScheduleStepForm({ locale, groupId, slots }: { locale: Locale; groupId: string; slots: GroupScheduleSlot[] }) {
+function ProposedScheduleSlotForm({ locale, groupId, slot, index }: {
+  locale: Locale; groupId: string; slot: Pick<GroupScheduleSlot, 'weekday' | 'start_time' | 'end_time'>; index: number;
+}) {
+  const t = scheduleCopy(locale);
+  const [weekday, setWeekday] = useState(slot.weekday);
+  const [start, setStart] = useState(slot.start_time.slice(0, 5));
+  const [end, setEnd] = useState(slot.end_time.slice(0, 5));
+  const [state, action, pending] = useActionState<ScheduleSlotActionState, FormData>(saveScheduleSlot.bind(null, locale), null);
+  const idPrefix = `proposal-${groupId}-${index}`;
+  return <li className="rounded-2xl border border-orange/40 bg-orange/5 p-4">
+    <h4 className="mb-3 font-bold text-teal">{weekdayLabels(locale)[weekday]}</h4>
+    <form action={action} onReset={event => event.preventDefault()} className="grid gap-3">
+      <input type="hidden" name="group_id" value={groupId} />
+      <SlotFields idPrefix={idPrefix} locale={locale} weekday={weekday} start={start} end={end} onWeekday={setWeekday} onStart={setStart} onEnd={setEnd} invalid={state?.fieldErrors} />
+      {state?.error && <p role="alert" className="text-sm text-red-800">{state.error}</p>}
+      {state?.success && <p role="status" aria-live="polite" className="text-sm text-teal">{state.success}</p>}
+      <button type="submit" disabled={pending} className="w-full rounded-xl bg-teal px-4 py-2 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.save}</button>
+    </form>
+  </li>;
+}
+
+export function WeeklyScheduleStepForm({ locale, groupId, slots, scheduleProposal, scheduleProposalError, copyScheduleFrom }: {
+  locale: Locale;
+  groupId: string;
+  slots: GroupScheduleSlot[];
+  scheduleProposal?: GroupScheduleProposal | null;
+  scheduleProposalError?: string | null;
+  copyScheduleFrom?: string;
+}) {
   const t = scheduleCopy(locale);
   const [deleteState, deleteAction, deletePending] = useActionState<ScheduleSlotActionState, FormData>(deleteScheduleSlot.bind(null, locale), null);
+  const sourceQuery = copyScheduleFrom ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}` : '';
   return <section className="grid gap-4">
     <div>
       <h2 className="text-xl font-black text-teal">{t.title}</h2>
       <p className="mt-1 text-sm text-muted">{t.timezone} {t.description}</p>
     </div>
+    {scheduleProposalError && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{scheduleProposalError || t.proposalError}</p>}
+    {scheduleProposal && <aside aria-label={t.proposal} className="grid gap-3 rounded-2xl border border-orange/30 bg-orange/5 p-4">
+      <div>
+        <h3 className="font-black text-teal">{t.proposal} “{scheduleProposal.sourceName}”</h3>
+        <p className="mt-1 text-sm text-muted">{t.proposalHint}</p>
+      </div>
+      {scheduleProposal.slots.length
+        ? <ul className="grid gap-3">{scheduleProposal.slots.map((slot, index) => <ProposedScheduleSlotForm key={`${slot.weekday}:${slot.start_time}:${index}`} locale={locale} groupId={groupId} slot={slot} index={index} />)}</ul>
+        : <p className="text-sm text-muted">{t.proposalEmpty}</p>}
+      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=schedule`} className="justify-self-start text-sm font-bold text-teal underline">{t.clearProposal}</Link>
+    </aside>}
     {deleteState?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{deleteState.error}</p>}
     {deleteState?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-green-900">{deleteState.success}</p>}
     {slots.length
@@ -205,8 +256,8 @@ export function WeeklyScheduleStepForm({ locale, groupId, slots }: { locale: Loc
       : <p className="rounded-xl bg-cream p-4 text-sm text-muted">{t.empty}</p>}
     <AddScheduleSlotForm locale={locale} groupId={groupId} />
     <div className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:justify-between">
-      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=details`} className="rounded-xl border border-line px-4 py-3 text-center font-bold text-teal">{t.back}</Link>
-      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=review`} className="rounded-xl bg-teal px-4 py-3 text-center font-bold text-white">{t.next}</Link>
+      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=details${sourceQuery}`} className="rounded-xl border border-line px-4 py-3 text-center font-bold text-teal">{t.back}</Link>
+      <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=review${sourceQuery}`} className="rounded-xl bg-teal px-4 py-3 text-center font-bold text-white">{t.next}</Link>
     </div>
   </section>;
 }

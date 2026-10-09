@@ -1,9 +1,11 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { LessonForm, SlotForm } from '@/components/platform/forms';
 import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate, weekday } from '@/components/platform/ui';
 import { GenerationPreviewForm } from '@/features/teacher/generation-form';
+import { DuplicateGroupForm } from '@/features/teacher/shortcuts-forms';
 
 export default async function TeacherGroupDetail({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale: raw, id } = await params;
@@ -29,13 +31,16 @@ export default async function TeacherGroupDetail({ params }: { params: Promise<{
   };
 
   return <>
-    <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={group.data.name} description={group.data.description} action={<Status value={group.data.status} locale={locale} />} />
+    <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={group.data.name} description={group.data.description} action={<div className="flex flex-wrap items-center gap-3"><Status value={group.data.status} locale={locale} /><Link href={`/${locale}/teacher/lessons?new=1&groupId=${id}`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{ar ? 'إضافة حصة' : 'Add lesson'}</Link></div>} />
     <div className="grid gap-6 xl:grid-cols-2">
       <Panel>
         <h2 className="text-xl font-black text-teal">{copy.schedule}</h2>
         <p className="mt-1 text-sm text-muted">{copy.cairo}</p>
         {slots.error ? <p role="alert" className="my-5 text-sm text-red-700">{copy.slotError}</p> : <div className="my-5 grid gap-2">{slots.data?.length ? slots.data.map(slot => <div key={slot.id} className="flex justify-between rounded-xl bg-cream px-4 py-3"><strong>{weekday(slot.weekday, locale)}</strong><span dir="ltr">{slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}</span></div>) : <EmptyState>{copy.addTime}</EmptyState>}</div>}
         <SlotForm locale={locale} groupId={id} />
+        <div className="mt-5 border-t border-line pt-5">
+          <DuplicateGroupForm locale={locale} groupId={id} />
+        </div>
       </Panel>
       <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.newLesson}</h2><LessonForm locale={locale} groupId={id} /></Panel>
     </div>

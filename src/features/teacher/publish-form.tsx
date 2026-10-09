@@ -51,6 +51,7 @@ export function PublishReviewForm({
   slots,
   exclusions,
   approved,
+  copyScheduleFrom,
 }: {
   locale: Locale;
   group: GroupSummary;
@@ -58,6 +59,7 @@ export function PublishReviewForm({
   slots: SlotSummary[];
   exclusions: string[];
   approved: boolean;
+  copyScheduleFrom?: string;
 }) {
   const t = copy(locale);
   const ar = locale === 'ar';
@@ -79,8 +81,13 @@ export function PublishReviewForm({
   const subject = catalogue.find(item => item.id === group.offering_id);
   const fromError = state?.fieldErrors?.from;
   const untilError = state?.fieldErrors?.until;
-  const scheduleHref = `/${locale}/teacher/groups/${group.id}/setup?step=schedule`;
-  const detailsHref = `/${locale}/teacher/groups/${group.id}/setup?step=details`;
+  const setupHref = (step: 'schedule' | 'details') => {
+    const query = new URLSearchParams({ step });
+    if (copyScheduleFrom) query.set('copyScheduleFrom', copyScheduleFrom);
+    return `/${locale}/teacher/groups/${group.id}/setup?${query.toString()}`;
+  };
+  const scheduleHref = setupHref('schedule');
+  const detailsHref = setupHref('details');
   const previewKey = publishReviewKey(group, slots, exclusions);
 
   return <div className="space-y-6">

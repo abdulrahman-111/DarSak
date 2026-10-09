@@ -2,6 +2,7 @@ import 'server-only';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { teacherViewer } from './data';
 import { setupCatalogueChoices, type SetupCatalogueNode, type SetupCatalogueOffering, type SetupCatalogueSubject } from './setup-domain';
+import { scheduleProposalSlots } from './shortcuts-domain';
 
 export type GroupDetailsFormValues = {
   name: string;
@@ -20,11 +21,17 @@ export type GroupScheduleSlot = {
   timezone: string;
 };
 
+export type GroupScheduleProposal = {
+  sourceId: string;
+  sourceName: string;
+  slots: Array<Pick<GroupScheduleSlot, 'weekday' | 'start_time' | 'end_time'>>;
+};
+
 const errorCopy = (locale: Locale) => locale === 'ar'
   ? 'تعذر تحميل إعدادات المجموعة. حاول مرة أخرى.'
   : 'Could not load group setup. Please try again.';
 
-export async function teacherGroupSetup(locale: Locale, id?: string | null) {
+export async function teacherGroupSetup(locale: Locale, id?: string | null, copyScheduleFrom?: string | null) {
   const me = await teacherViewer(locale);
   const ar = locale === 'ar';
   const empty = {
@@ -33,6 +40,8 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null) {
     values: null,
     catalogue: [],
     slots: [] as GroupScheduleSlot[],
+    scheduleProposal: null as GroupScheduleProposal | null,
+    scheduleProposalError: null as string | null,
     exclusions: [],
     error: null as string | null,
     notFound: false,
@@ -40,13 +49,17 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null) {
   if (id && !idSchema.safeParse(id).success) {
     return { ...empty, error: ar ? 'المجموعة غير موجودة.' : 'Group not found.', notFound: true };
   }
+  const proposalId = copyScheduleFrom && idSchema.safeParse(copyScheduleFrom).success ? copyScheduleFrom : null;
 
-  const [catalogueNodes, catalogueSubjects, catalogueOfferings, groupResult] = await Promise.all([
+  const [catalogueNodes, catalogueSubjects, catalogueOfferings, groupResult, sourceGroupResult] = await Promise.all([
     me.db.from('education_nodes').select('id,parent_id,name_ar,name_en').order('name_en'),
     me.db.from('subjects').select('id,name_ar,name_en').order('name_en'),
     me.db.from('offerings').select('id,node_id,subject_id'),
     id
       ? me.db.from('groups').select('id,teacher_id,name,description,offering_id,capacity,location,status').eq('id', id).eq('teacher_id', me.id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    proposalId
+      ? me.db.from('groups').select('id,name').eq('id', proposalId).eq('teacher_id', me.id).maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -66,13 +79,28 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null) {
 
   if (!groupResult.data) return { ...empty, catalogue };
 
-  const [slotsResult, exclusionsResult] = await Promise.all([
+  const [slotsResult, exclusionsResult, proposalSlotsResult] = await Promise.all([
     me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id!).order('weekday').order('start_time'),
     me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id!).order('local_date'),
+    proposalId && sourceGroupResult.data
+      ? me.db.from('group_schedule_slots').select('weekday,start_time,end_time').eq('group_id', proposalId).order('weekday').order('start_time')
+      : Promise.resolve({ data: null, error: null }),
   ]);
   if (slotsResult.error || exclusionsResult.error) return { ...empty, catalogue, error: errorCopy(locale) };
 
   const group = groupResult.data;
+  const scheduleProposalError = copyScheduleFrom
+    ? !proposalId || sourceGroupResult.error || !sourceGroupResult.data || proposalSlotsResult?.error
+      ? ar ? 'تعذر تحميل الجدول المقترح من هذه المجموعة.' : 'Could not load a schedule proposal from that group.'
+      : null
+    : null;
+  const scheduleProposal = proposalId && sourceGroupResult.data && !proposalSlotsResult?.error
+    ? {
+      sourceId: proposalId,
+      sourceName: sourceGroupResult.data.name,
+      slots: scheduleProposalSlots((proposalSlotsResult?.data ?? []) as GroupScheduleProposal['slots']),
+    }
+    : null;
   const values: GroupDetailsFormValues = {
     name: group.name,
     description: group.description ?? '',
@@ -86,6 +114,8 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null) {
     values,
     catalogue,
     slots: (slotsResult.data ?? []) as GroupScheduleSlot[],
+    scheduleProposal,
+    scheduleProposalError,
     exclusions: (exclusionsResult.data ?? []).map(row => row.local_date),
     error: null,
     notFound: false,
