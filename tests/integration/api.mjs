@@ -112,6 +112,79 @@ try {
   await success('/rest/v1/rpc/set_lesson_status',{token:teacher.token,method:'POST',body:{p_lesson_id:lessonId,p_status:'scheduled'}});
   const member = accepted[0].student_id === student.id ? student : student2;
   const pending = member.id === student.id ? student2 : student;
+  const contactArgs = {
+    p_full_name:'Teacher Contact Name',
+    p_headline:'Algebra teacher',
+    p_bio:'Contact privacy integration profile.',
+    p_offering_ids:[offerings[0].id],
+    p_phone_number:'+201234567890',
+    p_whatsapp_number:'   ',
+    p_contact_email:'contact@example.test',
+    p_visibility:'enrolled',
+  };
+  const savedProfile = await request('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:contactArgs});
+  check(savedProfile.ok,'active teacher can atomically save their own profile and enrolled contacts');
+  const ownerContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:teacher.token});
+  check(ownerContact.length===1 && ownerContact[0].whatsapp_number===null && ownerContact[0].visibility==='enrolled','contact blanks normalize to NULL and visibility defaults to enrolled');
+  const savedTeacherProfile = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=headline,bio`,{token:teacher.token});
+  const savedSpecializations = await success(`/rest/v1/teacher_specializations?teacher_id=eq.${teacher.id}&select=offering_id`,{token:teacher.token});
+  check(savedTeacherProfile[0]?.headline==='Algebra teacher' && savedTeacherProfile[0]?.bio==='Contact privacy integration profile.' && savedSpecializations.length===1 && savedSpecializations[0].offering_id===offerings[0].id,'profile save persists headline, bio, and specialization selection');
+  const anonPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
+  const unrelatedPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:otherTeacher.token});
+  const pendingPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:pending.token});
+  check(anonPrivateContact.length===0 && unrelatedPrivateContact.length===0 && pendingPrivateContact.length===0,'anonymous, unrelated, and pending viewers cannot read enrolled-only contacts');
+  const acceptedContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(acceptedContact.length===1 && acceptedContact[0].contact_email==='contact@example.test','accepted active student can read enrolled-only contact details');
+  const foreignContactWrite = await request('/rest/v1/teacher_contacts',{token:teacher.token,method:'POST',body:{teacher_id:otherTeacher.id,phone_number:'+201234567890',visibility:'public'}});
+  check(!foreignContactWrite.ok,'teacher cannot write a contact row for another teacher');
+  const foreignProfileWrite = await request(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:teacher.token,method:'PATCH',body:{full_name:'Spoofed target'}});
+  const foreignOwnerUnchanged = await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service});
+  check((!foreignProfileWrite.ok || foreignProfileWrite.data.length===0) && foreignOwnerUnchanged[0].full_name!=='Spoofed target','teacher cannot spoof another teacher ID in a direct profile write');
+  const savedAdminProfile = await request('/rest/v1/teacher_contacts',{token:spoof.token,method:'POST',body:{teacher_id:otherTeacher.id,phone_number:'+201234567890',visibility:'enrolled'}});
+  check(savedAdminProfile.ok,'active administrator can manage another teacher contact');
+  const foreignContactUpdate = await request(`/rest/v1/teacher_contacts?teacher_id=eq.${otherTeacher.id}`,{token:teacher.token,method:'PATCH',body:{phone_number:'+447911123456'}});
+  const adminContactCheck = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${otherTeacher.id}`,{token:spoof.token});
+  check((!foreignContactUpdate.ok || foreignContactUpdate.data.length===0) && adminContactCheck[0]?.phone_number==='+201234567890','teacher cannot update another teacher contact row');
+  await success(`/rest/v1/teacher_contacts?teacher_id=eq.${otherTeacher.id}`,{token:spoof.token,method:'DELETE'});
+  await success(`/rest/v1/enrollments?id=eq.${accepted[0].id}`,{token:service,method:'PATCH',body:{status:'rejected'}});
+  const rejectedContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(rejectedContact.length===0,'rejected student membership loses enrolled-only contact access');
+  await success(`/rest/v1/enrollments?id=eq.${accepted[0].id}`,{token:service,method:'PATCH',body:{status:'cancelled'}});
+  const cancelledContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(cancelledContact.length===0,'cancelled student membership cannot read enrolled-only contacts');
+  await success(`/rest/v1/enrollments?id=eq.${accepted[0].id}`,{token:service,method:'PATCH',body:{status:'removed'}});
+  const removedContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(removedContact.length===0,'removed student membership cannot read enrolled-only contacts');
+  await success(`/rest/v1/enrollments?id=eq.${accepted[0].id}`,{token:service,method:'PATCH',body:{status:'accepted'}});
+  const acceptedAgainContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(acceptedAgainContact.length===1,'current accepted membership restores enrolled-only contact access');
+  const badProfile = await request('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_full_name:'Attempted changed name',p_offering_ids:['00000000-0000-0000-0000-000000000000']}});
+  const preservedProfile = await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:teacher.token});
+  const preservedTeacherProfile = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=headline,bio`,{token:teacher.token});
+  const preservedSpecializations = await success(`/rest/v1/teacher_specializations?teacher_id=eq.${teacher.id}&select=offering_id`,{token:teacher.token});
+  const preservedContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}`,{token:teacher.token});
+  check(!badProfile.ok && preservedProfile[0].full_name==='Teacher Contact Name' && preservedTeacherProfile[0].headline==='Algebra teacher' && preservedSpecializations.length===1 && preservedSpecializations[0].offering_id===offerings[0].id && preservedContact[0].contact_email==='contact@example.test','rejected save preserves existing profile, specialization, and contact data');
+  await success('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_phone_number:'',p_whatsapp_number:'+447911123456',p_visibility:'public'}});
+  const publicContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
+  check(publicContact.length===1 && publicContact[0].phone_number===null && publicContact[0].whatsapp_number==='+447911123456','explicit public opt-in permits anonymous contact read and blank normalization');
+  await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
+  const unapprovedContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
+  check(unapprovedContact.length===0,'public opt-in does not expose contacts for an unapproved teacher');
+  await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{approved:true}});
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedOwnerContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:teacher.token});
+  const suspendedPublicContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
+  check(suspendedOwnerContact.length===0 && suspendedPublicContact.length===0,'suspended teacher contacts are hidden from owner and public viewers');
+  await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{visibility:'enrolled'}});
+  const suspendedEnrolledContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(suspendedEnrolledContact.length===0,'suspended teacher contacts are hidden from accepted students too');
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
+  const restoredEnrolledContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(restoredEnrolledContact.length===1,'approved active teacher contact is available to an accepted active student');
+  const protectedFields = await success(`/rest/v1/profiles?id=eq.${teacher.id}&select=role,status`,{token:teacher.token});
+  const protectedApproval = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=approved`,{token:teacher.token});
+  const loginUser = await success(`/auth/v1/admin/users/${teacher.id}`,{token:service});
+  check(protectedFields[0].role==='teacher' && protectedFields[0].status==='active' && protectedApproval[0].approved && loginUser.email.startsWith('integration-teacher-'),'profile save preserves role, status, approval, and Auth email');
   const privateLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:pending.token});
   check(privateLessons.length===0,'pending student cannot read private lessons');
   const memberLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:member.token});
@@ -140,6 +213,8 @@ try {
   const credentialLink = await request('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'link',title:'Unsafe credentials',url:'https://user:password@example.com/private',uploaded_by:teacher.id}});
   check(!credentialLink.ok,'database rejects credential-bearing material links');
   await success(`/rest/v1/profiles?id=eq.${member.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedMemberContacts = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:member.token});
+  check(suspendedMemberContacts.length===0,'suspended accepted student loses enrolled-only teacher contact access');
   const suspendedMemberLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:member.token});
   check(suspendedMemberLessons.length===0,'suspended accepted student loses lesson access immediately');
   const suspendedMemberDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{token:member.token,method:'POST',body:signBody});

@@ -10,6 +10,7 @@ Tables:
 - subjects: id, name_ar, name_en, slug unique.
 - offerings: id, node_id references education_nodes, subject_id references subjects, unique pair. School grade, university year or general university node defines context.
 - teacher_specializations: teacher_id, offering_id, composite PK.
+- teacher_contacts: teacher_id PK references teacher_profiles, phone_number and whatsapp_number nullable E.164 (`+` plus 8–15 digits), contact_email nullable up to 254 characters, visibility `enrolled` by default or `public`. Optional blanks normalize to NULL. Kept separate from login email. RLS exposes contacts only to the active owner/admin, approved active teacher's explicit public audience, or an active student with a currently accepted enrollment in one of the teacher's groups. Public policy uses the narrowly granted `can_read_teacher_contacts(p_teacher_id uuid)` helper; raw Data API reads are protected too.
 - groups: id, teacher_id profiles, offering_id, name text, description text default '', capacity integer 1..500, status draft/published/archived, location text default '', created_at.
 - group_schedule_slots: id, group_id, weekday integer 0..6 (Sunday=0), start_time time, end_time time, timezone text default Africa/Cairo. Same-day only. Teacher overlap prevention required.
 - enrollments: id, group_id, student_id, status pending/accepted/rejected/cancelled/removed, unique(group_id,student_id), updated_at.
@@ -20,6 +21,7 @@ Tables:
 - platform_settings: key text PK, value jsonb. Admin only except explicit public safe settings if needed.
 
 RPCs (server actions call with authenticated supabase client):
+- save_teacher_profile(p_full_name text,p_headline text,p_bio text,p_offering_ids uuid[],p_phone_number text,p_whatsapp_number text,p_contact_email text,p_visibility text) returns void. Authenticated active teacher only; atomically updates their own profile name, headline, bio, specializations, and contact row. Name 2–100, headline at most 160, bio at most 5000, distinct valid offering IDs, validated contact formats and visibility. Does not change role, account status, approval or Auth email.
 - request_enrollment(p_group_id uuid) returns uuid. Student only; published group; allow new or rejected/cancelled/removed retry -> pending; accepted/pending unchanged or error.
 - decide_enrollment(p_enrollment_id uuid,p_status text) returns void. Owner/admin only pending->accepted/rejected; accepted->removed; capacity atomic, notifications created.
 - cancel_enrollment(p_enrollment_id uuid) returns void. Student owns pending/accepted -> cancelled.
