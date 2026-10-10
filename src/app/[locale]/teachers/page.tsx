@@ -59,7 +59,7 @@ export default async function Teachers({
           {!error && <p className="font-bold text-muted" aria-live="polite">{c.results(groups.length)}</p>}
         </div>
 
-        <form className="mb-7 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-3" action={`/${locale}/teachers`} method="get">
+        <form key={discoverySearchParams(filters).toString()} className="mb-7 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-3" action={`/${locale}/teachers`} method="get">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="flex h-12 min-w-0 items-center gap-3 rounded-xl bg-[#f6f0e4] px-4 sm:col-span-2 lg:col-span-1">
               <Search size={18} className="shrink-0 text-muted"/>
