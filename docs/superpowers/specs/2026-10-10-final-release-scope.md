@@ -20,16 +20,17 @@ The detailed behavior and authorization requirements are in [the expanded design
 8. **Useful admin overview.** Prioritized approval requests, expired/current teacher access, reports and failed/queued emails, accurate counts, actionable links and reliable data-error states. No misleading zero totals on query failures.
 9. **Password recovery and accurate signup feedback.** Forgot-password entry, safe recovery callback/new-password flow, expired-link handling, account-enumeration-safe messaging and proper confirmation-required signup feedback. Preserve roles and all teaching access rules; do not change Auth confirmation settings. Verify Supabase Auth email delivery separately from Gmail application notifications.
 10. **Public group sharing.** Copy link plus native Share where supported, with a manual fallback. Eligible published groups only; no private information, access tokens or permission bypass.
+11. **Richer, customizable teacher profiles.** Add optional education/qualifications, experience, teaching approach/goals, languages, broad location and teaching modes. Provide a cover image, curated layouts/accessible colors, optional-section visibility/order, private completeness guidance and a visitor preview. Show real eligible group cards with next lessons/seats. Preserve biography/photo/contact data, bilingual fallback, enrolled-only contact defaults and expiry editing exceptions; keep hidden sections private and self-reported credentials clearly unverified.
 
 ## Delivery phases
 
 | Phase | Deliverable | Boundary |
 | --- | --- | --- |
 | 1 | Initial approval bug, request lifecycle and admin actions | Database/API regression, private audit and transactional outbox foundation first |
-| 2 | Teacher catalogue and guided setup integration | Owner-scoped data, historical visibility, public discovery |
+| 2 | Teacher catalogue, rich-profile data and guided setup integration | Owner-scoped data, hidden-section privacy, historical visibility, public discovery |
 | 3 | Monthly access and expiry enforcement | Explicit role/action matrix; free grants; teacher/student/admin isolation |
 | 4 | Email worker and fee-announcement readiness | Private outbox, fake SMTP tests, real delivery only after credentials |
-| 5 | Student/admin UX, recovery and group sharing | Bilingual mobile/browser checks and integration review |
+| 5 | Student/admin UX, rich-profile editor/presentation, recovery and group sharing | Bilingual mobile/browser checks and integration review |
 
 Each phase is divided into small Luna tasks, reviewed by Sol before moving on. Keep a dependency-aware plan: Auth creation, review and renewal event producers must integrate with the outbox without losing transactions. Create the private outbox/event scaffold in phase 1, even though SMTP delivery is implemented later.
 
@@ -39,8 +40,8 @@ Teacher photo/bio/contact fields and enrolled-student-default privacy; guided gr
 
 ## Later releases
 
-Payment provider/checkout and collection; attendance; calendar export; schedule-change notifications and email/WhatsApp reminders; chat; ratings/reviews; waitlists; advanced analytics. Introduce billing only after an explicit fee policy, provider, collection workflow and notice process are ready. Renewal and future-fee announcements in this release do not constitute payment processing.
+Payment provider/checkout and collection; attendance; calendar export; schedule-change notifications and email/WhatsApp reminders; chat; ratings/reviews; waitlists; advanced analytics; profile video embeds, certificate verification and unrestricted page-builder customization. Introduce billing only after an explicit fee policy, provider, collection workflow and notice process are ready. Renewal and future-fee announcements in this release do not constitute payment processing.
 
 ## Completion evidence
 
-Run appropriate unit, SQL/database, API, lint, typecheck, production-build and bilingual mobile/browser checks. Cover role/privacy boundaries, raw REST/RPC/Storage expiry bypasses, concurrent free renewal, calendar-month/DST cases, archived catalogue selections, SMTP failures, recovery callbacks and shared-link login return. Use disposable/local fixtures for broad tests; preserve production data and recorded migration history. Report exact failures and any live deployment access/email-provider limitation. Deliver reviewed changes in a draft PR with validation results; no payment or email-delivery success claim without evidence.
+Run appropriate unit, SQL/database, API, lint, typecheck, production-build and bilingual mobile/browser checks. Cover role/privacy boundaries, raw REST/RPC/Storage expiry bypasses, concurrent free renewal, calendar-month/DST cases, archived catalogue selections, SMTP failures, recovery callbacks, shared-link login return, rich-profile hidden sections and safe previews/cover uploads. Use disposable/local fixtures for broad tests; preserve production data and recorded migration history. Report exact failures and any live deployment access/email-provider limitation. Deliver reviewed changes in a draft PR with validation results; no payment or email-delivery success claim without evidence.
