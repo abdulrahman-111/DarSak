@@ -98,6 +98,14 @@ try {
   check(accepted.length === 1 && acceptResults.filter(r=>r.ok).length === 1, 'concurrent last-seat approvals cannot overfill capacity');
   const publicGroup = await success(`/rest/v1/rpc/public_groups?id=eq.${group.id}`);
   check(publicGroup.length===1 && publicGroup[0].accepted_count===1 && publicGroup[0].available_seats===0 && publicGroup[0].teacher_name, 'anonymous discovery exposes safe capacity and teacher projection');
+  const discovery = await success('/rest/v1/rpc/discover_groups',{method:'POST',body:{p_teacher_id:teacher.id,p_weekday:0,p_query:`Integration ${suffix}`,p_offset:0,p_limit:12}});
+  const discoveryRow = discovery.find(row=>row.id===group.id);
+  check(discoveryRow?.weekdays?.includes(0) && discoveryRow.accepted_count===1 && discoveryRow.available_seats===0 && Object.keys(discoveryRow).length===18 && !('lesson_title' in discoveryRow) && !('roster' in discoveryRow),'anonymous discovery filters safely and returns its exact 18-field schedule projection');
+  const publicDetail = await success('/rest/v1/rpc/public_group_detail',{method:'POST',body:{p_group_id:group.id}});
+  const hiddenDetail = await success('/rest/v1/rpc/public_group_detail',{method:'POST',body:{p_group_id:'ffffffff-ffff-4fff-8fff-ffffffffffff'}});
+  check(publicDetail.length===1 && publicDetail[0].id===group.id && publicDetail[0].weekdays?.includes(0) && hiddenDetail.length===0,'anonymous group detail ignores list pagination and hides nonexistent groups');
+  const longDiscoveryQuery = await request('/rest/v1/rpc/discover_groups',{method:'POST',body:{p_query:'x'.repeat(121)}});
+  check(!longDiscoveryQuery.ok,'discovery rejects overlong search strings through the Data API');
   const duplicateGroupId = await success('/rest/v1/rpc/duplicate_group',{token:teacher.token,method:'POST',body:{p_group_id:group.id}});
   const copiedGroup = (await success(`/rest/v1/groups?id=eq.${duplicateGroupId}`,{token:teacher.token}))[0];
   const copiedSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${duplicateGroupId}`,{token:teacher.token});
