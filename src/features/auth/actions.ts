@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient, isConfigured } from '@/lib/supabase/server';
 import { loginSchema, signupSchema } from '@/lib/domain';
 import { isLocale } from '@/i18n/config';
+import { loginRedirectPath } from './return-path';
 
 function configurationError(locale: string) {
   if (!isLocale(locale)) return 'Invalid language';
@@ -17,7 +18,7 @@ export async function loginAction(locale: string, _previous: unknown, formData: 
   const db = await createClient();
   const { error } = await db.auth.signInWithPassword(parsed.data);
   if (error) return { error: locale === 'ar' ? 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.' : 'Unable to sign in. Check your credentials and try again.' };
-  redirect(`/${locale}/dashboard`);
+  redirect(loginRedirectPath(locale as 'ar' | 'en', formData.get('next')));
 }
 export async function signupAction(locale: string, _previous: unknown, formData: FormData) {
   const unavailable = configurationError(locale);
