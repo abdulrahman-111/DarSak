@@ -6,7 +6,7 @@ import { currentUser } from '@/features/platform/data';
 import { publicCopy } from '@/components/public/copy';
 import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
-import { canCancel, canRequest } from '@/features/student/domain';
+import { canRequest } from '@/features/student/domain';
 import { EnrollmentForm } from '@/features/student/forms';
 
 const weekdays = {
@@ -28,6 +28,11 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
   const enrollment = me?.profile?.role === 'student' ? await enrollmentForGroup(id) : null;
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject?.[locale === 'ar' ? 'name_ar' : 'name_en'] || t.groups;
+  const nextLesson = data.next_lesson_at
+    ? new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(data.next_lesson_at))
+    : null;
+  const isStudent = me?.profile?.role === 'student' && me.profile.status === 'active';
+  const canEnroll = canRequest(enrollment?.status) && data.available_seats !== 0;
 
   return (
     <div className="min-h-[72vh] bg-[#f6f0e4]">
@@ -43,7 +48,12 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{data.name}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4d473f]">{data.description || c.detailIntro}</p>
 
-            {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-[#e3d9c8] p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><p className="font-bold text-teal">{detail.teacher.full_name}</p>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
+            <div className="mt-6 rounded-xl bg-[#f6f0e4] p-4" aria-label={c.nextLesson}>
+              <p className="flex items-center gap-2 text-sm font-bold text-teal"><CalendarDays size={17}/>{c.nextLesson}</p>
+              <p className="mt-2 text-sm text-muted">{nextLesson || c.noNextLesson}</p>
+            </div>
+
+            {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-[#e3d9c8] p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><Link href={`/${locale}/teachers/${detail.teacher.id}`} className="font-bold text-teal underline decoration-teal/30 underline-offset-2">{detail.teacher.full_name}</Link>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
 
             <div className="mt-9 border-t border-[#efe6d6] pt-7">
               <h2 className="text-xl font-bold text-teal">{c.arrangement}</h2>
@@ -75,12 +85,24 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
             <div className="mt-6 [&_button]:w-full [&_button]:bg-orange [&_button]:text-white">
-              {me?.profile?.role === 'student' && canRequest(enrollment?.status) ? (
-                <EnrollmentForm locale={locale} id={id} kind="request"/>
-              ) : me?.profile?.role === 'student' && enrollment && canCancel(enrollment.status) ? (
-                <><p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{locale === 'ar' ? `حالة الطلب: ${enrollment.status}` : `Request status: ${enrollment.status}`}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
+              {isStudent && enrollment?.status === 'pending' ? (
+                <><p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.pendingEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
+              ) : isStudent && enrollment?.status === 'accepted' ? (
+                <><p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.acceptedEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
+              ) : isStudent && canEnroll ? (
+                <>
+                  {enrollment?.status === 'rejected' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.retryEnrollment}</p>}
+                  {enrollment?.status === 'cancelled' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.cancelledEnrollment}</p>}
+                  <EnrollmentForm locale={locale} id={id} kind="request"/>
+                </>
+              ) : isStudent && data.available_seats === 0 ? (
+                <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{c.fullEnrollment}</p>
+              ) : !isStudent ? (
+                me ? <p className="rounded-xl bg-white/10 p-3 text-sm">{c.studentOnlyEnrollment}</p> : (
+                  <Link className="block rounded-xl bg-cream px-5 py-3 text-center font-bold text-teal transition hover:bg-white" href={`/${locale}/login?next=/${locale}/groups/${id}`}>{c.signInToRequest}</Link>
+                )
               ) : (
-                <Link className="block rounded-xl bg-cream px-5 py-3 text-center font-bold text-teal transition hover:bg-white" href={`/${locale}/login?next=/${locale}/groups/${id}`}>{c.signInToRequest}</Link>
+                <p className="rounded-xl bg-white/10 p-3 text-sm">{c.studentOnlyEnrollment}</p>
               )}
             </div>
           </aside>

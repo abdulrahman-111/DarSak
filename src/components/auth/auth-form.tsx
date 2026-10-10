@@ -10,11 +10,12 @@ type Props = {
   mode: 'login' | 'signup';
   labels: Record<string, string>;
   initialRole?: 'student' | 'teacher';
+  returnPath?: string | null;
 };
 
 const inputClass = 'mt-2 h-12 w-full rounded-xl border border-[#d8ccb8] bg-white px-4 text-ink outline-none transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
 
-export function AuthForm({ locale, mode, labels, initialRole = 'student' }: Props) {
+export function AuthForm({ locale, mode, labels, initialRole = 'student', returnPath }: Props) {
   const copy = authCopy[locale];
   const action = mode === 'login' ? loginAction.bind(null, locale) : signupAction.bind(null, locale);
   const [state, formAction, pending] = useActionState(action, null);
@@ -25,6 +26,7 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student' }: Prop
 
   return (
     <form action={formAction} className="space-y-5" aria-describedby={state?.error ? errorId : undefined}>
+      {mode === 'login' && returnPath && <input type="hidden" name="next" value={returnPath}/>}
       {mode === 'signup' && (
         <fieldset>
           <legend className="mb-3 font-bold text-ink">{copy.joinAs}</legend>

@@ -2,7 +2,76 @@ import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { LessonForm } from '@/components/platform/forms';
-import { DeleteMaterialButton, LessonStatusControls, TeacherMaterialForms } from '@/components/platform/actions';
+import { TeacherMaterialForms } from '@/components/platform/actions';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
+import { CopyLessonForm, DeleteLessonMaterialButton, LessonShortcutStatusControls } from '@/features/teacher/shortcuts-forms';
 
-export default async function TeacherLesson({params}:{params:Promise<{locale:string;id:string}>}){const {locale:raw,id}=await params;const locale=ensureLocale(raw),ar=locale==='ar';const me=await requireViewer(locale,'teacher');const lesson=await me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,notes,group:groups!inner(id,name,teacher_id)').eq('id',id).eq('group.teacher_id',me.id).maybeSingle();if(!lesson.data)notFound();const materials=await me.db.from('lesson_materials').select('id,title,kind,url,content,file_size,mime_type').eq('lesson_id',id).order('created_at');return <><ScreenTitle eyebrow={ar?'مساحة الحصة':'Lesson workspace'} title={lesson.data.title} description={cairoDate(lesson.data.starts_at,locale)} action={<Status value={lesson.data.status} locale={locale}/>}/><div className="grid gap-6 xl:grid-cols-[.8fr_1.2fr]"><Panel><h2 className="mb-4 text-xl font-black text-teal">{ar?'تعديل التفاصيل':'Edit details'}</h2><LessonForm locale={locale} groupId={lesson.data.group_id} lesson={lesson.data}/><div className="mt-6 border-t border-line pt-5"><h3 className="mb-3 font-black text-teal">{ar?'حالة الحصة':'Lesson status'}</h3><LessonStatusControls locale={locale} lessonId={id} status={lesson.data.status}/></div></Panel><Panel><div className="flex items-baseline justify-between gap-3"><h2 className="text-xl font-black text-teal">{ar?'مواد الحصة':'Lesson materials'}</h2><span className="text-sm text-muted">{(materials.data||[]).length}</span></div><p className="mt-2 text-sm text-muted">{ar?'الملفات خاصة بطلاب المجموعة المقبولين.':'Resources are private to accepted students.'}</p><div className="mt-5 grid gap-3">{materials.data?.length?materials.data.map(material=><div key={material.id} className="rounded-2xl border border-line p-4"><div className="flex items-center justify-between gap-3"><div><strong className="text-teal">{material.title}</strong><span className="ms-2 rounded-lg bg-cream px-2 py-1 text-xs font-bold uppercase">{material.kind}</span></div><DeleteMaterialButton locale={locale} lessonId={id} materialId={material.id}/></div>{material.kind==='note'&&<p className="mt-2 whitespace-pre-wrap text-sm text-muted">{material.content}</p>}{material.kind==='link'&&<p className="mt-2 truncate text-sm text-orange" dir="ltr">{material.url}</p>}{material.kind==='file'&&<p className="mt-2 text-sm text-muted">{material.mime_type} · {material.file_size?`${Math.ceil(material.file_size/1024)} KB`:'—'}</p>}</div>):<EmptyState>{ar?'لا توجد مواد بعد.':'No materials yet.'}</EmptyState>}</div><div className="mt-6 border-t border-line pt-5"><TeacherMaterialForms locale={locale} lessonId={id}/></div></Panel></div></>}
+export default async function TeacherLesson({ params }: { params: Promise<{ locale: string; id: string }> }) {
+  const { locale: raw, id } = await params;
+  const locale = ensureLocale(raw);
+  const ar = locale === 'ar';
+  const me = await requireViewer(locale, 'teacher');
+  const lessonResult = await me.db.from('lessons')
+    .select('id,group_id,title,starts_at,ends_at,status,notes,group:groups!inner(id,name,teacher_id)')
+    .eq('id', id)
+    .eq('group.teacher_id', me.id)
+    .maybeSingle();
+  if (!lessonResult.data) notFound();
+  const lesson = lessonResult.data;
+  const [materials, groups] = await Promise.all([
+    me.db.from('lesson_materials').select('id,title,kind,url,content,file_size,mime_type').eq('lesson_id', id).order('created_at'),
+    me.db.from('groups').select('id,name').eq('teacher_id', me.id).order('name').order('id'),
+  ]);
+
+  const copy = ar ? {
+    workspace: 'مساحة الحصة', edit: 'تعديل التفاصيل', status: 'حالة الحصة', resources: 'مواد الحصة',
+    privateHint: 'الملفات خاصة بطلاب المجموعة المقبولين.', copyLesson: 'نسخ الحصة إلى مجموعة أخرى',
+    copyHint: 'سيتم نسخ العنوان والملاحظات فقط. لن يتم نسخ الملفات أو المواد الخاصة.', materialsError: 'تعذر تحميل المواد.',
+  } : {
+    workspace: 'Lesson workspace', edit: 'Edit details', status: 'Lesson status', resources: 'Lesson materials',
+    privateHint: 'Resources are private to accepted students.', copyLesson: 'Copy lesson to a group',
+    copyHint: 'Only the title and notes will be copied. Private files and materials stay with this lesson.', materialsError: 'Could not load lesson materials.',
+  };
+
+  return <>
+    <ScreenTitle eyebrow={copy.workspace} title={lesson.title} description={cairoDate(lesson.starts_at, locale)} action={<Status value={lesson.status} locale={locale} />} />
+    <div className="grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
+      <div className="grid content-start gap-6">
+        <Panel>
+          <h2 className="mb-4 text-xl font-black text-teal">{copy.edit}</h2>
+          <LessonForm locale={locale} groupId={lesson.group_id} lesson={lesson} />
+          <div className="mt-6 border-t border-line pt-5">
+            <h3 className="mb-3 font-black text-teal">{copy.status}</h3>
+            <LessonShortcutStatusControls locale={locale} lessonId={id} status={lesson.status} />
+          </div>
+        </Panel>
+        <Panel>
+          <h2 className="text-xl font-black text-teal">{copy.copyLesson}</h2>
+          <p className="mt-2 text-sm text-muted">{copy.copyHint}</p>
+          {groups.error ? <p role="alert" className="mt-4 text-sm text-red-700">{ar ? 'تعذر تحميل مجموعاتك.' : 'Could not load your groups.'}</p> :
+            <div className="mt-4"><CopyLessonForm locale={locale} sourceLessonId={id} groups={groups.data ?? []} /></div>}
+        </Panel>
+      </div>
+      <Panel>
+        <div className="flex items-baseline justify-between gap-3">
+          <h2 className="text-xl font-black text-teal">{copy.resources}</h2>
+          <span className="text-sm text-muted">{(materials.data ?? []).length}</span>
+        </div>
+        <p className="mt-2 text-sm text-muted">{copy.privateHint}</p>
+        {materials.error ? <p role="alert" className="mt-4 text-sm text-red-700">{copy.materialsError}</p> :
+          <div className="mt-5 grid gap-3">
+            {materials.data?.length ? materials.data.map(material => <div key={material.id} className="rounded-2xl border border-line p-4">
+              <div className="flex items-center justify-between gap-3">
+                <div><strong className="text-teal">{material.title}</strong><span className="ms-2 rounded-lg bg-cream px-2 py-1 text-xs font-bold uppercase">{material.kind}</span></div>
+                <DeleteLessonMaterialButton locale={locale} lessonId={id} materialId={material.id} />
+              </div>
+              {material.kind === 'note' && <p className="mt-2 whitespace-pre-wrap text-sm text-muted">{material.content}</p>}
+              {material.kind === 'link' && <p className="mt-2 truncate text-sm text-orange" dir="ltr">{material.url}</p>}
+              {material.kind === 'file' && <p className="mt-2 text-sm text-muted">{material.mime_type} · {material.file_size ? `${Math.ceil(material.file_size / 1024)} KB` : '—'}</p>}
+            </div>) : <EmptyState>{ar ? 'لا توجد مواد بعد.' : 'No materials yet.'}</EmptyState>}
+          </div>}
+        <div className="mt-6 border-t border-line pt-5"><TeacherMaterialForms locale={locale} lessonId={id} /></div>
+      </Panel>
+    </div>
+  </>;
+}

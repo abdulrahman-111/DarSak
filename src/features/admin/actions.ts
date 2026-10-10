@@ -28,7 +28,12 @@ export async function adminAction(locale:string,operation:string,_state:AdminSta
  }else if(operation.startsWith('delete-')){
  if(value('confirm')!=='yes')return {error:t.invalid};const table={'delete-node':'education_nodes','delete-subject':'subjects','delete-offering':'offerings'}[operation];if(!table)return {error:t.invalid};z.uuid().parse(id);result=await db.from(table).delete().eq('id',id).select('id').single();
  }else if(operation==='group'){
- z.uuid().parse(id);const status=z.enum(['draft','published','archived']).parse(value('status'));result=await db.from('groups').update({status}).eq('id',id).select('id').single();
+ z.uuid().parse(id);const status=z.enum(['draft','published','archived']).parse(value('status'));
+ if(status==='published'){
+ const published=await db.rpc('publish_group',{p_group_id:id,p_from:null,p_until:null});
+ if(published.error){const message=published.error.message.toLowerCase();return {error:message.includes('conflict')||message.includes('overlap')?(l==='ar'?'تعذر نشر المجموعة بسبب تعارض في الحصص.':'The group could not be published because its schedule has lesson conflicts.'):t.error};}
+ result=published;
+ }else result=await db.from('groups').update({status}).eq('id',id).select('id').single();
  }else if(operation==='report'){
  z.uuid().parse(id);const status=z.enum(['open','resolved']).parse(value('status'));const admin_note=z.string().trim().max(3000).parse(value('admin_note'));result=await db.from('reports').update({status,admin_note}).eq('id',id).select('id').single();
  }else if(operation==='setting'){
