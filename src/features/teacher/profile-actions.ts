@@ -95,10 +95,10 @@ export async function removeTeacherAvatar(locale: Locale, _state: TeacherProfile
 }
 
 export async function saveTeacherProfile(locale: Locale, _state: TeacherProfileActionState, form: FormData): Promise<TeacherProfileActionState> {
-  const parsed = teacherProfileSchema.safeParse({
+  const accountSchema = teacherProfileSchema.omit({ bio: true });
+  const parsed = accountSchema.safeParse({
     full_name: form.get('full_name'),
     headline: form.get('headline'),
-    bio: form.get('bio'),
     offering_ids: form.getAll('offering_ids'),
     phone_number: form.get('phone_number') ?? '',
     whatsapp_number: form.get('whatsapp_number') ?? '',
@@ -117,10 +117,9 @@ export async function saveTeacherProfile(locale: Locale, _state: TeacherProfileA
   if (profileError) return { error: message(locale, 'Could not verify your teacher account. Please try again.', 'تعذر التحقق من حساب المعلم. حاول مرة أخرى.') };
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
 
-  const { error } = await db.rpc('save_teacher_profile', {
+  const { error } = await db.rpc('save_teacher_profile_account', {
     p_full_name: parsed.data.full_name,
     p_headline: parsed.data.headline,
-    p_bio: parsed.data.bio,
     p_offering_ids: parsed.data.offering_ids,
     p_phone_number: parsed.data.phone_number,
     p_whatsapp_number: parsed.data.whatsapp_number,

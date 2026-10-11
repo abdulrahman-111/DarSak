@@ -10,6 +10,7 @@ const users = [];
 const suffix = randomUUID().slice(0, 8);
 const uploadedPaths = [];
 const uploadedAvatarPaths = [];
+const uploadedCoverPaths = [];
 const signBody = {expiresIn:60};
 let passed = 0;
 async function request(path, {token = anon, method = 'GET', body, headers = {}, timeoutMs = 10000} = {}) {
@@ -49,6 +50,7 @@ async function signup(role) {
 try {
   const teacher = await signup('teacher');
   const otherTeacher = await signup('teacher');
+  const pendingTeacher = await signup('teacher');
   const student = await signup('student');
   const student2 = await signup('student');
   const spoof = await signup('admin');
@@ -184,6 +186,48 @@ try {
   const savedTeacherProfile = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=headline,bio`,{token:teacher.token});
   const savedSpecializations = await success(`/rest/v1/teacher_specializations?teacher_id=eq.${teacher.id}&select=offering_id`,{token:teacher.token});
   check(savedTeacherProfile[0]?.headline==='Algebra teacher' && savedTeacherProfile[0]?.bio==='Contact privacy integration profile.' && savedSpecializations.length===1 && savedSpecializations[0].offering_id===offerings[0].id,'profile save persists headline, bio, and specialization selection');
+  const privateDetailsBefore = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(privateDetailsBefore?.details?.about?.ar==='Contact privacy integration profile.','legacy biography is synchronized into the preferred-language About field');
+  const richDetails = {
+    about:{ar:'نبذة مخفية',en:'Hidden canonical biography'},approach:{ar:'',en:''},goals:{ar:'',en:''},
+    qualifications:[],experience:[],languages:[],city:{ar:'',en:''},teaching_mode:null,
+    layout:'classic',palette:'teal',section_order:['about','qualifications','experience','approach','goals'],hidden_sections:['about'],
+  };
+  const hiddenSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:richDetails,p_expected_version:privateDetailsBefore.version}});
+  check(hiddenSave.ok,'teacher can save canonical profile details with optimistic version');
+  const detailsAfterHiddenSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  const hiddenBioRaw = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=bio`,{token:service});
+  const hiddenBioPublicTeachers = await success('/rest/v1/rpc/public_teachers');
+  const visibleProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:teacher.id}});
+  check(detailsAfterHiddenSave.version===privateDetailsBefore.version+1 && !hiddenBioRaw[0].bio.includes('Hidden canonical biography') && !JSON.stringify(hiddenBioPublicTeachers).includes('Hidden canonical biography') && !JSON.stringify(visibleProjection).includes('Hidden canonical biography') && !JSON.stringify(visibleProjection).includes('hidden_sections'),'hidden About is absent from raw REST bio and both public teacher projections');
+  const staleSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:richDetails,p_expected_version:privateDetailsBefore.version}});
+  const afterStaleSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(!staleSave.ok && afterStaleSave.version===detailsAfterHiddenSave.version && afterStaleSave.details.about.en==='Hidden canonical biography','stale profile save cannot overwrite a newer version');
+  const concurrentCandidates = [
+    {...richDetails,approach:{ar:'Concurrent A',en:''}},
+    {...richDetails,approach:{ar:'Concurrent B',en:''}},
+  ];
+  const concurrentSaves = await Promise.all(concurrentCandidates.map(p_details=>request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details,p_expected_version:detailsAfterHiddenSave.version}})));
+  const afterConcurrentSaves = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(concurrentSaves.filter(result=>result.ok).length===1 && concurrentSaves.filter(result=>!result.ok).length===1 && afterConcurrentSaves.version===detailsAfterHiddenSave.version+1 && ['Concurrent A','Concurrent B'].includes(afterConcurrentSaves.details.approach.ar),'concurrent same-version saves serialize and only one can advance the profile');
+  const overlongLanguage = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:{...richDetails,languages:[' '.repeat(1000)+'x'+' '.repeat(1000)]},p_expected_version:afterConcurrentSaves.version}});
+  const afterOverlongLanguage = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(!overlongLanguage.ok && afterOverlongLanguage.version===afterConcurrentSaves.version && JSON.stringify(afterOverlongLanguage.details.languages)===JSON.stringify(afterConcurrentSaves.details.languages),'raw profile save rejects a teaching-language label over 60 stored characters without persisting it');
+  const invalidDetails = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:{...richDetails,unexpected:true},p_expected_version:detailsAfterHiddenSave.version}});
+  const foreignDetails = await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=teacher_id`,{token:otherTeacher.token});
+  const studentDetailsSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:student.token,method:'POST',body:{p_details:richDetails,p_expected_version:0}});
+  check(!invalidDetails.ok && foreignDetails.length===0 && !studentDetailsSave.ok,'raw JSON with unknown fields, foreign details reads, and non-teacher saves are rejected');
+  const directHiddenBioWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{bio:'Hidden canonical biography'}});
+  const bioAfterDirectWrite = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=bio`,{token:service});
+  check(!directHiddenBioWrite.ok || bioAfterDirectWrite[0].bio!=='Hidden canonical biography','raw teacher_profiles writes cannot expose hidden canonical About');
+  const legacySave = await request('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_bio:''}});
+  const detailsAfterLegacySave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(legacySave.ok && detailsAfterLegacySave.details.about.ar==='' && detailsAfterLegacySave.details.about.en==='Hidden canonical biography' && detailsAfterLegacySave.details.hidden_sections.includes('about'),'legacy save_teacher_profile clears hidden About and preserves other rich fields');
+  const accountSave = await request('/rest/v1/rpc/save_teacher_profile_account',{token:teacher.token,method:'POST',body:{p_full_name:'Teacher Contact Name',p_headline:'Algebra teacher',p_offering_ids:[offerings[0].id],p_phone_number:'+201234567890',p_whatsapp_number:'',p_contact_email:'contact@example.test',p_visibility:'enrolled'}});
+  const detailsAfterAccountSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(accountSave.ok && detailsAfterAccountSave.version===detailsAfterLegacySave.version && detailsAfterAccountSave.details.about.ar==='' && detailsAfterAccountSave.details.about.en==='Hidden canonical biography','contact/account save does not replay stale About or change descriptive version');
+  const newTeacherDetails = await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${pendingTeacher.id}&select=details,version`,{token:pendingTeacher.token});
+  check(newTeacherDetails.length===1 && newTeacherDetails[0].version===0 && newTeacherDetails[0].details.about.ar==='' && newTeacherDetails[0].details.about.en==='','new pending teacher starts with empty owner-editable details');
   const anonPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
   const unrelatedPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:otherTeacher.token});
   const pendingPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:pending.token});
@@ -279,6 +323,81 @@ try {
   const tooLargePath = `${teacher.id}/${randomUUID()}.png`;
   const tooLargeUpload = await uploadAvatar(tooLargePath,'image/png',Buffer.alloc(2097153),teacher.token);
   check(!tooLargeUpload.ok,'avatar storage enforces the 2 MiB upload cap');
+
+  const initialCoverPath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const coverPngAtLimit = Buffer.alloc(2097152);
+  pngBytes.copy(coverPngAtLimit);
+  const boundaryCoverUpload = await uploadAvatar(initialCoverPath,'image/png',coverPngAtLimit,teacher.token);
+  assert(boundaryCoverUpload.ok,`Cover upload at exactly 2 MiB failed: ${boundaryCoverUpload.status} ${JSON.stringify(boundaryCoverUpload.data)}`);
+  uploadedCoverPaths.push(initialCoverPath);
+  const emptyPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
+  const emptyOwnerCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_teacher_id:teacher.id}});
+  check(emptyPublicCoverPath===null && emptyOwnerCoverPath===null,'cover projection returns null for an eligible teacher without a cover');
+  const coverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:initialCoverPath,p_expected_path:null}});
+  check(coverSaved===true,'active teacher can set a cover with compare-and-set');
+  const anonymousRawCoverRead = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`);
+  check(!anonymousRawCoverRead.ok,'anonymous cover projection does not grant raw teacher_profiles reads');
+  const rawCoverClear = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{cover_path:null}});
+  const coverAfterRawClear = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
+  check((!rawCoverClear.ok || rawCoverClear.data.length===0) && coverAfterRawClear===initialCoverPath,'active teacher cannot bypass compare-and-set with a raw cover update');
+  const directAvatarWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{avatar_path:avatarPath}});
+  check(directAvatarWrite.ok && directAvatarWrite.data.length===1,'legacy authenticated avatar reference update remains available');
+  const publicCoverAccess = await success('/rest/v1/rpc/can_read_teacher_cover',{method:'POST',body:{p_name:initialCoverPath}});
+  const publicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
+  const publicCoverRead = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  check(publicCoverAccess===true && publicCoverPath===initialCoverPath && publicCoverRead.ok,'anonymous projection and signing expose only the current cover of an approved teacher');
+  const currentCoverDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[initialCoverPath]}});
+  check(!Array.isArray(currentCoverDelete.data) || !currentCoverDelete.data.some(row=>row.name===initialCoverPath),'Storage refuses to delete a currently referenced cover');
+  const coverAfterDeniedDelete = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  check(coverAfterDeniedDelete.ok,'denied concurrent cover deletion preserves the current object');
+  const preservedAvatar = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=avatar_path`,{token:service}))[0].avatar_path;
+  check(preservedAvatar===avatarPath,'cover save preserves the independent avatar reference');
+
+  const secondCoverPath = `${teacher.id}/cover/${randomUUID()}.webp`;
+  const thirdCoverPath = `${teacher.id}/cover/${randomUUID()}.jpg`;
+  const webpBytes = Buffer.from('UklGRgAAAABXRUJQVlA4', 'ascii');
+  const secondCoverUpload = await uploadAvatar(secondCoverPath,'image/webp',webpBytes,teacher.token);
+  const thirdCoverUpload = await uploadAvatar(thirdCoverPath,'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),teacher.token);
+  assert(secondCoverUpload.ok && thirdCoverUpload.ok,'Cover concurrency fixtures uploaded');
+  uploadedCoverPaths.push(secondCoverPath,thirdCoverPath);
+  const concurrentCoverSaves = await Promise.all([
+    request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:secondCoverPath,p_expected_path:initialCoverPath}}),
+    request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:thirdCoverPath,p_expected_path:initialCoverPath}}),
+  ]);
+  assert(concurrentCoverSaves.every(result=>result.ok),`Concurrent cover saves failed: ${JSON.stringify(concurrentCoverSaves)}`);
+  const currentCover = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
+  check(concurrentCoverSaves.filter(result=>result.data===true).length===1 && [secondCoverPath,thirdCoverPath].includes(currentCover),'concurrent compare-and-set cover replacements have one winner');
+  const failedSavePath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const failedSaveUpload = await uploadAvatar(failedSavePath,'image/png',pngBytes,teacher.token);
+  assert(failedSaveUpload.ok,'Failed-save cover fixture uploaded');
+  uploadedCoverPaths.push(failedSavePath);
+  const failedMetadataSave = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:failedSavePath,p_expected_path:initialCoverPath}});
+  const afterFailedCoverSave = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path,avatar_path`,{token:service}))[0];
+  const failedSavePublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${failedSavePath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  const failedSaveOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${failedSavePath.split('/').map(encodeURIComponent).join('/')}`,{token:teacher.token,method:'POST',body:signBody});
+  check(failedMetadataSave===false && afterFailedCoverSave.cover_path===currentCover && afterFailedCoverSave.avatar_path===avatarPath && !failedSavePublicRead.ok && failedSaveOwnerRead.ok,'failed metadata save keeps the current cover and avatar while the new object stays private');
+  const failedCoverDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[failedSavePath]}});
+  assert(failedCoverDelete.ok && failedCoverDelete.data.some(row=>row.name===failedSavePath),'owner can clean an unreferenced cover after a failed save');
+  uploadedCoverPaths.splice(uploadedCoverPaths.indexOf(failedSavePath),1);
+  const foreignCoverPath = `${otherTeacher.id}/cover/${randomUUID()}.png`;
+  const foreignCoverUpload = await uploadAvatar(foreignCoverPath,'image/png',pngBytes,teacher.token);
+  check(!foreignCoverUpload.ok,'teacher cannot upload a cover under a foreign owner UUID');
+  const avatarKindSpoof = await uploadAvatar(`${teacher.id}/${randomUUID()}/cover.png`,'image/png',pngBytes,teacher.token);
+  check(!avatarKindSpoof.ok,'cover kind path cannot be uploaded through the avatar contract');
+  const overLimitCoverPath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const overLimitCoverUpload = await uploadAvatar(overLimitCoverPath,'image/png',Buffer.alloc(2097153),teacher.token);
+  check(!overLimitCoverUpload.ok,'cover storage rejects files larger than 2 MiB');
+
+  const pendingCoverPath = `${pendingTeacher.id}/cover/${randomUUID()}.png`;
+  const pendingCoverUpload = await uploadAvatar(pendingCoverPath,'image/png',pngBytes,pendingTeacher.token);
+  assert(pendingCoverUpload.ok,'Unapproved active teacher can upload a private cover');
+  uploadedCoverPaths.push(pendingCoverPath);
+  const pendingCoverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:pendingTeacher.token,method:'POST',body:{p_cover_path:pendingCoverPath,p_expected_path:null}});
+  const pendingPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:pendingTeacher.id}});
+  const pendingOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${pendingCoverPath.split('/').map(encodeURIComponent).join('/')}`,{token:pendingTeacher.token,method:'POST',body:signBody});
+  const pendingPublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${pendingCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  check(pendingCoverSaved===true && pendingPublicCoverPath===null && pendingOwnerRead.ok && !pendingPublicRead.ok,'pending teacher can sign their own cover while public projection and signing remain hidden');
+
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
   await success('/rest/v1/teacher_specializations',{token:service,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id}});
   const hiddenSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
@@ -298,6 +417,34 @@ try {
   check(approvedPublicRead.ok,'referenced avatar becomes public after its teacher is approved');
   const visibleSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
   check(visibleSpecializations.some(row=>row.offering_id===offerings[0].id),'public specialization RPC exposes offerings for an approved active teacher');
+  const themeProfileBase = {
+    about:{ar:'',en:''},approach:{ar:'',en:''},goals:{ar:'',en:''},qualifications:[],experience:[],
+    languages:[],city:{ar:'',en:''},teaching_mode:null,
+    section_order:['about','qualifications','experience','approach','goals'],hidden_sections:[],
+  };
+  let themeVersion = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${otherTeacher.id}&select=version`,{token:otherTeacher.token}))[0].version;
+  const indigoThemeSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:otherTeacher.token,method:'POST',body:{p_details:{...themeProfileBase,layout:'compact',palette:'indigo'},p_expected_version:themeVersion}});
+  assert(indigoThemeSave.ok,'Teacher can save theme-only compact/indigo profile details');
+  themeVersion = indigoThemeSave.data;
+  const indigoThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(indigoThemeProjection?.layout==='compact' && indigoThemeProjection?.palette==='indigo' && indigoThemeProjection.sections.length===0,'anonymous RPC returns theme-only compact/indigo settings with no visible sections');
+  const oliveThemeSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:otherTeacher.token,method:'POST',body:{p_details:{...themeProfileBase,layout:'classic',palette:'olive'},p_expected_version:themeVersion}});
+  assert(oliveThemeSave.ok,'Teacher can save theme-only olive profile details');
+  themeVersion = oliveThemeSave.data;
+  const oliveThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(oliveThemeProjection?.layout==='classic' && oliveThemeProjection?.palette==='olive' && oliveThemeProjection.sections.length===0,'anonymous RPC returns theme-only olive palette with no visible sections');
+  const fullyHiddenSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:otherTeacher.token,method:'POST',body:{p_details:{...themeProfileBase,about:{ar:'Hidden theme secret',en:'Hidden theme secret'},approach:{ar:'Hidden approach',en:'Hidden approach'},goals:{ar:'Hidden goals',en:'Hidden goals'},layout:'compact',palette:'olive',hidden_sections:['about','qualifications','experience','approach','goals']},p_expected_version:themeVersion}});
+  assert(fullyHiddenSave.ok,'Teacher can save non-default appearance with all sections hidden');
+  const fullyHiddenProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(fullyHiddenProjection?.layout==='compact' && fullyHiddenProjection?.palette==='olive' && fullyHiddenProjection.sections.length===0 && !JSON.stringify(fullyHiddenProjection).includes('Hidden theme'),'anonymous RPC preserves non-default appearance without exposing fully hidden section values');
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
+  const pendingThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(pendingThemeProjection===null,'unapproved teacher with saved non-default appearance remains hidden');
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:true}});
+  await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(suspendedThemeProjection===null,'suspended teacher with saved non-default appearance remains hidden');
+  await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
   const privateLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:pending.token});
   check(privateLessons.length===0,'pending student cannot read private lessons');
   const memberLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:member.token});
@@ -428,9 +575,18 @@ try {
   const hiddenSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${otherGroup.id}`);
   check(hiddenSlots.length===0,'published slots disappear when their teacher is suspended');
   await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedDetailsBefore = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  const suspendedRawBioWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{bio:'Suspended overwrite'}});
+  const suspendedDetailsAfter = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check((!suspendedRawBioWrite.ok || suspendedRawBioWrite.data.length===0) && suspendedDetailsAfter.version===suspendedDetailsBefore.version && JSON.stringify(suspendedDetailsAfter.details.about)===JSON.stringify(suspendedDetailsBefore.details.about),'suspended teacher cannot change canonical About through raw teacher_profiles.bio updates');
   const suspendedAvatarOwner = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:teacher.token,method:'POST',body:signBody});
   const suspendedAvatarPublic = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:avatarPath}});
   const suspendedAvatarPublicSign = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{method:'POST',body:signBody});
+  const suspendedRawCoverClear = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{cover_path:null}});
+  const suspendedCoverCas = await request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:null,p_expected_path:currentCover}});
+  const suspendedCoverAfterWrites = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
+  const suspendedPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
+  check((!suspendedRawCoverClear.ok || suspendedRawCoverClear.data.length===0) && !suspendedCoverCas.ok && suspendedCoverAfterWrites===currentCover && suspendedPublicCoverPath===null,'suspended teacher cannot clear their cover and public cover projection returns null');
   const suspendedAvatarDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[avatarPath]}});
   assert(suspendedAvatarDelete.ok,`Suspended avatar delete request failed: ${suspendedAvatarDelete.status} ${JSON.stringify(suspendedAvatarDelete.data)}`);
   check(!Array.isArray(suspendedAvatarDelete.data) || !suspendedAvatarDelete.data.some(row=>row.name===avatarPath),'suspended owner cannot delete their avatar through Storage');
@@ -449,6 +605,11 @@ try {
   if (uploadedAvatarPaths.length) {
     const cleanup = await request('/storage/v1/object/teacher-avatars',{token:service,method:'DELETE',body:{prefixes:uploadedAvatarPaths}});
     if (!cleanup.ok) console.error(`Avatar fixture cleanup failed: ${cleanup.status}`);
+  }
+  if (uploadedCoverPaths.length) {
+    for (const id of users) await request(`/rest/v1/teacher_profiles?id=eq.${id}`,{token:service,method:'PATCH',body:{cover_path:null}});
+    const cleanup = await request('/storage/v1/object/teacher-avatars',{token:service,method:'DELETE',body:{prefixes:uploadedCoverPaths}});
+    if (!cleanup.ok) console.error(`Cover fixture cleanup failed: ${cleanup.status}`);
   }
   for (const id of users.reverse()) {
     const result = await request(`/auth/v1/admin/users/${id}`,{token:service,method:'DELETE'});

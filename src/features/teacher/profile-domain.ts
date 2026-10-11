@@ -3,16 +3,20 @@ import { z } from 'zod';
 export const teacherAvatarMaxBytes = 2_097_152;
 const avatarExtensions: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 
+function avatarExtension(mimeType: string): string | null {
+  return Object.prototype.hasOwnProperty.call(avatarExtensions, mimeType) ? avatarExtensions[mimeType] : null;
+}
+
 export function teacherAvatarExtension(file: { type: string; size: number }): string | null {
   if (!Number.isSafeInteger(file.size) || file.size < 1 || file.size > teacherAvatarMaxBytes) return null;
-  return avatarExtensions[file.type] ?? null;
+  return avatarExtension(file.type);
 }
 
 export function teacherAvatarPath(teacherId: string, fileId: string, mimeType: string): string {
   const uuid = z.string().uuid();
   const owner = uuid.parse(teacherId);
   const objectId = uuid.parse(fileId);
-  const extension = avatarExtensions[mimeType];
+  const extension = avatarExtension(mimeType);
   if (!extension) throw new Error('Unsupported teacher avatar image type');
   return `${owner}/${objectId}.${extension}`;
 }
@@ -63,7 +67,6 @@ export type TeacherProfileInput = z.infer<typeof teacherProfileSchema>;
 export type ProfileFormValues = {
   full_name: string;
   headline: string;
-  bio: string;
   offering_ids: string[];
   phone_number: string;
   whatsapp_number: string;
