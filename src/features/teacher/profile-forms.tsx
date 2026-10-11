@@ -1,20 +1,24 @@
 'use client';
 
-import { useActionState, useState } from 'react';
-import { removeTeacherAvatar, saveTeacherProfile, uploadTeacherAvatar, type TeacherProfileActionState } from './profile-actions';
+import { useActionState, useState, useTransition } from 'react';
+import { addTeacherSpecialization, removeTeacherAvatar, saveTeacherProfile, uploadTeacherAvatar, type TeacherProfileActionState, type TeacherSpecializationActionState } from './profile-actions';
 import { TeacherAvatarImage } from './profile-avatar-image';
 import type { Locale } from '@/features/student/domain';
-import type { ProfileFormValues } from './profile-domain';
+import { addUniqueOfferingId, type ProfileFormValues } from './profile-domain';
 import type { ProfileCatalogueNode, ProfileCatalogueOffering, ProfileCatalogueSubject } from './profile-data';
+import { CatalogueLabelEditor } from './catalogue-forms';
+import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
   save: 'حفظ الملف الشخصي', saving: 'جارٍ الحفظ…', fullName: 'الاسم الكامل', headline: 'العنوان المهني',
   specializations: 'المواد والتخصصات', chooseSubjects: 'اختر المواد والسياقات التي تدرّسها.', emptyCatalogue: 'لا توجد تخصصات متاحة بعد. يمكنك حفظ بقية بياناتك الآن.',
+  chooseSubject: 'المادة', chooseCategory: 'السنة / فئة الطلاب', addSpecialization: 'إضافة التخصص', adding: 'جارٍ الإضافة…', remove: 'إزالة', retained: 'تخصص محفوظ يحتوي على مادة أو فئة مؤرشفة.', archived: 'مؤرشف', addSubject: 'إضافة مادة', addCategory: 'إضافة سنة أو فئة',
   phone: 'رقم الهاتف', whatsapp: 'رقم واتساب', email: 'بريد التواصل', e164: 'اكتب الرقم بالصيغة الدولية، مثل +201234567890.',
   visibility: 'من يمكنه رؤية بيانات التواصل؟', enrolled: 'طلاب المجموعات المقبولون فقط', public: 'عام بعد اعتماد الحساب', visibilityHint: 'لا يؤثر هذا الاختيار في بريد تسجيل الدخول.',
   required: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 100 حرف.', headlineBounds: 'يجب ألا يتجاوز العنوان 160 حرفاً.',
   phoneError: 'أدخل رقماً دولياً صحيحاً بصيغة E.164 أو اتركه فارغاً.', emailError: 'أدخل بريداً صحيحاً لا يتجاوز 254 حرفاً أو اتركه فارغاً.',
   selectionError: 'تحقق من اختيار التخصصات.',
+  pairError: 'اختر مادة وسنة أو فئة نشطتين.',
 } : {
   save: 'Save profile', saving: 'Saving…', fullName: 'Full name', headline: 'Professional headline',
   specializations: 'Subjects and specializations', chooseSubjects: 'Choose the subjects and academic contexts you teach.', emptyCatalogue: 'No specializations are available yet. You can save the rest of your profile.',
@@ -23,6 +27,7 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   required: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 100 characters.', headlineBounds: 'Headline must be no longer than 160 characters.',
   phoneError: 'Enter a valid international E.164 number or leave this blank.', emailError: 'Enter a valid email up to 254 characters or leave this blank.',
   selectionError: 'Check your specialization selection.',
+  chooseSubject: 'Subject', chooseCategory: 'Year / student category', addSpecialization: 'Add specialization', adding: 'Adding…', remove: 'Remove', retained: 'Saved specialization with an archived subject or category.', archived: 'Archived', addSubject: 'Add a subject', addCategory: 'Add a year or category', pairError: 'Choose an active subject and year or category.',
 };
 
 type Props = {
@@ -31,6 +36,7 @@ type Props = {
   nodes: ProfileCatalogueNode[];
   subjects: ProfileCatalogueSubject[];
   offerings: ProfileCatalogueOffering[];
+  retainedOfferingIds?: string[];
 };
 
 export function TeacherAvatarEditor({ locale, avatarUrl, hasAvatar, fullName }: { locale: Locale; avatarUrl: string | null; hasAvatar: boolean; fullName: string }) {
@@ -62,11 +68,32 @@ export function TeacherAvatarEditor({ locale, avatarUrl, hasAvatar, fullName }: 
   </section>;
 }
 
-export function TeacherProfileForm({ locale, values, nodes, subjects, offerings }: Props) {
+export function TeacherProfileForm({ locale, values, nodes, subjects, offerings, retainedOfferingIds = [] }: Props) {
   const t = copy(locale);
   const ar = locale === 'ar';
   const [formValues, setFormValues] = useState(values);
   const [state, action, pending] = useActionState<TeacherProfileActionState, FormData>(saveTeacherProfile.bind(null, locale), null);
+  const [pairState, setPairState] = useState<TeacherSpecializationActionState>(null);
+  const [pairPending, startPairTransition] = useTransition();
+  const [choiceSubjects, setChoiceSubjects] = useState(subjects.filter(row => row.archived_at === null));
+  const [choiceNodes, setChoiceNodes] = useState(nodes.filter(row => row.archived_at === null));
+  const [offeringRows, setOfferingRows] = useState(offerings);
+  const [selectedSubjectId, setSelectedSubjectId] = useState(() => subjects.find(row => row.archived_at === null)?.id ?? '');
+  const [selectedCategoryId, setSelectedCategoryId] = useState(() => nodes.find(row => row.archived_at === null)?.id ?? '');
+  const [showSubjectEditor, setShowSubjectEditor] = useState(false);
+  const [showCategoryEditor, setShowCategoryEditor] = useState(false);
+  const submitPair = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    startPairTransition(async () => {
+      const result = await addTeacherSpecialization(locale, pairState, form);
+      setPairState(result);
+      if (result?.row) {
+        setOfferingRows(current => current.some(row => row.id === result.row?.id) ? current : [...current, result.row!]);
+        setFormValues(current => ({ ...current, offering_ids: addUniqueOfferingId(current.offering_ids, result.row!.id) }));
+      }
+    });
+  };
   const fieldError = (name: string) => state?.fieldErrors?.[name];
   const errorText = (name: string) => {
     if (!fieldError(name)) return undefined;
@@ -76,15 +103,18 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
     if (name === 'contact_email') return t.emailError;
     return t.selectionError;
   };
-  const getName = (row: { name_ar: string; name_en: string }) => ar ? row.name_ar : row.name_en;
+  const getName = (row: { name_ar: string; name_en: string }) => {
+    const localized = ar ? row.name_ar.trim() : row.name_en.trim();
+    return localized || (ar ? row.name_en.trim() : row.name_ar.trim());
+  };
   const ancestors = (nodeId: string) => {
     const labels: string[] = [];
-    let node = nodes.find(item => item.id === nodeId);
+    let node = [...choiceNodes, ...nodes].find(item => item.id === nodeId);
     const seen = new Set<string>();
     while (node && !seen.has(node.id)) {
       seen.add(node.id);
       labels.unshift(getName(node));
-      node = node.parent_id ? nodes.find(item => item.id === node?.parent_id) : undefined;
+      node = node.parent_id ? [...choiceNodes, ...nodes].find(item => item.id === node?.parent_id) : undefined;
     }
     return labels.join(' › ');
   };
@@ -99,7 +129,27 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
     </div>;
   };
 
-  return <form action={action} onReset={event => event.preventDefault()} className="space-y-6">
+  const selectedOfferingRows = formValues.offering_ids.flatMap(id => {
+    const offering = offeringRows.find(row => row.id === id);
+    const subject = offering && [...choiceSubjects, ...subjects].find(row => row.id === offering.subject_id);
+    const node = offering && [...choiceNodes, ...nodes].find(row => row.id === offering.node_id);
+    if (!offering || !subject || !node) return [];
+    const archived = retainedOfferingIds.includes(id) || offering.archived_at !== null || subject.archived_at !== null || node.archived_at !== null;
+    return [{ offering, subject, node, archived }];
+  });
+
+  const savedSubject = (row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
+    if ('parent_id' in row) {
+      setChoiceNodes(current => current.some(item => item.id === row.id) ? current : [...current, row]);
+      setSelectedCategoryId(row.id);
+    } else {
+      setChoiceSubjects(current => current.some(item => item.id === row.id) ? current : [...current, row]);
+      setSelectedSubjectId(row.id);
+    }
+  };
+
+  return <div className="space-y-6">
+  <form action={action} onReset={event => event.preventDefault()} className="space-y-6">
     <div className="grid gap-5 md:grid-cols-2">
       <div>
         <label htmlFor="profile-full-name" className="block text-sm font-bold">{t.fullName}</label>
@@ -115,15 +165,12 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
     <fieldset className="min-w-0" aria-describedby={fieldError('offering_ids') ? 'profile-specialization-error' : undefined}>
       <legend className="text-lg font-black text-teal">{t.specializations}</legend>
       <p className="mt-1 text-sm text-muted">{t.chooseSubjects}</p>
-      {offerings.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">
-        {offerings.map(offering => {
-          const subject = subjects.find(item => item.id === offering.subject_id);
-          const id = `offering-${offering.id}`;
-          return <label key={offering.id} htmlFor={id} className="flex min-w-0 cursor-pointer items-start gap-3 rounded-xl border border-line bg-cream/60 p-3">
-            <input id={id} name="offering_ids" type="checkbox" value={offering.id} checked={formValues.offering_ids.includes(offering.id)} onChange={event => setFormValues(current => ({ ...current, offering_ids: event.target.checked ? [...current.offering_ids, offering.id] : current.offering_ids.filter(id => id !== offering.id) }))} className="mt-1 size-4 shrink-0 accent-teal" />
-            <span className="min-w-0"><span className="block font-bold text-teal">{subject ? getName(subject) : ''}</span><span className="mt-1 block break-words text-sm text-muted">{ancestors(offering.node_id)}</span></span>
-          </label>;
-        })}
+      {selectedOfferingRows.length ? <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        {selectedOfferingRows.map(({ offering, subject, node, archived }) => <div key={offering.id} className="flex min-w-0 items-start gap-3 rounded-xl border border-line bg-cream/60 p-3">
+          <input type="hidden" name="offering_ids" value={offering.id}/>
+          <span className="min-w-0 flex-1"><span className="block font-bold text-teal">{getName(subject)}</span><span className="mt-1 block break-words text-sm text-muted">{ancestors(node.id)}</span>{archived && <span className="mt-2 block text-xs text-muted">{t.retained} {t.archived}</span>}</span>
+          <button type="button" onClick={() => setFormValues(current => ({ ...current, offering_ids: current.offering_ids.filter(id => id !== offering.id) }))} className="shrink-0 rounded-lg border border-line px-3 py-1.5 text-sm font-bold text-teal">{t.remove}</button>
+        </div>)}
       </div> : <p className="mt-3 rounded-xl border border-dashed border-line p-4 text-sm text-muted">{t.emptyCatalogue}</p>}
       {fieldError('offering_ids') && <p id="profile-specialization-error" className="mt-2 text-sm text-red-700">{errorText('offering_ids')}</p>}
     </fieldset>
@@ -148,5 +195,23 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
     {state?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}
     {state?.success && <p role="status" className="rounded-xl bg-teal/10 p-3 text-sm font-bold text-teal">{state.success}</p>}
     <button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.save}</button>
-  </form>;
+  </form>
+  <section aria-label={t.addSpecialization} className="space-y-4 border-t border-line pt-5">
+    <h2 className="text-lg font-black text-teal">{t.addSpecialization}</h2>
+    {choiceSubjects.length && choiceNodes.length ? <form onSubmit={submitPair} onReset={event => event.preventDefault()} className="grid gap-4 sm:grid-cols-2">
+      <div><label htmlFor="profile-add-subject" className="block text-sm font-bold">{t.chooseSubject}</label><select id="profile-add-subject" name="subject_id" value={selectedSubjectId} onChange={event => setSelectedSubjectId(event.target.value)} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">{choiceSubjects.map(row => <option key={row.id} value={row.id}>{getName(row)}</option>)}</select></div>
+      <div><label htmlFor="profile-add-category" className="block text-sm font-bold">{t.chooseCategory}</label><select id="profile-add-category" name="category_id" value={selectedCategoryId} onChange={event => setSelectedCategoryId(event.target.value)} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">{choiceNodes.map(row => <option key={row.id} value={row.id}>{ancestors(row.id)}</option>)}</select></div>
+      <button type="submit" disabled={pairPending} className="rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:opacity-50 sm:col-span-2 sm:justify-self-start">{pairPending ? t.adding : t.addSpecialization}</button>
+    </form> : <p className="rounded-xl border border-dashed border-line p-4 text-sm text-muted">{t.emptyCatalogue}</p>}
+    {pairState?.fieldErrors && <p role="alert" className="text-sm text-red-700">{t.pairError}</p>}
+    {pairState?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{pairState.error}</p>}
+    {pairState?.success && <p role="status" className="text-sm font-bold text-teal">{pairState.success}</p>}
+    <div className="flex flex-wrap gap-3">
+      <button type="button" onClick={() => { setShowSubjectEditor(value => !value); setShowCategoryEditor(false); }} className="rounded-xl border border-line px-4 py-2 text-sm font-bold text-teal">{t.addSubject}</button>
+      <button type="button" onClick={() => { setShowCategoryEditor(value => !value); setShowSubjectEditor(false); }} className="rounded-xl border border-line px-4 py-2 text-sm font-bold text-teal">{t.addCategory}</button>
+    </div>
+    {showSubjectEditor && <div className="rounded-2xl border border-line bg-cream p-4"><CatalogueLabelEditor locale={locale} kind="subject" onSaved={row => savedSubject(row as TeacherCatalogueSubject)}/></div>}
+    {showCategoryEditor && <div className="rounded-2xl border border-line bg-cream p-4"><CatalogueLabelEditor locale={locale} kind="category" onSaved={row => savedSubject(row as TeacherCatalogueCategory)}/></div>}
+  </section>
+  </div>;
 }

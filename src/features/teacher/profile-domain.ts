@@ -62,6 +62,15 @@ export const teacherProfileSchema = z.object({
   visibility: z.enum(['enrolled', 'public']).default('enrolled'),
 });
 
+export const teacherSpecializationPairSchema = z.object({
+  subject_id: z.string().uuid(),
+  category_id: z.string().uuid(),
+});
+
+export function addUniqueOfferingId(ids: string[], id: string): string[] {
+  return ids.includes(id) ? ids : [...ids, id];
+}
+
 export type TeacherProfileInput = z.infer<typeof teacherProfileSchema>;
 
 export type ProfileFormValues = {

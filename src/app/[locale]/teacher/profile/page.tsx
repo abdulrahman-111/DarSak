@@ -21,7 +21,7 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
       <TeacherAvatarEditor locale={locale} avatarUrl={data.avatarUrl} hasAvatar={data.hasAvatar} fullName={data.values.full_name}/>
       <TeacherCoverEditor locale={locale} coverUrl={data.coverUrl} hasCover={!!data.coverUrl}/>
       {!data.me.teacher?.approved && <p className="mb-5 rounded-xl bg-orange/10 p-3 text-sm text-ink">{ar ? 'يمكنك تعديل ملفك الشخصي أثناء انتظار اعتماد الحساب.' : 'You can edit your profile while your account is awaiting approval.'}</p>}
-      <TeacherProfileForm locale={locale} values={data.values} nodes={data.nodes} subjects={data.subjects} offerings={data.offerings}/>
+      <TeacherProfileForm locale={locale} values={data.values} nodes={data.nodes} subjects={data.subjects} offerings={data.offerings} retainedOfferingIds={data.retainedOfferingIds}/>
       <TeacherProfileDetailsForm locale={locale} details={data.details.details} version={data.details.version} error={data.details.error} teacher={{ id: data.me.id, full_name: data.values.full_name, headline: data.values.headline || null }} avatarUrl={data.avatarUrl} coverUrl={data.coverUrl} specializations={data.previewSpecializations} groups={data.previewGroups} contactVisibility={data.values.visibility} previewContacts={publicVisitorContacts(data.values.visibility, data.contacts)}/>
     </Panel>}
   </>;
