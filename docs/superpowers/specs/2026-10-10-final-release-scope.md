@@ -21,6 +21,7 @@ The detailed behavior and authorization requirements are in [the expanded design
 9. **Password recovery and accurate signup feedback.** Forgot-password entry, safe recovery callback/new-password flow, expired-link handling, account-enumeration-safe messaging and proper confirmation-required signup feedback. Preserve roles and all teaching access rules; do not change Auth confirmation settings. Verify Supabase Auth email delivery separately from Gmail application notifications.
 10. **Public group sharing.** Copy link plus native Share where supported, with a manual fallback. Eligible published groups only; no private information, access tokens or permission bypass.
 11. **Richer, customizable teacher profiles.** Add optional education/qualifications, experience, teaching approach/goals, languages, broad location and teaching modes. Provide a cover image, curated layouts/accessible colors, optional-section visibility/order, private completeness guidance and a visitor preview. Show real eligible group cards with next lessons/seats. Preserve biography/photo/contact data, bilingual fallback, enrolled-only contact defaults and expiry editing exceptions; keep hidden sections private and self-reported credentials clearly unverified.
+12. **Easier navigation for every role.** Give teachers, students and admins consistent role menus, a clear current-page indicator, breadcrumbs where useful and an obvious return to their dashboard. Surface each role's main actions through simple shortcuts. Preserve English/Arabic, mobile usability, keyboard focus and all existing authorization rules; deliver this with Phase 6.
 
 ## Delivery phases
 
@@ -31,7 +32,7 @@ The detailed behavior and authorization requirements are in [the expanded design
 | 3 | Initial approval bug, request lifecycle and admin actions | Database/API regression, private audit and transactional outbox foundation |
 | 4 | Monthly access and expiry enforcement | Explicit role/action matrix; free grants; teacher/student/admin isolation |
 | 5 | Email worker and fee-announcement readiness | Private outbox, fake SMTP tests, real delivery only after credentials |
-| 6 | Remaining student/admin UX, recovery and group sharing | Bilingual mobile/browser checks and full integration review |
+| 6 | Remaining student/admin UX, easier navigation for all roles, recovery and group sharing | Bilingual mobile/browser and keyboard checks, preserved authorization and full integration review |
 
 Each phase is divided into small Luna tasks, reviewed by Sol before moving on. Keep a dependency-aware plan: Auth creation, review and renewal event producers must integrate with the outbox without losing transactions. Create the private outbox/event scaffold in phase 3, before approval/renewal event producers are added, even though SMTP delivery is implemented later.
 
