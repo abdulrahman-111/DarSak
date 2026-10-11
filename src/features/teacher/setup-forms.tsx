@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import type { Locale } from '@/features/student/domain';
 import { deleteScheduleSlot, saveGroupDraft, saveScheduleSlot, type GroupDraftActionState, type ScheduleSlotActionState } from './setup-actions';
 import type { GroupDetailsFormValues, GroupScheduleProposal, GroupScheduleSlot } from './setup-data';
-import type { SetupStep } from './setup-domain';
+import { isRetainedCataloguePair, type SetupStep } from './setup-domain';
 import { CatalogueLabelEditor } from './catalogue-forms';
 import type { SetupCatalogue } from './setup-data';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
@@ -15,13 +15,13 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   name: 'اسم المجموعة', description: 'الوصف', subject: 'المادة', category: 'السنة / فئة الطلاب', capacity: 'السعة', location: 'المكان', addSubject: 'إضافة مادة', addCategory: 'إضافة سنة / فئة',
   save: 'حفظ التفاصيل', saving: 'جارٍ الحفظ…',
   nameRequired: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 120 حرفاً.', descriptionBounds: 'يجب ألا يتجاوز الوصف 2000 حرف.',
-  locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وسياقاً دراسياً.',
+  locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وفئة دراسية نشطتين.',
   details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
 } : {
   name: 'Group name', description: 'Description', subject: 'Subject', category: 'Year / student category', capacity: 'Capacity', location: 'Location', addSubject: 'Add subject', addCategory: 'Add year / category',
   save: 'Save details', saving: 'Saving…',
   nameRequired: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 120 characters.', descriptionBounds: 'Description must be no longer than 2,000 characters.',
-  locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose a subject and education context.',
+  locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose an active subject and year or student category.',
   details: 'Details', schedule: 'Schedule', review: 'Review', reviewPending: 'Review your group setup here before publishing.',
 };
 
@@ -69,20 +69,29 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   };
   const invalid = (field: string) => ({ 'aria-invalid': !!fieldError(field), 'aria-describedby': fieldError(field) ? `group-${field}-error` : undefined });
 
+  const savedSubjectRow = subjects.find(item => item.id === catalogue.retained?.subject_id);
+  const savedCategoryRow = nodes.find(item => item.id === catalogue.retained?.category_id);
+  const retainedSubjectIsArchived = !!savedSubjectRow && savedSubjectRow.archived_at !== null;
+  const retainedCategoryIsArchived = !!savedCategoryRow && savedCategoryRow.archived_at !== null;
+  const retainedSubjectArchived = retainedSubjectIsArchived && catalogue.retained?.subject_id === formValues.subject_id;
+  const retainedCategoryArchived = retainedCategoryIsArchived && catalogue.retained?.category_id === formValues.category_id;
   const onSubjectSaved = useCallback((row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
     const subject = row as TeacherCatalogueSubject;
     setSubjects(current => current.some(item => item.id === subject.id) ? current.map(item => item.id === subject.id ? subject : item) : [...current, subject]);
-    setFormValues(current => ({ ...current, subject_id: subject.id }));
+    setFormValues(current => ({ ...current, subject_id: subject.id, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }));
     setAddSubject(false);
-  }, []);
+  }, [catalogue.retained, retainedCategoryIsArchived]);
   const onCategorySaved = useCallback((row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
     const category = row as TeacherCatalogueCategory;
     setNodes(current => current.some(item => item.id === category.id) ? current.map(item => item.id === category.id ? category : item) : [...current, category]);
-    setFormValues(current => ({ ...current, category_id: category.id }));
+    setFormValues(current => ({ ...current, category_id: category.id, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }));
     setAddCategory(false);
-  }, []);
-  const activeSubjects = subjects.filter(item => item.archived_at === null || item.id === catalogue.retained?.subject_id);
-  const eligibleNodes = nodes.filter(item => (item.archived_at === null || item.id === catalogue.retained?.category_id) &&
+  }, [catalogue.retained, retainedSubjectIsArchived]);
+  const retainedPairUnchanged = isRetainedCataloguePair(formValues, catalogue.retained);
+  const subjectNeedsActiveChoice = !!catalogue.retained && retainedSubjectIsArchived && formValues.category_id !== catalogue.retained.category_id && !formValues.subject_id;
+  const categoryNeedsActiveChoice = !!catalogue.retained && retainedCategoryIsArchived && formValues.subject_id !== catalogue.retained.subject_id && !formValues.category_id;
+  const activeSubjects = subjects.filter(item => item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.subject_id));
+  const eligibleNodes = nodes.filter(item => (item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.category_id)) &&
     (item.owner_teacher_id === null ? ['grade', 'university', 'year'].includes(item.kind) : ['custom_year', 'student_category'].includes(item.kind)));
   const contextLabel = (nodeId: string) => {
     const labels: string[] = [];
@@ -99,7 +108,7 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   return <div className="grid gap-5">
   <form action={action} onReset={event => event.preventDefault()} className="grid gap-5">
     {groupId && <input type="hidden" name="group_id" value={groupId} />}
-    {groupId && <input type="hidden" name="expected_updated_at" value={values?.updated_at ?? ''} />}
+    {groupId && <input type="hidden" name="expected_updated_at" value={formValues.updated_at ?? ''} />}
     <div>
       <label htmlFor="group-name" className="block text-sm font-bold">{t.name}</label>
       <input id="group-name" name="name" value={formValues.name} onChange={event => setFormValues(current => ({ ...current, name: event.target.value }))} required minLength={2} maxLength={120} {...invalid('name')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
@@ -112,20 +121,22 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     </div>
     <div>
       <label htmlFor="group-subject" className="block text-sm font-bold">{t.subject}</label>
-      <select id="group-subject" name="subject_id" value={formValues.subject_id} onChange={event => setFormValues(current => ({ ...current, subject_id: event.target.value }))} required {...invalid('subject_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+      <select id="group-subject" name="subject_id" value={formValues.subject_id} onChange={event => setFormValues(current => ({ ...current, subject_id: event.target.value, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }))} required {...invalid('subject_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
         <option value="">—</option>
-        {activeSubjects.map(subject => <option key={subject.id} value={subject.id}>{locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}</option>)}
+        {activeSubjects.map(subject => <option key={subject.id} value={subject.id}>{subject.id === catalogue.retained?.subject_id && retainedSubjectArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}` : locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}</option>)}
       </select>
       {fieldError('subject_id') && <p id="group-subject_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('subject_id')}</p>}
+      {subjectNeedsActiveChoice && <p className="mt-1 text-sm text-muted">{t.offeringError}</p>}
       <button type="button" onClick={() => setAddSubject(value => !value)} className="mt-2 text-sm font-bold text-teal underline">{t.addSubject}</button>
     </div>
     <div>
       <label htmlFor="group-category" className="block text-sm font-bold">{t.category}</label>
-      <select id="group-category" name="category_id" value={formValues.category_id} onChange={event => setFormValues(current => ({ ...current, category_id: event.target.value }))} required {...invalid('category_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+      <select id="group-category" name="category_id" value={formValues.category_id} onChange={event => setFormValues(current => ({ ...current, category_id: event.target.value, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }))} required {...invalid('category_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
         <option value="">—</option>
-        {eligibleNodes.map(node => <option key={node.id} value={node.id}>{contextLabel(node.id)}</option>)}
+        {eligibleNodes.map(node => <option key={node.id} value={node.id}>{node.id === catalogue.retained?.category_id && retainedCategoryArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${contextLabel(node.id)}` : contextLabel(node.id)}</option>)}
       </select>
       {fieldError('category_id') && <p id="group-category_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('category_id')}</p>}
+      {categoryNeedsActiveChoice && <p className="mt-1 text-sm text-muted">{t.offeringError}</p>}
       <button type="button" onClick={() => setAddCategory(value => !value)} className="mt-2 text-sm font-bold text-teal underline">{t.addCategory}</button>
     </div>
     <div className="grid gap-5 sm:grid-cols-2">

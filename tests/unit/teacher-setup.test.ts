@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { idSchema } from '@/features/student/domain';
-import { groupDetailsSchema, groupScheduleSlotSchema, normalizeSetupStep, setupCatalogueChoices } from '@/features/teacher/setup-domain';
+import { groupDetailsSchema, groupScheduleSlotSchema, isRetainedCataloguePair, normalizeSetupStep, setupCatalogueChoices } from '@/features/teacher/setup-domain';
 
 const validDetails = {
   name: 'Algebra group',
@@ -33,6 +33,14 @@ describe('teacher group setup details', () => {
     expect(groupDetailsSchema.safeParse({ ...validDetails, category_id: 'english-only' }).success).toBe(false);
     expect(groupDetailsSchema.safeParse({ ...validDetails, capacity: 'ten' }).success).toBe(false);
     expect(idSchema.safeParse('malformed-group-id').success).toBe(false);
+  });
+
+  it('retains an archived pair only while both saved component IDs stay unchanged', () => {
+    const retained = { subject_id: 'subject-1', category_id: 'category-1' };
+    expect(isRetainedCataloguePair(retained, retained)).toBe(true);
+    expect(isRetainedCataloguePair({ ...retained, category_id: 'category-2' }, retained)).toBe(false);
+    expect(isRetainedCataloguePair({ ...retained, subject_id: 'subject-2' }, retained)).toBe(false);
+    expect(isRetainedCataloguePair(retained, null)).toBe(false);
   });
 
   it('normalizes unsupported setup steps to details', () => {

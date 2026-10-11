@@ -37,6 +37,13 @@ export type SetupCatalogueSubject = { id: string; owner_teacher_id: string | nul
 export type SetupCatalogueOffering = { id: string; owner_teacher_id: string | null; archived_at: string | null; node_id: string; subject_id: string };
 export type SetupCatalogueChoice = { id: string; subject_id: string; category_id: string; subject: string; context: string; label: string };
 
+export function isRetainedCataloguePair(
+  selected: { subject_id: string; category_id: string },
+  retained: Pick<SetupCatalogueChoice, 'subject_id' | 'category_id'> | null,
+): boolean {
+  return !!retained && selected.subject_id === retained.subject_id && selected.category_id === retained.category_id;
+}
+
 export function setupCatalogueChoices(
   locale: Locale,
   nodes: SetupCatalogueNode[],
