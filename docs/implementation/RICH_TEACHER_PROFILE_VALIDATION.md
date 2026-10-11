@@ -1,6 +1,6 @@
 # Rich teacher profile validation
 
-Validation is against branch `codex/teacher-profiles` at `a9431dc` unless a row names a prior revision. The first authenticated browser run exposed an anonymous public-profile failure in the cover-reference read. Root added the narrow `public_teacher_cover_path(p_teacher_id uuid) returns text` RPC in `33b7704`, and corrected its scalar loader in `a9431dc`; scoped review, final build, fresh SQL replay, API, and browser checks now pass.
+Validation is against code commit `a9431dc` on `codex/teacher-profiles` unless a row names a prior revision. The initial public cover-reference failure was fixed by the narrow `public_teacher_cover_path(p_teacher_id uuid) returns text` RPC in `33b7704` and its scalar loader correction in `a9431dc`. Build, fresh SQL replay, API, and browser evidence below pass for that baseline. A subsequent whole-branch review reproduced an unresolved projection edge case for profiles containing only layout/palette settings: the public RPC returns `NULL`, so the selected appearance can be lost. Phase sign-off remains pending that follow-up.
 
 ## Build, tests, and database
 
@@ -14,13 +14,13 @@ Validation is against branch `codex/teacher-profiles` at `a9431dc` unless a row 
 | `tests/database/run.sh` | PASS: all 13 SQL suites in the final fresh replay. |
 | Fresh application migration replay | PASS: current migrations including the safe public cover RPC, seed, and all 13 SQL suites passed in a disposable `dars_validation` database. The helper removed the database after its run. Auth/Storage/extensions came from schema-only local framework objects; this does not claim a full Supabase service bootstrap. See `/workspace/shared/dars-profile-phase/fresh-replay-final-report.md` for migration hashes and console tail. |
 | Local API integration | PASS: 137 assertions on the local database at `a9431dc`. |
-| Hosted Vercel build check | PASS for commit `3dcb94e`; this records the earlier CI build only, not production runtime or migration validation. |
+| Hosted Vercel build check | PASS for exact commit `a9431dc` (deployment `dpl_FVhbM9FpVq1K3FtLAvVv4cQNBWbY`); this records the preview build only, not production runtime or migration validation. |
 
 The standard Turbopack build remains failed; webpack is the verified production build command in this environment. No production database, user, migration, or deployment was changed during Task 5 validation.
 
 ## Authenticated browser evidence
 
-Chromium (`/usr/bin/chromium`, Playwright Core) ran against the local production server on port 3030. All users and group data were generated for this validation run.
+Chromium (`/usr/bin/chromium`, Playwright Core) ran against the local production server on port 3031. Port 3030 was occupied by a pre-existing listener, so validation used a fresh controlled server on 3031. All users and group data were generated for this validation run.
 
 Confirmed in the final replay:
 
@@ -49,7 +49,7 @@ At `3dcb94e`, `publicTeacherDetail` read `cover_path` directly from `teacher_pro
 
 An initial fixture attempt tried setting `profiles.status='pending'`; that value is invalid because account status is `active` or `suspended`. The pending-approval fixture is an active teacher with `teacher_profiles.approved=false`, matching the application model. The attempt stopped before browser navigation and its generated Auth fixtures were removed.
 
-The final Chromium run passed 12 named cases. Its helper and results are under `/workspace/.dars-browser-tools/validation`; the helper is external to the repository and has no product dependencies. A raw anonymous table probe for `teacher_profiles.cover_path` remains 401 intentionally; the public route uses the reviewed safe RPC.
+The Chromium baseline run passed 12 named cases. Its helper and results are under `/workspace/.dars-browser-tools/validation`; the helper is external to the repository and has no product dependencies. A raw anonymous table probe for `teacher_profiles.cover_path` remains 401 intentionally; the public route uses the reviewed safe RPC. The separate theme-only projection case described above is not covered by these fixtures and still needs a targeted regression and browser replay after its fix.
 
 The final independent cleanup audit passed 16 checks: all five fixture Auth users returned 404; their profile, teacher-profile, details, contact, group and enrollment rows were absent; and no `teacher-avatars` objects remained under their UUID prefixes. The script clears references before deleting Storage objects, then deletes Auth users. The validation helper, result JSON and historical failure screenshot/text remain as external evidence only. No real account, production data, or user file was changed.
 
