@@ -67,3 +67,5 @@ Only the two new migrations were applied before the application release. Existin
 | --- | --- | --- |
 | `20261011134452_rich_teacher_profile_details.sql` | `20261011153807` | `5bc0caf03053310c5bcbc84bdc5edb42f9bb0d2d1ab58897a30ca657d3d0aaa4` |
 | `20261011141234_teacher_profile_covers.sql` | `20261011153951` | `2b67f5bf6d92bd913b70feda127455bc85a6f92599650aed18e2ea8cccb8eaab` |
+
+Production security advisors were run after migration. They report intentional public/authenticated SECURITY DEFINER RPC execution (authorization and projections were reviewed and regression-tested), and an informational no-policy notice for the private, no-client-grant cover object mirror (fail-closed by design). Auth leaked-password protection is disabled in the project settings; this release does not change that setting. [Auth setting guidance](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection). No advisor clean-result claim is made.
