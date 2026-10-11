@@ -26,6 +26,11 @@ export function shortcutMutationMessage(locale: Locale, rawError: string): strin
       ? 'يتعارض هذا الموعد مع الجدول أو حصة موجودة. اختر وقتاً آخر.'
       : 'This time conflicts with the schedule or an existing lesson. Choose another time.';
   }
+  if (error.includes('update the original catalogue selection before duplicating this group')) {
+    return ar
+      ? 'حدّث اختيار المادة والفئة الأصلي قبل نسخ هذه المجموعة.'
+      : 'Update the original subject and category selection before duplicating this group.';
+  }
   if (error.includes('not authorized') || error.includes('not found') || error.includes('owner')) {
     return ar
       ? 'تعذر العثور على هذا العنصر أو ليس لديك صلاحية الوصول إليه.'

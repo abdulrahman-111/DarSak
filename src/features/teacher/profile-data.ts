@@ -152,7 +152,7 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
     return { teacher: null, visitor: null, avatarUrl: null, error: ar ? 'تعذر تحميل ملف المعلم. حاول مرة أخرى.' : 'Could not load this teacher profile. Please try again.' };
   }
 
-  const localized = (row: { name_ar: string; name_en: string }) => ar ? row.name_ar : row.name_en;
+  const localized = (row: { name_ar: string; name_en: string }) => catalogueDisplayName(row, locale);
   const nodeRows = (nodes.data ?? []) as ProfileCatalogueNode[];
   const subjectRows = (subjects.data ?? []) as ProfileCatalogueSubject[];
   const offeringRows = (offerings.data ?? []) as ProfileCatalogueOffering[];

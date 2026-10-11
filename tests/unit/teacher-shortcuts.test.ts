@@ -48,4 +48,10 @@ describe('teacher shortcut validation', () => {
     expect(shortcutMutationMessage('ar', 'not authorized')).not.toContain('not authorized');
     expect(shortcutMutationMessage('en', 'database connection refused')).not.toContain('database connection refused');
   });
+
+  it('explains how to resolve an archived source specialization before duplicating', () => {
+    const refusal = 'Update the original catalogue selection before duplicating this group.';
+    expect(shortcutMutationMessage('en', refusal)).toMatch(/original subject and category selection/i);
+    expect(shortcutMutationMessage('ar', refusal)).toMatch(/اختيار المادة والفئة الأصلي/);
+  });
 });

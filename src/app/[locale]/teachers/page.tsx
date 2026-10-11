@@ -6,6 +6,7 @@ import { discoverySearchParams, normalizeDiscoveryFilters, DISCOVERY_PAGE_SIZE }
 import { GroupCard, SetupCard } from '@/components/ui';
 import { isConfigured } from '@/lib/supabase/server';
 import { publicCopy } from '@/components/public/copy';
+import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 
 type SearchValue = string | string[] | undefined;
 type Query = Record<string, SearchValue>;
@@ -71,14 +72,14 @@ export default async function Teachers({
               <span className="sr-only">{c.subject}</span>
               <select className="min-w-0 flex-1 bg-transparent outline-none" name="subject_id" defaultValue={filters.subjectId || ''}>
                 <option value="">{c.allSubjects}</option>
-                {subjects.map(subject => <option key={subject.id} value={subject.id}>{subject[locale === 'ar' ? 'name_ar' : 'name_en']}</option>)}
+                {subjects.map(subject => <option key={subject.id} value={subject.id}>{catalogueDisplayName(subject, locale)}</option>)}
               </select>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
               <span className="sr-only">{c.context}</span>
               <select className="min-w-0 flex-1 bg-transparent outline-none" name="node_id" defaultValue={filters.nodeId || ''}>
                 <option value="">{c.allContexts}</option>
-                {nodes.map(node => <option key={node.id} value={node.id}>{node[locale === 'ar' ? 'name_ar' : 'name_en']}</option>)}
+                {nodes.map(node => <option key={node.id} value={node.id}>{catalogueDisplayName(node, locale)}</option>)}
               </select>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
