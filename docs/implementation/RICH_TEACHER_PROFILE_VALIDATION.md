@@ -1,6 +1,6 @@
 # Rich teacher profile validation
 
-The UI/browser/build baseline is code commit `a9431dc` on `codex/teacher-profiles`. The subsequent database-only theme fix is commit `f1e64e1`; it amends the unreleased rich-profile migration and adds SQL/API regressions without changing application code. The earlier public cover-reference failure was fixed by the narrow `public_teacher_cover_path(p_teacher_id uuid) returns text` RPC in `33b7704` and its scalar loader correction in `a9431dc`. The theme fix now passes targeted SQL/API checks and the final fresh replay. Sol's scoped rereview is pending; do not treat Phase 1 as signed off until that review completes.
+The UI/browser/build baseline is code commit `a9431dc` on `codex/teacher-profiles`. The subsequent database-only theme fix is commit `f1e64e1`; it amends the unreleased rich-profile migration and adds SQL/API regressions without changing application code. The earlier public cover-reference failure was fixed by the narrow `public_teacher_cover_path(p_teacher_id uuid) returns text` RPC in `33b7704` and its scalar loader correction in `a9431dc`. The theme fix now passes targeted SQL/API checks and the final fresh replay. Sol's integrated review and scoped theme rereview passed with no outstanding P1/P2 findings. The reviewer also verified four actual static-render cases for English/Arabic empty-section appearance.
 
 ## Build, tests, and database
 
@@ -14,7 +14,7 @@ The UI/browser/build baseline is code commit `a9431dc` on `codex/teacher-profile
 | `tests/database/run.sh` | PASS: all 13 SQL suites in the fresh replay including the theme projection fix. |
 | Fresh application migration replay | PASS: final migration sources, seed, and all 13 SQL suites passed in a disposable `dars_validation` database; the helper removed it after the run. Auth/Storage/extensions came from schema-only local framework objects; this does not claim a full Supabase service bootstrap. The final rich-profile migration SHA256 is `5bc0caf03053310c5bcbc84bdc5edb42f9bb0d2d1ab58897a30ca657d3d0aaa4`; the cover migration SHA256 is `2b67f5bf6d92bd913b70feda127455bc85a6f92599650aed18e2ea8cccb8eaab`. |
 | Local API integration | PASS: 142 assertions, including theme-only and all-hidden public projections, ineligible pending/suspended teachers, and students. |
-| Hosted Vercel build check | PASS for the app/UI commit `a9431dc` (deployment `dpl_FVhbM9FpVq1K3FtLAvVv4cQNBWbY`); it predates the SQL-only `f1e64e1` migration change and is not production runtime or migration validation. |
+| Hosted Vercel build check | PASS for `f1e64e1` (deployment `dpl_8UQTNWWg73evpsbL2UqZ4goqdjsV`), including the final SQL-only fix. This records the hosted build, not authenticated production runtime. |
 
 The standard Turbopack build remains failed; webpack is the verified production build command in this environment. No production database, user, migration, or deployment was changed during Task 5 validation.
 
@@ -51,10 +51,19 @@ An initial fixture attempt tried setting `profiles.status='pending'`; that value
 
 The Chromium baseline at unchanged UI commit `a9431dc` passed 12 named cases. Its helper and results are under `/workspace/.dars-browser-tools/validation`; the helper is external to the repository and has no product dependencies. A raw anonymous table probe for `teacher_profiles.cover_path` remains 401 intentionally; the public route uses the reviewed safe RPC. The theme-only case was covered by new database and API regressions against the SQL fix, but was not added to the prior browser matrix; no UI code changed in `f1e64e1`.
 
-The theme-only projection regression failed against the old SQL function and passed after the fix. Default empty profiles still return `NULL`; non-default appearance is returned with an empty `sections` array even when all descriptive sections are hidden. Pending/unapproved teachers, suspended teachers, and students remain ineligible. Final Sol scoped rereview of `f1e64e1` is pending.
+The theme-only projection regression failed against the old SQL function and passed after the fix. Default empty profiles still return `NULL`; non-default appearance is returned with an empty `sections` array even when all descriptive sections are hidden. Pending/unapproved teachers, suspended teachers, and students remain ineligible. Final Sol scoped rereview of `f1e64e1` passed: the original SQL reproduction now returns the saved appearance; affected SQL, 18 focused unit tests and four actual EN/AR rendering cases passed.
 
 The final independent cleanup audit passed 16 checks: all five fixture Auth users returned 404; their profile, teacher-profile, details, contact, group and enrollment rows were absent; and no `teacher-avatars` objects remained under their UUID prefixes. The script clears references before deleting Storage objects, then deletes Auth users. The validation helper, result JSON and historical failure screenshot/text remain as external evidence only. No real account, production data, or user file was changed.
 
 ## Deferred integrations and limits
 
 Monthly expiry/renewal eligibility is phase 4. The subject catalogue replacement follows in phase 2. This validation does not claim either integration is complete. Cover signed URLs expire after 300 seconds; removing a cover prevents new signing but does not revoke URLs already issued. Operator-driven Auth deletion must clear references and remove bytes through Storage first because the Auth/profile cascade does not call the Storage API.
+
+## Production migration mapping
+
+Only the two new migrations were applied before the application release. Existing migration history, teacher approval/status and existing group/lesson data were preserved. Post-migration checks confirmed 8 profiles, 4 teachers, 4 groups and 12 lessons, plus 4 version-zero canonical detail rows; RLS and direct-write restrictions remain enforced.
+
+| Source file | Production version | SHA256 |
+| --- | --- | --- |
+| `20261011134452_rich_teacher_profile_details.sql` | `20261011153807` | `5bc0caf03053310c5bcbc84bdc5edb42f9bb0d2d1ab58897a30ca657d3d0aaa4` |
+| `20261011141234_teacher_profile_covers.sql` | `20261011153951` | `2b67f5bf6d92bd913b70feda127455bc85a6f92599650aed18e2ea8cccb8eaab` |
