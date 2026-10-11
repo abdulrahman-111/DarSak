@@ -53,6 +53,12 @@ export function canSelectCatalogueRow(
   return isSharedOrOwned && isActiveOrRetained;
 }
 
+export function isTeacherCatalogueCategory(node: Pick<CatalogueChoiceNode, 'owner_teacher_id' | 'kind'>): boolean {
+  return node.owner_teacher_id === null
+    ? ['grade', 'university', 'year'].includes(node.kind)
+    : ['custom_year', 'student_category'].includes(node.kind);
+}
+
 export function filterTeacherCatalogueChoices(
   subjects: CatalogueChoiceSubject[],
   nodes: CatalogueChoiceNode[],
@@ -69,17 +75,13 @@ export function filterTeacherCatalogueChoices(
   const selectableOfferings = offerings.filter(offering => {
     const node = nodeById.get(offering.node_id);
     const subject = activeSubjects.find(row => row.id === offering.subject_id);
-    const context = node && (node.owner_teacher_id === null
-      ? ['grade', 'university', 'year'].includes(node.kind)
-      : ['custom_year', 'student_category'].includes(node.kind));
+    const context = node && isTeacherCatalogueCategory(node);
     return offering.archived_at === null
       && (offering.owner_teacher_id === null || offering.owner_teacher_id === teacherId)
       && !!node && !!subject && !!context && subjectIds.has(subject.id);
   });
 
-  const eligibleContexts = activeNodes.filter(node => node.owner_teacher_id === null
-    ? ['grade', 'university', 'year'].includes(node.kind)
-    : ['custom_year', 'student_category'].includes(node.kind));
+  const eligibleContexts = activeNodes.filter(isTeacherCatalogueCategory);
   const usedNodeIds = new Set(eligibleContexts.map(node => node.id));
   for (const nodeId of [...usedNodeIds]) {
     let node = allNodeById.get(nodeId);

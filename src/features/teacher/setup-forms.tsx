@@ -8,6 +8,7 @@ import { deleteScheduleSlot, saveGroupDraft, saveScheduleSlot, type GroupDraftAc
 import type { GroupDetailsFormValues, GroupScheduleProposal, GroupScheduleSlot } from './setup-data';
 import { isRetainedCataloguePair, type SetupStep } from './setup-domain';
 import { CatalogueLabelEditor } from './catalogue-forms';
+import { isTeacherCatalogueCategory } from './catalogue-domain';
 import type { SetupCatalogue } from './setup-data';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
 
@@ -91,8 +92,7 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   const subjectNeedsActiveChoice = !!catalogue.retained && retainedSubjectIsArchived && formValues.category_id !== catalogue.retained.category_id && !formValues.subject_id;
   const categoryNeedsActiveChoice = !!catalogue.retained && retainedCategoryIsArchived && formValues.subject_id !== catalogue.retained.subject_id && !formValues.category_id;
   const activeSubjects = subjects.filter(item => item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.subject_id));
-  const eligibleNodes = nodes.filter(item => (item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.category_id)) &&
-    (item.owner_teacher_id === null ? ['grade', 'university', 'year'].includes(item.kind) : ['custom_year', 'student_category'].includes(item.kind)));
+  const eligibleNodes = nodes.filter(item => (item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.category_id)) && isTeacherCatalogueCategory(item));
   const contextLabel = (nodeId: string) => {
     const labels: string[] = [];
     const seen = new Set<string>();

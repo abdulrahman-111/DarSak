@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { addUniqueOfferingId, teacherProfileSchema, teacherSpecializationPairSchema } from '@/features/teacher/profile-domain';
-import { canSelectCatalogueRow, catalogueDisplayName } from '@/features/teacher/catalogue-domain';
+import { canSelectCatalogueRow, catalogueDisplayName, isTeacherCatalogueCategory } from '@/features/teacher/catalogue-domain';
 
 const validProfile = {
   full_name: 'Mona Ali',
@@ -80,5 +80,13 @@ describe('teacher profile validation', () => {
     expect(catalogueDisplayName({ name_ar: 'الجبر', name_en: '' }, 'en')).toBe('الجبر');
     expect(canSelectCatalogueRow({ id: 'own-archived', owner_teacher_id: 'teacher', archived_at: '2026-01-01' }, 'teacher', 'own-archived')).toBe(true);
     expect(canSelectCatalogueRow({ id: 'foreign', owner_teacher_id: 'another-teacher', archived_at: null }, 'teacher', 'foreign')).toBe(false);
+  });
+
+  it('offers only system learning levels and teacher categories as profile categories', () => {
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: null, kind: 'grade' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'custom_year' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'student_category' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: null, kind: 'faculty' })).toBe(false);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'department' })).toBe(false);
   });
 });

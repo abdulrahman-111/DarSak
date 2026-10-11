@@ -8,6 +8,7 @@ import { addUniqueOfferingId, type ProfileFormValues } from './profile-domain';
 import type { ProfileCatalogueNode, ProfileCatalogueOffering, ProfileCatalogueSubject } from './profile-data';
 import { CatalogueLabelEditor } from './catalogue-forms';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
+import { isTeacherCatalogueCategory } from './catalogue-domain';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
   save: 'حفظ الملف الشخصي', saving: 'جارٍ الحفظ…', fullName: 'الاسم الكامل', headline: 'العنوان المهني',
@@ -76,10 +77,10 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings,
   const [pairState, setPairState] = useState<TeacherSpecializationActionState>(null);
   const [pairPending, startPairTransition] = useTransition();
   const [choiceSubjects, setChoiceSubjects] = useState(subjects.filter(row => row.archived_at === null));
-  const [choiceNodes, setChoiceNodes] = useState(nodes.filter(row => row.archived_at === null));
+  const [choiceNodes, setChoiceNodes] = useState(nodes.filter(row => row.archived_at === null && isTeacherCatalogueCategory(row)));
   const [offeringRows, setOfferingRows] = useState(offerings);
   const [selectedSubjectId, setSelectedSubjectId] = useState(() => subjects.find(row => row.archived_at === null)?.id ?? '');
-  const [selectedCategoryId, setSelectedCategoryId] = useState(() => nodes.find(row => row.archived_at === null)?.id ?? '');
+  const [selectedCategoryId, setSelectedCategoryId] = useState(() => nodes.find(row => row.archived_at === null && isTeacherCatalogueCategory(row))?.id ?? '');
   const [showSubjectEditor, setShowSubjectEditor] = useState(false);
   const [showCategoryEditor, setShowCategoryEditor] = useState(false);
   const submitPair = (event: React.FormEvent<HTMLFormElement>) => {
@@ -142,9 +143,11 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings,
     if ('parent_id' in row) {
       setChoiceNodes(current => current.some(item => item.id === row.id) ? current : [...current, row]);
       setSelectedCategoryId(row.id);
+      setShowCategoryEditor(false);
     } else {
       setChoiceSubjects(current => current.some(item => item.id === row.id) ? current : [...current, row]);
       setSelectedSubjectId(row.id);
+      setShowSubjectEditor(false);
     }
   };
 
