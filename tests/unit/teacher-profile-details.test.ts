@@ -1,0 +1,138 @@
+import { describe, expect, it } from 'vitest';
+import {
+  emptyRichProfile,
+  localizedProfileText,
+  richProfileSchema,
+  visibleProfileSections,
+  type RichProfileInput,
+} from '@/features/teacher/profile-details-domain';
+
+describe('teacher profile details', () => {
+  it('single_language_falls_back', () => {
+    expect(localizedProfileText({ ar: '', en: 'Teaching with care' }, 'ar')).toBe('Teaching with care');
+    expect(localizedProfileText({ ar: 'التدريس باهتمام', en: '' }, 'en')).toBe('التدريس باهتمام');
+  });
+
+  it('optional_empty_profile_valid', () => {
+    expect(richProfileSchema.safeParse(emptyRichProfile()).success).toBe(true);
+  });
+
+  it('unknown_or_duplicate_sections_rejected', () => {
+    const base = emptyRichProfile();
+    expect(richProfileSchema.safeParse({ ...base, layout: 'fancy' }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, section_order: ['about', 'unknown'] }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, section_order: ['about', 'about'] }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, hidden_sections: ['about', 'about'] }).success).toBe(false);
+  });
+
+  it('entry_and_total_payload_limits', () => {
+    const base = emptyRichProfile();
+    const entry = (id: string) => ({
+      id,
+      title: { ar: '', en: 'A'.repeat(120) },
+      organization: { ar: '', en: '' },
+      description: { ar: '', en: 'D'.repeat(1_500) },
+      start_year: null,
+      end_year: null,
+      current: false,
+    });
+    expect(richProfileSchema.safeParse({ ...base, qualifications: Array.from({ length: 10 }, (_, i) => entry(`q${i}`)) }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, qualifications: Array.from({ length: 11 }, (_, i) => entry(`q${i}`)) }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, city: { ar: '', en: 'C'.repeat(120) } }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, city: { ar: '', en: 'C'.repeat(121) } }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, languages: Array.from({ length: 10 }, (_, i) => `L${i}`) }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, languages: Array.from({ length: 11 }, (_, i) => `L${i}`) }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, about: { ar: '', en: 'A'.repeat(5_000) } }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, about: { ar: '', en: 'A'.repeat(5_001) } }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, approach: { ar: '', en: 'A'.repeat(2_000) } }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, approach: { ar: '', en: 'A'.repeat(2_001) } }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, goals: { ar: '', en: 'G'.repeat(2_000) } }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, goals: { ar: '', en: 'G'.repeat(2_001) } }).success).toBe(false);
+
+    const fullEntry = (id: string) => ({
+      id,
+      title: { ar: 'A'.repeat(120), en: 'T'.repeat(120) },
+      organization: { ar: 'M'.repeat(120), en: 'O'.repeat(120) },
+      description: { ar: 'W'.repeat(1_500), en: 'D'.repeat(1_500) },
+      start_year: 1900,
+      end_year: null,
+      current: false,
+    });
+    const atPayloadLimit = {
+      ...base,
+      qualifications: Array.from({ length: 10 }, (_, i) => fullEntry(`q${i}`)),
+      experience: Array.from({ length: 10 }, (_, i) => fullEntry(`e${i}`)),
+    };
+    const allEntries = [...atPayloadLimit.qualifications, ...atPayloadLimit.experience];
+    for (const currentEntry of allEntries) {
+      const byteLength = new TextEncoder().encode(JSON.stringify(atPayloadLimit)).byteLength;
+      if (byteLength <= 65_536) break;
+      const excess = byteLength - 65_536;
+      currentEntry.description.en = currentEntry.description.en.slice(0, Math.max(0, currentEntry.description.en.length - excess));
+    }
+    expect(new TextEncoder().encode(JSON.stringify(atPayloadLimit)).byteLength).toBe(65_536);
+    expect(richProfileSchema.safeParse(atPayloadLimit).success).toBe(true);
+    const overPayloadLimit = structuredClone(atPayloadLimit);
+    overPayloadLimit.experience[9].description.en += 'x';
+    expect(richProfileSchema.safeParse(overPayloadLimit).success).toBe(false);
+  });
+
+  it('invalid_year_order_rejected', () => {
+    const base = emptyRichProfile();
+    const entry = {
+      id: 'same',
+      title: { ar: '', en: 'Title' },
+      organization: { ar: '', en: 'School' },
+      description: { ar: '', en: '' },
+      start_year: 2022,
+      end_year: 2021,
+      current: false,
+    };
+    const cairoYear = Number(new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo', year: 'numeric' }).format(new Date()));
+    expect(richProfileSchema.safeParse({ ...base, qualifications: [{ ...entry, start_year: 1900, end_year: cairoYear + 1 }] }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, qualifications: [{ ...entry, start_year: 1899, end_year: null }] }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, qualifications: [{ ...entry, start_year: cairoYear + 2, end_year: null }] }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, experience: [entry] }).success).toBe(false);
+    expect(richProfileSchema.safeParse({ ...base, experience: [{ ...entry, end_year: null, current: true }] }).success).toBe(true);
+  });
+
+  it('duplicate_entry_ids_rejected_across_sections', () => {
+    const base = emptyRichProfile();
+    const entry = {
+      id: 'same',
+      title: { ar: '', en: 'Title' },
+      organization: { ar: '', en: 'School' },
+      description: { ar: '', en: '' },
+      start_year: 2022,
+      end_year: null,
+      current: false,
+    };
+    const validEntry = { ...entry, end_year: null, current: false };
+    expect(richProfileSchema.safeParse({ ...base, experience: [validEntry, { ...validEntry, id: 'other' }] }).success).toBe(true);
+    expect(richProfileSchema.safeParse({ ...base, experience: [validEntry, { ...validEntry, id: 'same' }] }).success).toBe(false);
+    expect(richProfileSchema.safeParse({
+      ...base,
+      qualifications: [validEntry],
+      experience: [{ ...validEntry, id: 'other' }],
+    }).success).toBe(true);
+    expect(richProfileSchema.safeParse({
+      ...base,
+      qualifications: [validEntry],
+      experience: [{ ...validEntry, id: validEntry.id }],
+    }).success).toBe(false);
+  });
+
+  it('hidden_about_omitted', () => {
+    const details: RichProfileInput = {
+      ...emptyRichProfile(),
+      about: { ar: 'خاص', en: 'Private about' },
+      approach: { ar: '', en: 'Visible approach' },
+      section_order: ['about', 'approach', 'qualifications', 'experience', 'goals'],
+      hidden_sections: ['about'],
+    };
+    expect(visibleProfileSections(details)).toEqual([
+      { id: 'approach', value: { ar: '', en: 'Visible approach' } },
+    ]);
+    expect(JSON.stringify(visibleProfileSections(details))).not.toContain('Private about');
+  });
+});

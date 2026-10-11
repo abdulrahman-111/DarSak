@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { avatarPathIsCurrent, publicTeacherContactLinks, storageRemovalConfirmed, teacherAvatarExtension, teacherAvatarPath } from '@/features/teacher/profile-domain';
+import { teacherCoverPath } from '@/features/teacher/profile-details-domain';
 
 describe('teacher avatar rules', () => {
   it('accepts only non-empty JPEG, PNG, and WebP images up to 2 MiB', () => {
@@ -17,6 +18,17 @@ describe('teacher avatar rules', () => {
     expect(() => teacherAvatarPath('invalid', '22222222-2222-4222-8222-222222222222', 'image/jpeg')).toThrow();
     expect(() => teacherAvatarPath('11111111-1111-4111-8111-111111111111', 'invalid', 'image/jpeg')).toThrow();
     expect(() => teacherAvatarPath('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 'image/gif')).toThrow();
+  });
+});
+
+describe('teacher cover paths', () => {
+  it('cover_path_is_distinct_from_avatar', () => {
+    const owner = '11111111-1111-4111-8111-111111111111';
+    const file = '22222222-2222-4222-8222-222222222222';
+    expect(teacherCoverPath(owner, file, 'image/jpeg')).toBe(`${owner}/cover/${file}.jpg`);
+    expect(teacherCoverPath(owner, file, 'image/jpeg')).not.toBe(teacherAvatarPath(owner, file, 'image/jpeg'));
+    expect(() => teacherCoverPath('invalid', file, 'image/jpeg')).toThrow();
+    expect(() => teacherCoverPath(owner, file, 'image/gif')).toThrow();
   });
 });
 
