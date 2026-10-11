@@ -166,6 +166,28 @@ $$;
 revoke all on function public.set_teacher_cover_path(text,text) from public,anon,authenticated;
 grant execute on function public.set_teacher_cover_path(text,text) to authenticated;
 
+-- The public teacher profile needs the current cover reference, but clients
+-- must not gain raw access to teacher_profiles.cover_path. Keep the projection
+-- narrow and return no value unless the teacher is currently public.
+create or replace function public.public_teacher_cover_path(p_teacher_id uuid)
+returns text
+language sql
+stable
+security definer
+set search_path=pg_catalog,public
+as $$
+  select t.cover_path
+  from public.teacher_profiles t
+  join public.profiles p on p.id=t.id
+  where t.id=p_teacher_id
+    and p.role='teacher'
+    and p.status='active'
+    and t.approved
+    and t.cover_path is not null
+$$;
+revoke all on function public.public_teacher_cover_path(uuid) from public,anon,authenticated;
+grant execute on function public.public_teacher_cover_path(uuid) to anon,authenticated;
+
 drop policy if exists teacher_covers_read on storage.objects;
 create policy teacher_covers_read on storage.objects
 for select to anon,authenticated

@@ -11,7 +11,9 @@ begin
   if not has_function_privilege('anon','public.can_read_teacher_cover(text)','EXECUTE')
      or has_function_privilege('anon','public.can_upload_teacher_cover(text,jsonb)','EXECUTE')
      or has_function_privilege('anon','public.can_delete_teacher_cover(text)','EXECUTE')
-     or has_function_privilege('anon','public.set_teacher_cover_path(text,text)','EXECUTE') then
+     or has_function_privilege('anon','public.set_teacher_cover_path(text,text)','EXECUTE')
+     or not has_function_privilege('anon','public.public_teacher_cover_path(uuid)','EXECUTE')
+     or not has_function_privilege('authenticated','public.public_teacher_cover_path(uuid)','EXECUTE') then
     raise exception 'cover helper grants are too broad or incomplete';
   end if;
   if has_column_privilege('authenticated','public.teacher_profiles','cover_path','UPDATE')
@@ -21,8 +23,13 @@ begin
      or not has_column_privilege('authenticated','public.teacher_profiles','approved','UPDATE') then
     raise exception 'authenticated column updates must preserve avatar/headline while withholding cover_path';
   end if;
+  if has_table_privilege('anon','public.teacher_profiles','SELECT') then
+    raise exception 'anonymous users gained raw teacher_profiles access';
+  end if;
   if (select prosecdef from pg_proc where oid='public.can_read_teacher_cover(text)'::regprocedure) is not true
-     or (select prosecdef from pg_proc where oid='public.set_teacher_cover_path(text,text)'::regprocedure) is not true then
+     or (select prosecdef from pg_proc where oid='public.set_teacher_cover_path(text,text)'::regprocedure) is not true
+     or (select prosecdef from pg_proc where oid='public.public_teacher_cover_path(uuid)'::regprocedure) is not true
+     or (select proconfig from pg_proc where oid='public.public_teacher_cover_path(uuid)'::regprocedure) is distinct from array['search_path=pg_catalog, public']::text[] then
     raise exception 'cover access helpers must run with constrained definer privileges';
   end if;
   if (select proargnames from pg_proc where oid='public.public_teachers()'::regprocedure) <> array['id','full_name','headline','bio','avatar_path']::text[] then
@@ -41,6 +48,14 @@ insert into storage.objects(bucket_id,name,owner_id,metadata) values
  ('teacher-avatars','34000000-0000-4000-8000-000000000001/cover/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png','34000000-0000-4000-8000-000000000001','{"mimetype":"image/png","size":68}'),
  ('teacher-avatars','34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp','34000000-0000-4000-8000-000000000001','{"mimetype":"image/webp","size":68}'),
  ('teacher-avatars','34000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png','34000000-0000-4000-8000-000000000001','{"mimetype":"image/png","size":68}');
+set local role anon;
+do $$
+begin
+  if public.public_teacher_cover_path('34000000-0000-4000-8000-000000000001') is not null then
+    raise exception 'cover projection returned a path when no cover is set';
+  end if;
+end $$;
+reset role;
 update public.teacher_profiles
 set avatar_path='34000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png'
 where id='34000000-0000-4000-8000-000000000001';
@@ -54,6 +69,12 @@ do $$
 begin
   if not public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png') then
     raise exception 'currently referenced cover of approved teacher not public';
+  end if;
+  if public.public_teacher_cover_path('34000000-0000-4000-8000-000000000001') is distinct from '34000000-0000-4000-8000-000000000001/cover/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png' then
+    raise exception 'public cover projection did not return the exact eligible reference';
+  end if;
+  if public.public_teacher_cover_path('34000000-0000-4000-8000-000000000002') is not null then
+    raise exception 'public cover projection exposed an unapproved teacher';
   end if;
   if public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp') then
     raise exception 'unreferenced cover is public';
@@ -143,6 +164,9 @@ begin
   if public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp')
      or public.can_delete_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp') then
     raise exception 'suspended teacher can still read or remove covers';
+  end if;
+  if public.public_teacher_cover_path('34000000-0000-4000-8000-000000000001') is not null then
+    raise exception 'public cover projection exposed a suspended teacher';
   end if;
 end $$;
 reset role;

@@ -104,7 +104,7 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
     db.from('education_nodes').select('id,parent_id,kind,name_ar,name_en').order('name_en'),
     db.from('subjects').select('id,name_ar,name_en').order('name_en'),
     db.rpc('public_teacher_profile_details', { p_teacher_id: teacherId }),
-    db.from('teacher_profiles').select('cover_path').eq('id', teacherId).eq('approved', true).maybeSingle(),
+    db.rpc('public_teacher_cover_path', { p_teacher_id: teacherId }),
     publicGroups(normalizeDiscoveryFilters({ teacher_id: teacherId })),
   ]);
   if (offerings.error || nodes.error || subjects.error || detailsResult.error || coverResult.error || groupsResult.error) {

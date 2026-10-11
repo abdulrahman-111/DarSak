@@ -330,16 +330,22 @@ try {
   const boundaryCoverUpload = await uploadAvatar(initialCoverPath,'image/png',coverPngAtLimit,teacher.token);
   assert(boundaryCoverUpload.ok,`Cover upload at exactly 2 MiB failed: ${boundaryCoverUpload.status} ${JSON.stringify(boundaryCoverUpload.data)}`);
   uploadedCoverPaths.push(initialCoverPath);
+  const emptyPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
+  const emptyOwnerCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_teacher_id:teacher.id}});
+  check(emptyPublicCoverPath===null && emptyOwnerCoverPath===null,'cover projection returns null for an eligible teacher without a cover');
   const coverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:initialCoverPath,p_expected_path:null}});
   check(coverSaved===true,'active teacher can set a cover with compare-and-set');
+  const anonymousRawCoverRead = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`);
+  check(!anonymousRawCoverRead.ok,'anonymous cover projection does not grant raw teacher_profiles reads');
   const rawCoverClear = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{cover_path:null}});
   const coverAfterRawClear = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
   check((!rawCoverClear.ok || rawCoverClear.data.length===0) && coverAfterRawClear===initialCoverPath,'active teacher cannot bypass compare-and-set with a raw cover update');
   const directAvatarWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{avatar_path:avatarPath}});
   check(directAvatarWrite.ok && directAvatarWrite.data.length===1,'legacy authenticated avatar reference update remains available');
   const publicCoverAccess = await success('/rest/v1/rpc/can_read_teacher_cover',{method:'POST',body:{p_name:initialCoverPath}});
+  const publicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
   const publicCoverRead = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
-  check(publicCoverAccess===true && publicCoverRead.ok,'anonymous can sign the current cover of an approved teacher');
+  check(publicCoverAccess===true && publicCoverPath===initialCoverPath && publicCoverRead.ok,'anonymous projection and signing expose only the current cover of an approved teacher');
   const currentCoverDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[initialCoverPath]}});
   check(!Array.isArray(currentCoverDelete.data) || !currentCoverDelete.data.some(row=>row.name===initialCoverPath),'Storage refuses to delete a currently referenced cover');
   const coverAfterDeniedDelete = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
@@ -387,9 +393,10 @@ try {
   assert(pendingCoverUpload.ok,'Unapproved active teacher can upload a private cover');
   uploadedCoverPaths.push(pendingCoverPath);
   const pendingCoverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:pendingTeacher.token,method:'POST',body:{p_cover_path:pendingCoverPath,p_expected_path:null}});
+  const pendingPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:pendingTeacher.id}});
   const pendingOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${pendingCoverPath.split('/').map(encodeURIComponent).join('/')}`,{token:pendingTeacher.token,method:'POST',body:signBody});
   const pendingPublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${pendingCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
-  check(pendingCoverSaved===true && pendingOwnerRead.ok && !pendingPublicRead.ok,'pending teacher can sign their own cover while anonymous viewers cannot');
+  check(pendingCoverSaved===true && pendingPublicCoverPath===null && pendingOwnerRead.ok && !pendingPublicRead.ok,'pending teacher can sign their own cover while public projection and signing remain hidden');
 
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
   await success('/rest/v1/teacher_specializations',{token:service,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id}});
@@ -550,7 +557,8 @@ try {
   const suspendedRawCoverClear = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{cover_path:null}});
   const suspendedCoverCas = await request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:null,p_expected_path:currentCover}});
   const suspendedCoverAfterWrites = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
-  check((!suspendedRawCoverClear.ok || suspendedRawCoverClear.data.length===0) && !suspendedCoverCas.ok && suspendedCoverAfterWrites===currentCover,'suspended teacher cannot clear their cover through REST or the CAS RPC');
+  const suspendedPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
+  check((!suspendedRawCoverClear.ok || suspendedRawCoverClear.data.length===0) && !suspendedCoverCas.ok && suspendedCoverAfterWrites===currentCover && suspendedPublicCoverPath===null,'suspended teacher cannot clear their cover and public cover projection returns null');
   const suspendedAvatarDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[avatarPath]}});
   assert(suspendedAvatarDelete.ok,`Suspended avatar delete request failed: ${suspendedAvatarDelete.status} ${JSON.stringify(suspendedAvatarDelete.data)}`);
   check(!Array.isArray(suspendedAvatarDelete.data) || !suspendedAvatarDelete.data.some(row=>row.name===avatarPath),'suspended owner cannot delete their avatar through Storage');
