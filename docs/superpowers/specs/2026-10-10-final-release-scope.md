@@ -26,13 +26,18 @@ The detailed behavior and authorization requirements are in [the expanded design
 
 | Phase | Deliverable | Boundary |
 | --- | --- | --- |
-| 1 | Initial approval bug, request lifecycle and admin actions | Database/API regression, private audit and transactional outbox foundation first |
-| 2 | Teacher catalogue, rich-profile data and guided setup integration | Owner-scoped data, hidden-section privacy, historical visibility, public discovery |
-| 3 | Monthly access and expiry enforcement | Explicit role/action matrix; free grants; teacher/student/admin isolation |
-| 4 | Email worker and fee-announcement readiness | Private outbox, fake SMTP tests, real delivery only after credentials |
-| 5 | Student/admin UX, rich-profile editor/presentation, recovery and group sharing | Bilingual mobile/browser checks and integration review |
+| 1 | Rich teacher profiles: data, covers, editor, preview and public presentation | Private hidden sections, safe assets, bilingual mobile validation |
+| 2 | Custom subjects, years/categories and guided setup/profile integration | Owner-scoped data, historical visibility, atomic pairing and public discovery |
+| 3 | Initial approval bug, request lifecycle and admin actions | Database/API regression, private audit and transactional outbox foundation |
+| 4 | Monthly access and expiry enforcement | Explicit role/action matrix; free grants; teacher/student/admin isolation |
+| 5 | Email worker and fee-announcement readiness | Private outbox, fake SMTP tests, real delivery only after credentials |
+| 6 | Remaining student/admin UX, recovery and group sharing | Bilingual mobile/browser checks and full integration review |
 
-Each phase is divided into small Luna tasks, reviewed by Sol before moving on. Keep a dependency-aware plan: Auth creation, review and renewal event producers must integrate with the outbox without losing transactions. Create the private outbox/event scaffold in phase 1, even though SMTP delivery is implemented later.
+Each phase is divided into small Luna tasks, reviewed by Sol before moving on. Keep a dependency-aware plan: Auth creation, review and renewal event producers must integrate with the outbox without losing transactions. Create the private outbox/event scaffold in phase 3, before approval/renewal event producers are added, even though SMTP delivery is implemented later.
+
+## Implementation plans
+
+The user explicitly chose teacher profiles first, then custom subjects and years/student categories. Execute [the profile-first plan](../plans/2026-10-10-teacher-profile-first.md), followed by [the catalogue-second plan](../plans/2026-10-10-teacher-catalogue-second.md). Profiles initially use the existing catalogue; phase 2 connects custom choices. Phase 4 adds monthly eligibility to the already working public/profile/storage projections. Do not claim those later integrations completed during phase 1.
 
 ## Already shipped: preserve and verify
 
