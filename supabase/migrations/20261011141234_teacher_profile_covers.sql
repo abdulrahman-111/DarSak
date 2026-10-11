@@ -47,6 +47,13 @@ alter table public.teacher_profiles
   add column cover_path text,
   add column cover_bucket_id text generated always as ('teacher-avatars') stored;
 
+-- Keep the legacy authenticated writes while making cover_path RPC-only. The
+-- definer CAS function below retains authority; service/admin SQL grants stay
+-- unchanged, and avatar/profile/approval columns keep their prior privileges.
+revoke update on public.teacher_profiles from authenticated;
+grant update (id,bio,headline,avatar_path,approved,created_at)
+  on public.teacher_profiles to authenticated;
+
 alter table public.teacher_profiles
   add constraint teacher_profiles_cover_path_owner_format check (
     cover_path is null or cover_path ~ (

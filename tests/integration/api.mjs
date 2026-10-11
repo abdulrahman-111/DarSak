@@ -332,6 +332,11 @@ try {
   uploadedCoverPaths.push(initialCoverPath);
   const coverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:initialCoverPath,p_expected_path:null}});
   check(coverSaved===true,'active teacher can set a cover with compare-and-set');
+  const rawCoverClear = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{cover_path:null}});
+  const coverAfterRawClear = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
+  check((!rawCoverClear.ok || rawCoverClear.data.length===0) && coverAfterRawClear===initialCoverPath,'active teacher cannot bypass compare-and-set with a raw cover update');
+  const directAvatarWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{avatar_path:avatarPath}});
+  check(directAvatarWrite.ok && directAvatarWrite.data.length===1,'legacy authenticated avatar reference update remains available');
   const publicCoverAccess = await success('/rest/v1/rpc/can_read_teacher_cover',{method:'POST',body:{p_name:initialCoverPath}});
   const publicCoverRead = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
   check(publicCoverAccess===true && publicCoverRead.ok,'anonymous can sign the current cover of an approved teacher');
@@ -542,6 +547,10 @@ try {
   const suspendedAvatarOwner = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:teacher.token,method:'POST',body:signBody});
   const suspendedAvatarPublic = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:avatarPath}});
   const suspendedAvatarPublicSign = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{method:'POST',body:signBody});
+  const suspendedRawCoverClear = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{cover_path:null}});
+  const suspendedCoverCas = await request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:null,p_expected_path:currentCover}});
+  const suspendedCoverAfterWrites = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
+  check((!suspendedRawCoverClear.ok || suspendedRawCoverClear.data.length===0) && !suspendedCoverCas.ok && suspendedCoverAfterWrites===currentCover,'suspended teacher cannot clear their cover through REST or the CAS RPC');
   const suspendedAvatarDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[avatarPath]}});
   assert(suspendedAvatarDelete.ok,`Suspended avatar delete request failed: ${suspendedAvatarDelete.status} ${JSON.stringify(suspendedAvatarDelete.data)}`);
   check(!Array.isArray(suspendedAvatarDelete.data) || !suspendedAvatarDelete.data.some(row=>row.name===avatarPath),'suspended owner cannot delete their avatar through Storage');

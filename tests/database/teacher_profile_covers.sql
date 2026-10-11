@@ -14,6 +14,13 @@ begin
      or has_function_privilege('anon','public.set_teacher_cover_path(text,text)','EXECUTE') then
     raise exception 'cover helper grants are too broad or incomplete';
   end if;
+  if has_column_privilege('authenticated','public.teacher_profiles','cover_path','UPDATE')
+     or not has_column_privilege('authenticated','public.teacher_profiles','avatar_path','UPDATE')
+     or not has_column_privilege('authenticated','public.teacher_profiles','headline','UPDATE')
+     or not has_column_privilege('authenticated','public.teacher_profiles','bio','UPDATE')
+     or not has_column_privilege('authenticated','public.teacher_profiles','approved','UPDATE') then
+    raise exception 'authenticated column updates must preserve avatar/headline while withholding cover_path';
+  end if;
   if (select prosecdef from pg_proc where oid='public.can_read_teacher_cover(text)'::regprocedure) is not true
      or (select prosecdef from pg_proc where oid='public.set_teacher_cover_path(text,text)'::regprocedure) is not true then
     raise exception 'cover access helpers must run with constrained definer privileges';
@@ -64,6 +71,12 @@ set local role authenticated;
 set local request.jwt.claim.sub = '34000000-0000-4000-8000-000000000001';
 do $$
 begin
+  begin
+    update public.teacher_profiles set cover_path=null where id='34000000-0000-4000-8000-000000000001';
+    raise exception 'raw owner cover update bypassed the CAS RPC';
+  exception when insufficient_privilege then null;
+  end;
+  update public.teacher_profiles set avatar_path=avatar_path where id='34000000-0000-4000-8000-000000000001';
   if not public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp') then
     raise exception 'active owner cannot read unreferenced pending cover';
   end if;
@@ -76,7 +89,7 @@ begin
   if not public.set_teacher_cover_path(
     '34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp',
     '34000000-0000-4000-8000-000000000001/cover/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png'
-  ) then raise exception 'cover compare-and-set did not save an empty reference'; end if;
+  ) then raise exception 'cover compare-and-set did not replace the expected reference'; end if;
   if public.set_teacher_cover_path(
     '34000000-0000-4000-8000-000000000001/cover/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.png',null
   ) then raise exception 'stale cover compare-and-set overwrote a newer reference'; end if;
@@ -117,6 +130,16 @@ set local role authenticated;
 set local request.jwt.claim.sub = '34000000-0000-4000-8000-000000000001';
 do $$
 begin
+  begin
+    update public.teacher_profiles set cover_path=null where id='34000000-0000-4000-8000-000000000001';
+    raise exception 'suspended owner raw cover clear unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
+  begin
+    perform public.set_teacher_cover_path(null,'34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp');
+    raise exception 'suspended owner CAS unexpectedly succeeded';
+  exception when insufficient_privilege then null;
+  end;
   if public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp')
      or public.can_delete_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp') then
     raise exception 'suspended teacher can still read or remove covers';

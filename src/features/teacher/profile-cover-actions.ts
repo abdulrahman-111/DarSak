@@ -88,15 +88,20 @@ export async function removeTeacherCover(locale: Locale, _state: TeacherProfileA
   if (!current.path) return { success: message(locale, 'There is no cover to remove.', 'لا توجد صورة غلاف لحذفها.') };
 
   const cleared = await me.db.rpc('set_teacher_cover_path', { p_cover_path: null, p_expected_path: current.path });
+  let replacedByNewerCover = false;
   if (cleared.error || cleared.data !== true) {
     const verified = await currentCoverPath(me.db, me.id);
     if (verified.error) return { error: message(locale, 'The removal result could not be confirmed. Please retry or contact support.', 'تعذر التحقق من نتيجة الإزالة. حاول مرة أخرى أو تواصل مع الدعم.') };
     if (verified.path === current.path) return { error: message(locale, 'Your cover could not be removed from the profile.', 'تعذر إزالة صورة الغلاف من الملف الشخصي.') };
+    replacedByNewerCover = verified.path !== null;
   }
 
   const cleaned = await removeCoverObject(me.db, current.path);
   revalidateTeacherProfilePaths(locale, me.id);
-  return { success: cleaned
-    ? message(locale, 'Cover removed.', 'تم حذف صورة الغلاف.')
-    : message(locale, 'Cover removed from your profile, but its file could not be cleaned up.', 'تمت إزالة صورة الغلاف من ملفك، لكن تعذر تنظيف الملف.') };
+  if (replacedByNewerCover) return { error: cleaned
+    ? message(locale, 'Your cover changed during removal. The newer cover was kept.', 'تغيرت صورة الغلاف أثناء الإزالة. تم الاحتفاظ بالصورة الأحدث.')
+    : message(locale, 'Your cover changed during removal. The newer cover was kept, but the previous file could not be cleaned up.', 'تغيرت صورة الغلاف أثناء الإزالة. تم الاحتفاظ بالصورة الأحدث، لكن تعذر تنظيف الملف السابق.') };
+  return cleaned
+    ? { success: message(locale, 'Cover removed.', 'تم حذف صورة الغلاف.') }
+    : { error: message(locale, 'The cover was removed from your profile, but its file could not be cleaned up. Please contact support.', 'تمت إزالة صورة الغلاف من ملفك، لكن تعذر تنظيف الملف. تواصل مع الدعم.') };
 }
