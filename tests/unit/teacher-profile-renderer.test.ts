@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildTeacherVisitorView, TeacherProfile } from '@/components/public/teacher-profile';
-import { emptyRichProfile, visiblePublicTeacherProfile, type PublicTeacherVisitorContacts } from '@/features/teacher/profile-details-domain';
+import { emptyRichProfile, publicVisitorContacts, visiblePublicTeacherProfile, type PublicTeacherVisitorContacts } from '@/features/teacher/profile-details-domain';
 
 const teacher = { id: '11111111-1111-4111-8111-111111111111', full_name: 'Mona Ali', headline: null };
 const enrolledContacts: PublicTeacherVisitorContacts = {
@@ -49,6 +49,34 @@ describe('shared teacher visitor projection', () => {
     });
 
     expect(view.contacts).toEqual(enrolledContacts);
+  });
+
+  it('owner preview includes only contact values explicitly filtered as public', () => {
+    const publicContacts = publicVisitorContacts('public', enrolledContacts);
+    const publicView = buildTeacherVisitorView({
+      teacher,
+      details: null,
+      contactVisibility: 'public',
+      contacts: publicContacts,
+      specializations: [],
+      groups: [],
+      avatarUrl: null,
+      coverUrl: null,
+    });
+    const privateView = buildTeacherVisitorView({
+      teacher,
+      details: null,
+      contactVisibility: 'enrolled',
+      contacts: publicVisitorContacts('enrolled', enrolledContacts),
+      specializations: [],
+      groups: [],
+      avatarUrl: null,
+      coverUrl: null,
+    });
+
+    expect(publicView.contacts).toEqual(enrolledContacts);
+    expect(privateView.contacts).toBeNull();
+    expect(JSON.stringify(privateView)).not.toContain('+201234567890');
   });
 
   it('renders valid unbroken teacher text with safe wrapping and localized fallback', () => {

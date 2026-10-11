@@ -207,6 +207,25 @@ describe('teacher profile details', () => {
     expect(publicTeacherProfileDetailsSchema.safeParse({ ...projection, hidden_sections: ['about'] }).success).toBe(false);
   });
 
+  it('omits blank repeater drafts while keeping partial or year-only entries visible', () => {
+    const blank = {
+      id: 'blank', title: { ar: '', en: '' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
+      start_year: null, end_year: null, current: false,
+    };
+    const partial = { ...blank, id: 'partial', title: { ar: '', en: 'Tutor' } };
+    const yearOnly = { ...blank, id: 'year-only', start_year: 2020 };
+    const projection = visiblePublicTeacherProfile({
+      ...emptyRichProfile(),
+      qualifications: [blank, partial],
+      experience: [blank, yearOnly],
+    });
+
+    expect(projection.sections).toEqual([
+      { id: 'qualifications', value: [partial] },
+      { id: 'experience', value: [yearOnly] },
+    ]);
+  });
+
   it('public_projection_rejects_malformed_sections_and_private_fields', () => {
     const projection = visiblePublicTeacherProfile({
       ...emptyRichProfile(),

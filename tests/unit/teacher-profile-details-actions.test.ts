@@ -83,4 +83,18 @@ describe('saveTeacherProfileDetails', () => {
     expect(result?.fieldErrors).toHaveProperty('about.en');
     expect(createClientMock).not.toHaveBeenCalled();
   });
+
+  it('removes blank repeater drafts before saving canonical details', async () => {
+    const blank = {
+      id: 'blank-draft', title: { ar: '', en: '' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
+      start_year: null, end_year: null, current: false,
+    };
+    const { rpc } = setup({ data: 1, error: null });
+    await saveTeacherProfileDetails('en', null, formFor({ ...emptyRichProfile(), qualifications: [blank] }));
+
+    expect(rpc).toHaveBeenCalledWith('save_teacher_profile_details', expect.objectContaining({
+      p_details: expect.objectContaining({ qualifications: [] }),
+      p_expected_version: 0,
+    }));
+  });
 });

@@ -12,6 +12,18 @@ export type ProfileEntry = {
   current: boolean;
 };
 
+/** Empty repeater drafts are useful in the editor, but should not appear to visitors. */
+export function profileEntryHasContent(entry: ProfileEntry): boolean {
+  return [
+    entry.title.ar, entry.title.en,
+    entry.organization.ar, entry.organization.en,
+    entry.description.ar, entry.description.en,
+  ].some(value => value.trim().length > 0)
+    || entry.start_year !== null
+    || entry.end_year !== null
+    || entry.current;
+}
+
 export const profileSectionIds = ['about', 'qualifications', 'experience', 'approach', 'goals'] as const;
 export type ProfileSectionId = typeof profileSectionIds[number];
 export type ProfileLayout = 'classic' | 'compact';
@@ -207,14 +219,18 @@ export function publicVisitorContacts(
 /** Return only enabled, non-empty descriptive values in the teacher's chosen order. */
 export function visibleProfileSections(input: RichProfileInput): VisibleProfileSection[] {
   const hidden = new Set(input.hidden_sections);
-  return input.section_order.flatMap(id => {
-    if (hidden.has(id)) return [];
+  const visible: VisibleProfileSection[] = [];
+  for (const id of input.section_order) {
+    if (hidden.has(id)) continue;
     const value = input[id];
-    const hasContent = Array.isArray(value)
-      ? value.length > 0
-      : value.ar.length > 0 || value.en.length > 0;
-    return hasContent ? [{ id, value }] : [];
-  });
+    if (Array.isArray(value)) {
+      const entries = value.filter(profileEntryHasContent);
+      if (entries.length) visible.push({ id, value: entries });
+      continue;
+    }
+    if (value.ar.trim() || value.en.trim()) visible.push({ id, value });
+  }
+  return visible;
 }
 
 export function teacherCoverPath(teacherId: string, fileId: string, mimeType: string): string {

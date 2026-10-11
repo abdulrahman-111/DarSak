@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
-import { richProfileSchema } from './profile-details-domain';
+import { profileEntryHasContent, richProfileSchema } from './profile-details-domain';
 
 export type RichProfileActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; version?: number } | null;
 
@@ -74,7 +74,11 @@ export async function saveTeacherProfileDetails(
   }
 
   const { data: savedVersion, error } = await db.rpc('save_teacher_profile_details', {
-    p_details: parsed.data,
+    p_details: {
+      ...parsed.data,
+      qualifications: parsed.data.qualifications.filter(profileEntryHasContent),
+      experience: parsed.data.experience.filter(profileEntryHasContent),
+    },
     p_expected_version: version,
   });
   if (error) {
