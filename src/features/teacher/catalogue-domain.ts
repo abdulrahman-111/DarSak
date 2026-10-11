@@ -8,6 +8,9 @@ export type CatalogueSelectableRow = {
   owner_teacher_id: string | null;
   archived_at: string | null;
 };
+export type CatalogueChoiceSubject = CatalogueSelectableRow & CatalogueLabelInput;
+export type CatalogueChoiceNode = CatalogueSelectableRow & CatalogueLabelInput & { kind: string; parent_id: string | null };
+export type CatalogueChoiceOffering = CatalogueSelectableRow & { node_id: string; subject_id: string };
 
 const catalogueLabelFields = {
   name_ar: z.string().trim().max(120),
@@ -48,4 +51,47 @@ export function canSelectCatalogueRow(
   const isSharedOrOwned = row.owner_teacher_id === null || row.owner_teacher_id === teacherId;
   const isActiveOrRetained = row.archived_at === null || row.id === retainedId;
   return isSharedOrOwned && isActiveOrRetained;
+}
+
+export function filterTeacherCatalogueChoices(
+  subjects: CatalogueChoiceSubject[],
+  nodes: CatalogueChoiceNode[],
+  offerings: CatalogueChoiceOffering[],
+  teacherId: string,
+) {
+  const activeSubjects = subjects.filter(row => row.archived_at === null
+    && (row.owner_teacher_id === null || row.owner_teacher_id === teacherId));
+  const activeNodes = nodes.filter(row => row.archived_at === null
+    && (row.owner_teacher_id === null || row.owner_teacher_id === teacherId));
+  const allNodeById = new Map(nodes.map(row => [row.id, row]));
+  const nodeById = new Map(activeNodes.map(row => [row.id, row]));
+  const subjectIds = new Set(activeSubjects.map(row => row.id));
+  const selectableOfferings = offerings.filter(offering => {
+    const node = nodeById.get(offering.node_id);
+    const subject = activeSubjects.find(row => row.id === offering.subject_id);
+    const context = node && (node.owner_teacher_id === null
+      ? ['grade', 'university', 'year'].includes(node.kind)
+      : ['custom_year', 'student_category'].includes(node.kind));
+    return offering.archived_at === null
+      && (offering.owner_teacher_id === null || offering.owner_teacher_id === teacherId)
+      && !!node && !!subject && !!context && subjectIds.has(subject.id);
+  });
+
+  const usedNodeIds = new Set(selectableOfferings.map(row => row.node_id));
+  for (const nodeId of [...usedNodeIds]) {
+    let node = allNodeById.get(nodeId);
+    const seen = new Set<string>();
+    while (node?.owner_teacher_id === null && node.parent_id && !seen.has(node.id)) {
+      seen.add(node.id);
+      const parent = allNodeById.get(node.parent_id);
+      if (!parent || parent.owner_teacher_id !== null) break;
+      usedNodeIds.add(parent.id);
+      node = parent;
+    }
+  }
+  return {
+    subjects: activeSubjects,
+    nodes: nodes.filter(node => (node.owner_teacher_id === null || node.owner_teacher_id === teacherId) && usedNodeIds.has(node.id)),
+    offerings: selectableOfferings,
+  };
 }
