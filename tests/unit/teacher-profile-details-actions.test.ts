@@ -74,4 +74,13 @@ describe('saveTeacherProfileDetails', () => {
     expect(result?.fieldErrors).toEqual({ form: 'invalid' });
     expect(createClientMock).not.toHaveBeenCalled();
   });
+
+  it('keeps the last confirmed version on later validation failures', async () => {
+    const details = { ...emptyRichProfile(), about: { en: 'x'.repeat(5_001), ar: '' } };
+    const result = await saveTeacherProfileDetails('en', { version: 7 }, formFor(details));
+
+    expect(result).toMatchObject({ version: 7, error: expect.any(String) });
+    expect(result?.fieldErrors).toHaveProperty('about.en');
+    expect(createClientMock).not.toHaveBeenCalled();
+  });
 });

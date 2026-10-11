@@ -36,40 +36,41 @@ function revalidateTeacherProfile(teacherId: string) {
 
 export async function saveTeacherProfileDetails(
   locale: Locale,
-  _state: RichProfileActionState,
+  state: RichProfileActionState,
   form: FormData,
 ): Promise<RichProfileActionState> {
+  const retainVersion = (result: Exclude<RichProfileActionState, null>) => state?.version === undefined ? result : { ...result, version: state.version };
   let rawDetails: unknown;
   const serializedDetails = form.get('details');
   if (typeof serializedDetails !== 'string') {
-    return { error: message(locale, 'Please review the profile details and try again.', 'راجع تفاصيل الملف الشخصي وحاول مرة أخرى.'), fieldErrors: { form: 'invalid' } };
+    return retainVersion({ error: message(locale, 'Please review the profile details and try again.', 'راجع تفاصيل الملف الشخصي وحاول مرة أخرى.'), fieldErrors: { form: 'invalid' } });
   }
   try {
     rawDetails = JSON.parse(serializedDetails);
   } catch {
-    return { error: message(locale, 'Please review the profile details and try again.', 'راجع تفاصيل الملف الشخصي وحاول مرة أخرى.'), fieldErrors: { form: 'invalid' } };
+    return retainVersion({ error: message(locale, 'Please review the profile details and try again.', 'راجع تفاصيل الملف الشخصي وحاول مرة أخرى.'), fieldErrors: { form: 'invalid' } });
   }
 
   const parsed = richProfileSchema.safeParse(rawDetails);
   if (!parsed.success) {
-    return {
+    return retainVersion({
       error: message(locale, 'Please check the highlighted profile details.', 'يرجى مراجعة تفاصيل الملف الشخصي المحددة.'),
       fieldErrors: fieldErrors(parsed.error),
-    };
+    });
   }
   const version = expectedVersion(form.get('expected_version'));
   if (version === null) {
-    return { error: message(locale, 'Reload your profile before saving these changes.', 'أعد تحميل ملفك الشخصي قبل حفظ هذه التغييرات.') };
+    return retainVersion({ error: message(locale, 'Reload your profile before saving these changes.', 'أعد تحميل ملفك الشخصي قبل حفظ هذه التغييرات.') });
   }
 
   const db = await createClient();
   const { data: { user }, error: authError } = await db.auth.getUser();
   if (authError || !user) {
-    return { error: message(locale, 'Sign in as an active teacher to save profile details.', 'سجل الدخول بحساب معلم نشط لحفظ تفاصيل الملف الشخصي.') };
+    return retainVersion({ error: message(locale, 'Sign in as an active teacher to save profile details.', 'سجل الدخول بحساب معلم نشط لحفظ تفاصيل الملف الشخصي.') });
   }
   const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
   if (profileError || profile?.role !== 'teacher' || profile.status !== 'active') {
-    return { error: message(locale, 'An active teacher account is required to save profile details.', 'يلزم حساب معلم نشط لحفظ تفاصيل الملف الشخصي.') };
+    return retainVersion({ error: message(locale, 'An active teacher account is required to save profile details.', 'يلزم حساب معلم نشط لحفظ تفاصيل الملف الشخصي.') });
   }
 
   const { data: savedVersion, error } = await db.rpc('save_teacher_profile_details', {
@@ -78,14 +79,14 @@ export async function saveTeacherProfileDetails(
   });
   if (error) {
     if (error.code === '40001' || /version conflict/i.test(error.message)) {
-      return { error: message(locale, 'Your profile changed while you were editing. Reload it, review the latest version, and retry.', 'تغير ملفك الشخصي أثناء التعديل. أعد تحميل أحدث نسخة وراجعها ثم حاول مرة أخرى.') };
+      return retainVersion({ error: message(locale, 'Your profile changed while you were editing. Reload it, review the latest version, and retry.', 'تغير ملفك الشخصي أثناء التعديل. أعد تحميل أحدث نسخة وراجعها ثم حاول مرة أخرى.') });
     }
-    return { error: message(locale, 'Your profile details could not be saved. Your changes are still in the form; please try again.', 'تعذر حفظ تفاصيل الملف الشخصي. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
+    return retainVersion({ error: message(locale, 'Your profile details could not be saved. Your changes are still in the form; please try again.', 'تعذر حفظ تفاصيل الملف الشخصي. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') });
   }
 
   const nextVersion = typeof savedVersion === 'string' && /^\d+$/.test(savedVersion) ? Number(savedVersion) : savedVersion;
   if (typeof nextVersion !== 'number' || !Number.isSafeInteger(nextVersion) || nextVersion <= version) {
-    return { error: message(locale, 'The save result could not be confirmed. Reload your profile before retrying.', 'تعذر التحقق من نتيجة الحفظ. أعد تحميل ملفك الشخصي قبل المحاولة مجدداً.') };
+    return retainVersion({ error: message(locale, 'The save result could not be confirmed. Reload your profile before retrying.', 'تعذر التحقق من نتيجة الحفظ. أعد تحميل ملفك الشخصي قبل المحاولة مجدداً.') });
   }
   revalidateTeacherProfile(user.id);
   return { success: message(locale, 'Profile details saved.', 'تم حفظ تفاصيل الملف الشخصي.'), version: nextVersion };

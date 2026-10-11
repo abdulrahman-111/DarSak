@@ -67,7 +67,6 @@ export type TeacherProfileInput = z.infer<typeof teacherProfileSchema>;
 export type ProfileFormValues = {
   full_name: string;
   headline: string;
-  bio: string;
   offering_ids: string[];
   phone_number: string;
   whatsapp_number: string;

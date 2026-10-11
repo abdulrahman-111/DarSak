@@ -8,19 +8,19 @@ import type { ProfileFormValues } from './profile-domain';
 import type { ProfileCatalogueNode, ProfileCatalogueOffering, ProfileCatalogueSubject } from './profile-data';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
-  save: 'حفظ الملف الشخصي', saving: 'جارٍ الحفظ…', fullName: 'الاسم الكامل', headline: 'العنوان المهني', bio: 'نبذة عنك',
+  save: 'حفظ الملف الشخصي', saving: 'جارٍ الحفظ…', fullName: 'الاسم الكامل', headline: 'العنوان المهني',
   specializations: 'المواد والتخصصات', chooseSubjects: 'اختر المواد والسياقات التي تدرّسها.', emptyCatalogue: 'لا توجد تخصصات متاحة بعد. يمكنك حفظ بقية بياناتك الآن.',
   phone: 'رقم الهاتف', whatsapp: 'رقم واتساب', email: 'بريد التواصل', e164: 'اكتب الرقم بالصيغة الدولية، مثل +201234567890.',
   visibility: 'من يمكنه رؤية بيانات التواصل؟', enrolled: 'طلاب المجموعات المقبولون فقط', public: 'عام بعد اعتماد الحساب', visibilityHint: 'لا يؤثر هذا الاختيار في بريد تسجيل الدخول.',
-  required: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 100 حرف.', headlineBounds: 'يجب ألا يتجاوز العنوان 160 حرفاً.', bioBounds: 'يجب ألا تتجاوز النبذة 5000 حرف.',
+  required: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 100 حرف.', headlineBounds: 'يجب ألا يتجاوز العنوان 160 حرفاً.',
   phoneError: 'أدخل رقماً دولياً صحيحاً بصيغة E.164 أو اتركه فارغاً.', emailError: 'أدخل بريداً صحيحاً لا يتجاوز 254 حرفاً أو اتركه فارغاً.',
   selectionError: 'تحقق من اختيار التخصصات.',
 } : {
-  save: 'Save profile', saving: 'Saving…', fullName: 'Full name', headline: 'Professional headline', bio: 'About you',
+  save: 'Save profile', saving: 'Saving…', fullName: 'Full name', headline: 'Professional headline',
   specializations: 'Subjects and specializations', chooseSubjects: 'Choose the subjects and academic contexts you teach.', emptyCatalogue: 'No specializations are available yet. You can save the rest of your profile.',
   phone: 'Phone number', whatsapp: 'WhatsApp number', email: 'Contact email', e164: 'Use an international number, such as +201234567890.',
   visibility: 'Who can see your contact details?', enrolled: 'Accepted students in my groups', public: 'Public after account approval', visibilityHint: 'This does not change your sign-in email.',
-  required: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 100 characters.', headlineBounds: 'Headline must be no longer than 160 characters.', bioBounds: 'Bio must be no longer than 5,000 characters.',
+  required: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 100 characters.', headlineBounds: 'Headline must be no longer than 160 characters.',
   phoneError: 'Enter a valid international E.164 number or leave this blank.', emailError: 'Enter a valid email up to 254 characters or leave this blank.',
   selectionError: 'Check your specialization selection.',
 };
@@ -72,7 +72,6 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
     if (!fieldError(name)) return undefined;
     if (name === 'full_name') return formValues.full_name.trim().length < 2 ? t.required : t.nameBounds;
     if (name === 'headline') return t.headlineBounds;
-    if (name === 'bio') return t.bioBounds;
     if (name === 'phone_number' || name === 'whatsapp_number') return t.phoneError;
     if (name === 'contact_email') return t.emailError;
     return t.selectionError;
@@ -113,12 +112,6 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings 
         {fieldError('headline') && <p id="profile-headline-error" className="mt-1 text-sm text-red-700">{errorText('headline')}</p>}
       </div>
     </div>
-    <div>
-      <label htmlFor="profile-bio" className="block text-sm font-bold">{t.bio}</label>
-      <textarea id="profile-bio" name="bio" value={formValues.bio} onChange={event => setFormValues(current => ({ ...current, bio: event.target.value }))} maxLength={5000} rows={6} aria-invalid={!!fieldError('bio')} aria-describedby={fieldError('bio') ? 'profile-bio-error' : undefined} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
-      {fieldError('bio') && <p id="profile-bio-error" className="mt-1 text-sm text-red-700">{errorText('bio')}</p>}
-    </div>
-
     <fieldset className="min-w-0" aria-describedby={fieldError('offering_ids') ? 'profile-specialization-error' : undefined}>
       <legend className="text-lg font-black text-teal">{t.specializations}</legend>
       <p className="mt-1 text-sm text-muted">{t.chooseSubjects}</p>
