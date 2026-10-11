@@ -168,6 +168,7 @@ begin
   end if;
 end $$;
 
+set local request.jwt.claim.sub='00000000-0000-0000-0000-000000000000';
 set local role anon;
 do $$
 begin
@@ -232,6 +233,9 @@ begin
 end $$;
 reset role;
 
+insert into public.subjects(id,name_ar,name_en,slug) values
+ ('7a100000-0000-4000-8000-000000000020','موضوع مشترك مؤقت','Task 2b shared subject','task-2b-shared-subject'),
+ ('7a100000-0000-4000-8000-000000000021','موضوع مشترك للمجموعة','Task 2b group subject','task-2b-group-subject');
 set local role authenticated;
 set local request.jwt.claim.sub='7a000000-0000-4000-8000-000000000001';
 do $$
@@ -241,9 +245,35 @@ declare
   v_category uuid;
   v_offering uuid;
   v_group uuid;
+  v_reuse_group uuid;
+  v_shared_group uuid;
+  v_shared_node uuid;
+  v_shared_pair uuid;
+  v_shared_pair_again uuid;
+  v_shared_group_pair uuid;
   v_saved_group uuid;
   v_updated_at timestamptz;
 begin
+  select node_id into v_shared_node from public.offerings where owner_teacher_id is null order by id limit 1;
+  if v_shared_node is null then raise exception 'shared category fixture is missing'; end if;
+  v_shared_pair:=public.save_teacher_offering('7a100000-0000-4000-8000-000000000020',v_shared_node);
+  v_shared_pair_again:=public.save_teacher_offering('7a100000-0000-4000-8000-000000000020',v_shared_node);
+  if v_shared_pair is distinct from v_shared_pair_again
+     or (select owner_teacher_id from public.offerings where id=v_shared_pair)<>'7a000000-0000-4000-8000-000000000001'
+     or exists(select 1 from public.offerings where owner_teacher_id is null and subject_id='7a100000-0000-4000-8000-000000000020') then
+    raise exception 'explicit pair creation did not reuse a private teacher-owned fallback';
+  end if;
+  v_reuse_group:=public.save_teacher_group_draft(null,'7a100000-0000-4000-8000-000000000020',v_shared_node,'Reuse private fallback','',5,'',null);
+  if (select offering_id from public.groups where id=v_reuse_group) is distinct from v_shared_pair then
+    raise exception 'draft did not reuse the existing teacher-owned fallback pair';
+  end if;
+  v_shared_group:=public.save_teacher_group_draft(null,'7a100000-0000-4000-8000-000000000021',v_shared_node,'Shared components draft','',5,'',null);
+  select o.id into v_shared_group_pair from public.groups g join public.offerings o on o.id=g.offering_id where g.id=v_shared_group;
+  if (select owner_teacher_id from public.offerings where id=v_shared_group_pair)<>'7a000000-0000-4000-8000-000000000001'
+     or exists(select 1 from public.offerings where owner_teacher_id is null and subject_id='7a100000-0000-4000-8000-000000000021') then
+    raise exception 'draft pair creation exposed a missing shared/shared pair';
+  end if;
+
   v_subject:=public.save_teacher_subject(null,'  مادة خاصة جديدة  ','');
   v_category:=public.save_teacher_category(null,'student_category','','  New private category  ');
   if (select name_ar from public.subjects where id=v_subject)<>'مادة خاصة جديدة'
@@ -291,6 +321,35 @@ begin
   perform public.set_teacher_catalogue_archived('offering',v_offering,false);
   perform public.set_teacher_catalogue_archived('subject',v_subject,true);
   perform public.set_teacher_catalogue_archived('subject',v_subject,false);
+end $$;
+reset role;
+
+set local request.jwt.claim.sub='00000000-0000-0000-0000-000000000000';
+set local role anon;
+do $$
+begin
+  if exists(select 1 from public.offerings where subject_id in ('7a100000-0000-4000-8000-000000000020','7a100000-0000-4000-8000-000000000021')) then
+    raise exception 'anonymous reader can see an unreferenced or draft-only private fallback pair';
+  end if;
+end $$;
+reset role;
+set local role authenticated;
+set local request.jwt.claim.sub='7a000000-0000-4000-8000-000000000001';
+do $$
+declare v_group uuid;
+begin
+  select id into v_group from public.groups where teacher_id='7a000000-0000-4000-8000-000000000001' and name='Shared components draft';
+  perform public.save_schedule_slot(v_group,4,'14:00','15:00',null);
+  perform public.publish_group(v_group,null,null);
+end $$;
+reset role;
+set local request.jwt.claim.sub='00000000-0000-0000-0000-000000000000';
+set local role anon;
+do $$
+begin
+  if not exists(select 1 from public.offerings where subject_id='7a100000-0000-4000-8000-000000000021') then
+    raise exception 'eligible publication did not expose the private fallback pair';
+  end if;
 end $$;
 reset role;
 

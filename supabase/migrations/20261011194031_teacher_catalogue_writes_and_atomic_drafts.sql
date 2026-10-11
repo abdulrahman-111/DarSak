@@ -55,6 +55,7 @@ begin
   if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
   if length(v_ar)>120 or length(v_en)>120 or (v_ar='' and v_en='') then raise exception 'provide a label up to 120 characters in at least one language' using errcode='22023'; end if;
   perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+  if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
   if p_id is null then
     insert into public.subjects(id,owner_teacher_id,name_ar,name_en,slug) values(v_id,v_teacher,v_ar,v_en,v_id::text);
   else
@@ -77,6 +78,7 @@ begin
   if p_kind not in ('custom_year','student_category') then raise exception 'category kind must be custom_year or student_category' using errcode='22023'; end if;
   if length(v_ar)>120 or length(v_en)>120 or (v_ar='' and v_en='') then raise exception 'provide a label up to 120 characters in at least one language' using errcode='22023'; end if;
   perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+  if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
   if p_id is null then
     insert into public.education_nodes(id,parent_id,kind,name_ar,name_en,slug,owner_teacher_id)
     values(v_id,null,p_kind,v_ar,v_en,v_id::text,v_teacher);
@@ -104,6 +106,7 @@ begin
   else select owner_teacher_id into v_owner from public.education_nodes where id=p_id; end if;
   if v_owner is distinct from v_teacher then raise exception 'owned catalogue row not found'; end if;
   perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+  if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
   if p_kind='offering' then
     perform 1 from public.subjects where id=v_subject for update;
     perform 1 from public.education_nodes where id=v_node for update;
@@ -128,6 +131,7 @@ declare v_teacher uuid:=auth.uid(); v_subject_owner uuid; v_subject_archived tim
 begin
   if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
   perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+  if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
   perform 1 from public.subjects where id=p_subject_id for update;
   if not found then raise exception 'subject is not selectable'; end if;
   perform 1 from public.education_nodes where id=p_category_id for update;
@@ -139,26 +143,22 @@ begin
   if v_subject_owner is null and v_node_owner is null then
     select id,archived_at into v_offering_id,v_existing_archived from public.offerings
     where owner_teacher_id is null and subject_id=p_subject_id and node_id=p_category_id for update;
-    if found then
-      if v_existing_archived is not null then raise exception 'restore the archived specialization before adding it'; end if;
+    if found and v_existing_archived is null then
       return v_offering_id;
     end if;
-    insert into public.offerings(node_id,subject_id) values(p_category_id,p_subject_id)
-    on conflict(node_id,subject_id) where owner_teacher_id is null do nothing returning id into v_offering_id;
-  else
-    select id,archived_at into v_offering_id,v_existing_archived from public.offerings
-    where owner_teacher_id=v_teacher and subject_id=p_subject_id and node_id=p_category_id for update;
-    if found then
-      if v_existing_archived is not null then raise exception 'restore the archived specialization before adding it'; end if;
-      return v_offering_id;
-    end if;
-    insert into public.offerings(node_id,subject_id,owner_teacher_id) values(p_category_id,p_subject_id,v_teacher)
-    on conflict(owner_teacher_id,node_id,subject_id) where owner_teacher_id is not null do nothing returning id into v_offering_id;
   end if;
+
+  select id,archived_at into v_offering_id,v_existing_archived from public.offerings
+  where owner_teacher_id=v_teacher and subject_id=p_subject_id and node_id=p_category_id for update;
+  if found then
+    if v_existing_archived is not null then raise exception 'restore the archived specialization before adding it'; end if;
+    return v_offering_id;
+  end if;
+  insert into public.offerings(node_id,subject_id,owner_teacher_id) values(p_category_id,p_subject_id,v_teacher)
+  on conflict(owner_teacher_id,node_id,subject_id) where owner_teacher_id is not null do nothing returning id into v_offering_id;
   if v_offering_id is null then
     select id,archived_at into v_offering_id,v_existing_archived from public.offerings
-    where owner_teacher_id is not distinct from case when v_subject_owner is null and v_node_owner is null then null else v_teacher end
-      and subject_id=p_subject_id and node_id=p_category_id;
+    where owner_teacher_id=v_teacher and subject_id=p_subject_id and node_id=p_category_id;
     if v_existing_archived is not null then raise exception 'restore the archived specialization before adding it'; end if;
   end if;
   return v_offering_id;
@@ -185,6 +185,7 @@ begin
    raise exception 'draft fields are invalid';
  end if;
  perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+ if not private.teacher_catalogue_active(v_teacher) then raise exception 'active teacher required' using errcode='42501'; end if;
  if p_group_id is not null then
    select * into v_group from public.groups where id=p_group_id for update;
    if not found or v_group.teacher_id<>v_teacher or v_group.status<>'draft' then raise exception 'owned draft not found'; end if;
@@ -208,24 +209,20 @@ begin
    if v_subject_owner is null and v_node_owner is null then
      select id,archived_at into v_offering,v_existing_archived from public.offerings
        where owner_teacher_id is null and subject_id=p_subject_id and node_id=p_category_id for update;
-   else
+     if v_existing_archived is not null then v_offering:=null; end if;
+   end if;
+   if v_offering is null then
      select id,archived_at into v_offering,v_existing_archived from public.offerings
        where owner_teacher_id=v_teacher and subject_id=p_subject_id and node_id=p_category_id for update;
    end if;
    if v_offering is not null then
      if v_existing_archived is not null then raise exception 'restore the archived specialization before selecting it'; end if;
    else
-     if v_subject_owner is null and v_node_owner is null then
-       insert into public.offerings(node_id,subject_id) values(p_category_id,p_subject_id)
-       on conflict(node_id,subject_id) where owner_teacher_id is null do nothing returning id into v_offering;
-     else
-       insert into public.offerings(node_id,subject_id,owner_teacher_id) values(p_category_id,p_subject_id,v_teacher)
-       on conflict(owner_teacher_id,node_id,subject_id) where owner_teacher_id is not null do nothing returning id into v_offering;
-     end if;
+     insert into public.offerings(node_id,subject_id,owner_teacher_id) values(p_category_id,p_subject_id,v_teacher)
+     on conflict(owner_teacher_id,node_id,subject_id) where owner_teacher_id is not null do nothing returning id into v_offering;
      if v_offering is null then
        select id,archived_at into v_offering,v_existing_archived from public.offerings
-       where owner_teacher_id is not distinct from case when v_subject_owner is null and v_node_owner is null then null else v_teacher end
-         and subject_id=p_subject_id and node_id=p_category_id;
+       where owner_teacher_id=v_teacher and subject_id=p_subject_id and node_id=p_category_id;
        if v_existing_archived is not null then raise exception 'restore the archived specialization before selecting it'; end if;
      end if;
    end if;
@@ -261,6 +258,7 @@ begin
  if v_whatsapp is not null and v_whatsapp !~ '^\+[1-9][0-9]{7,14}$' then raise exception 'WhatsApp number must use E.164 format'; end if;
  if v_email is not null and (length(v_email) not between 3 and 254 or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$') then raise exception 'invalid contact email'; end if;
  perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher_id::text,0));
+ if not private.teacher_catalogue_active(v_teacher_id) then raise exception 'active teacher required' using errcode='42501'; end if;
  perform private.validate_teacher_offering_ids(v_teacher_id,p_offering_ids);
  update public.profiles set full_name=v_full_name where id=v_teacher_id;
  update public.teacher_profiles set headline=v_headline,bio=v_bio where id=v_teacher_id;
@@ -290,6 +288,7 @@ begin
  if v_whatsapp is not null and v_whatsapp !~ '^\+[1-9][0-9]{7,14}$' then raise exception 'WhatsApp number must use E.164 format'; end if;
  if v_email is not null and (length(v_email) not between 3 and 254 or v_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$') then raise exception 'invalid contact email'; end if;
  perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher_id::text,0));
+ if not private.teacher_catalogue_active(v_teacher_id) then raise exception 'active teacher required' using errcode='42501'; end if;
  perform private.validate_teacher_offering_ids(v_teacher_id,p_offering_ids);
  update public.profiles set full_name=v_full_name where id=v_teacher_id;
  update public.teacher_profiles set headline=v_headline where id=v_teacher_id;

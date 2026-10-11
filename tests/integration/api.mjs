@@ -1,6 +1,7 @@
 /** Real local Supabase API verification. Refuses cloud hosts. */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { execFileSync, spawn } from 'node:child_process';
 const origin = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
 assert(['127.0.0.1', 'localhost'].includes(new URL(origin).hostname), 'Integration fixtures are local-only');
 const anon = process.env.SUPABASE_ANON_KEY;
@@ -12,6 +13,7 @@ const uploadedPaths = [];
 const uploadedAvatarPaths = [];
 const uploadedCoverPaths = [];
 const signBody = {expiresIn:60};
+const wait = milliseconds => new Promise(resolve=>setTimeout(resolve,milliseconds));
 let passed = 0;
 async function request(path, {token = anon, method = 'GET', body, headers = {}, timeoutMs = 10000} = {}) {
   const response = await fetch(`${origin}${path}`, {
@@ -444,6 +446,31 @@ try {
   check(concurrentPairs.every(result=>result.ok) && concurrentPairs[0].data===concurrentPairs[1].data,'concurrent pair requests reuse one teacher-owned offering');
   const rpcOfferingId = concurrentPairs[0].data;
   const foreignRename = await request('/rest/v1/rpc/save_teacher_subject',{token:otherTeacher.token,method:'POST',body:{p_id:rpcSubjectId,p_name_ar:'Foreign edit',p_name_en:''}});
+  const lockApp = `task2b_catalogue_lock_${suffix}`;
+  const holderSql = `begin; select pg_advisory_xact_lock(hashtextextended('teacher-calendar:${teacher.id}',0)); select pg_sleep(3); commit;`;
+  const lockHolder = spawn('docker',['exec','-e',`PGAPPNAME=${lockApp}`,'supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-c',holderSql],{stdio:'ignore'});
+  const holderExit = new Promise(resolve=>lockHolder.once('exit',resolve));
+  const lockQuery = `select count(*) from pg_stat_activity a join pg_locks l on l.pid=a.pid where a.application_name='${lockApp}' and l.locktype='advisory' and l.granted`;
+  let holderReady = false;
+  for (let attempt=0;attempt<40 && !holderReady;attempt++) {
+    await wait(50);
+    holderReady = execFileSync('docker',['exec','supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-Atc',lockQuery],{encoding:'utf8'}).trim()==='1';
+  }
+  assert(holderReady,'Local advisory-lock fixture became active');
+  const queuedSubjectSave = request('/rest/v1/rpc/save_teacher_subject',{token:teacher.token,method:'POST',body:{p_id:null,p_name_ar:'Suspended while queued',p_name_en:''}});
+  const queuedQuery = `select count(*) from pg_stat_activity where query ilike '%save_teacher_subject%' and wait_event_type='Lock'`;
+  let saveIsQueued = false;
+  for (let attempt=0;attempt<40 && !saveIsQueued;attempt++) {
+    await wait(50);
+    saveIsQueued = execFileSync('docker',['exec','supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-Atc',queuedQuery],{encoding:'utf8'}).trim()==='1';
+  }
+  assert(saveIsQueued,'Catalogue mutation waited for the teacher calendar lock');
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedQueuedSave = await queuedSubjectSave;
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
+  await holderExit;
+  const suspendedWriteRows = await success(`/rest/v1/subjects?owner_teacher_id=eq.${teacher.id}&name_ar=eq.Suspended%20while%20queued&select=id`,{token:service});
+  check(!suspendedQueuedSave.ok && suspendedQueuedSave.data?.code==='42501' && suspendedWriteRows.length===0,'a teacher suspended while queued cannot mutate after the calendar lock releases');
   const rpcDraftId = await success('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:null,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`RPC ${suffix}`,p_description:'Atomic draft',p_capacity:8,p_location:'Cairo',p_expected_updated_at:null}});
   const rpcDraftBefore = (await success(`/rest/v1/groups?id=eq.${rpcDraftId}&select=updated_at,name,offering_id`,{token:teacher.token}))[0];
   const rpcDraftSaved = await success('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:rpcDraftId,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`RPC ${suffix} updated`,p_description:'Saved',p_capacity:9,p_location:'Giza',p_expected_updated_at:rpcDraftBefore.updated_at}});
