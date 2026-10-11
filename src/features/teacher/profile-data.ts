@@ -132,7 +132,7 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
     teacher.avatar_path
     ? await db.storage.from('teacher-avatars').createSignedUrl(teacher.avatar_path, 300)
     : null,
-    readTeacherCover(db, coverResult.data?.cover_path ?? null),
+    readTeacherCover(db, coverResult.data ?? null),
   ]);
   const visitor = buildTeacherVisitorView({
     teacher: { id: teacher.id, full_name: teacher.full_name, headline: teacher.headline },
