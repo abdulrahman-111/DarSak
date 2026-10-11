@@ -438,6 +438,25 @@ try {
   const adminKindChange = await request(`/rest/v1/education_nodes?id=eq.${customNodeId}`,{token:spoof.token,method:'PATCH',body:{kind:'year'}});
   const adminPairChange = await request(`/rest/v1/offerings?id=eq.${customOfferingId}`,{token:spoof.token,method:'PATCH',body:{node_id:offerings[0].node_id}});
   check(!adminOwnerSpoof.ok && !adminDeleteOwned.ok && !adminLabelChange.ok && !adminKindChange.ok && !adminPairChange.ok && retainedOwnedSubject.length===1,'admin cannot reassign, relabel, physically delete, reshape, or relink owned catalogue rows');
+  const rpcSubjectId = await success('/rest/v1/rpc/save_teacher_subject',{token:teacher.token,method:'POST',body:{p_id:null,p_name_ar:'  مادة RPC خاصة  ',p_name_en:''}});
+  const rpcCategoryId = await success('/rest/v1/rpc/save_teacher_category',{token:teacher.token,method:'POST',body:{p_id:null,p_kind:'student_category',p_name_ar:'',p_name_en:' RPC category '}});
+  const concurrentPairs = await Promise.all([1,2].map(()=>request('/rest/v1/rpc/save_teacher_offering',{token:teacher.token,method:'POST',body:{p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId}})));
+  check(concurrentPairs.every(result=>result.ok) && concurrentPairs[0].data===concurrentPairs[1].data,'concurrent pair requests reuse one teacher-owned offering');
+  const rpcOfferingId = concurrentPairs[0].data;
+  const foreignRename = await request('/rest/v1/rpc/save_teacher_subject',{token:otherTeacher.token,method:'POST',body:{p_id:rpcSubjectId,p_name_ar:'Foreign edit',p_name_en:''}});
+  const rpcDraftId = await success('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:null,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`RPC ${suffix}`,p_description:'Atomic draft',p_capacity:8,p_location:'Cairo',p_expected_updated_at:null}});
+  const rpcDraftBefore = (await success(`/rest/v1/groups?id=eq.${rpcDraftId}&select=updated_at,name,offering_id`,{token:teacher.token}))[0];
+  const rpcDraftSaved = await success('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:rpcDraftId,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`RPC ${suffix} updated`,p_description:'Saved',p_capacity:9,p_location:'Giza',p_expected_updated_at:rpcDraftBefore.updated_at}});
+  const staleNewSubject = await success('/rest/v1/rpc/save_teacher_subject',{token:teacher.token,method:'POST',body:{p_id:null,p_name_ar:'Stale subject',p_name_en:''}});
+  const staleDraftSave = await request('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:rpcDraftId,p_subject_id:staleNewSubject,p_category_id:rpcCategoryId,p_name:'Must not save',p_description:'',p_capacity:10,p_location:'',p_expected_updated_at:rpcDraftBefore.updated_at}});
+  const danglingStalePair = await success(`/rest/v1/offerings?owner_teacher_id=eq.${teacher.id}&subject_id=eq.${staleNewSubject}&select=id`,{token:service});
+  check(!foreignRename.ok && rpcDraftSaved===rpcDraftId && !staleDraftSave.ok && danglingStalePair.length===0,'catalogue rename ownership and atomic draft timestamp CAS reject foreign or stale writes before pair creation');
+  const archiveSaveRaceGroup = await Promise.all([
+    request('/rest/v1/rpc/set_teacher_catalogue_archived',{token:teacher.token,method:'POST',body:{p_kind:'offering',p_id:rpcOfferingId,p_archived:true}}),
+    request('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:null,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`Race ${suffix}`,p_description:'',p_capacity:5,p_location:'',p_expected_updated_at:null}}),
+  ]);
+  const raceGroup = archiveSaveRaceGroup[1].ok ? await success(`/rest/v1/groups?id=eq.${archiveSaveRaceGroup[1].data}&select=offering_id,status`,{token:service}) : [];
+  check(archiveSaveRaceGroup[0].ok && (!archiveSaveRaceGroup[1].ok || (raceGroup.length===1 && raceGroup[0].offering_id===rpcOfferingId && raceGroup[0].status==='draft')),'archive and draft-save race serializes without a foreign or dangling pair');
   const customDraft = (await success('/rest/v1/groups',{token:service,method:'POST',body:{teacher_id:teacher.id,offering_id:customOfferingId,name:`Custom ${suffix}`,capacity:5,status:'draft',updated_at:'2100-01-01T00:00:00Z'}}))[0];
   const foreignCustomGroup = await request('/rest/v1/groups',{token:otherTeacher.token,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:customOfferingId,name:'Foreign custom pair',capacity:5,status:'draft'}});
   const sharedStudentChoice = await success(`/rest/v1/student_profiles?id=eq.${student.id}`,{token:student.token,method:'PATCH',body:{offering_id:offerings[0].id}});

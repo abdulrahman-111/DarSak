@@ -12,6 +12,13 @@ begin
   if to_regprocedure('public.public_discovery_catalogue()') is null then
     raise exception 'public_discovery_catalogue() is not installed';
   end if;
+  if to_regprocedure('public.save_teacher_subject(uuid,text,text)') is null
+     or to_regprocedure('public.save_teacher_category(uuid,text,text,text)') is null
+     or to_regprocedure('public.set_teacher_catalogue_archived(text,uuid,boolean)') is null
+     or to_regprocedure('public.save_teacher_offering(uuid,uuid)') is null
+     or to_regprocedure('public.save_teacher_group_draft(uuid,uuid,uuid,text,text,integer,text,timestamptz)') is null then
+    raise exception 'teacher catalogue write RPCs are not installed';
+  end if;
 end $$;
 
 insert into auth.users(id,aud,role,email,raw_user_meta_data) values
@@ -222,6 +229,68 @@ begin
   exception when others then
     if sqlerrm='student selected an owned offering' then raise; end if;
   end;
+end $$;
+reset role;
+
+set local role authenticated;
+set local request.jwt.claim.sub='7a000000-0000-4000-8000-000000000001';
+do $$
+declare
+  v_subject uuid;
+  v_second_subject uuid;
+  v_category uuid;
+  v_offering uuid;
+  v_group uuid;
+  v_saved_group uuid;
+  v_updated_at timestamptz;
+begin
+  v_subject:=public.save_teacher_subject(null,'  مادة خاصة جديدة  ','');
+  v_category:=public.save_teacher_category(null,'student_category','','  New private category  ');
+  if (select name_ar from public.subjects where id=v_subject)<>'مادة خاصة جديدة'
+     or (select name_en from public.subjects where id=v_subject)<>''
+     or (select name_en from public.education_nodes where id=v_category)<>'New private category' then
+    raise exception 'RPC catalogue labels were not normalized or localized';
+  end if;
+  v_offering:=public.save_teacher_offering(v_subject,v_category);
+  v_group:=public.save_teacher_group_draft(null,v_subject,v_category,'Atomic draft','Description',12,'Cairo',null);
+  select updated_at into v_updated_at from public.groups where id=v_group;
+  v_saved_group:=public.save_teacher_group_draft(v_group,v_subject,v_category,'Atomic draft updated','Description updated',13,'Giza',v_updated_at);
+  if v_saved_group<>v_group or not exists(select 1 from public.groups where id=v_group and capacity=13 and location='Giza') then
+    raise exception 'atomic draft did not save the selected offering and fields';
+  end if;
+
+  v_second_subject:=public.save_teacher_subject(null,'Stale subject','');
+  select updated_at into v_updated_at from public.groups where id=v_group;
+  begin
+    perform public.save_teacher_group_draft(v_group,v_second_subject,v_category,'Stale attempt','',20,'',v_updated_at-interval '1 second');
+    raise exception 'stale draft save unexpectedly succeeded';
+  exception when sqlstate '40001' then null;
+  end;
+  if exists(select 1 from public.offerings where owner_teacher_id='7a000000-0000-4000-8000-000000000001' and subject_id=v_second_subject)
+     or not exists(select 1 from public.groups where id=v_group and name='Atomic draft updated' and capacity=13) then
+    raise exception 'stale draft changed the saved row or left a dangling pair';
+  end if;
+
+  perform public.save_teacher_profile_account('Catalogue Owner','Profile',array[v_offering],'+201234567890','','owner@example.test','enrolled');
+  perform public.set_teacher_catalogue_archived('offering',v_offering,true);
+  if public.save_teacher_group_draft(v_group,v_subject,v_category,'Retained archived draft','',13,'Giza',
+      (select updated_at from public.groups where id=v_group))<>v_group then
+    raise exception 'unchanged archived group selection could not be retained';
+  end if;
+  perform public.save_teacher_profile_account('Catalogue Owner','Profile',array[v_offering],'+201234567890','','owner@example.test','enrolled');
+  if not exists(select 1 from public.teacher_specializations where teacher_id='7a000000-0000-4000-8000-000000000001' and offering_id=v_offering) then
+    raise exception 'unchanged archived profile selection was deleted';
+  end if;
+  begin
+    perform public.duplicate_group(v_group);
+    raise exception 'duplicate accepted an archived pair';
+  exception when others then
+    if sqlerrm='duplicate accepted an archived pair' then raise; end if;
+    if sqlerrm not ilike '%update the original catalogue selection%' then raise; end if;
+  end;
+  perform public.set_teacher_catalogue_archived('offering',v_offering,false);
+  perform public.set_teacher_catalogue_archived('subject',v_subject,true);
+  perform public.set_teacher_catalogue_archived('subject',v_subject,false);
 end $$;
 reset role;
 
