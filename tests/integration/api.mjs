@@ -209,6 +209,9 @@ try {
   const concurrentSaves = await Promise.all(concurrentCandidates.map(p_details=>request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details,p_expected_version:detailsAfterHiddenSave.version}})));
   const afterConcurrentSaves = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
   check(concurrentSaves.filter(result=>result.ok).length===1 && concurrentSaves.filter(result=>!result.ok).length===1 && afterConcurrentSaves.version===detailsAfterHiddenSave.version+1 && ['Concurrent A','Concurrent B'].includes(afterConcurrentSaves.details.approach.ar),'concurrent same-version saves serialize and only one can advance the profile');
+  const overlongLanguage = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:{...richDetails,languages:[' '.repeat(1000)+'x'+' '.repeat(1000)]},p_expected_version:afterConcurrentSaves.version}});
+  const afterOverlongLanguage = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(!overlongLanguage.ok && afterOverlongLanguage.version===afterConcurrentSaves.version && JSON.stringify(afterOverlongLanguage.details.languages)===JSON.stringify(afterConcurrentSaves.details.languages),'raw profile save rejects a teaching-language label over 60 stored characters without persisting it');
   const invalidDetails = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:{...richDetails,unexpected:true},p_expected_version:detailsAfterHiddenSave.version}});
   const foreignDetails = await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=teacher_id`,{token:otherTeacher.token});
   const studentDetailsSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:student.token,method:'POST',body:{p_details:richDetails,p_expected_version:0}});
@@ -216,12 +219,12 @@ try {
   const directHiddenBioWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{bio:'Hidden canonical biography'}});
   const bioAfterDirectWrite = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=bio`,{token:service});
   check(!directHiddenBioWrite.ok || bioAfterDirectWrite[0].bio!=='Hidden canonical biography','raw teacher_profiles writes cannot expose hidden canonical About');
-  const legacySave = await request('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_bio:'Legacy compatibility biography'}});
+  const legacySave = await request('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_bio:''}});
   const detailsAfterLegacySave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
-  check(legacySave.ok && detailsAfterLegacySave.details.about.en==='Hidden canonical biography' && detailsAfterLegacySave.details.hidden_sections.includes('about'),'legacy save_teacher_profile updates canonical About and preserves other rich fields');
+  check(legacySave.ok && detailsAfterLegacySave.details.about.ar==='' && detailsAfterLegacySave.details.about.en==='Hidden canonical biography' && detailsAfterLegacySave.details.hidden_sections.includes('about'),'legacy save_teacher_profile clears hidden About and preserves other rich fields');
   const accountSave = await request('/rest/v1/rpc/save_teacher_profile_account',{token:teacher.token,method:'POST',body:{p_full_name:'Teacher Contact Name',p_headline:'Algebra teacher',p_offering_ids:[offerings[0].id],p_phone_number:'+201234567890',p_whatsapp_number:'',p_contact_email:'contact@example.test',p_visibility:'enrolled'}});
   const detailsAfterAccountSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
-  check(accountSave.ok && detailsAfterAccountSave.version===detailsAfterLegacySave.version && detailsAfterAccountSave.details.about.ar==='Legacy compatibility biography' && detailsAfterAccountSave.details.about.en==='Hidden canonical biography','contact/account save does not replay stale About or change descriptive version');
+  check(accountSave.ok && detailsAfterAccountSave.version===detailsAfterLegacySave.version && detailsAfterAccountSave.details.about.ar==='' && detailsAfterAccountSave.details.about.en==='Hidden canonical biography','contact/account save does not replay stale About or change descriptive version');
   const newTeacherDetails = await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${pendingTeacher.id}&select=details,version`,{token:pendingTeacher.token});
   check(newTeacherDetails.length===1 && newTeacherDetails[0].version===0 && newTeacherDetails[0].details.about.ar==='' && newTeacherDetails[0].details.about.en==='','new pending teacher starts with empty owner-editable details');
   const anonPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
@@ -468,6 +471,10 @@ try {
   const hiddenSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${otherGroup.id}`);
   check(hiddenSlots.length===0,'published slots disappear when their teacher is suspended');
   await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedDetailsBefore = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  const suspendedRawBioWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{bio:'Suspended overwrite'}});
+  const suspendedDetailsAfter = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check((!suspendedRawBioWrite.ok || suspendedRawBioWrite.data.length===0) && suspendedDetailsAfter.version===suspendedDetailsBefore.version && JSON.stringify(suspendedDetailsAfter.details.about)===JSON.stringify(suspendedDetailsBefore.details.about),'suspended teacher cannot change canonical About through raw teacher_profiles.bio updates');
   const suspendedAvatarOwner = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:teacher.token,method:'POST',body:signBody});
   const suspendedAvatarPublic = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:avatarPath}});
   const suspendedAvatarPublicSign = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{method:'POST',body:signBody});

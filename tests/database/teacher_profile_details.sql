@@ -147,10 +147,16 @@ reset role;
 
 set local role authenticated;
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
+update public.teacher_profiles set bio='Visible Arabic' where id='20000000-0000-4000-8000-000000000001';
 do $$
 begin
   if exists (select 1 from public.teacher_profiles where id='20000000-0000-4000-8000-000000000001' and bio like '%Hidden English%') then
     raise exception 'raw REST teacher_profiles bio contains hidden About';
+  end if;
+  if (select bio from public.teacher_profiles where id='20000000-0000-4000-8000-000000000001') <> ''
+     or (select details->'about'->>'ar' from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> 'Visible Arabic'
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> 1 then
+    raise exception 'raw write of canonical hidden About was not sanitized without changing canonical version';
   end if;
 end $$;
 reset role;
@@ -190,21 +196,129 @@ reset role;
 set local role authenticated;
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 do $$
+declare v_details jsonb; v_version bigint; v_rejected boolean;
 begin
+  select details,version into v_details,v_version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001';
   begin
     perform public.save_teacher_profile_details('{"about":{"ar":"x","en":""},"unexpected":true}'::jsonb,1);
     raise exception 'invalid raw details accepted';
-  exception when others then
-    if sqlerrm = 'invalid raw details accepted' then raise; end if;
+  exception when sqlstate '22023' then null;
   end;
+  if (select details from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_details
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_version then
+    raise exception 'invalid raw details changed canonical details or version';
+  end if;
   begin
     perform public.save_teacher_profile_details(
       '{"about":{"ar":"new","en":""},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"classic","palette":"teal","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,0
     );
     raise exception 'stale details version overwrote saved row';
-  exception when others then
-    if sqlerrm = 'stale details version overwrote saved row' then raise; end if;
+  exception when sqlstate '40001' then null;
   end;
+  if (select details from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_details
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_version then
+    raise exception 'stale details save changed canonical details or version';
+  end if;
+  v_rejected := false;
+  begin
+    perform public.save_teacher_profile_details(
+      jsonb_build_object(
+        'about',jsonb_build_object('ar','','en',''),'approach',jsonb_build_object('ar','','en',''),
+        'goals',jsonb_build_object('ar','','en',''),'qualifications','[]'::jsonb,'experience','[]'::jsonb,
+        'languages',jsonb_build_array(repeat(' ',1000)||'x'||repeat(' ',1000)),
+        'city',jsonb_build_object('ar','','en',''),'teaching_mode',null,'layout','classic','palette','teal',
+        'section_order','["about","qualifications","experience","approach","goals"]'::jsonb,'hidden_sections','[]'::jsonb
+      ),1
+    );
+    raise exception 'overlong stored teaching language was accepted';
+  exception when sqlstate '22023' then v_rejected := true;
+  end;
+  if not v_rejected then raise exception 'overlong stored teaching language was accepted'; end if;
+  if (select details from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_details
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_version then
+    raise exception 'rejected teaching language changed canonical details or version';
+  end if;
+end $$;
+reset role;
+
+-- An explicit legacy write must update canonical About even when public bio is
+-- already empty because About is hidden.
+set local role authenticated;
+set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
+select public.save_teacher_profile(
+  'Rich teacher','', '', array(select id from public.offerings limit 1), null, null, null, 'enrolled'
+);
+do $$
+begin
+  if (select details->'about'->>'ar' from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> ''
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> 2
+     or (select bio from public.teacher_profiles where id='20000000-0000-4000-8000-000000000001') <> '' then
+    raise exception 'legacy empty bio write did not clear hidden canonical About and advance version';
+  end if;
+end $$;
+reset role;
+
+-- An explicit same-value legacy write must fill the preferred-language slot
+-- when the visible biography currently comes from the other-language fallback.
+reset role;
+set local session_replication_role=replica;
+update public.profiles set preferred_language='en' where id='20000000-0000-4000-8000-000000000001';
+set local session_replication_role=origin;
+set local role authenticated;
+set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
+select public.save_teacher_profile(
+  'Rich teacher','Legacy English biography','Legacy English biography', array(select id from public.offerings limit 1), null, null, null, 'enrolled'
+);
+do $$
+declare v_details jsonb; v_version bigint;
+begin
+  select details,version into v_details,v_version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001';
+  if v_details->'about'->>'en' <> 'Legacy English biography' or v_version <> 3 then
+    raise exception 'legacy writer did not store preferred-language About';
+  end if;
+end $$;
+select public.save_teacher_profile_details(
+  (select details || '{"hidden_sections":[]}'::jsonb from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001'),
+  3
+);
+reset role;
+set local session_replication_role=replica;
+update public.profiles set preferred_language='ar' where id='20000000-0000-4000-8000-000000000001';
+set local session_replication_role=origin;
+set local role authenticated;
+set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
+select public.save_teacher_profile(
+  'Rich teacher','Legacy English biography','Legacy English biography', array(select id from public.offerings limit 1), null, null, null, 'enrolled'
+);
+do $$
+begin
+  if (select details->'about'->>'ar' from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> 'Legacy English biography'
+     or (select details->'about'->>'en' from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> 'Legacy English biography'
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') <> 5 then
+    raise exception 'same-value legacy fallback write did not fill preferred-language About';
+  end if;
+end $$;
+reset role;
+
+-- Suspended owners cannot use the raw row UPDATE path to bypass the RPC guard.
+set local session_replication_role=replica;
+update public.profiles set status='suspended' where id='20000000-0000-4000-8000-000000000001';
+set local session_replication_role=origin;
+set local role authenticated;
+set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
+do $$
+declare v_details jsonb; v_version bigint;
+begin
+  select details,version into v_details,v_version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001';
+  begin
+    update public.teacher_profiles set bio='Suspended overwrite' where id='20000000-0000-4000-8000-000000000001';
+    raise exception 'suspended teacher raw bio write succeeded';
+  exception when sqlstate '42501' then null;
+  end;
+  if (select details from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_details
+     or (select version from public.teacher_profile_details where teacher_id='20000000-0000-4000-8000-000000000001') is distinct from v_version then
+    raise exception 'suspended teacher raw bio write changed private About or version';
+  end if;
 end $$;
 reset role;
 

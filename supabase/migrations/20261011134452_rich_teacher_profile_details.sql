@@ -8,6 +8,13 @@ create table public.teacher_profile_details (
   updated_at timestamptz not null default now(),
   constraint teacher_profile_details_object check (jsonb_typeof(details) = 'object')
 );
+create table dars_private.internal_profile_bio_syncs (
+  backend_pid integer not null,
+  transaction_id bigint not null,
+  teacher_id uuid not null,
+  primary key (backend_pid,transaction_id,teacher_id)
+);
+revoke all on dars_private.internal_profile_bio_syncs from public, anon, authenticated;
 alter table public.teacher_profile_details enable row level security;
 revoke all on public.teacher_profile_details from public, anon, authenticated;
 grant select on public.teacher_profile_details to authenticated;
@@ -173,7 +180,9 @@ begin
     raise exception 'invalid teaching languages' using errcode = '22023';
   end if;
   for v_entry in select value from jsonb_array_elements(p_details->'languages') loop
-    if jsonb_typeof(v_entry) <> 'string' or char_length(btrim(v_entry #>> '{}')) not between 1 and 60 then
+    if jsonb_typeof(v_entry) <> 'string'
+       or char_length(btrim(v_entry #>> '{}')) not between 1 and 60
+       or char_length(v_entry #>> '{}') > 60 then
       raise exception 'invalid teaching language label' using errcode = '22023';
     end if;
   end loop;
@@ -261,20 +270,48 @@ declare
   v_details jsonb;
   v_visible_bio text;
 begin
-  if new.bio is not distinct from old.bio or current_setting('dars.profile_details_internal',true) = 'on' then
+  if exists (
+    select 1 from dars_private.internal_profile_bio_syncs s
+    where s.backend_pid=pg_backend_pid() and s.transaction_id=txid_current() and s.teacher_id=new.id
+  ) then
     return new;
+  end if;
+  if not (
+    exists (
+      select 1 from public.profiles p
+      where p.id=auth.uid() and p.id=new.id
+        and p.role='teacher'::public.user_role and p.status='active'::public.user_status
+    )
+    or exists (
+      select 1 from public.profiles p
+      where p.id=auth.uid() and p.role='admin'::public.user_role and p.status='active'::public.user_status
+    )
+    or coalesce(auth.jwt()->>'role'='service_role',false)
+    or (
+      session_user in ('postgres','service_role')
+      and current_setting('role',true) in ('none','postgres','service_role')
+    )
+  ) then
+    raise exception 'active teacher, admin, or service operator required' using errcode='42501';
   end if;
   if char_length(new.bio) > 5000 then raise exception 'bio exceeds 5000 characters' using errcode='22023'; end if;
   select coalesce(p.preferred_language,'ar') into v_language from public.profiles p where p.id=new.id;
   v_language := coalesce(v_language,'ar');
   select details into v_details from public.teacher_profile_details where teacher_id=new.id for update;
   if v_details is null then v_details := dars_private.empty_teacher_profile_details(); end if;
-  v_details := jsonb_set(v_details,array['about',v_language],to_jsonb(new.bio),true);
-  perform dars_private.validate_teacher_profile_details(v_details);
-  update public.teacher_profile_details set details=v_details,version=version+1,updated_at=now() where teacher_id=new.id;
   if v_details->'hidden_sections' @> '["about"]'::jsonb then
     v_visible_bio := '';
   else
+    v_visible_bio := coalesce(nullif(v_details->'about'->>v_language,''),v_details->'about'->>case when v_language='ar' then 'en' else 'ar' end,'');
+  end if;
+  if v_details->'about'->>v_language is not distinct from new.bio then
+    new.bio := v_visible_bio;
+    return new;
+  end if;
+  v_details := jsonb_set(v_details,array['about',v_language],to_jsonb(new.bio),true);
+  perform dars_private.validate_teacher_profile_details(v_details);
+  update public.teacher_profile_details set details=v_details,version=version+1,updated_at=now() where teacher_id=new.id;
+  if not (v_details->'hidden_sections' @> '["about"]'::jsonb) then
     v_visible_bio := coalesce(nullif(v_details->'about'->>v_language,''),v_details->'about'->>case when v_language='ar' then 'en' else 'ar' end,'');
   end if;
   new.bio := v_visible_bio;
@@ -347,7 +384,6 @@ declare
   v_version bigint;
   v_language text;
   v_bio text;
-  v_previous_setting text;
 begin
   if v_teacher_id is null or not exists (
     select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id
@@ -368,10 +404,11 @@ begin
   else
     v_bio := coalesce(nullif(p_details->'about'->>v_language,''),p_details->'about'->>case when v_language='ar' then 'en' else 'ar' end,'');
   end if;
-  v_previous_setting := current_setting('dars.profile_details_internal',true);
-  perform set_config('dars.profile_details_internal','on',true);
+  insert into dars_private.internal_profile_bio_syncs(backend_pid,transaction_id,teacher_id)
+  values(pg_backend_pid(),txid_current(),v_teacher_id);
   update public.teacher_profiles set bio=v_bio where id=v_teacher_id;
-  perform set_config('dars.profile_details_internal',coalesce(v_previous_setting,'off'),true);
+  delete from dars_private.internal_profile_bio_syncs
+  where backend_pid=pg_backend_pid() and transaction_id=txid_current() and teacher_id=v_teacher_id;
   return v_version+1;
 end;
 $$;
