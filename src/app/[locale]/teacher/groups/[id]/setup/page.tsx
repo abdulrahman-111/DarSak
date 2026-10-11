@@ -36,7 +36,7 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
               key={data.group.id}
               locale={locale}
               group={data.group}
-              catalogue={data.catalogue}
+              catalogue={data.catalogue.choices}
               slots={data.slots}
               exclusions={data.exclusions}
               approved={Boolean(data.me.teacher?.approved)}
