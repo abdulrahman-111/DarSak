@@ -417,6 +417,34 @@ try {
   check(approvedPublicRead.ok,'referenced avatar becomes public after its teacher is approved');
   const visibleSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
   check(visibleSpecializations.some(row=>row.offering_id===offerings[0].id),'public specialization RPC exposes offerings for an approved active teacher');
+  const themeProfileBase = {
+    about:{ar:'',en:''},approach:{ar:'',en:''},goals:{ar:'',en:''},qualifications:[],experience:[],
+    languages:[],city:{ar:'',en:''},teaching_mode:null,
+    section_order:['about','qualifications','experience','approach','goals'],hidden_sections:[],
+  };
+  let themeVersion = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${otherTeacher.id}&select=version`,{token:otherTeacher.token}))[0].version;
+  const indigoThemeSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:otherTeacher.token,method:'POST',body:{p_details:{...themeProfileBase,layout:'compact',palette:'indigo'},p_expected_version:themeVersion}});
+  assert(indigoThemeSave.ok,'Teacher can save theme-only compact/indigo profile details');
+  themeVersion = indigoThemeSave.data;
+  const indigoThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(indigoThemeProjection?.layout==='compact' && indigoThemeProjection?.palette==='indigo' && indigoThemeProjection.sections.length===0,'anonymous RPC returns theme-only compact/indigo settings with no visible sections');
+  const oliveThemeSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:otherTeacher.token,method:'POST',body:{p_details:{...themeProfileBase,layout:'classic',palette:'olive'},p_expected_version:themeVersion}});
+  assert(oliveThemeSave.ok,'Teacher can save theme-only olive profile details');
+  themeVersion = oliveThemeSave.data;
+  const oliveThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(oliveThemeProjection?.layout==='classic' && oliveThemeProjection?.palette==='olive' && oliveThemeProjection.sections.length===0,'anonymous RPC returns theme-only olive palette with no visible sections');
+  const fullyHiddenSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:otherTeacher.token,method:'POST',body:{p_details:{...themeProfileBase,about:{ar:'Hidden theme secret',en:'Hidden theme secret'},approach:{ar:'Hidden approach',en:'Hidden approach'},goals:{ar:'Hidden goals',en:'Hidden goals'},layout:'compact',palette:'olive',hidden_sections:['about','qualifications','experience','approach','goals']},p_expected_version:themeVersion}});
+  assert(fullyHiddenSave.ok,'Teacher can save non-default appearance with all sections hidden');
+  const fullyHiddenProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(fullyHiddenProjection?.layout==='compact' && fullyHiddenProjection?.palette==='olive' && fullyHiddenProjection.sections.length===0 && !JSON.stringify(fullyHiddenProjection).includes('Hidden theme'),'anonymous RPC preserves non-default appearance without exposing fully hidden section values');
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
+  const pendingThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(pendingThemeProjection===null,'unapproved teacher with saved non-default appearance remains hidden');
+  await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:true}});
+  await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedThemeProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
+  check(suspendedThemeProjection===null,'suspended teacher with saved non-default appearance remains hidden');
+  await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
   const privateLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:pending.token});
   check(privateLessons.length===0,'pending student cannot read private lessons');
   const memberLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:member.token});

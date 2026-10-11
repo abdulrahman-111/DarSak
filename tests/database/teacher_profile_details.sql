@@ -142,8 +142,89 @@ begin
   if public.public_teacher_profile_details('20000000-0000-4000-8000-000000000001') is not null then
     raise exception 'empty visible profile should not be published';
   end if;
+  if public.public_teacher_profile_details('20000000-0000-4000-8000-000000000003') is not null then
+    raise exception 'ineligible student received a public teacher profile projection';
+  end if;
 end $$;
 reset role;
+
+-- Non-default appearance is itself public profile content even when all
+-- descriptive sections are empty or hidden.
+set local role authenticated;
+set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000002';
+select public.save_teacher_profile_details(
+  '{"about":{"ar":"","en":""},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"compact","palette":"indigo","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,
+  0
+);
+reset role;
+set local role anon;
+set local request.jwt.claim.sub='';
+do $$
+declare v_public jsonb;
+begin
+  select public.public_teacher_profile_details('20000000-0000-4000-8000-000000000002') into v_public;
+  if v_public is null or v_public->>'layout'<>'compact' or v_public->>'palette'<>'indigo'
+     or v_public->'sections'<>'[]'::jsonb then
+    raise exception 'theme-only compact/indigo settings were not publicly projected';
+  end if;
+end $$;
+reset role;
+
+set local role authenticated;
+set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000002';
+select public.save_teacher_profile_details(
+  '{"about":{"ar":"","en":""},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"classic","palette":"olive","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,
+  1
+);
+select public.save_teacher_profile_details(
+  '{"about":{"ar":"Hidden theme-only about","en":"Hidden theme-only about"},"approach":{"ar":"Hidden approach","en":"Hidden approach"},"goals":{"ar":"Hidden goals","en":"Hidden goals"},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"compact","palette":"olive","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":["about","qualifications","experience","approach","goals"]}'::jsonb,
+  2
+);
+reset role;
+set local role anon;
+set local request.jwt.claim.sub='';
+do $$
+declare v_public jsonb;
+begin
+  select public.public_teacher_profile_details('20000000-0000-4000-8000-000000000002') into v_public;
+  if v_public is null or v_public->>'layout'<>'compact' or v_public->>'palette'<>'olive'
+     or v_public->'sections'<>'[]'::jsonb
+     or v_public::text like '%Hidden theme-only%' then
+    raise exception 'all-hidden non-default theme was not projected safely';
+  end if;
+end $$;
+reset role;
+
+-- Eligibility remains mandatory even when private settings make the profile
+-- non-empty; neither suspension nor missing approval exposes appearance.
+set local session_replication_role=replica;
+update public.teacher_profiles set approved=false where id='20000000-0000-4000-8000-000000000002';
+set local session_replication_role=origin;
+set local role anon;
+set local request.jwt.claim.sub='';
+do $$
+begin
+  if public.public_teacher_profile_details('20000000-0000-4000-8000-000000000002') is not null then
+    raise exception 'unapproved teacher appearance was publicly projected';
+  end if;
+end $$;
+reset role;
+set local session_replication_role=replica;
+update public.teacher_profiles set approved=true where id='20000000-0000-4000-8000-000000000002';
+update public.profiles set status='suspended' where id='20000000-0000-4000-8000-000000000002';
+set local session_replication_role=origin;
+set local role anon;
+set local request.jwt.claim.sub='';
+do $$
+begin
+  if public.public_teacher_profile_details('20000000-0000-4000-8000-000000000002') is not null then
+    raise exception 'suspended teacher appearance was publicly projected';
+  end if;
+end $$;
+reset role;
+set local session_replication_role=replica;
+update public.profiles set status='active' where id='20000000-0000-4000-8000-000000000002';
+set local session_replication_role=origin;
 
 set local role authenticated;
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';

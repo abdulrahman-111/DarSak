@@ -357,7 +357,9 @@ begin
      and jsonb_array_length(v_details->'languages')=0
      and coalesce(v_details->'city'->>'ar','')=''
      and coalesce(v_details->'city'->>'en','')=''
-     and v_details->'teaching_mode'='null'::jsonb then
+     and v_details->'teaching_mode'='null'::jsonb
+     and v_details->>'layout'='classic'
+     and v_details->>'palette'='teal' then
     return null;
   end if;
   v_projection := jsonb_build_object(
