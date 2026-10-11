@@ -8,7 +8,12 @@ alter table public.subjects
   add column owner_teacher_id uuid references public.profiles(id) on delete cascade,
   add column archived_at timestamptz,
   add constraint subjects_owned_slug_uuid check(owner_teacher_id is null or slug=id::text),
-  add constraint subjects_owned_label_present check(owner_teacher_id is null or nullif(btrim(name_ar),'') is not null or nullif(btrim(name_en),'') is not null);
+  add constraint subjects_owned_label_contract check(owner_teacher_id is null or (
+    char_length(regexp_replace(name_ar,'^[[:space:]]+|[[:space:]]+$','','g'))<=120 and
+    char_length(regexp_replace(name_en,'^[[:space:]]+|[[:space:]]+$','','g'))<=120 and
+    (nullif(regexp_replace(name_ar,'^[[:space:]]+|[[:space:]]+$','','g'),'') is not null or
+     nullif(regexp_replace(name_en,'^[[:space:]]+|[[:space:]]+$','','g'),'') is not null)
+  ));
 
 alter table public.education_nodes
   add column owner_teacher_id uuid references public.profiles(id) on delete cascade,
@@ -16,7 +21,12 @@ alter table public.education_nodes
   add constraint education_nodes_owned_shape check(
     owner_teacher_id is null or (parent_id is null and kind in ('custom_year','student_category') and slug=id::text)
   ),
-  add constraint education_nodes_owned_label_present check(owner_teacher_id is null or nullif(btrim(name_ar),'') is not null or nullif(btrim(name_en),'') is not null);
+  add constraint education_nodes_owned_label_contract check(owner_teacher_id is null or (
+    char_length(regexp_replace(name_ar,'^[[:space:]]+|[[:space:]]+$','','g'))<=120 and
+    char_length(regexp_replace(name_en,'^[[:space:]]+|[[:space:]]+$','','g'))<=120 and
+    (nullif(regexp_replace(name_ar,'^[[:space:]]+|[[:space:]]+$','','g'),'') is not null or
+     nullif(regexp_replace(name_en,'^[[:space:]]+|[[:space:]]+$','','g'),'') is not null)
+  ));
 alter table public.education_nodes drop constraint education_nodes_kind_check;
 alter table public.education_nodes add constraint education_nodes_kind_check
   check((owner_teacher_id is null and kind in ('system','level','grade','university','faculty','department','year'))
@@ -145,6 +155,10 @@ begin
     if not exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id where p.id=new.owner_teacher_id and p.role='teacher') then
       raise exception 'catalogue owner must be a teacher';
     end if;
+    new.name_ar := regexp_replace(coalesce(new.name_ar,''),'^[[:space:]]+|[[:space:]]+$','','g');
+    new.name_en := regexp_replace(coalesce(new.name_en,''),'^[[:space:]]+|[[:space:]]+$','','g');
+    if char_length(new.name_ar)>120 or char_length(new.name_en)>120 then raise exception 'owned catalogue labels must be at most 120 characters' using errcode='23514'; end if;
+    if new.name_ar='' and new.name_en='' then raise exception 'owned catalogue needs one nonempty label' using errcode='23514'; end if;
     if new.slug is distinct from new.id::text then raise exception 'owned subject slug must match its id'; end if;
   end if;
   return new;
@@ -177,6 +191,10 @@ begin
     if not exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id where p.id=new.owner_teacher_id and p.role='teacher') then
       raise exception 'catalogue owner must be a teacher';
     end if;
+    new.name_ar := regexp_replace(coalesce(new.name_ar,''),'^[[:space:]]+|[[:space:]]+$','','g');
+    new.name_en := regexp_replace(coalesce(new.name_en,''),'^[[:space:]]+|[[:space:]]+$','','g');
+    if char_length(new.name_ar)>120 or char_length(new.name_en)>120 then raise exception 'owned catalogue labels must be at most 120 characters' using errcode='23514'; end if;
+    if new.name_ar='' and new.name_en='' then raise exception 'owned catalogue needs one nonempty label' using errcode='23514'; end if;
     if new.kind not in ('custom_year','student_category') or new.parent_id is not null then raise exception 'owned categories must be custom roots'; end if;
     if new.slug is distinct from new.id::text then raise exception 'owned category slug must match its id'; end if;
   end if;

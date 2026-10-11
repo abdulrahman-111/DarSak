@@ -39,6 +39,78 @@ begin
   exception when check_violation then null;
   end;
 end $$;
+do $$
+begin
+  insert into public.subjects(id,owner_teacher_id,name_ar,name_en,slug)
+  values('7a100000-0000-4000-8000-000000000010','7a000000-0000-4000-8000-000000000001','  Trimmed subject  ','','7a100000-0000-4000-8000-000000000010');
+  if (select name_ar from public.subjects where id='7a100000-0000-4000-8000-000000000010')<>'Trimmed subject'
+     or (select name_en from public.subjects where id='7a100000-0000-4000-8000-000000000010')<>'' then
+    raise exception 'owned subject labels were not trimmed with the optional blank preserved';
+  end if;
+  insert into public.education_nodes(id,parent_id,kind,name_ar,name_en,slug,owner_teacher_id)
+  values('7a200000-0000-4000-8000-000000000010',null,'student_category','','  Trimmed category  ','7a200000-0000-4000-8000-000000000010','7a000000-0000-4000-8000-000000000001');
+  if (select name_en from public.education_nodes where id='7a200000-0000-4000-8000-000000000010')<>'Trimmed category'
+     or (select name_ar from public.education_nodes where id='7a200000-0000-4000-8000-000000000010')<>'' then
+    raise exception 'owned category labels were not trimmed with the optional blank preserved';
+  end if;
+  insert into public.subjects(id,name_ar,name_en,slug)
+  values('7a100000-0000-4000-8000-000000000011','  Shared subject  ','','shared-trim-test');
+  if (select name_ar from public.subjects where id='7a100000-0000-4000-8000-000000000011')<>'  Shared subject  ' then
+    raise exception 'shared subject labels changed';
+  end if;
+  begin
+    insert into public.subjects(id,owner_teacher_id,name_ar,name_en,slug)
+    values('7a100000-0000-4000-8000-000000000012','7a000000-0000-4000-8000-000000000001',repeat('x',121),'','7a100000-0000-4000-8000-000000000012');
+    raise exception 'owned subject accepted a label over 120 characters';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.subjects(id,owner_teacher_id,name_ar,name_en,slug)
+    values('7a100000-0000-4000-8000-000000000013','7a000000-0000-4000-8000-000000000001',E'\t\n',E'\r ','7a100000-0000-4000-8000-000000000013');
+    raise exception 'owned subject accepted whitespace-only labels';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.education_nodes(id,parent_id,kind,name_ar,name_en,slug,owner_teacher_id)
+    values('7a200000-0000-4000-8000-000000000012',null,'student_category',repeat('x',121),'','7a200000-0000-4000-8000-000000000012','7a000000-0000-4000-8000-000000000001');
+    raise exception 'owned category accepted a label over 120 characters';
+  exception when check_violation then null;
+  end;
+  begin
+    insert into public.education_nodes(id,parent_id,kind,name_ar,name_en,slug,owner_teacher_id)
+    values('7a200000-0000-4000-8000-000000000013',null,'student_category',E'\t\n',E'\r ','7a200000-0000-4000-8000-000000000013','7a000000-0000-4000-8000-000000000001');
+    raise exception 'owned category accepted whitespace-only labels';
+  exception when check_violation then null;
+  end;
+  update public.subjects set name_ar='  Updated subject  ',name_en='' where id='7a100000-0000-4000-8000-000000000010';
+  update public.education_nodes set name_ar=E'\t',name_en='  Updated category  ' where id='7a200000-0000-4000-8000-000000000010';
+  if (select name_ar from public.subjects where id='7a100000-0000-4000-8000-000000000010')<>'Updated subject'
+     or (select name_en from public.subjects where id='7a100000-0000-4000-8000-000000000010')<>''
+     or (select name_ar from public.education_nodes where id='7a200000-0000-4000-8000-000000000010')<>''
+     or (select name_en from public.education_nodes where id='7a200000-0000-4000-8000-000000000010')<>'Updated category' then
+    raise exception 'owned label update normalization failed';
+  end if;
+  begin
+    update public.subjects set name_ar=repeat('x',121) where id='7a100000-0000-4000-8000-000000000010';
+    raise exception 'owned subject update accepted a label over 120 characters';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.subjects set name_ar=E'\t\n',name_en=E'\r ' where id='7a100000-0000-4000-8000-000000000010';
+    raise exception 'owned subject update accepted whitespace-only labels';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.education_nodes set name_en=repeat('x',121) where id='7a200000-0000-4000-8000-000000000010';
+    raise exception 'owned category update accepted a label over 120 characters';
+  exception when check_violation then null;
+  end;
+  begin
+    update public.education_nodes set name_ar=E'\t\n',name_en=E'\r ' where id='7a200000-0000-4000-8000-000000000010';
+    raise exception 'owned category update accepted whitespace-only labels';
+  exception when check_violation then null;
+  end;
+end $$;
 insert into public.offerings(id,node_id,subject_id,owner_teacher_id) values
  ('7a300000-0000-4000-8000-000000000001','7a200000-0000-4000-8000-000000000001','7a100000-0000-4000-8000-000000000001','7a000000-0000-4000-8000-000000000001'),
  ('7a300000-0000-4000-8000-000000000002','7a200000-0000-4000-8000-000000000002','7a100000-0000-4000-8000-000000000002','7a000000-0000-4000-8000-000000000002'),
