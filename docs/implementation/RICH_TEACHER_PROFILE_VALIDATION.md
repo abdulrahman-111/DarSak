@@ -1,20 +1,20 @@
 # Rich teacher profile validation
 
-Validation is against code commit `a9431dc` on `codex/teacher-profiles` unless a row names a prior revision. The initial public cover-reference failure was fixed by the narrow `public_teacher_cover_path(p_teacher_id uuid) returns text` RPC in `33b7704` and its scalar loader correction in `a9431dc`. Build, fresh SQL replay, API, and browser evidence below pass for that baseline. A subsequent whole-branch review reproduced an unresolved projection edge case for profiles containing only layout/palette settings: the public RPC returns `NULL`, so the selected appearance can be lost. Phase sign-off remains pending that follow-up.
+The UI/browser/build baseline is code commit `a9431dc` on `codex/teacher-profiles`. The subsequent database-only theme fix is commit `f1e64e1`; it amends the unreleased rich-profile migration and adds SQL/API regressions without changing application code. The earlier public cover-reference failure was fixed by the narrow `public_teacher_cover_path(p_teacher_id uuid) returns text` RPC in `33b7704` and its scalar loader correction in `a9431dc`. The theme fix now passes targeted SQL/API checks and the final fresh replay. Sol's scoped rereview is pending; do not treat Phase 1 as signed off until that review completes.
 
 ## Build, tests, and database
 
 | Check | Result |
 | --- | --- |
-| `npm run test` | PASS: 119 tests across 16 files at `a9431dc`. |
-| `npm run lint` | PASS: zero errors, one `<img>` warning in `src/features/teacher/profile-cover-editor.tsx`. |
-| `npm run typecheck` | PASS at `a9431dc`. |
+| `npm run test` | PASS: 119 tests across 16 files at UI commit `a9431dc`; the SQL-only theme fix adds separate database/API regression coverage. |
+| `npm run lint` | PASS at `a9431dc`: zero errors, one `<img>` warning in `src/features/teacher/profile-cover-editor.tsx`. |
+| `npm run typecheck` | PASS at `a9431dc`; the follow-up changes only SQL and SQL/API tests. |
 | `npm run build` | FAIL: Turbopack CSS/PostCSS subprocess cannot bind a port (`Operation not permitted`) in this environment. |
 | `npm run build -- --webpack` | PASS: production build at `a9431dc`, exit 0. |
-| `tests/database/run.sh` | PASS: all 13 SQL suites in the final fresh replay. |
-| Fresh application migration replay | PASS: current migrations including the safe public cover RPC, seed, and all 13 SQL suites passed in a disposable `dars_validation` database. The helper removed the database after its run. Auth/Storage/extensions came from schema-only local framework objects; this does not claim a full Supabase service bootstrap. See `/workspace/shared/dars-profile-phase/fresh-replay-final-report.md` for migration hashes and console tail. |
-| Local API integration | PASS: 137 assertions on the local database at `a9431dc`. |
-| Hosted Vercel build check | PASS for exact commit `a9431dc` (deployment `dpl_FVhbM9FpVq1K3FtLAvVv4cQNBWbY`); this records the preview build only, not production runtime or migration validation. |
+| `tests/database/run.sh` | PASS: all 13 SQL suites in the fresh replay including the theme projection fix. |
+| Fresh application migration replay | PASS: final migration sources, seed, and all 13 SQL suites passed in a disposable `dars_validation` database; the helper removed it after the run. Auth/Storage/extensions came from schema-only local framework objects; this does not claim a full Supabase service bootstrap. The final rich-profile migration SHA256 is `5bc0caf03053310c5bcbc84bdc5edb42f9bb0d2d1ab58897a30ca657d3d0aaa4`; the cover migration SHA256 is `2b67f5bf6d92bd913b70feda127455bc85a6f92599650aed18e2ea8cccb8eaab`. |
+| Local API integration | PASS: 142 assertions, including theme-only and all-hidden public projections, ineligible pending/suspended teachers, and students. |
+| Hosted Vercel build check | PASS for the app/UI commit `a9431dc` (deployment `dpl_FVhbM9FpVq1K3FtLAvVv4cQNBWbY`); it predates the SQL-only `f1e64e1` migration change and is not production runtime or migration validation. |
 
 The standard Turbopack build remains failed; webpack is the verified production build command in this environment. No production database, user, migration, or deployment was changed during Task 5 validation.
 
@@ -49,7 +49,9 @@ At `3dcb94e`, `publicTeacherDetail` read `cover_path` directly from `teacher_pro
 
 An initial fixture attempt tried setting `profiles.status='pending'`; that value is invalid because account status is `active` or `suspended`. The pending-approval fixture is an active teacher with `teacher_profiles.approved=false`, matching the application model. The attempt stopped before browser navigation and its generated Auth fixtures were removed.
 
-The Chromium baseline run passed 12 named cases. Its helper and results are under `/workspace/.dars-browser-tools/validation`; the helper is external to the repository and has no product dependencies. A raw anonymous table probe for `teacher_profiles.cover_path` remains 401 intentionally; the public route uses the reviewed safe RPC. The separate theme-only projection case described above is not covered by these fixtures and still needs a targeted regression and browser replay after its fix.
+The Chromium baseline at unchanged UI commit `a9431dc` passed 12 named cases. Its helper and results are under `/workspace/.dars-browser-tools/validation`; the helper is external to the repository and has no product dependencies. A raw anonymous table probe for `teacher_profiles.cover_path` remains 401 intentionally; the public route uses the reviewed safe RPC. The theme-only case was covered by new database and API regressions against the SQL fix, but was not added to the prior browser matrix; no UI code changed in `f1e64e1`.
+
+The theme-only projection regression failed against the old SQL function and passed after the fix. Default empty profiles still return `NULL`; non-default appearance is returned with an empty `sections` array even when all descriptive sections are hidden. Pending/unapproved teachers, suspended teachers, and students remain ineligible. Final Sol scoped rereview of `f1e64e1` is pending.
 
 The final independent cleanup audit passed 16 checks: all five fixture Auth users returned 404; their profile, teacher-profile, details, contact, group and enrollment rows were absent; and no `teacher-avatars` objects remained under their UUID prefixes. The script clears references before deleting Storage objects, then deletes Auth users. The validation helper, result JSON and historical failure screenshot/text remain as external evidence only. No real account, production data, or user file was changed.
 
