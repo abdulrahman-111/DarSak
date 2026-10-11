@@ -49,6 +49,7 @@ async function signup(role) {
 try {
   const teacher = await signup('teacher');
   const otherTeacher = await signup('teacher');
+  const pendingTeacher = await signup('teacher');
   const student = await signup('student');
   const student2 = await signup('student');
   const spoof = await signup('admin');
@@ -184,6 +185,45 @@ try {
   const savedTeacherProfile = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=headline,bio`,{token:teacher.token});
   const savedSpecializations = await success(`/rest/v1/teacher_specializations?teacher_id=eq.${teacher.id}&select=offering_id`,{token:teacher.token});
   check(savedTeacherProfile[0]?.headline==='Algebra teacher' && savedTeacherProfile[0]?.bio==='Contact privacy integration profile.' && savedSpecializations.length===1 && savedSpecializations[0].offering_id===offerings[0].id,'profile save persists headline, bio, and specialization selection');
+  const privateDetailsBefore = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(privateDetailsBefore?.details?.about?.ar==='Contact privacy integration profile.','legacy biography is synchronized into the preferred-language About field');
+  const richDetails = {
+    about:{ar:'نبذة مخفية',en:'Hidden canonical biography'},approach:{ar:'',en:''},goals:{ar:'',en:''},
+    qualifications:[],experience:[],languages:[],city:{ar:'',en:''},teaching_mode:null,
+    layout:'classic',palette:'teal',section_order:['about','qualifications','experience','approach','goals'],hidden_sections:['about'],
+  };
+  const hiddenSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:richDetails,p_expected_version:privateDetailsBefore.version}});
+  check(hiddenSave.ok,'teacher can save canonical profile details with optimistic version');
+  const detailsAfterHiddenSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  const hiddenBioRaw = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=bio`,{token:service});
+  const hiddenBioPublicTeachers = await success('/rest/v1/rpc/public_teachers');
+  const visibleProjection = await success('/rest/v1/rpc/public_teacher_profile_details',{method:'POST',body:{p_teacher_id:teacher.id}});
+  check(detailsAfterHiddenSave.version===privateDetailsBefore.version+1 && !hiddenBioRaw[0].bio.includes('Hidden canonical biography') && !JSON.stringify(hiddenBioPublicTeachers).includes('Hidden canonical biography') && !JSON.stringify(visibleProjection).includes('Hidden canonical biography') && !JSON.stringify(visibleProjection).includes('hidden_sections'),'hidden About is absent from raw REST bio and both public teacher projections');
+  const staleSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:richDetails,p_expected_version:privateDetailsBefore.version}});
+  const afterStaleSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(!staleSave.ok && afterStaleSave.version===detailsAfterHiddenSave.version && afterStaleSave.details.about.en==='Hidden canonical biography','stale profile save cannot overwrite a newer version');
+  const concurrentCandidates = [
+    {...richDetails,approach:{ar:'Concurrent A',en:''}},
+    {...richDetails,approach:{ar:'Concurrent B',en:''}},
+  ];
+  const concurrentSaves = await Promise.all(concurrentCandidates.map(p_details=>request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details,p_expected_version:detailsAfterHiddenSave.version}})));
+  const afterConcurrentSaves = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(concurrentSaves.filter(result=>result.ok).length===1 && concurrentSaves.filter(result=>!result.ok).length===1 && afterConcurrentSaves.version===detailsAfterHiddenSave.version+1 && ['Concurrent A','Concurrent B'].includes(afterConcurrentSaves.details.approach.ar),'concurrent same-version saves serialize and only one can advance the profile');
+  const invalidDetails = await request('/rest/v1/rpc/save_teacher_profile_details',{token:teacher.token,method:'POST',body:{p_details:{...richDetails,unexpected:true},p_expected_version:detailsAfterHiddenSave.version}});
+  const foreignDetails = await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=teacher_id`,{token:otherTeacher.token});
+  const studentDetailsSave = await request('/rest/v1/rpc/save_teacher_profile_details',{token:student.token,method:'POST',body:{p_details:richDetails,p_expected_version:0}});
+  check(!invalidDetails.ok && foreignDetails.length===0 && !studentDetailsSave.ok,'raw JSON with unknown fields, foreign details reads, and non-teacher saves are rejected');
+  const directHiddenBioWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{bio:'Hidden canonical biography'}});
+  const bioAfterDirectWrite = await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=bio`,{token:service});
+  check(!directHiddenBioWrite.ok || bioAfterDirectWrite[0].bio!=='Hidden canonical biography','raw teacher_profiles writes cannot expose hidden canonical About');
+  const legacySave = await request('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_bio:'Legacy compatibility biography'}});
+  const detailsAfterLegacySave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(legacySave.ok && detailsAfterLegacySave.details.about.en==='Hidden canonical biography' && detailsAfterLegacySave.details.hidden_sections.includes('about'),'legacy save_teacher_profile updates canonical About and preserves other rich fields');
+  const accountSave = await request('/rest/v1/rpc/save_teacher_profile_account',{token:teacher.token,method:'POST',body:{p_full_name:'Teacher Contact Name',p_headline:'Algebra teacher',p_offering_ids:[offerings[0].id],p_phone_number:'+201234567890',p_whatsapp_number:'',p_contact_email:'contact@example.test',p_visibility:'enrolled'}});
+  const detailsAfterAccountSave = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
+  check(accountSave.ok && detailsAfterAccountSave.version===detailsAfterLegacySave.version && detailsAfterAccountSave.details.about.ar==='Legacy compatibility biography' && detailsAfterAccountSave.details.about.en==='Hidden canonical biography','contact/account save does not replay stale About or change descriptive version');
+  const newTeacherDetails = await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${pendingTeacher.id}&select=details,version`,{token:pendingTeacher.token});
+  check(newTeacherDetails.length===1 && newTeacherDetails[0].version===0 && newTeacherDetails[0].details.about.ar==='' && newTeacherDetails[0].details.about.en==='','new pending teacher starts with empty owner-editable details');
   const anonPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
   const unrelatedPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:otherTeacher.token});
   const pendingPrivateContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:pending.token});
