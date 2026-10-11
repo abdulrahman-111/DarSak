@@ -33,8 +33,8 @@ const profileEntrySchema = z.object({
   title: localizedText(120),
   organization: localizedText(120),
   description: localizedText(1_500),
-  start_year: z.number().int().min(1900).max(currentCairoYear() + 1).nullable(),
-  end_year: z.number().int().min(1900).max(currentCairoYear() + 1).nullable(),
+  start_year: z.number().int().min(1900).nullable(),
+  end_year: z.number().int().min(1900).nullable(),
   current: z.boolean(),
 }).strict().superRefine((entry, context) => {
   if (entry.start_year !== null && entry.end_year !== null && entry.end_year < entry.start_year) {
@@ -61,6 +61,7 @@ const profileDetailsShape = z.object({
 }).strict();
 
 export const richProfileSchema = profileDetailsShape.superRefine((profile, context) => {
+  const maximumYear = currentCairoYear() + 1;
   const unique = <T>(items: T[]) => new Set(items).size === items.length;
   if (!unique(profile.section_order)) {
     context.addIssue({ code: 'custom', path: ['section_order'], message: 'duplicate_sections' });
@@ -70,6 +71,16 @@ export const richProfileSchema = profileDetailsShape.superRefine((profile, conte
   }
   if (!unique(profile.hidden_sections)) {
     context.addIssue({ code: 'custom', path: ['hidden_sections'], message: 'duplicate_sections' });
+  }
+  for (const field of ['qualifications', 'experience'] as const) {
+    profile[field].forEach((entry, index) => {
+      for (const yearField of ['start_year', 'end_year'] as const) {
+        const year = entry[yearField];
+        if (year !== null && year > maximumYear) {
+          context.addIssue({ code: 'custom', path: [field, index, yearField], message: 'year_after_current_cairo_year' });
+        }
+      }
+    });
   }
   const entryIds = [...profile.qualifications, ...profile.experience].map(entry => entry.id);
   if (!unique(entryIds)) {

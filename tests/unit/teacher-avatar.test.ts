@@ -8,6 +8,9 @@ describe('teacher avatar rules', () => {
     expect(teacherAvatarExtension({ type: 'image/png', size: 12 })).toBe('png');
     expect(teacherAvatarExtension({ type: 'image/webp', size: 12 })).toBe('webp');
     expect(teacherAvatarExtension({ type: 'image/gif', size: 12 })).toBeNull();
+    expect(teacherAvatarExtension({ type: 'toString', size: 12 })).toBeNull();
+    expect(teacherAvatarExtension({ type: 'constructor', size: 12 })).toBeNull();
+    expect(teacherAvatarExtension({ type: '__proto__', size: 12 })).toBeNull();
     expect(teacherAvatarExtension({ type: 'image/jpeg', size: 0 })).toBeNull();
     expect(teacherAvatarExtension({ type: 'image/jpeg', size: 2_097_153 })).toBeNull();
   });
@@ -26,9 +29,14 @@ describe('teacher cover paths', () => {
     const owner = '11111111-1111-4111-8111-111111111111';
     const file = '22222222-2222-4222-8222-222222222222';
     expect(teacherCoverPath(owner, file, 'image/jpeg')).toBe(`${owner}/cover/${file}.jpg`);
+    expect(teacherCoverPath(owner, file, 'image/png')).toBe(`${owner}/cover/${file}.png`);
+    expect(teacherCoverPath(owner, file, 'image/webp')).toBe(`${owner}/cover/${file}.webp`);
     expect(teacherCoverPath(owner, file, 'image/jpeg')).not.toBe(teacherAvatarPath(owner, file, 'image/jpeg'));
     expect(() => teacherCoverPath('invalid', file, 'image/jpeg')).toThrow();
     expect(() => teacherCoverPath(owner, file, 'image/gif')).toThrow();
+    expect(() => teacherCoverPath(owner, file, 'toString')).toThrow();
+    expect(() => teacherCoverPath(owner, file, 'constructor')).toThrow();
+    expect(() => teacherCoverPath(owner, file, '__proto__')).toThrow();
   });
 });
 

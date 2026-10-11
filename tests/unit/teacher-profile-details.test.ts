@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   emptyRichProfile,
   localizedProfileText,
@@ -20,8 +20,22 @@ describe('teacher profile details', () => {
   it('unknown_or_duplicate_sections_rejected', () => {
     const base = emptyRichProfile();
     expect(richProfileSchema.safeParse({ ...base, layout: 'fancy' }).success).toBe(false);
-    expect(richProfileSchema.safeParse({ ...base, section_order: ['about', 'unknown'] }).success).toBe(false);
-    expect(richProfileSchema.safeParse({ ...base, section_order: ['about', 'about'] }).success).toBe(false);
+    const unknownSection = richProfileSchema.safeParse({
+      ...base,
+      section_order: ['about', 'qualifications', 'experience', 'approach', 'unknown'],
+    });
+    expect(unknownSection.success).toBe(false);
+    if (!unknownSection.success) {
+      expect(unknownSection.error.issues.some(issue => issue.path.join('.') === 'section_order.4')).toBe(true);
+    }
+    const duplicateSection = richProfileSchema.safeParse({
+      ...base,
+      section_order: ['about', 'about', 'experience', 'approach', 'goals'],
+    });
+    expect(duplicateSection.success).toBe(false);
+    if (!duplicateSection.success) {
+      expect(duplicateSection.error.issues.some(issue => issue.message === 'duplicate_sections')).toBe(true);
+    }
     expect(richProfileSchema.safeParse({ ...base, hidden_sections: ['about', 'about'] }).success).toBe(false);
   });
 
@@ -73,8 +87,16 @@ describe('teacher profile details', () => {
     expect(new TextEncoder().encode(JSON.stringify(atPayloadLimit)).byteLength).toBe(65_536);
     expect(richProfileSchema.safeParse(atPayloadLimit).success).toBe(true);
     const overPayloadLimit = structuredClone(atPayloadLimit);
-    overPayloadLimit.experience[9].description.en += 'x';
-    expect(richProfileSchema.safeParse(overPayloadLimit).success).toBe(false);
+    overPayloadLimit.experience[9].description.en = overPayloadLimit.experience[9].description.en.slice(0, -1);
+    overPayloadLimit.qualifications[0].description.en += 'ع';
+    expect(new TextEncoder().encode(JSON.stringify(overPayloadLimit)).byteLength).toBe(65_537);
+    expect(JSON.stringify(overPayloadLimit).length).toBe(65_536);
+    const payloadResult = richProfileSchema.safeParse(overPayloadLimit);
+    expect(payloadResult.success).toBe(false);
+    if (!payloadResult.success) {
+      expect(payloadResult.error.issues.some(issue => issue.message === 'profile_payload_too_large')).toBe(true);
+      expect(payloadResult.error.issues.some(issue => issue.path.join('.') === 'experience.9.description.en')).toBe(false);
+    }
   });
 
   it('invalid_year_order_rejected', () => {
@@ -120,6 +142,37 @@ describe('teacher profile details', () => {
       qualifications: [validEntry],
       experience: [{ ...validEntry, id: validEntry.id }],
     }).success).toBe(false);
+  });
+
+  it('uses the current Cairo year when parsing with an existing schema instance', async () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-12-31T21:30:00.000Z'));
+      vi.resetModules();
+      const { emptyRichProfile: emptyAtImport, richProfileSchema: schemaAtImport } = await import('@/features/teacher/profile-details-domain');
+      const profile = {
+        ...emptyAtImport(),
+        qualifications: [{
+          id: 'year-boundary',
+          title: { ar: '', en: 'Teaching' },
+          organization: { ar: '', en: '' },
+          description: { ar: '', en: '' },
+          start_year: 2028,
+          end_year: null,
+          current: false,
+        }],
+      };
+      expect(schemaAtImport.safeParse(profile).success).toBe(false);
+      vi.setSystemTime(new Date('2026-12-31T22:30:00.000Z'));
+      expect(schemaAtImport.safeParse(profile).success).toBe(true);
+      expect(schemaAtImport.safeParse({
+        ...profile,
+        qualifications: [{ ...profile.qualifications[0], start_year: 2029 }],
+      }).success).toBe(false);
+    } finally {
+      vi.useRealTimers();
+      vi.resetModules();
+    }
   });
 
   it('hidden_about_omitted', () => {
