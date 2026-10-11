@@ -53,8 +53,8 @@ const sectionTitles = {
 } as const;
 
 const visitorLabels = {
-  en: { groups: 'Groups', findTutor: 'View group details', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
-  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
+  en: { groups: 'Groups', findTutor: 'View group details', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. Dars does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
+  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق Dars من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
 } as const;
 
 function entryYears(entry: { start_year: number | null; end_year: number | null; current: boolean }, locale: 'en' | 'ar') {
@@ -77,7 +77,7 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
   return <div className="min-h-[70vh] bg-[#f6f0e4]" dir={ar ? 'rtl' : 'ltr'}>
     <section className="container py-10 md:py-16">
       <Link href={`/${locale}/teachers`} className="mb-7 inline-flex font-bold text-orange">{backLabel}</Link>
-      <article className={`mx-auto overflow-hidden rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] shadow-[0_12px_35px_rgba(6,59,59,.05)] ${layout}`}>
+      <article className={`mx-auto overflow-hidden [overflow-wrap:anywhere] [word-break:normal] rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] shadow-[0_12px_35px_rgba(6,59,59,.05)] ${layout}`}>
         {view.coverUrl && <div className="h-36 bg-cover bg-center sm:h-52" role="img" aria-label={ar ? 'غلاف ملف المعلم' : 'Teacher profile cover'} style={{ backgroundImage: `url("${view.coverUrl}")` }} />}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <TeacherAvatarImage src={view.avatarUrl} name={view.teacher.full_name} size="size-32"/>
@@ -94,13 +94,14 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
           const title = sectionTitles[lang][section.id];
           return <section key={section.id} className={`mt-8 border-t pt-7 ${theme.border}`}>
             <h2 className={`text-xl font-black ${theme.accent}`}>{title}</h2>
+            {section.id === 'qualifications' && <p className="mt-2 text-sm leading-6 text-muted">{labels.qualificationsDisclosure}</p>}
             {Array.isArray(section.value) ? <ul className="mt-4 grid gap-3 sm:grid-cols-2">
               {section.value.map(entry => {
                 const entryTitle = localizedProfileText(entry.title, lang);
                 const organization = localizedProfileText(entry.organization, lang);
                 const description = localizedProfileText(entry.description, lang);
                 const years = entryYears(entry, lang);
-                return <li key={entry.id} className={`rounded-xl p-4 ${theme.surface}`}>
+                return <li key={entry.id} className={`min-w-0 rounded-xl p-4 ${theme.surface}`}>
                   {entryTitle && <h3 className={`font-bold ${theme.accent}`}>{entryTitle}</h3>}
                   {organization && <p className="mt-1 text-sm font-medium text-[#4d473f]">{organization}</p>}
                   {years && <p className="mt-1 text-xs text-muted">{years}</p>}
@@ -113,8 +114,8 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
 
         <section className={`mt-8 border-t pt-7 ${theme.border}`}>
           <h2 className={`text-xl font-black ${theme.accent}`}>{labels.subjects}</h2>
-          {view.specializations.length ? <ul className="mt-4 grid gap-3 sm:grid-cols-2">
-            {view.specializations.map(item => <li key={item.id} className={`rounded-xl p-4 ${theme.surface}`}>
+          {view.specializations.length ? <ul className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
+            {view.specializations.map(item => <li key={item.id} className={`min-w-0 rounded-xl p-4 ${theme.surface}`}>
               <span className={`block font-bold ${theme.accent}`}>{item.subject}</span>
               {item.context && <span className="mt-1 block text-sm text-muted">{item.context}</span>}
             </li>)}
@@ -123,7 +124,7 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
 
         {view.groups.length > 0 && <section className={`mt-8 border-t pt-7 ${theme.border}`}>
           <h2 className={`text-xl font-black ${theme.accent}`}>{labels.groups}</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2">{view.groups.map(group => <GroupCard key={group.id} group={group} locale={locale} t={{ groups: labels.groups, findTutor: labels.findTutor }} />)}</div>
+          <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2">{view.groups.map(group => <div key={group.id} className="min-w-0"><GroupCard group={group} locale={locale} t={{ groups: labels.groups, findTutor: labels.findTutor }} /></div>)}</div>
         </section>}
 
         {hasContact && <section className={`mt-8 border-t pt-7 ${theme.border}`}>
