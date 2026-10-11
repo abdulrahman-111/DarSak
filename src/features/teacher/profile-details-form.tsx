@@ -167,7 +167,8 @@ export function TeacherProfileDetailsForm({ locale, details, version, error, tea
     </aside>}
 
     <form action={action} className="mt-6 space-y-7">
-      <input type="hidden" name="details" value={JSON.stringify(submittedValue)} />
+      {/* Keep editor array indices intact until schema validation returns field paths. The save action removes blank rows before persistence. */}
+      <input type="hidden" name="details" value={JSON.stringify(value)} />
       <input type="hidden" name="expected_version" value={state?.version ?? snapshotVersion} />
 
       <section className="space-y-5" aria-labelledby="profile-about-heading">

@@ -97,4 +97,26 @@ describe('saveTeacherProfileDetails', () => {
       p_expected_version: 0,
     }));
   });
+
+  it('keeps invalid repeater field paths aligned after blank rows in both lists', async () => {
+    const blank = {
+      id: 'blank-draft', title: { ar: '', en: '' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
+      start_year: null, end_year: null, current: false,
+    };
+    const invalid = {
+      id: 'invalid-qualification', title: { ar: '', en: 'Tutor' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
+      start_year: 2025, end_year: 2020, current: false,
+    };
+    const details = {
+      ...emptyRichProfile(),
+      qualifications: [blank, invalid],
+      experience: [blank, { ...invalid, id: 'invalid-experience' }],
+    };
+
+    const result = await saveTeacherProfileDetails('en', null, formFor(details));
+
+    expect(result?.fieldErrors).toHaveProperty('qualifications.1.end_year');
+    expect(result?.fieldErrors).toHaveProperty('experience.1.end_year');
+    expect(createClientMock).not.toHaveBeenCalled();
+  });
 });
