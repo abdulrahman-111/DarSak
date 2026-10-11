@@ -53,7 +53,7 @@ export function CatalogueLabelEditor({ locale, kind, row, onSaved }: {
     {fieldError(name) && <p id={`catalogue-${row?.id ?? 'new'}-${kind}-${name}-error`} className="mt-1 text-sm text-red-700">{locale === 'ar' ? 'أدخل اسماً لا يتجاوز ١٢٠ حرفاً في لغة واحدة على الأقل.' : 'Enter a name up to 120 characters in at least one language.'}</p>}
   </div>;
 
-  return <form action={action} className="grid gap-4">
+  return <form action={action} onReset={event => event.preventDefault()} className="grid gap-4">
     {row && <input type="hidden" name="id" value={row.id} />}
     {kind === 'category' && <>
       {categoryRow

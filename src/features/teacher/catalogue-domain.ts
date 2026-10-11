@@ -77,7 +77,10 @@ export function filterTeacherCatalogueChoices(
       && !!node && !!subject && !!context && subjectIds.has(subject.id);
   });
 
-  const usedNodeIds = new Set(selectableOfferings.map(row => row.node_id));
+  const eligibleContexts = activeNodes.filter(node => node.owner_teacher_id === null
+    ? ['grade', 'university', 'year'].includes(node.kind)
+    : ['custom_year', 'student_category'].includes(node.kind));
+  const usedNodeIds = new Set(eligibleContexts.map(node => node.id));
   for (const nodeId of [...usedNodeIds]) {
     let node = allNodeById.get(nodeId);
     const seen = new Set<string>();

@@ -137,6 +137,8 @@ describe('teacher catalogue choices', () => {
       { id: 'system', owner_teacher_id: null, archived_at: null, parent_id: null, kind: 'system', name_ar: 'مدرسة', name_en: 'School' },
       { id: 'grade', owner_teacher_id: null, archived_at: null, parent_id: 'system', kind: 'grade', name_ar: 'الصف العاشر', name_en: 'Grade 10' },
       { id: 'own-year', owner_teacher_id: teacherId, archived_at: null, parent_id: null, kind: 'custom_year', name_ar: 'سنة أولى', name_en: 'Year One' },
+      { id: 'unused-shared-year', owner_teacher_id: null, archived_at: null, parent_id: 'system', kind: 'year', name_ar: 'السنة الجامعية الثانية', name_en: 'University year two' },
+      { id: 'unused-own-category', owner_teacher_id: teacherId, archived_at: null, parent_id: null, kind: 'student_category', name_ar: 'طلاب متقدمون', name_en: 'Advanced students' },
       { id: 'foreign-year', owner_teacher_id: '33333333-3333-4333-8333-333333333333', archived_at: null, parent_id: null, kind: 'custom_year', name_ar: 'سنة خاصة', name_en: 'Private year' },
       { id: 'archived-grade', owner_teacher_id: null, archived_at: '2026-01-01T00:00:00Z', parent_id: null, kind: 'grade', name_ar: 'قديم', name_en: 'Archived grade' },
     ];
@@ -157,7 +159,7 @@ describe('teacher catalogue choices', () => {
     );
 
     expect(choices.subjects.map(row => row.id)).toEqual(['shared-subject', 'own-subject']);
-    expect(choices.nodes.map(row => row.id).sort()).toEqual(['grade', 'own-year', 'system']);
+    expect(choices.nodes.map(row => row.id).sort()).toEqual(['grade', 'own-year', 'system', 'unused-own-category', 'unused-shared-year']);
     expect(choices.offerings.map(row => row.id).sort()).toEqual(['own-offering', 'shared-offering']);
   });
 });
