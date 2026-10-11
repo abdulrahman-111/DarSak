@@ -122,6 +122,88 @@ export type VisibleProfileSection = {
   value: LocalizedText | ProfileEntry[];
 };
 
+export type PublicProfileSection =
+  | { id: 'about' | 'approach' | 'goals'; value: LocalizedText }
+  | { id: 'qualifications' | 'experience'; value: ProfileEntry[] };
+
+export type PublicTeacherProfileDetails = {
+  sections: PublicProfileSection[];
+  languages: string[];
+  city: LocalizedText;
+  teaching_mode: TeachingMode | null;
+  layout: ProfileLayout;
+  palette: ProfilePalette;
+};
+
+const publicEntrySchema = profileEntrySchema;
+const publicSectionSchema = z.discriminatedUnion('id', [
+  z.object({ id: z.literal('about'), value: localizedText(5_000) }).strict(),
+  z.object({ id: z.literal('approach'), value: localizedText(2_000) }).strict(),
+  z.object({ id: z.literal('goals'), value: localizedText(2_000) }).strict(),
+  z.object({ id: z.literal('qualifications'), value: z.array(publicEntrySchema).max(10) }).strict(),
+  z.object({ id: z.literal('experience'), value: z.array(publicEntrySchema).max(10) }).strict(),
+]);
+
+/** Strictly validate the anonymous RPC projection before it reaches a renderer. */
+export const publicTeacherProfileDetailsSchema = z.object({
+  sections: z.array(publicSectionSchema).max(profileSectionIds.length),
+  languages: z.array(z.string().trim().min(1).max(60)).max(10),
+  city: localizedText(120),
+  teaching_mode: z.enum(['online', 'in_person', 'both']).nullable(),
+  layout: z.enum(['classic', 'compact']),
+  palette: z.enum(['teal', 'indigo', 'olive']),
+}).strict().superRefine((profile, context) => {
+  const sectionIds = profile.sections.map(section => section.id);
+  if (new Set(sectionIds).size !== sectionIds.length) {
+    context.addIssue({ code: 'custom', path: ['sections'], message: 'duplicate_sections' });
+  }
+  const entries = profile.sections.flatMap(section =>
+    section.id === 'qualifications' || section.id === 'experience' ? section.value : [],
+  );
+  if (new Set(entries.map(entry => entry.id)).size !== entries.length) {
+    context.addIssue({ code: 'custom', path: ['sections'], message: 'duplicate_entry_ids' });
+  }
+  if (profile.sections.some(section => Array.isArray(section.value)
+    ? section.value.length === 0
+    : section.value.ar.length === 0 && section.value.en.length === 0)) {
+    context.addIssue({ code: 'custom', path: ['sections'], message: 'empty_public_section' });
+  }
+  if (new TextEncoder().encode(JSON.stringify(profile)).byteLength > 65_536) {
+    context.addIssue({ code: 'custom', message: 'profile_payload_too_large' });
+  }
+});
+
+export type PublicTeacherVisitorContacts = {
+  phone_number: string | null;
+  whatsapp_number: string | null;
+  contact_email: string | null;
+};
+
+/** Build the shared visitor projection from canonical owner data without retaining hidden sections. */
+export function visiblePublicTeacherProfile(input: RichProfileInput): PublicTeacherProfileDetails {
+  return {
+    sections: visibleProfileSections(input) as PublicProfileSection[],
+    languages: [...input.languages],
+    city: input.city,
+    teaching_mode: input.teaching_mode,
+    layout: input.layout,
+    palette: input.palette,
+  };
+}
+
+/** Contacts enter the visitor view only when the independent setting is explicitly public. */
+export function publicVisitorContacts(
+  visibility: string | null | undefined,
+  contacts: PublicTeacherVisitorContacts | null | undefined,
+): PublicTeacherVisitorContacts | null {
+  if (visibility !== 'public' || !contacts) return null;
+  return {
+    phone_number: contacts.phone_number,
+    whatsapp_number: contacts.whatsapp_number,
+    contact_email: contacts.contact_email,
+  };
+}
+
 /** Return only enabled, non-empty descriptive values in the teacher's chosen order. */
 export function visibleProfileSections(input: RichProfileInput): VisibleProfileSection[] {
   const hidden = new Set(input.hidden_sections);

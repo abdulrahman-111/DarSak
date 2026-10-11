@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   emptyRichProfile,
   localizedProfileText,
+  publicTeacherProfileDetailsSchema,
   richProfileSchema,
+  visiblePublicTeacherProfile,
   visibleProfileSections,
   type RichProfileInput,
 } from '@/features/teacher/profile-details-domain';
@@ -187,5 +189,31 @@ describe('teacher profile details', () => {
       { id: 'approach', value: { ar: '', en: 'Visible approach' } },
     ]);
     expect(JSON.stringify(visibleProfileSections(details))).not.toContain('Private about');
+  });
+
+  it('public_projection_keeps_visible_order_and_excludes_hidden_values', () => {
+    const details: RichProfileInput = {
+      ...emptyRichProfile(),
+      about: { ar: 'خاص', en: 'Private about' },
+      approach: { ar: 'نهج عربي', en: 'Visible approach' },
+      goals: { ar: '', en: 'Learning goals' },
+      section_order: ['approach', 'about', 'goals', 'experience', 'qualifications'],
+      hidden_sections: ['about'],
+    };
+    const projection = visiblePublicTeacherProfile(details);
+    expect(projection.sections.map(section => section.id)).toEqual(['approach', 'goals']);
+    expect(JSON.stringify(projection)).not.toContain('Private about');
+    expect(publicTeacherProfileDetailsSchema.safeParse(projection).success).toBe(true);
+    expect(publicTeacherProfileDetailsSchema.safeParse({ ...projection, hidden_sections: ['about'] }).success).toBe(false);
+  });
+
+  it('public_projection_rejects_malformed_sections_and_private_fields', () => {
+    const projection = visiblePublicTeacherProfile({
+      ...emptyRichProfile(),
+      about: { ar: '', en: 'Visible' },
+    });
+    expect(publicTeacherProfileDetailsSchema.safeParse({ ...projection, sections: [{ id: 'about', value: { ar: '', en: 4 } }] }).success).toBe(false);
+    expect(publicTeacherProfileDetailsSchema.safeParse({ ...projection, hidden_sections: ['goals'] }).success).toBe(false);
+    expect(publicTeacherProfileDetailsSchema.safeParse({ ...projection, sections: [{ id: 'untrusted', value: 'x' }] }).success).toBe(false);
   });
 });
