@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { teacherAvatarPath } from './profile-domain';
+import { teacherAvatarExtension, teacherAvatarPath, teacherAvatarMaxBytes } from './profile-domain';
 
 export type LocalizedText = { ar: string; en: string };
 export type ProfileEntry = {
@@ -139,4 +139,22 @@ export function teacherCoverPath(teacherId: string, fileId: string, mimeType: st
   const avatarPath = teacherAvatarPath(teacherId, fileId, mimeType);
   const [owner, filename] = avatarPath.split('/');
   return `${owner}/cover/${filename}`;
+}
+
+export async function teacherCoverImageType(file: {
+  type: string;
+  size: number;
+  arrayBuffer(): Promise<ArrayBuffer>;
+}): Promise<string | null> {
+  if (!teacherAvatarExtension(file) || file.size > teacherAvatarMaxBytes) return null;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const startsWith = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte);
+  const matches = file.type === 'image/jpeg'
+    ? startsWith(0xff, 0xd8, 0xff)
+    : file.type === 'image/png'
+      ? startsWith(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a)
+      : file.type === 'image/webp'
+        ? startsWith(0x52, 0x49, 0x46, 0x46) && bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50
+        : false;
+  return matches ? file.type : null;
 }

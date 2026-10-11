@@ -10,6 +10,7 @@ const users = [];
 const suffix = randomUUID().slice(0, 8);
 const uploadedPaths = [];
 const uploadedAvatarPaths = [];
+const uploadedCoverPaths = [];
 const signBody = {expiresIn:60};
 let passed = 0;
 async function request(path, {token = anon, method = 'GET', body, headers = {}, timeoutMs = 10000} = {}) {
@@ -322,6 +323,69 @@ try {
   const tooLargePath = `${teacher.id}/${randomUUID()}.png`;
   const tooLargeUpload = await uploadAvatar(tooLargePath,'image/png',Buffer.alloc(2097153),teacher.token);
   check(!tooLargeUpload.ok,'avatar storage enforces the 2 MiB upload cap');
+
+  const initialCoverPath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const coverPngAtLimit = Buffer.alloc(2097152);
+  pngBytes.copy(coverPngAtLimit);
+  const boundaryCoverUpload = await uploadAvatar(initialCoverPath,'image/png',coverPngAtLimit,teacher.token);
+  assert(boundaryCoverUpload.ok,`Cover upload at exactly 2 MiB failed: ${boundaryCoverUpload.status} ${JSON.stringify(boundaryCoverUpload.data)}`);
+  uploadedCoverPaths.push(initialCoverPath);
+  const coverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:initialCoverPath,p_expected_path:null}});
+  check(coverSaved===true,'active teacher can set a cover with compare-and-set');
+  const publicCoverAccess = await success('/rest/v1/rpc/can_read_teacher_cover',{method:'POST',body:{p_name:initialCoverPath}});
+  const publicCoverRead = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  check(publicCoverAccess===true && publicCoverRead.ok,'anonymous can sign the current cover of an approved teacher');
+  const currentCoverDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[initialCoverPath]}});
+  check(!Array.isArray(currentCoverDelete.data) || !currentCoverDelete.data.some(row=>row.name===initialCoverPath),'Storage refuses to delete a currently referenced cover');
+  const coverAfterDeniedDelete = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  check(coverAfterDeniedDelete.ok,'denied concurrent cover deletion preserves the current object');
+  const preservedAvatar = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=avatar_path`,{token:service}))[0].avatar_path;
+  check(preservedAvatar===avatarPath,'cover save preserves the independent avatar reference');
+
+  const secondCoverPath = `${teacher.id}/cover/${randomUUID()}.webp`;
+  const thirdCoverPath = `${teacher.id}/cover/${randomUUID()}.jpg`;
+  const webpBytes = Buffer.from('UklGRgAAAABXRUJQVlA4', 'ascii');
+  const secondCoverUpload = await uploadAvatar(secondCoverPath,'image/webp',webpBytes,teacher.token);
+  const thirdCoverUpload = await uploadAvatar(thirdCoverPath,'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),teacher.token);
+  assert(secondCoverUpload.ok && thirdCoverUpload.ok,'Cover concurrency fixtures uploaded');
+  uploadedCoverPaths.push(secondCoverPath,thirdCoverPath);
+  const concurrentCoverSaves = await Promise.all([
+    request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:secondCoverPath,p_expected_path:initialCoverPath}}),
+    request('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:thirdCoverPath,p_expected_path:initialCoverPath}}),
+  ]);
+  assert(concurrentCoverSaves.every(result=>result.ok),`Concurrent cover saves failed: ${JSON.stringify(concurrentCoverSaves)}`);
+  const currentCover = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
+  check(concurrentCoverSaves.filter(result=>result.data===true).length===1 && [secondCoverPath,thirdCoverPath].includes(currentCover),'concurrent compare-and-set cover replacements have one winner');
+  const failedSavePath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const failedSaveUpload = await uploadAvatar(failedSavePath,'image/png',pngBytes,teacher.token);
+  assert(failedSaveUpload.ok,'Failed-save cover fixture uploaded');
+  uploadedCoverPaths.push(failedSavePath);
+  const failedMetadataSave = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:failedSavePath,p_expected_path:initialCoverPath}});
+  const afterFailedCoverSave = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path,avatar_path`,{token:service}))[0];
+  const failedSavePublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${failedSavePath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  const failedSaveOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${failedSavePath.split('/').map(encodeURIComponent).join('/')}`,{token:teacher.token,method:'POST',body:signBody});
+  check(failedMetadataSave===false && afterFailedCoverSave.cover_path===currentCover && afterFailedCoverSave.avatar_path===avatarPath && !failedSavePublicRead.ok && failedSaveOwnerRead.ok,'failed metadata save keeps the current cover and avatar while the new object stays private');
+  const failedCoverDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[failedSavePath]}});
+  assert(failedCoverDelete.ok && failedCoverDelete.data.some(row=>row.name===failedSavePath),'owner can clean an unreferenced cover after a failed save');
+  uploadedCoverPaths.splice(uploadedCoverPaths.indexOf(failedSavePath),1);
+  const foreignCoverPath = `${otherTeacher.id}/cover/${randomUUID()}.png`;
+  const foreignCoverUpload = await uploadAvatar(foreignCoverPath,'image/png',pngBytes,teacher.token);
+  check(!foreignCoverUpload.ok,'teacher cannot upload a cover under a foreign owner UUID');
+  const avatarKindSpoof = await uploadAvatar(`${teacher.id}/${randomUUID()}/cover.png`,'image/png',pngBytes,teacher.token);
+  check(!avatarKindSpoof.ok,'cover kind path cannot be uploaded through the avatar contract');
+  const overLimitCoverPath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const overLimitCoverUpload = await uploadAvatar(overLimitCoverPath,'image/png',Buffer.alloc(2097153),teacher.token);
+  check(!overLimitCoverUpload.ok,'cover storage rejects files larger than 2 MiB');
+
+  const pendingCoverPath = `${pendingTeacher.id}/cover/${randomUUID()}.png`;
+  const pendingCoverUpload = await uploadAvatar(pendingCoverPath,'image/png',pngBytes,pendingTeacher.token);
+  assert(pendingCoverUpload.ok,'Unapproved active teacher can upload a private cover');
+  uploadedCoverPaths.push(pendingCoverPath);
+  const pendingCoverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:pendingTeacher.token,method:'POST',body:{p_cover_path:pendingCoverPath,p_expected_path:null}});
+  const pendingOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${pendingCoverPath.split('/').map(encodeURIComponent).join('/')}`,{token:pendingTeacher.token,method:'POST',body:signBody});
+  const pendingPublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${pendingCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
+  check(pendingCoverSaved===true && pendingOwnerRead.ok && !pendingPublicRead.ok,'pending teacher can sign their own cover while anonymous viewers cannot');
+
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
   await success('/rest/v1/teacher_specializations',{token:service,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id}});
   const hiddenSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
@@ -496,6 +560,11 @@ try {
   if (uploadedAvatarPaths.length) {
     const cleanup = await request('/storage/v1/object/teacher-avatars',{token:service,method:'DELETE',body:{prefixes:uploadedAvatarPaths}});
     if (!cleanup.ok) console.error(`Avatar fixture cleanup failed: ${cleanup.status}`);
+  }
+  if (uploadedCoverPaths.length) {
+    for (const id of users) await request(`/rest/v1/teacher_profiles?id=eq.${id}`,{token:service,method:'PATCH',body:{cover_path:null}});
+    const cleanup = await request('/storage/v1/object/teacher-avatars',{token:service,method:'DELETE',body:{prefixes:uploadedCoverPaths}});
+    if (!cleanup.ok) console.error(`Cover fixture cleanup failed: ${cleanup.status}`);
   }
   for (const id of users.reverse()) {
     const result = await request(`/auth/v1/admin/users/${id}`,{token:service,method:'DELETE'});

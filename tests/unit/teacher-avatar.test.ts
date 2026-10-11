@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { avatarPathIsCurrent, publicTeacherContactLinks, storageRemovalConfirmed, teacherAvatarExtension, teacherAvatarPath } from '@/features/teacher/profile-domain';
-import { teacherCoverPath } from '@/features/teacher/profile-details-domain';
+import { teacherCoverImageType, teacherCoverPath } from '@/features/teacher/profile-details-domain';
 
 describe('teacher avatar rules', () => {
   it('accepts only non-empty JPEG, PNG, and WebP images up to 2 MiB', () => {
@@ -37,6 +37,21 @@ describe('teacher cover paths', () => {
     expect(() => teacherCoverPath(owner, file, 'toString')).toThrow();
     expect(() => teacherCoverPath(owner, file, 'constructor')).toThrow();
     expect(() => teacherCoverPath(owner, file, '__proto__')).toThrow();
+  });
+});
+
+describe('teacher cover image validation', () => {
+  const bytes = (...values: number[]) => new Blob([Uint8Array.from(values)]);
+
+  it('accepts JPEG, PNG, and WebP only when the byte signature matches the declared MIME type', async () => {
+    const jpeg = bytes(0xff, 0xd8, 0xff, 0xe0);
+    const png = bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    const webp = bytes(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50);
+    expect(await teacherCoverImageType({ type: 'image/jpeg', size: jpeg.size, arrayBuffer: () => jpeg.arrayBuffer() })).toBe('image/jpeg');
+    expect(await teacherCoverImageType({ type: 'image/png', size: png.size, arrayBuffer: () => png.arrayBuffer() })).toBe('image/png');
+    expect(await teacherCoverImageType({ type: 'image/webp', size: webp.size, arrayBuffer: () => webp.arrayBuffer() })).toBe('image/webp');
+    expect(await teacherCoverImageType({ type: 'image/png', size: jpeg.size, arrayBuffer: () => jpeg.arrayBuffer() })).toBeNull();
+    expect(await teacherCoverImageType({ type: 'image/svg+xml', size: 8, arrayBuffer: () => png.arrayBuffer() })).toBeNull();
   });
 });
 
