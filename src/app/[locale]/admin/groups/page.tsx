@@ -1,6 +1,7 @@
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
+import { AdminForm } from '@/features/admin/forms';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 
 export default async function AdminGroups({ params }: { params: Promise<{ locale: string }> }) {
@@ -35,6 +36,13 @@ export default async function AdminGroups({ params }: { params: Promise<{ locale
           <Status value={group.status} locale={locale} />
         </div>
         <div className="mt-5 border-t border-line pt-5">
+          <div className="mb-4">
+            <h3 className="mb-2 text-sm font-black text-teal">{ar ? 'النشر والمسودة' : 'Publishing and draft status'}</h3>
+            <AdminForm locale={locale} operation="group" id={group.id} fields={[{ name: 'status', label: ar ? 'الحالة' : 'Status', value: group.status === 'published' ? 'published' : 'draft', options: [
+              { value: 'draft', label: ar ? 'إعادتها إلى مسودة' : 'Return to draft' },
+              { value: 'published', label: ar ? 'نشر المجموعة' : 'Publish group' },
+            ] }]} button={ar ? 'حفظ الحالة' : 'Save status'} />
+          </div>
           <GroupManagementControls locale={locale} groupId={group.id} status={group.status} />
         </div>
       </Panel>)}</div> : <EmptyState>{ar ? 'لا توجد مجموعات.' : 'No groups found.'}</EmptyState>}

@@ -52,7 +52,7 @@ set local session_replication_role=origin;
 set local role authenticated;
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000001';
 do $$
-declare v_count integer;
+declare v_count integer; v_lesson_count integer;
 begin
   begin perform public.delete_unused_teacher_group('7d100000-0000-4000-8000-000000000001');
     raise exception 'published group was deleted without cancellation';
@@ -67,6 +67,29 @@ begin
      or (select status from public.enrollments where group_id='7d100000-0000-4000-8000-000000000001' and student_id='7d000000-0000-4000-8000-000000000005')<>'rejected'
      or (select count(*) from public.lesson_materials where lesson_id='7d300000-0000-4000-8000-000000000001')<>1 then
     raise exception 'group cancellation failed to preserve history or cancel only future lessons';
+  end if;
+  select count(*) into v_lesson_count from public.lessons where group_id='7d100000-0000-4000-8000-000000000001';
+  begin
+    perform public.create_lesson('7d100000-0000-4000-8000-000000000001','Stale create',now()+interval '5 days',now()+interval '5 days 1 hour','');
+    raise exception 'stale lesson create succeeded for archived group';
+  exception when raise_exception then
+    if sqlerrm='stale lesson create succeeded for archived group' then raise; end if;
+  end;
+  begin
+    perform public.generate_lessons('7d100000-0000-4000-8000-000000000001','2027-01-04','2027-01-04');
+    raise exception 'stale generation succeeded for archived group';
+  exception when raise_exception then
+    if sqlerrm='stale generation succeeded for archived group' then raise; end if;
+  end;
+  begin
+    perform public.set_lesson_status('7d300000-0000-4000-8000-000000000001','scheduled');
+    raise exception 'stale status action revived lesson in archived group';
+  exception when raise_exception then
+    if sqlerrm='stale status action revived lesson in archived group' then raise; end if;
+  end;
+  if (select count(*) from public.lessons where group_id='7d100000-0000-4000-8000-000000000001')<>v_lesson_count
+     or (select status from public.lessons where id='7d300000-0000-4000-8000-000000000001')<>'cancelled' then
+    raise exception 'archived stale lesson actions changed lesson history';
   end if;
   begin perform public.delete_unused_teacher_group('7d100000-0000-4000-8000-000000000001');
     raise exception 'group with enrollment/lesson history was deleted';

@@ -737,6 +737,9 @@ try {
   await success('/rest/v1/rpc/delete_unused_teacher_group',{token:otherTeacher.token,method:'POST',body:{p_group_id:emptyManagementGroup.id}});
   const removedManagementSchedule = await success(`/rest/v1/group_schedule_slots?id=eq.${managementSlot.id}`,{token:service});
   check(removedManagementSchedule.length===0,'owner can delete an unused draft and its schedule');
+  const pendingEnrollmentId = enroll1===accepted[0].id ? enroll2 : enroll1;
+  await success(`/rest/v1/enrollments?id=eq.${accepted[0].id}`,{token:service,method:'PATCH',body:{status:'accepted'}});
+  await success(`/rest/v1/enrollments?id=eq.${pendingEnrollmentId}`,{token:service,method:'PATCH',body:{status:'pending'}});
   const ownerGroupLessons = await success(`/rest/v1/lessons?group_id=eq.${group.id}&select=id,starts_at,status`,{token:service});
   const preservedEnrollmentRows = await success(`/rest/v1/enrollments?group_id=eq.${group.id}&select=id,status`,{token:service});
   const storedFilesBeforeCancel = await success(`/rest/v1/lesson_materials?lesson_id=eq.${lessonId}&kind=eq.file&select=id,storage_path`,{token:service});
@@ -745,7 +748,13 @@ try {
   const afterCancelLessons = await success(`/rest/v1/lessons?group_id=eq.${group.id}&select=id,starts_at,status`,{token:service});
   const preservedEnrollmentsAfterCancel = await success(`/rest/v1/enrollments?group_id=eq.${group.id}&select=id,status`,{token:service});
   const preservedFilesAfterCancel = await success(`/rest/v1/lesson_materials?lesson_id=eq.${lessonId}&kind=eq.file&select=id,storage_path`,{token:service});
-  check(cancelledGroup.status==='archived' && cancelledFutureCount>0 && afterCancelLessons.length===ownerGroupLessons.length && afterCancelLessons.some(row=>row.status==='cancelled') && preservedEnrollmentRows.length===preservedEnrollmentsAfterCancel.length && preservedEnrollmentsAfterCancel.some(row=>row.status==='accepted') && preservedEnrollmentsAfterCancel.some(row=>row.status==='rejected') && storedFilesBeforeCancel.length===preservedFilesAfterCancel.length,'group cancellation archives, cancels future lessons, rejects pending requests, and preserves accepted memberships, lessons, and materials');
+  check(cancelledGroup.status==='archived' && cancelledFutureCount>0 && afterCancelLessons.length===ownerGroupLessons.length && afterCancelLessons.some(row=>row.status==='cancelled'),'group cancellation archives without deleting lessons and cancels future scheduled lessons');
+  check(preservedEnrollmentRows.length===preservedEnrollmentsAfterCancel.length && preservedEnrollmentsAfterCancel.some(row=>row.status==='accepted') && preservedEnrollmentsAfterCancel.some(row=>row.status==='rejected'),'group cancellation rejects pending requests while retaining accepted memberships');
+  check(storedFilesBeforeCancel.length===preservedFilesAfterCancel.length,'group cancellation preserves lesson materials and stored-file metadata');
+  const archivedCreate = await request('/rest/v1/rpc/create_lesson',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_title:'Stale create',p_starts_at:'2027-01-08T16:00:00Z',p_ends_at:'2027-01-08T17:00:00Z'}});
+  const archivedGenerate = await request('/rest/v1/rpc/generate_lessons',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_from:'2027-01-03',p_until:'2027-01-03'}});
+  const archivedReschedule = await request('/rest/v1/rpc/set_lesson_status',{token:teacher.token,method:'POST',body:{p_lesson_id:lessonId,p_status:'scheduled'}});
+  check(!archivedCreate.ok && !archivedGenerate.ok && !archivedReschedule.ok,'stale create, generation, and reschedule actions cannot add lessons to an archived group');
   console.log(`Verified ${passed} real API assertions.`);
 } finally {
   if (uploadedPaths.length) {
