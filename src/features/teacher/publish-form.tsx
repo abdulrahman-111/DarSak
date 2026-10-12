@@ -32,6 +32,8 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   rangeHint: 'ستظهر المعاينة هنا. لا تُنشأ الحصص حتى تضغط زر النشر.', from: 'من', until: 'إلى',
   rangeError: 'أدخل تاريخين صحيحين ضمن نطاق لا يتجاوز 90 يوماً.', publish: 'نشر المجموعة', publishing: 'جارٍ النشر…',
   approval: 'يمكنك مراجعة المسودة الآن، لكن يجب اعتماد حسابك قبل النشر.',
+  waiting: 'طلب مراجعة حسابك بانتظار القرار. ستتمكن من النشر بعد اعتماده.',
+  declined: 'رُفض طلب مراجعة حسابك. راجع لوحة حالة المراجعة أعلى الصفحة، ثم أرسل طلب مراجعة جديدًا بعد التحديث.',
   reviewIntro: 'راجع التفاصيل والجدول والأيام المستثناة. يمكنك العودة إلى أي خطوة لتعديلها.',
 } : {
   details: 'Group details', editDetails: 'Edit details', schedule: 'Weekly schedule', editSchedule: 'Edit schedule',
@@ -41,6 +43,8 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   rangeHint: 'The preview appears here. Lessons are not created until you publish.', from: 'From', until: 'Until',
   rangeError: 'Enter both valid dates within a range of 90 days or less.', publish: 'Publish group', publishing: 'Publishing…',
   approval: 'You can review this draft now, but your account must be approved before publishing.',
+  waiting: 'Your teacher review is pending. You can publish after it is approved.',
+  declined: 'Your teacher review was declined. Read the review panel above, then request another review after making updates.',
   reviewIntro: 'Review the details, schedule, and excluded days. Return to any step to make changes.',
 };
 
@@ -51,6 +55,7 @@ export function PublishReviewForm({
   slots,
   exclusions,
   approved,
+  reviewStatus = null,
   copyScheduleFrom,
 }: {
   locale: Locale;
@@ -59,6 +64,7 @@ export function PublishReviewForm({
   slots: SlotSummary[];
   exclusions: string[];
   approved: boolean;
+  reviewStatus?: 'pending'|'approved'|'declined'|null;
   copyScheduleFrom?: string;
 }) {
   const t = copy(locale);
@@ -92,7 +98,7 @@ export function PublishReviewForm({
 
   return <div className="space-y-6">
     <p className="text-sm leading-6 text-muted">{t.reviewIntro}</p>
-    {!approved && <p role="status" className="rounded-xl bg-orange/10 p-4 text-sm text-ink">{t.approval}</p>}
+    {!approved && <p role="status" className="rounded-xl bg-orange/10 p-4 text-sm text-ink">{reviewStatus==='declined'?t.declined:reviewStatus==='pending'?t.waiting:t.approval}</p>}
 
     <section aria-labelledby="publish-details-heading" className="rounded-2xl border border-line bg-cream/50 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
