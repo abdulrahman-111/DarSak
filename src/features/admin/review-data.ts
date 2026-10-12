@@ -1,5 +1,19 @@
 export type AdminTeacherReviewRow={teacher_id:string;full_name:string;headline:string|null;account_status:'active'|'suspended';status:'pending'|'approved'|'declined';request_id:string|null;requested_at:string;reviewed_at:string|null};
 export type ReviewPage={rows:AdminTeacherReviewRow[];total:number;error:string|null};
+export type PeopleTeacherMetadata={teachers:Array<{id:string;headline:string|null}>;reviews:Array<{teacher_id:string;status:string}>;error:boolean};
+
+export function canonicalTeacherReviewStatus(value:unknown):'pending'|'approved'|'declined'|null{
+ return value==='pending'||value==='approved'||value==='declined'?value:null;
+}
+
+export async function peopleTeacherMetadata(db:any,teacherIds:string[]):Promise<PeopleTeacherMetadata>{
+ if(teacherIds.length===0)return {teachers:[],reviews:[],error:false};
+ const [teachers,reviews]=await Promise.all([
+  db.from('teacher_profiles').select('id,headline').in('id',teacherIds),
+  db.from('teacher_review_state').select('teacher_id,status').in('teacher_id',teacherIds),
+ ]);
+ return {teachers:(teachers.data??[]),reviews:(reviews.data??[]),error:!!teachers.error||!!reviews.error};
+}
 
 export function normalizeReviewPage(value:unknown):{rows:AdminTeacherReviewRow[];total:number}|null{
  if(!value||typeof value!=='object')return null;

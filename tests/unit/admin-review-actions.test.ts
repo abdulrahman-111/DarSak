@@ -6,7 +6,7 @@ vi.mock('next/cache',()=>({revalidatePath:revalidatePathMock}));
 
 import { adminAction,decideTeacherReview } from '@/features/admin/actions';
 import { teacherReviewDecisionSchema,teacherReviewListSchema } from '@/features/admin/domain';
-import { adminTeacherReviews,normalizeReviewPage } from '@/features/admin/review-data';
+import { adminTeacherReviews,canonicalTeacherReviewStatus,normalizeReviewPage,peopleTeacherMetadata } from '@/features/admin/review-data';
 
 const teacherId='11111111-1111-4111-8111-111111111111';
 const requestId='22222222-2222-4222-8222-222222222222';
@@ -61,5 +61,28 @@ describe('teacher review list contracts',()=>{
   expect(db.rpc).toHaveBeenCalledWith('admin_teacher_reviews',{p_status:'pending',p_query:'Ada',p_offset:30,p_limit:30});
   const failed=await adminTeacherReviews({rpc:async()=>({data:null,error:{message:'offline'}})},{status:'pending',query:'',offset:0,limit:30});
   expect(failed).toMatchObject({rows:[],total:0,error:'offline'});
+ });
+});
+
+describe('People teacher review metadata',()=>{
+ it('uses canonical declined status instead of inferring pending from approved=false',()=>{
+  expect(canonicalTeacherReviewStatus('declined')).toBe('declined');
+  expect(canonicalTeacherReviewStatus('pending')).toBe('pending');
+  expect(canonicalTeacherReviewStatus('approved')).toBe('approved');
+  expect(canonicalTeacherReviewStatus(undefined)).toBeNull();
+ });
+ it('loads teacher metadata only for the current page IDs',async()=>{
+  const currentPageIds=[teacherId,'55555555-5555-4555-8555-555555555555'];
+  const inCalls:Array<{table:string;column:string;ids:string[]}> = [];
+  const db={from:(table:string)=>({select:()=>({in:async(column:string,ids:string[])=>{
+   inCalls.push({table,column,ids});
+   return table==='teacher_profiles'?{data:[{id:teacherId,headline:'Tutor'}],error:null}:{data:[{teacher_id:teacherId,status:'declined'}],error:null};
+  }})})};
+  const result=await peopleTeacherMetadata(db,currentPageIds);
+  expect(inCalls).toEqual([
+   {table:'teacher_profiles',column:'id',ids:currentPageIds},
+   {table:'teacher_review_state',column:'teacher_id',ids:currentPageIds},
+  ]);
+  expect(canonicalTeacherReviewStatus(result.reviews[0]?.status)).toBe('declined');
  });
 });
