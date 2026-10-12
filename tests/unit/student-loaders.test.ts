@@ -41,6 +41,7 @@ describe('student dashboard loader query contract', () => {
           select(fields: string, options?: unknown) { query.fields = fields; query.selectOptions = options; return builder; },
           eq(column: string, value: unknown) { query.filters.push(['eq', column, value]); return builder; },
           gt(column: string, value: unknown) { query.filters.push(['gt', column, value]); return builder; },
+          neq(column: string, value: unknown) { query.filters.push(['neq', column, value]); return builder; },
           order() { return builder; },
           limit(value: number) { query.limit = value; return builder; },
           range() { return builder; },
@@ -48,6 +49,7 @@ describe('student dashboard loader query contract', () => {
             if (table === 'lessons') {
               let rows = allLessons.filter(row => query.filters.every(([kind, column, value]) => {
                 const actual = row[column as keyof typeof row];
+                if (column.startsWith('group.enrollments.')) return true;
                 if (kind === 'eq') return actual === value;
                 return new Date(String(actual)).getTime() > new Date(String(value)).getTime();
               }));
@@ -71,10 +73,11 @@ describe('student dashboard loader query contract', () => {
     expect(result.upcomingCount).toBe(8);
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['future-0', 'future-1', 'future-2', 'future-3', 'future-4']);
     expect(queries.find(query => query.table === 'lessons')).toMatchObject({
-      filters: [['eq', 'status', 'scheduled'], ['gt', 'ends_at', now.toISOString()]],
+      filters: [['eq', 'status', 'scheduled'], ['eq', 'group.enrollments.student_id', 'student-id'], ['eq', 'group.enrollments.status', 'accepted'], ['gt', 'ends_at', now.toISOString()]],
       limit: 5,
       selectOptions: { count: 'exact' },
     });
+    expect(queries.find(query => query.table === 'lessons')?.fields).toContain('groups!inner(id,enrollments!inner(id))');
   });
 
   it('limits recurring timetable slots to this student’s accepted groups through the RLS-visible join', async () => {
@@ -87,6 +90,7 @@ describe('student dashboard loader query contract', () => {
           select(fields: string) { query.fields = fields; return builder; },
           eq(column: string, value: unknown) { query.filters.push(['eq', column, value]); return builder; },
           gt(column: string, value: unknown) { query.filters.push(['gt', column, value]); return builder; },
+          neq(column: string, value: unknown) { query.filters.push(['neq', column, value]); return builder; },
           order() { return builder; },
           range() { return builder; },
           then(resolve: (value: unknown) => unknown) { return Promise.resolve(resolve({ data: [], count: 0, error: null })); },
@@ -98,11 +102,16 @@ describe('student dashboard loader query contract', () => {
 
     const result = await studentTimetable('en', 1, new Date('2026-10-12T10:00:00.000Z'));
     const slots = queries.find(query => query.table === 'group_schedule_slots');
+    const lessons = queries.find(query => query.table === 'lessons');
 
     expect(result.error).toBe(false);
     expect(slots?.fields).toContain('groups!inner');
-    expect(slots?.fields).toContain('enrollments!inner(student_id)');
+    expect(slots?.fields).toContain('enrollments!inner(id)');
     expect(slots?.filters).toContainEqual(['eq', 'group.enrollments.student_id', 'student-id']);
     expect(slots?.filters).toContainEqual(['eq', 'group.enrollments.status', 'accepted']);
+    expect(slots?.filters).toContainEqual(['neq', 'group.status', 'archived']);
+    expect(lessons?.fields).toContain('groups!inner(id,enrollments!inner(id))');
+    expect(lessons?.filters).toContainEqual(['eq', 'group.enrollments.student_id', 'student-id']);
+    expect(lessons?.filters).toContainEqual(['eq', 'group.enrollments.status', 'accepted']);
   });
 });

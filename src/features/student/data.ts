@@ -68,7 +68,7 @@ export async function studentDashboard(locale:Locale,now=new Date()){
  const [accepted,pending,upcoming]=await Promise.all([
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','accepted'),
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','pending'),
-  me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status',{count:'exact'}).eq('status','scheduled').gt('ends_at',timestamp).order('starts_at').order('id').limit(5),
+  me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,enrollments!inner(id))',{count:'exact'}).eq('status','scheduled').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').gt('ends_at',timestamp).order('starts_at').order('id').limit(5),
  ]);
  const error=!!(accepted.error||pending.error||upcoming.error||accepted.count==null||pending.count==null||upcoming.count==null);
  return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,upcomingCount:upcoming.count??0,lessons:(upcoming.data||[]) as Lesson[],error};
@@ -80,14 +80,14 @@ export async function studentClasses(locale:Locale,pageInput:unknown=1){
 }
 export async function studentLessons(locale:Locale,pageInput:unknown=1){
  const me=await student(locale);
- const result=await pagedRows(pageInput,(from,to)=>me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status',{count:'exact'}).order('starts_at',{ascending:false}).order('id',{ascending:false}).range(from,to));
+ const result=await pagedRows(pageInput,(from,to)=>me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,enrollments!inner(id))',{count:'exact'}).eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').order('starts_at',{ascending:false}).order('id',{ascending:false}).range(from,to));
  return {lessons:result.rows as Lesson[],page:result.page,total:result.total,pageCount:result.pageCount,error:result.error};
 }
 export async function studentTimetable(locale:Locale,pageInput:unknown=1,now=new Date()){
  const me=await student(locale),timestamp=now.toISOString();
  const [slots,lessons]=await Promise.all([
-  me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone,group:groups!inner(id,enrollments!inner(student_id))').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').order('weekday').order('start_time').order('id'),
-  pagedRows(pageInput,(from,to)=>me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status',{count:'exact'}).eq('status','scheduled').gt('ends_at',timestamp).order('starts_at').order('id').range(from,to)),
+  me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone,group:groups!inner(id,status,enrollments!inner(id))').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').neq('group.status','archived').order('weekday').order('start_time').order('id'),
+  pagedRows(pageInput,(from,to)=>me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,enrollments!inner(id))',{count:'exact'}).eq('status','scheduled').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').gt('ends_at',timestamp).order('starts_at').order('id').range(from,to)),
  ]);
  return {slots:(slots.data||[]) as unknown as Slot[],lessons:lessons.rows as Lesson[],page:lessons.page,total:lessons.total,pageCount:lessons.pageCount,error:!!(slots.error||lessons.error)};
 }
