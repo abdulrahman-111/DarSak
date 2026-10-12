@@ -713,8 +713,8 @@ try {
   const suspendedWrite = await request('/rest/v1/rpc/create_lesson',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_title:'Should fail',p_starts_at:'2027-01-04T16:00:00Z',p_ends_at:'2027-01-04T18:00:00Z'}});
   check(!suspendedWrite.ok,'suspension blocks a previously authenticated session');
   // Management controls exercise historical safety through authenticated RPCs.
-  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
-  await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
+  await success('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:teacher.id,p_status:'active',p_approved:null}});
+  await success('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:otherTeacher.id,p_status:'active',p_approved:null}});
   const deletableManual = await success('/rest/v1/rpc/create_lesson',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_title:'Delete safely',p_starts_at:'2035-05-01T10:00:00Z',p_ends_at:'2035-05-01T11:00:00Z'}});
   const foreignLessonDelete = await request('/rest/v1/rpc/delete_manual_teacher_lesson',{token:teacher.token,method:'POST',body:{p_lesson_id:deletableManual}});
   const studentLessonDelete = await request('/rest/v1/rpc/delete_manual_teacher_lesson',{token:student.token,method:'POST',body:{p_lesson_id:deletableManual}});
@@ -732,7 +732,7 @@ try {
   const emptyManagementGroup = (await success('/rest/v1/groups',{token:service,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id,name:`Unused ${suffix}`,capacity:4,status:'draft'}}))[0];
   const managementSlot = (await success('/rest/v1/group_schedule_slots',{token:service,method:'POST',body:{group_id:emptyManagementGroup.id,weekday:4,start_time:'10:00',end_time:'11:00'}}))[0];
   const anonGroupDelete = await request('/rest/v1/rpc/delete_unused_teacher_group',{method:'POST',body:{p_group_id:emptyManagementGroup.id}});
-  const foreignGroupDelete = await request('/rest/v1/rpc/delete_unused_teacher_group',{token:otherTeacher.token,method:'POST',body:{p_group_id:emptyManagementGroup.id}});
+  const foreignGroupDelete = await request('/rest/v1/rpc/delete_unused_teacher_group',{token:teacher.token,method:'POST',body:{p_group_id:emptyManagementGroup.id}});
   check(!anonGroupDelete.ok && !foreignGroupDelete.ok,'anonymous and foreign teacher cannot delete an unused group');
   await success('/rest/v1/rpc/delete_unused_teacher_group',{token:otherTeacher.token,method:'POST',body:{p_group_id:emptyManagementGroup.id}});
   const removedManagementSchedule = await success(`/rest/v1/group_schedule_slots?id=eq.${managementSlot.id}`,{token:service});

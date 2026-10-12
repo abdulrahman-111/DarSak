@@ -6,6 +6,8 @@ import { LessonForm, SlotForm } from '@/components/platform/forms';
 import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate, weekday } from '@/components/platform/ui';
 import { GenerationPreviewForm } from '@/features/teacher/generation-form';
 import { DuplicateGroupForm } from '@/features/teacher/shortcuts-forms';
+import { EnrollmentDecisionButtons } from '@/components/platform/actions';
+import { GroupManagementControls } from '@/features/teacher/management-forms';
 
 export default async function TeacherGroupDetail({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale: raw, id } = await params;
@@ -19,42 +21,43 @@ export default async function TeacherGroupDetail({ params }: { params: Promise<{
     me.db.rpc('group_students', { p_group_id: id }),
     me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id).order('local_date'),
   ]);
-  if (!group.data) notFound();
+  const currentGroup = group.data;
+  if (!currentGroup) notFound();
   const copy = ar ? {
     schedule: 'الجدول الأسبوعي', cairo: 'كل الأوقات بتوقيت القاهرة.', addTime: 'أضف أول موعد أسبوعي.',
     newLesson: 'حصة جديدة', lessons: 'الحصص', noLessons: 'لا توجد حصص بعد.', students: 'الطلاب والطلبات', noStudents: 'لا توجد طلبات بعد.',
-    generation: 'إنشاء الحصص من الجدول', slotError: 'تعذر تحميل المواعيد الأسبوعية.', lessonsError: 'تعذر تحميل الحصص.', studentsError: 'تعذر تحميل الطلاب والطلبات.', exclusionsError: 'تعذر تحميل الأيام المستثناة.',
+    generation: 'إنشاء الحصص من الجدول', slotError: 'تعذر تحميل المواعيد الأسبوعية.', lessonsError: 'تعذر تحميل الحصص.', studentsError: 'تعذر تحميل الطلاب والطلبات.', exclusionsError: 'تعذر تحميل الأيام المستثناة.', back: 'العودة إلى مجموعاتي', archived: 'هذه المجموعة مؤرشفة. يمكنك مراجعة سجلها، لكن لن تُضاف مواعيد أو حصص جديدة.', archivedNoSchedule: 'لا توجد مواعيد أسبوعية محفوظة.',
   } : {
     schedule: 'Weekly schedule', cairo: 'All times use Africa/Cairo.', addTime: 'Add the first weekly time.',
     newLesson: 'New lesson', lessons: 'Lessons', noLessons: 'No lessons yet.', students: 'Students and requests', noStudents: 'No requests yet.',
-    generation: 'Generate lessons from schedule', slotError: 'Could not load weekly times.', lessonsError: 'Could not load lessons.', studentsError: 'Could not load students and requests.', exclusionsError: 'Could not load excluded days.',
+    generation: 'Generate lessons from schedule', slotError: 'Could not load weekly times.', lessonsError: 'Could not load lessons.', studentsError: 'Could not load students and requests.', exclusionsError: 'Could not load excluded days.', back: 'Back to my groups', archived: 'This group is archived. You can review its history, but no new times or lessons can be added.', archivedNoSchedule: 'No weekly schedule was saved for this group.',
   };
 
   return <>
-    <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={group.data.name} description={group.data.description} action={<div className="flex flex-wrap items-center gap-3"><Status value={group.data.status} locale={locale} /><Link href={`/${locale}/teacher/lessons?new=1&groupId=${id}`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{ar ? 'إضافة حصة' : 'Add lesson'}</Link></div>} />
+    <Link href={`/${locale}/teacher/groups`} className="mb-4 inline-flex font-bold text-teal underline">← {copy.back}</Link>
+    <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={currentGroup.name} description={currentGroup.description} action={<div className="grid justify-items-end gap-3"><div className="flex flex-wrap items-center gap-3"><Status value={currentGroup.status} locale={locale} />{currentGroup.status !== 'archived' && <Link href={`/${locale}/teacher/lessons?new=1&groupId=${id}`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{ar ? 'إضافة حصة' : 'Add lesson'}</Link>}</div><GroupManagementControls locale={locale} groupId={id} status={currentGroup.status} /></div>} />
+    {currentGroup.status === 'archived' && <Panel className="mb-6"><p className="text-sm font-semibold text-muted">{copy.archived}</p></Panel>}
     <div className="grid gap-6 xl:grid-cols-2">
       <Panel>
         <h2 className="text-xl font-black text-teal">{copy.schedule}</h2>
         <p className="mt-1 text-sm text-muted">{copy.cairo}</p>
-        {slots.error ? <p role="alert" className="my-5 text-sm text-red-700">{copy.slotError}</p> : <div className="my-5 grid gap-2">{slots.data?.length ? slots.data.map(slot => <div key={slot.id} className="flex justify-between rounded-xl bg-cream px-4 py-3"><strong>{weekday(slot.weekday, locale)}</strong><span dir="ltr">{slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}</span></div>) : <EmptyState>{copy.addTime}</EmptyState>}</div>}
-        <SlotForm locale={locale} groupId={id} />
-        <div className="mt-5 border-t border-line pt-5">
-          <DuplicateGroupForm locale={locale} groupId={id} />
-        </div>
+        {slots.error ? <p role="alert" className="my-5 text-sm text-red-700">{copy.slotError}</p> : <div className="my-5 grid gap-2">{slots.data?.length ? slots.data.map(slot => <div key={slot.id} className="flex justify-between rounded-xl bg-cream px-4 py-3"><strong>{weekday(slot.weekday, locale)}</strong><span dir="ltr">{slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}</span></div>) : <EmptyState>{currentGroup.status === 'archived' ? copy.archivedNoSchedule : copy.addTime}</EmptyState>}</div>}
+        {currentGroup.status !== 'archived' && <><SlotForm locale={locale} groupId={id} />
+          <div className="mt-5 border-t border-line pt-5"><DuplicateGroupForm locale={locale} groupId={id} /></div></>}
       </Panel>
-      <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.newLesson}</h2><LessonForm locale={locale} groupId={id} /></Panel>
+      {currentGroup.status !== 'archived' && <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.newLesson}</h2><LessonForm locale={locale} groupId={id} /></Panel>}
     </div>
 
-    <Panel className="mt-6">
+    {currentGroup.status !== 'archived' && <Panel className="mt-6">
       <h2 className="mb-4 text-xl font-black text-teal">{copy.generation}</h2>
       {exclusions.error ? <p role="alert" className="text-sm text-red-700">{copy.exclusionsError}</p> : <GenerationPreviewForm key={`${id}:${(slots.data ?? []).map(slot => `${slot.id}:${slot.weekday}:${slot.start_time}:${slot.end_time}`).join(',')}:${(exclusions.data ?? []).map(row => row.local_date).join(',')}`} locale={locale} groupId={id} savedExclusions={(exclusions.data ?? []).map(row => row.local_date)} />}
-    </Panel>
+    </Panel>}
 
     <div className="mt-6 grid gap-6 xl:grid-cols-2">
       <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.lessons}</h2>{lessons.error ? <p role="alert" className="text-sm text-red-700">{copy.lessonsError}</p> : lessons.data?.length ? <div className="grid gap-2">{lessons.data.map(lesson => <RowLink key={lesson.id} href={`/${locale}/teacher/lessons/${lesson.id}`} title={lesson.title} meta={cairoDate(lesson.starts_at, locale)} trailing={<Status value={lesson.status} locale={locale} />} />)}</div> : <EmptyState>{copy.noLessons}</EmptyState>}</Panel>
       <Panel>
         <h2 className="mb-4 text-xl font-black text-teal">{copy.students}</h2>
-        {students.error ? <p role="alert" className="text-sm text-red-700">{copy.studentsError}</p> : students.data?.length ? <div className="grid gap-2">{students.data.map((student: { enrollment_id: string; full_name: string; status: string }) => <div key={student.enrollment_id} className="flex items-center justify-between rounded-xl border border-line p-3"><strong>{student.full_name}</strong><Status value={student.status} locale={locale} /></div>)}</div> : <EmptyState>{copy.noStudents}</EmptyState>}
+        {students.error ? <p role="alert" className="text-sm text-red-700">{copy.studentsError}</p> : students.data?.length ? <div className="grid gap-2">{students.data.map((student: { enrollment_id: string; full_name: string; status: string }) => <div key={student.enrollment_id} className="rounded-xl border border-line p-3"><div className="flex items-center justify-between gap-3"><strong>{student.full_name}</strong><Status value={student.status} locale={locale} /></div>{currentGroup.status !== 'archived' && <EnrollmentDecisionButtons locale={locale} id={student.enrollment_id} status={student.status} />}</div>)}</div> : <EmptyState>{copy.noStudents}</EmptyState>}
       </Panel>
     </div>
   </>;

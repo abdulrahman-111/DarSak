@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
+import { GroupManagementControls } from '@/features/teacher/management-forms';
 
 export default async function TeacherGroups({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -26,18 +27,25 @@ export default async function TeacherGroups({ params }: { params: Promise<{ loca
           const href = group.status === 'draft'
             ? `/${locale}/teacher/groups/${group.id}/setup?step=details`
             : `/${locale}/teacher/groups/${group.id}`;
-          return <Link href={href} key={group.id} className="rounded-[1.5rem] border border-line bg-white p-5 hover:border-orange/50">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-bold text-orange">{group.offering?.subject?.[ar ? 'name_ar' : 'name_en'] || '—'}</p>
-                <h2 className="mt-1 text-xl font-black text-teal">{group.name}</h2>
+          return <article key={group.id} className="rounded-[1.5rem] border border-line bg-white p-5">
+            <Link href={href} className="block rounded-xl hover:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-bold text-orange">{group.offering?.subject?.[ar ? 'name_ar' : 'name_en'] || '—'}</p>
+                  <h2 className="mt-1 text-xl font-black text-teal">{group.name}</h2>
+                </div>
+                <Status value={group.status} locale={locale} />
               </div>
-              <Status value={group.status} locale={locale} />
+              <p className="mt-3 line-clamp-2 text-sm text-muted">{group.description || '—'}</p>
+              <p className="mt-4 text-sm text-muted">{group.location || '—'} · {ar ? 'السعة' : 'Capacity'} {group.capacity}</p>
+              <p className="mt-4 text-sm font-bold text-teal">{group.status === 'draft'
+                ? ar ? 'استئناف الإعداد ←' : 'Resume setup →'
+                : group.status === 'archived' ? ar ? 'عرض السجل ←' : 'View history →' : ar ? 'إدارة المجموعة ←' : 'Manage group →'}</p>
+            </Link>
+            <div className="mt-4 border-t border-line pt-4">
+              <GroupManagementControls locale={locale} groupId={group.id} status={group.status} />
             </div>
-            <p className="mt-3 line-clamp-2 text-sm text-muted">{group.description || '—'}</p>
-            <p className="mt-4 text-sm text-muted">{group.location || '—'} · {ar ? 'السعة' : 'Capacity'} {group.capacity}</p>
-            {group.status === 'draft' && <p className="mt-4 text-sm font-bold text-teal">{ar ? 'استئناف الإعداد ←' : 'Resume setup →'}</p>}
-          </Link>;
+          </article>;
         }) : <EmptyState>{ar ? 'لم تنشئ أي مجموعة بعد.' : 'You have not created any groups yet.'}</EmptyState>}
       </div>}
   </>;

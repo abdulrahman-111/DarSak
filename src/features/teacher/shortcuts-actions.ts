@@ -68,7 +68,7 @@ export async function copyLesson(
     .maybeSingle();
   if (source.error || !source.data) return { error: shortcutMutationMessage(locale, source.error?.message ?? 'source not found') };
 
-  const target = await me.db.from('groups').select('id').eq('id', parsed.data.target_group_id).eq('teacher_id', me.user.id).maybeSingle();
+  const target = await me.db.from('groups').select('id').eq('id', parsed.data.target_group_id).eq('teacher_id', me.user.id).neq('status', 'archived').maybeSingle();
   if (target.error || !target.data) return { error: shortcutMutationMessage(locale, target.error?.message ?? 'target not found') };
 
   const { data: newLessonId, error } = await me.db.rpc('create_lesson', {
