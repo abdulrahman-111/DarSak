@@ -1,6 +1,26 @@
 import { ensureLocale } from '@/i18n/config';
-import { requireViewer } from '@/components/platform/access';
+import Link from 'next/link';
 import { EnrollmentDecisionButtons } from '@/components/platform/actions';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
+import { StudentPagination } from '@/features/student/pagination';
+import { teacherStudents } from '@/features/teacher/data';
 
-export default async function TeacherStudents({params}:{params:Promise<{locale:string}>}){const {locale:raw}=await params;const locale=ensureLocale(raw),ar=locale==='ar';const me=await requireViewer(locale,'teacher');const groups=await me.db.from('groups').select('id,name').eq('teacher_id',me.id).order('name');const records=(await Promise.all((groups.data||[]).map(async group=>{const result=await me.db.rpc('group_students',{p_group_id:group.id});return (result.data||[]).map((row:any)=>({...row,group_name:group.name}))}))).flat().filter(row=>row.status==='accepted');return <><ScreenTitle eyebrow={ar?'المجموعات الحالية':'Current groups'} title={ar?'طلابي':'My students'} description={ar?'الطلاب المقبولون في مجموعاتك.':'Students currently accepted into your groups.'}/>{records.length?<Panel><div className="grid gap-3">{records.map(row=><div key={row.enrollment_id} className="rounded-2xl border border-line p-4"><div className="flex items-center justify-between gap-3"><div><strong className="text-teal">{row.full_name}</strong><p className="mt-1 text-sm text-muted">{row.group_name}</p></div><Status value={row.status} locale={locale}/></div><EnrollmentDecisionButtons locale={locale} id={row.enrollment_id} status={row.status}/></div>)}</div></Panel>:<EmptyState>{ar?'لا يوجد طلاب مقبولون بعد.':'No accepted students yet.'}</EmptyState>}</>}
+export default async function TeacherStudents({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{page?:string|string[]}>}){
+  const [{locale:raw},query]=await Promise.all([params,searchParams]);
+  const locale=ensureLocale(raw),ar=locale==='ar';
+  const data=await teacherStudents(locale,query.page);
+  const copy=ar
+    ?{eyebrow:'المجموعات الحالية',title:'طلابي',description:'الطلاب المقبولون في مجموعاتك.',failed:'تعذر تحميل طلابك. حاول مرة أخرى.',retry:'إعادة المحاولة',empty:'لا يوجد طلاب مقبولون بعد.',previous:'السابق',next:'التالي',page:'الصفحة'}
+    :{eyebrow:'Current groups',title:'My students',description:'Students currently accepted into your groups.',failed:'Could not load your students. Try again.',retry:'Try again',empty:'No accepted students yet.',previous:'Previous',next:'Next',page:'Page'};
+  return <>
+    <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description}/>
+    {data.error
+      ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p><Link href={`/${locale}/teacher/students?page=${data.page}`} className="mt-3 inline-flex font-bold text-orange underline">{copy.retry}</Link></Panel>
+      : <>
+        {data.students.length
+          ? <Panel><div className="grid gap-3">{data.students.map(row=><div key={row.enrollment_id} className="rounded-2xl border border-line p-4"><div className="flex items-center justify-between gap-3"><div><strong className="text-teal">{row.full_name}</strong><p className="mt-1 text-sm text-muted">{row.group_name}</p></div><Status value={row.status} locale={locale}/></div><EnrollmentDecisionButtons locale={locale} id={row.enrollment_id} status={row.status}/></div>)}</div></Panel>
+          : <EmptyState>{copy.empty}</EmptyState>}
+        <StudentPagination locale={locale} href={`/${locale}/teacher/students`} page={data.page} pageCount={data.pageCount} labels={copy}/>
+      </>}
+  </>;
+}

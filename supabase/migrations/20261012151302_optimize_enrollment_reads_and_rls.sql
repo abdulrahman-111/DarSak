@@ -1,5 +1,7 @@
 -- Keep row-independent auth helpers as initplans so PostgreSQL evaluates them
 -- once per statement instead of once per candidate row.
+begin;
+
 alter policy profile_self_read on public.profiles
   using (id = (select auth.uid()) or (select public.current_role()) = 'admin');
 alter policy profile_self_update on public.profiles
@@ -174,3 +176,5 @@ create index if not exists student_profiles_offering_id_idx on public.student_pr
 create index if not exists teacher_profiles_cover_object_idx on public.teacher_profiles(cover_bucket_id, cover_path);
 create index if not exists teacher_review_events_actor_user_id_idx on public.teacher_review_events(actor_user_id);
 create index if not exists teacher_review_state_reviewed_by_idx on public.teacher_review_state(reviewed_by);
+
+commit;

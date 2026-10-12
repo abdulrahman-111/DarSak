@@ -3,21 +3,22 @@ import { ensureLocale } from '@/i18n/config';
 import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
 import { LessonForm } from '@/components/platform/forms';
 import { teacherLessons } from '@/features/teacher/data';
+import { StudentPagination } from '@/features/student/pagination';
 
-export default async function TeacherLessons({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string; groupId?: string; deleted?: string }> }) {
+export default async function TeacherLessons({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string; groupId?: string; deleted?: string; page?: string | string[] }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  const data = await teacherLessons(locale);
+  const data = await teacherLessons(locale, query.page);
   const requestedNew = query.new === '1';
   const selectedGroup = data.groups.find(group => group.id === query.groupId);
   const copy = ar ? {
     title: 'الحصص', description: 'افتح مساحة الحصة لتعديل التفاصيل ومراجعة المواد.', add: 'إضافة حصة', group: 'اختر المجموعة', choose: '— اختر مجموعة —', select: 'اختيار',
-    noGroups: 'أنشئ مجموعة قبل إضافة حصة.', createGroup: 'إنشاء مجموعة', noLessons: 'لا توجد حصص بعد.',
+    noGroups: 'أنشئ مجموعة قبل إضافة حصة.', createGroup: 'إنشاء مجموعة', noLessons: 'لا توجد حصص بعد.', previous: 'السابق', next: 'التالي', page: 'الصفحة', retry: 'إعادة المحاولة',
     invalidGroup: 'اختر إحدى مجموعاتك من القائمة لإضافة حصة.', failed: 'تعذر تحميل حصصك ومجموعاتك. حدّث الصفحة وحاول مرة أخرى.',
   } : {
     title: 'Lessons', description: 'Open a lesson workspace to update details and review its materials.', add: 'Add lesson', group: 'Choose a group', choose: '— Choose a group —', select: 'Select',
-    noGroups: 'Create a group before adding a lesson.', createGroup: 'Create group', noLessons: 'No lessons yet.',
+    noGroups: 'Create a group before adding a lesson.', createGroup: 'Create group', noLessons: 'No lessons yet.', previous: 'Previous', next: 'Next', page: 'Page', retry: 'Try again',
     invalidGroup: 'Choose one of your groups from the list to add a lesson.', failed: 'Could not load your lessons and groups. Refresh and try again.',
   };
 
@@ -29,7 +30,7 @@ export default async function TeacherLessons({ params, searchParams }: { params:
       action={<Link href={`/${locale}/teacher/lessons?new=1`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{copy.add}</Link>}
     />
     {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف الحصة.' : 'Lesson deleted.'}</p></Panel>}
-    {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p></Panel> : <>
+    {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p><Link href={`/${locale}/teacher/lessons?page=${data.page}`} className="mt-3 inline-flex font-bold text-orange underline">{copy.retry}</Link></Panel> : <>
       {requestedNew && <Panel className="mb-6">
         <h2 className="mb-4 text-xl font-black text-teal">{copy.add}</h2>
         {data.groups.length ? <>
@@ -53,6 +54,7 @@ export default async function TeacherLessons({ params, searchParams }: { params:
           return <RowLink key={lesson.id} href={`/${locale}/teacher/lessons/${lesson.id}`} title={lesson.title} meta={`${group?.name || '—'} · ${cairoDate(lesson.starts_at, locale)}`} trailing={<Status value={lesson.status} locale={locale} />} />;
         })}</div> : <EmptyState>{copy.noLessons}</EmptyState>}
       </Panel>
+      <StudentPagination locale={locale} href={`/${locale}/teacher/lessons`} page={data.page} pageCount={data.pageCount} labels={copy}/>
     </>}
   </>;
 }
