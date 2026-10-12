@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { createClientMock } = vi.hoisted(() => ({ createClientMock: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
+vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: vi.fn() }));
 
 import { catalogue } from '@/features/platform/data';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
