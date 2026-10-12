@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { loginRedirectPath, safeLoginReturnPath } from '@/features/auth/return-path';
+import { loginRedirectPath, safeAuthNext, safeLoginReturnPath } from '@/features/auth/return-path';
 
 const groupId = 'A70EA958-E2D5-4C9C-90D1-4E001D9AF93C';
 
@@ -55,5 +55,31 @@ describe('login return paths', () => {
     '/en/teachers/00000000-0000-4000-8000-000000000000',
   ])('rejects unsafe or out-of-scope path %s', path => {
     expect(loginRedirectPath('en', path)).toBe('/en/dashboard');
+  });
+});
+
+describe('safeAuthNext', () => {
+  it('keeps valid locale-prefixed local paths', () => {
+    expect(safeAuthNext('/ar/reset-password', 'en')).toBe('/ar/reset-password');
+    expect(safeAuthNext('/en/dashboard', 'ar')).toBe('/en/dashboard');
+    expect(safeAuthNext('/en', 'ar')).toBe('/en');
+  });
+
+  it.each([
+    '//evil.com',
+    '/\\evil',
+    '/en/a\\b',
+    'https://x',
+    '/fr/x',
+    '/en/../x',
+    '/en//x',
+    '/en/x?next=https://evil.com',
+    '/en/x#frag',
+    '',
+    ['/ar/reset-password'],
+    undefined,
+    null,
+  ])('falls back to the fallback-locale dashboard for %j', candidate => {
+    expect(safeAuthNext(candidate, 'ar')).toBe('/ar/dashboard');
   });
 });
