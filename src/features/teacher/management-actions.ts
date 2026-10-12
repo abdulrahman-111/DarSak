@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { idSchema, type Locale } from '@/features/student/domain';
 
@@ -17,7 +18,7 @@ async function activeManager(locale: Locale) {
   if (actor?.status !== 'active' || !['teacher', 'admin'].includes(actor.role)) {
     return { error: copy(locale, 'An active teacher or administrator account is required.', 'يلزم حساب معلم أو مسؤول نشط.') } as const;
   }
-  return { db, user } as const;
+  return { db, user, role: actor.role } as const;
 }
 
 function managementError(locale: Locale, raw: string | undefined) {
@@ -65,7 +66,7 @@ export async function deleteUnusedTeacherGroup(locale: Locale, groupId: string, 
   const { error } = await me.db.rpc('delete_unused_teacher_group', { p_group_id: groupId });
   if (error) return { error: managementError(locale, error.message) };
   refreshManagement(locale, groupId);
-  return { success: copy(locale, 'Unused group deleted.', 'تم حذف المجموعة غير المستخدمة.') };
+  redirect(me.role === 'admin' ? `/${locale}/admin/groups?deleted=1` : `/${locale}/teacher/groups?deleted=1`);
 }
 
 export async function deleteManualTeacherLesson(locale: Locale, lessonId: string, groupId: string, _state: ManagementActionState, _form: FormData): Promise<ManagementActionState> {
@@ -75,5 +76,5 @@ export async function deleteManualTeacherLesson(locale: Locale, lessonId: string
   const { error } = await me.db.rpc('delete_manual_teacher_lesson', { p_lesson_id: lessonId });
   if (error) return { error: managementError(locale, error.message) };
   refreshManagement(locale, groupId, lessonId);
-  return { success: copy(locale, 'Lesson deleted.', 'تم حذف الحصة.') };
+  redirect(`/${locale}/teacher/lessons?deleted=1`);
 }

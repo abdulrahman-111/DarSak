@@ -4,7 +4,7 @@ import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate } from '@/co
 import { LessonForm } from '@/components/platform/forms';
 import { teacherLessons } from '@/features/teacher/data';
 
-export default async function TeacherLessons({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string; groupId?: string }> }) {
+export default async function TeacherLessons({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string; groupId?: string; deleted?: string }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
@@ -28,6 +28,7 @@ export default async function TeacherLessons({ params, searchParams }: { params:
       description={copy.description}
       action={<Link href={`/${locale}/teacher/lessons?new=1`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{copy.add}</Link>}
     />
+    {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف الحصة.' : 'Lesson deleted.'}</p></Panel>}
     {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p></Panel> : <>
       {requestedNew && <Panel className="mb-6">
         <h2 className="mb-4 text-xl font-black text-teal">{copy.add}</h2>

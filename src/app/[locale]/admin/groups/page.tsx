@@ -4,8 +4,8 @@ import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui
 import { AdminForm } from '@/features/admin/forms';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 
-export default async function AdminGroups({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: raw } = await params;
+export default async function AdminGroups({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ deleted?: string }> }) {
+  const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'admin');
@@ -26,6 +26,7 @@ export default async function AdminGroups({ params }: { params: Promise<{ locale
         ? 'راجع المجموعات وأرشفها مع الاحتفاظ بسجل الطلاب والحصص.'
         : 'Review groups and archive them while keeping student and lesson history.'}
     />
+    {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف المجموعة غير المستخدمة.' : 'Unused group deleted.'}</p></Panel>}
     {failed ? <Panel><p role="alert" className="text-sm text-red-800">{ar ? 'تعذر تحميل المجموعات. حدّث الصفحة وحاول مرة أخرى.' : 'Could not load groups. Refresh and try again.'}</p></Panel>
       : groups.data?.length ? <div className="grid gap-4 lg:grid-cols-2">{groups.data.map(group => <Panel key={group.id}>
         <div className="flex items-start justify-between gap-3">

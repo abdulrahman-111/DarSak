@@ -4,8 +4,8 @@ import { requireViewer } from '@/components/platform/access';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 
-export default async function TeacherGroups({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: raw } = await params;
+export default async function TeacherGroups({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ deleted?: string }> }) {
+  const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'teacher');
@@ -21,6 +21,7 @@ export default async function TeacherGroups({ params }: { params: Promise<{ loca
       description={ar ? 'أنشئ المجموعات كمسودات، ثم استأنف إعداد جدولها قبل النشر.' : 'Create groups as drafts, then resume setup to add their schedules before publishing.'}
       action={<Link href={`/${locale}/teacher/groups/new`} className="rounded-xl bg-teal px-5 py-3 font-bold text-white">{ar ? 'إنشاء مجموعة' : 'Create group'}</Link>}
     />
+    {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف المجموعة غير المستخدمة.' : 'Unused group deleted.'}</p></Panel>}
     {groups.error ? <Panel><p role="alert" className="text-sm text-red-800">{ar ? 'تعذر تحميل مجموعاتك. حدّث الصفحة وحاول مرة أخرى.' : 'Could not load your groups. Refresh and try again.'}</p></Panel> :
       <div className="grid gap-4">
         {groups.data?.length ? groups.data.map((group: any) => {
