@@ -1,7 +1,10 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
 import { publicGroups } from '@/features/platform/data';
+import { getRequestViewer } from '@/features/platform/request-viewer';
+import { roleHome } from '@/components/platform/access';
 import { GroupCard, SetupCard } from '@/components/ui';
 import { isConfigured } from '@/lib/supabase/server';
 import { publicCopy } from '@/components/public/copy';
@@ -9,9 +12,15 @@ import { WeeklyPreview } from '@/components/public/weekly-preview';
 
 export default async function Home({ params }: { params: Promise<{ locale: 'ar' | 'en' }> }) {
   const { locale } = await params;
+  const configured = isConfigured();
+  if (configured) {
+    const { profile } = await getRequestViewer();
+    if (profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher' || profile.role === 'admin')) {
+      redirect(roleHome(locale, profile.role));
+    }
+  }
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
-  const configured = isConfigured();
   const groups = configured ? (await publicGroups()).data : [];
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
   const ticker = locale === 'ar'

@@ -2,13 +2,15 @@
 
 import { useParams } from 'next/navigation';
 
-type RouteArea = 'discovery' | 'group' | 'groupSetup';
+type RouteArea = 'discovery' | 'group' | 'groupSetup' | 'page';
+type ErrorArea = Exclude<RouteArea, 'page'>;
 
 const copy = {
   en: {
     discoveryLoading: 'Loading groups…',
     groupLoading: 'Loading group details…',
     setupLoading: 'Loading group setup…',
+    pageLoading: 'Loading page…',
     discoveryError: 'We could not load discovery right now.',
     groupError: 'We could not load this group right now.',
     setupError: 'We could not load this group setup right now.',
@@ -18,6 +20,7 @@ const copy = {
     discoveryLoading: 'جارٍ تحميل المجموعات…',
     groupLoading: 'جارٍ تحميل تفاصيل المجموعة…',
     setupLoading: 'جارٍ تحميل إعداد المجموعة…',
+    pageLoading: 'جارٍ تحميل الصفحة…',
     discoveryError: 'تعذر تحميل صفحة المجموعات الآن.',
     groupError: 'تعذر تحميل هذه المجموعة الآن.',
     setupError: 'تعذر تحميل إعداد هذه المجموعة الآن.',
@@ -32,13 +35,13 @@ function useRouteCopy() {
 
 export function RouteLoading({ area }: { area: RouteArea }) {
   const t = useRouteCopy();
-  const text = area === 'discovery' ? t.discoveryLoading : area === 'group' ? t.groupLoading : t.setupLoading;
+  const text = area === 'discovery' ? t.discoveryLoading : area === 'group' ? t.groupLoading : area === 'page' ? t.pageLoading : t.setupLoading;
   return <section className="container py-16" role="status" aria-live="polite" aria-busy="true">
     <div className="mx-auto max-w-3xl animate-pulse rounded-2xl border border-line bg-white p-6 text-sm font-bold text-muted">{text}</div>
   </section>;
 }
 
-export function RouteError({ area, retry }: { area: RouteArea; retry: () => void }) {
+export function RouteError({ area, retry }: { area: ErrorArea; retry: () => void }) {
   const t = useRouteCopy();
   const text = area === 'discovery' ? t.discoveryError : area === 'group' ? t.groupError : t.setupError;
   return <section className="container py-16" role="alert">

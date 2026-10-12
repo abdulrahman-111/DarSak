@@ -1,6 +1,7 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
 import { createClient,isConfigured } from '@/lib/supabase/server';
+import { getRequestViewer } from '@/features/platform/request-viewer';
 import { idSchema,type Locale } from './domain';
 import { catalogue, publicGroupDetail, publicGroups, publicTeachers } from '@/features/platform/data';
 import { normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
@@ -12,7 +13,7 @@ export type Enrollment={id:string;group_id:string;status:string;group:Group|null
 export type Lesson={id:string;group_id:string;title:string;starts_at:string;ends_at:string;status:string;notes:string};
 export type Material={id:string;lesson_id:string;kind:string;title:string;url:string|null;content:string|null;storage_path:string|null};
 const groupFields='id,teacher_id,name,description,capacity,status,location,offering:offerings(id,subject:subjects(id,name_ar,name_en),node:education_nodes(id,name_ar,name_en))';
-export async function viewer(){if(!isConfigured())return null;const db=await createClient();const {data:{user}}=await db.auth.getUser();if(!user)return null;const {data:profile}=await db.from('profiles').select('id,role,status').eq('id',user.id).maybeSingle();return profile?{db,id:user.id,role:profile.role as string,status:profile.status as string}:null}
+export async function viewer(){if(!isConfigured())return null;const {db,user,profile}=await getRequestViewer();return user&&profile?{db,id:user.id,role:profile.role as string,status:profile.status as string}:null}
 export async function student(locale:Locale){const me=await viewer();if(!me)redirect(`/${locale}/login`);if(me.role!=='student'||me.status!=='active')redirect(`/${locale}/dashboard`);return me}
 export async function discovery(filters:{subject?:string;education?:string;teacher?:string;page?:number}={}){
  const [groups,catalogueResult,teacherResult]=await Promise.all([
@@ -28,8 +29,7 @@ export async function classDetail(id:string){
  // Public visitors must use the narrow projection. Reading `groups` directly can
  // invoke policies that depend on private profile data, which anonymous users
  // cannot access.
- const db=await createClient();
- const {data:{user}}=await db.auth.getUser();
+ const {db,user}=await getRequestViewer();
  const publicDetail=await publicGroupDetail(id);
  if(publicDetail.error)throw new Error('Class lookup failed');
  const visibleGroup=publicDetail.data;

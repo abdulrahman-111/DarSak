@@ -19,6 +19,27 @@ describe('login return paths', () => {
   });
 
   it.each([
+    ['student', '/en/student'],
+    ['teacher', '/en/teacher'],
+    ['admin', '/en/admin'],
+  ])('routes an active %s to their role home by default', (role, path) => {
+    expect(loginRedirectPath('en', undefined, { role, status: 'active' })).toBe(path);
+  });
+
+  it('keeps a safe group return path ahead of the role home', () => {
+    const groupPath = '/ar/groups/00000000-0000-4000-8000-000000000000';
+    expect(loginRedirectPath('ar', groupPath, { role: 'teacher', status: 'active' })).toBe(groupPath);
+  });
+
+  it.each([
+    null,
+    { role: 'teacher', status: 'suspended' },
+    { role: 'unknown', status: 'active' },
+  ])('uses the guarded dashboard fallback for missing or invalid active profiles', profile => {
+    expect(loginRedirectPath('en', undefined, profile)).toBe('/en/dashboard');
+  });
+
+  it.each([
     'https://example.com/en/groups/00000000-0000-4000-8000-000000000000',
     '//example.com/en/groups/00000000-0000-4000-8000-000000000000',
     '/\\example.com/en/groups/00000000-0000-4000-8000-000000000000',
