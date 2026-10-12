@@ -8,6 +8,8 @@ import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
 import { canRequest } from '@/features/student/domain';
 import { EnrollmentForm } from '@/features/student/forms';
+import { canSharePublicGroup } from '@/features/student/share-domain';
+import { PublicGroupShare } from '@/features/student/public-group-share';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 
 const weekdays = {
@@ -53,6 +55,8 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
               <p className="flex items-center gap-2 text-sm font-bold text-teal"><CalendarDays size={17}/>{c.nextLesson}</p>
               <p className="mt-2 text-sm text-muted">{nextLesson || c.noNextLesson}</p>
             </div>
+
+            {canSharePublicGroup(detail.publiclyEligible, data.status) && <PublicGroupShare locale={locale} groupId={data.id}/>}
 
             {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-[#e3d9c8] p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><Link href={`/${locale}/teachers/${detail.teacher.id}`} className="font-bold text-teal underline decoration-teal/30 underline-offset-2">{detail.teacher.full_name}</Link>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
 
