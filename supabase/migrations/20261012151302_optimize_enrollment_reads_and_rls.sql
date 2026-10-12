@@ -137,13 +137,17 @@ begin
     raise exception 'invalid page bounds' using errcode = '22023';
   end if;
 
-  with matching as materialized (
-    select e.id as enrollment_id, e.student_id, p.full_name, e.status::text as status,
+  with page_rows as materialized (
+    select e.id as enrollment_id, e.student_id, e.status::text as status,
       g.id as group_id, g.name as group_name, e.updated_at
     from public.enrollments e
     join public.groups g on g.id = e.group_id
-    join public.profiles p on p.id = e.student_id
-    where g.teacher_id = v_actor and e.status::text = p_status
+    where g.teacher_id = v_actor and e.status = p_status::public.enrollment_status
+    order by e.updated_at desc, e.id desc
+    offset p_offset limit p_limit
+  ), page as (
+    select page_rows.*, p.full_name
+    from page_rows join public.profiles p on p.id = page_rows.student_id
   )
   select jsonb_build_object(
     'rows', coalesce((
@@ -155,12 +159,13 @@ begin
         'group_id', page.group_id,
         'group_name', page.group_name
       ) order by page.updated_at desc, page.enrollment_id desc)
-      from (
-        select * from matching order by updated_at desc, enrollment_id desc
-        offset p_offset limit p_limit
-      ) page
+      from page
     ), '[]'::jsonb),
-    'total', (select count(*) from matching)
+    'total', (
+      select count(*) from public.enrollments e
+      join public.groups g on g.id = e.group_id
+      where g.teacher_id = v_actor and e.status = p_status::public.enrollment_status
+    )
   ) into v_result;
 
   return v_result;
