@@ -4,7 +4,7 @@ import { authErrorMessage } from '@/features/auth/errors';
 describe('authErrorMessage', () => {
   it.each([
     'invalid_credentials', 'email_not_confirmed', 'user_already_exists', 'email_exists', 'weak_password',
-    'over_email_send_rate_limit', 'over_request_rate_limit', 'captcha_failed', 'same_password', 'signup_disabled',
+    'over_email_send_rate_limit', 'over_request_rate_limit', 'captcha_failed', 'same_password', 'signup_disabled', 'email_address_invalid',
   ])('returns a distinct English and Arabic message for %s', code => {
     const en = authErrorMessage('en', code, 'login');
     const ar = authErrorMessage('ar', code, 'login');
@@ -37,5 +37,20 @@ describe('authErrorMessage', () => {
 
   it('uses English for any non-Arabic locale string', () => {
     expect(authErrorMessage('en', 'captcha_failed', 'login')).toMatch(/Security check/);
+  });
+
+  it('maps email_address_invalid to a clear message in signup and reset contexts', () => {
+    for (const context of ['signup', 'reset'] as const) {
+      expect(authErrorMessage('en', 'email_address_invalid', context)).toBe("This email address can't be used. Please use a different email.");
+      expect(/[؀-ۿ]/.test(authErrorMessage('ar', 'email_address_invalid', context))).toBe(true);
+    }
+  });
+
+  it('has no repeated words in any message', () => {
+    for (const locale of ['en', 'ar']) {
+      for (const code of ['invalid_credentials', 'email_not_confirmed', 'user_already_exists', 'weak_password', 'over_email_send_rate_limit', 'captcha_failed', 'same_password', 'signup_disabled', 'email_address_invalid']) {
+        expect(authErrorMessage(locale, code, 'login')).not.toMatch(/(^|\s)(\S+)\s+\2(\s|[.,!?]|$)/i);
+      }
+    }
   });
 });

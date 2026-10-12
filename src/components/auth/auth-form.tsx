@@ -60,13 +60,13 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
       {mode === 'signup' && (
         <label className="block text-sm font-bold text-ink">
           {labels.fullName}
-          <input className={inputClass} name="fullName" required minLength={2} maxLength={100} autoComplete="name"/>
+          <input className={inputClass} name="fullName" defaultValue={state?.fullName} required minLength={2} maxLength={100} autoComplete="name"/>
         </label>
       )}
 
       <label className="block text-sm font-bold text-ink">
         {labels.email}
-        <input className={inputClass} name="email" type="email" dir="ltr" required autoComplete="email" inputMode="email"/>
+        <input className={inputClass} name="email" type="email" dir="ltr" defaultValue={state?.email} required autoComplete="email" inputMode="email"/>
       </label>
 
       <label className="block text-sm font-bold text-ink">

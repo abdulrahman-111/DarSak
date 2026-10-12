@@ -43,7 +43,8 @@ describe('auth actions', () => {
     it('returns a generic message for invalid_credentials', async () => {
       createClientMock.mockResolvedValue({ auth: { signInWithPassword: async () => ({ data: {}, error: { code: 'invalid_credentials' } }) } });
       const result = await loginAction('en', null, form({ email: 'a@b.co', password: 'x' }));
-      expect(result).toEqual({ error: 'Unable to sign in. Check your credentials and try again.' });
+      expect(result).toEqual({ error: 'Unable to sign in. Check your credentials and try again.', email: 'a@b.co' });
+      expect(JSON.stringify(result)).not.toContain('"password"');
     });
 
     it('points unconfirmed accounts to the resend page', async () => {
@@ -97,9 +98,20 @@ describe('auth actions', () => {
       expect((await signupAction('en', null, form(signup)))?.error).toMatch(/too weak/);
     });
 
+    it('echoes email, name and role (never the password) on error', async () => {
+      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: {}, error: { code: 'email_address_invalid' } }) } });
+      const result = await signupAction('en', null, form({ ...signup, role: 'teacher' }));
+      expect(result).toEqual({
+        error: "This email address can't be used. Please use a different email.",
+        email: 'sara@example.com', fullName: 'Sara Ali', role: 'teacher',
+      });
+      expect(JSON.stringify(result)).not.toContain('password123');
+    });
+
     it('validates input before creating a client', async () => {
       const result = await signupAction('en', null, form({ ...signup, password: 'short' }));
       expect(result?.error).toMatch(/at least 8/);
+      expect(result).toMatchObject({ email: 'sara@example.com', fullName: 'Sara Ali', role: 'student' });
       expect(createClientMock).not.toHaveBeenCalled();
     });
   });
@@ -122,6 +134,13 @@ describe('auth actions', () => {
       expect((await run())?.error).toMatch(/Too many attempts/);
       createClientMock.mockResolvedValue({ auth: { resetPasswordForEmail: async () => ({ data: {}, error: { code: 'captcha_failed' } }) } });
       expect((await run())?.error).toMatch(/Security check/);
+    });
+
+    it('surfaces email_address_invalid and keeps the typed email', async () => {
+      createClientMock.mockResolvedValue({ auth: { resetPasswordForEmail: async () => ({ data: {}, error: { code: 'email_address_invalid' } }) } });
+      const result = await run('bad@example.com');
+      expect(result?.error).toMatch(/can't be used/);
+      expect(result?.email).toBe('bad@example.com');
     });
 
     it('redirects the link through the callback to the locale reset page', async () => {

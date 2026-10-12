@@ -23,8 +23,9 @@ export default async function CheckEmail({ params, searchParams }: {
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{copy.checkEyebrow}</p>
             <h1 className="mt-3 text-4xl font-black tracking-[-.03em] text-teal md:text-5xl">{copy.checkTitle}</h1>
             <p className="mt-4 max-w-lg leading-7 text-[#4d473f]">
-              {email ? <>{copy.checkSentTo} <bdi dir="ltr" className="font-bold text-ink">{email}</bdi>. </> : null}
-              {copy.checkBody}
+              {email
+                ? <>{copy.checkSentTo} <bdi dir="ltr" className="font-bold text-ink">{email}</bdi>. {copy.checkBodyTo}</>
+                : copy.checkBody}
             </p>
             <p className="mt-4 max-w-lg text-sm leading-6 text-muted">{copy.resendHint}</p>
             <div className="mt-8"><ResendConfirmationForm locale={locale} emailLabel={labels.email} email={email}/></div>

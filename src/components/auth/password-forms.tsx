@@ -29,7 +29,7 @@ function EmailForm({ locale, action, emailLabel, submit, pendingLabel, defaultEm
     <form action={formAction} className="space-y-5" aria-describedby={state ? feedbackId : undefined}>
       <label className="block text-sm font-bold text-ink">
         {emailLabel}
-        <input className={inputClass} name="email" type="email" dir="ltr" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={defaultEmail}/>
+        <input className={inputClass} name="email" type="email" dir="ltr" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={state?.email ?? defaultEmail}/>
       </label>
       <Turnstile locale={locale} resetSignal={state}/>
       <Feedback state={state} id={feedbackId}/>

@@ -9,6 +9,7 @@ const en = {
   captcha_failed: 'Security check failed. Please try again.',
   same_password: 'Choose a password different from your current one.',
   signup_disabled: 'New sign-ups are currently disabled.',
+  email_address_invalid: "This email address can't be used. Please use a different email.",
   login: 'Unable to sign in. Check your credentials and try again.',
   signup: 'Unable to create an account. Please try again.',
   reset: 'Unable to send the reset link. Please try again.',
@@ -23,6 +24,7 @@ const ar: typeof en = {
   captcha_failed: 'فشل التحقق الأمني. يرجى المحاولة مرة أخرى.',
   same_password: 'اختر كلمة مرور مختلفة عن كلمة المرور الحالية.',
   signup_disabled: 'التسجيل الجديد متوقف حاليًا.',
+  email_address_invalid: 'لا يمكن استخدام عنوان البريد الإلكتروني هذا. يرجى استخدام بريد إلكتروني آخر.',
   login: 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
   signup: 'تعذر إنشاء الحساب. يرجى المحاولة مرة أخرى.',
   reset: 'تعذر إرسال رابط إعادة التعيين. يرجى المحاولة مرة أخرى.',
@@ -41,6 +43,7 @@ const codeKey: Record<string, keyof typeof en> = {
   captcha_failed: 'captcha_failed',
   same_password: 'same_password',
   signup_disabled: 'signup_disabled',
+  email_address_invalid: 'email_address_invalid',
 };
 
 /** Map a Supabase AuthError.code to bilingual copy; unknown codes get the context's generic message. */
