@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
-import { Metric, Panel, ScreenTitle } from '@/components/platform/ui';
+import { Metric, Panel, QuickAction, ScreenTitle, UnavailableMetric } from '@/components/platform/ui';
 
 export default async function AdminOverview({params}:{params:Promise<{locale:string}>}){
  const {locale:raw}=await params,locale=ensureLocale(raw),ar=locale==='ar',me=await requireViewer(locale,'admin');
@@ -14,9 +14,17 @@ export default async function AdminOverview({params}:{params:Promise<{locale:str
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('status','accepted'),
  ]);
  const response=reviews.data as {total?:unknown}|null,pendingTotal=typeof response?.total==='number'?response.total:null,reviewsFailed=!!reviews.error||pendingTotal===null;
- const t=ar?{eyebrow:'إدارة المنصة',title:'نظرة عامة',description:'تابع المجتمع وراجع المعلمين والبلاغات والدليل التعليمي.',students:'الطلاب',teachers:'المعلمون',pending:'طلبات معلمين بانتظار المراجعة',groups:'المجموعات',enrollments:'طلبات التحاق مقبولة',reports:'بلاغات مفتوحة',queue:'فتح طلبات المعلمين',error:'تعذر تحميل عدد الطلبات. حاول إعادة تحميل الصفحة.',intro:'ابدأ بمراجعة طلبات المعلمين والبلاغات المفتوحة.'}:{eyebrow:'Platform administration',title:'Overview',description:'Monitor the community and manage teacher reviews, reports, and the education catalogue.',students:'Students',teachers:'Teachers',pending:'Teacher requests awaiting review',groups:'Groups',enrollments:'Accepted enrollments',reports:'Open reports',queue:'Open teacher requests',error:'Could not load the teacher request count. Refresh and try again.',intro:'Start with teacher requests and open reports.'};
+ const t=ar?{eyebrow:'إدارة المنصة',title:'نظرة عامة',description:'تابع المجتمع وراجع المعلمين والبلاغات والدليل التعليمي.',students:'الطلاب',teachers:'المعلمون',pending:'طلبات معلمين بانتظار المراجعة',groups:'المجموعات',enrollments:'طلبات التحاق مقبولة',reports:'بلاغات مفتوحة',queue:'فتح طلبات المعلمين',error:'تعذر تحميل هذا العدد. حدّث الصفحة وحاول مرة أخرى.',intro:'ابدأ بمراجعة طلبات المعلمين والبلاغات المفتوحة.',users:'المستخدمون',groupsLink:'المجموعات',catalogue:'الدليل التعليمي',reportsLink:'البلاغات',settings:'الإعدادات',retry:'إعادة المحاولة'}:{eyebrow:'Platform administration',title:'Overview',description:'Monitor the community and manage teacher reviews, reports, and the education catalogue.',students:'Students',teachers:'Teachers',pending:'Teacher requests awaiting review',groups:'Groups',enrollments:'Accepted enrollments',reports:'Open reports',queue:'Open teacher requests',error:'Could not load this count. Refresh and try again.',intro:'Start with teacher requests and open reports.',users:'People',groupsLink:'Groups',catalogue:'Education catalogue',reportsLink:'Reports',settings:'Settings',retry:'Try again'};
+ const stats=[
+  {label:t.students,result:students,href:`/${locale}/admin/users`},
+  {label:t.teachers,result:teachers,href:`/${locale}/admin/users?role=teacher`},
+  {label:t.groups,result:groups,href:`/${locale}/admin/groups`},
+  {label:t.enrollments,result:enrollments,href:`/${locale}/admin/groups`},
+  {label:t.reports,result:reports,href:`/${locale}/admin/reports`},
+ ];
  return <><ScreenTitle eyebrow={t.eyebrow} title={t.title} description={t.description}/>
-  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3"><Metric label={t.students} value={students.count||0}/><Metric label={t.teachers} value={teachers.count||0}/>{reviewsFailed?<Panel><p className="text-sm text-muted">{t.pending}</p><p role="alert" className="mt-2 text-sm text-red-800">{t.error}</p><Link className="mt-3 inline-block font-bold text-orange underline" href={`/${locale}/admin/teachers`}>{t.queue}</Link></Panel>:<Link href={`/${locale}/admin/teachers`}><Metric label={t.pending} value={pendingTotal!}/></Link>}<Metric label={t.groups} value={groups.count||0}/><Metric label={t.enrollments} value={enrollments.count||0}/><Metric label={t.reports} value={reports.count||0}/></div>
+  <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6"><QuickAction href={`/${locale}/admin/teachers`}>{t.queue}</QuickAction><QuickAction href={`/${locale}/admin/users`}>{t.users}</QuickAction><QuickAction href={`/${locale}/admin/groups`}>{t.groupsLink}</QuickAction><QuickAction href={`/${locale}/admin/education`}>{t.catalogue}</QuickAction><QuickAction href={`/${locale}/admin/reports`}>{t.reportsLink}</QuickAction><QuickAction href={`/${locale}/admin/settings`}>{t.settings}</QuickAction></div>
+  <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{stats.map(item=>item.result.error||item.result.count===null?<UnavailableMetric key={item.label} label={item.label} message={t.error} href={`/${locale}/admin?retry=1`} retry={t.retry}/>:<Link key={item.label} href={item.href}><Metric label={item.label} value={item.result.count}/></Link>)}{reviewsFailed?<UnavailableMetric label={t.pending} message={t.error} href={`/${locale}/admin?retry=1`} retry={t.retry}/>:<Link href={`/${locale}/admin/teachers`}><Metric label={t.pending} value={pendingTotal!}/></Link>}</div>
   <Panel className="mt-6"><h2 className="text-xl font-black text-teal">{t.queue}</h2><p className="mt-2 text-muted">{t.intro}</p><Link href={`/${locale}/admin/teachers`} className="mt-4 inline-flex rounded-xl bg-teal px-5 py-3 font-bold text-white">{t.queue}</Link></Panel>
  </>;
 }

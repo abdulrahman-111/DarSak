@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ActiveLink } from '@/components/active-link';
 import type { PlatformRole } from './access';
 
 type NavItem = { href: string; label: string };
@@ -41,8 +42,8 @@ export function PlatformShell({ locale, role, name, children }: { locale: string
         <span className="grid size-10 place-items-center rounded-xl bg-cream font-black text-teal">د</span>
         <span><strong className="block text-lg">{ar ? 'درس' : 'Dars'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
       </Link>
-      <nav className="mt-5 flex gap-2 overflow-x-auto pb-2 lg:flex-col" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
-        {items.map(item => <Link key={item.href} href={item.href} className="whitespace-nowrap rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white">{item.label}</Link>)}
+      <nav className="mt-5 grid grid-cols-2 gap-2 pb-2 lg:grid-cols-1" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
+        {items.map((item, index) => <ActiveLink key={item.href} href={item.href} exact={index === 0} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{item.label}</ActiveLink>)}
       </nav>
       <div className="mt-5 rounded-2xl bg-black/10 px-3 py-3 text-sm"><span className="block truncate font-bold">{name}</span><span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span></div>
     </aside>
