@@ -53,6 +53,8 @@ try {
   const teacher = await signup('teacher');
   const otherTeacher = await signup('teacher');
   const pendingTeacher = await signup('teacher');
+  const reviewTeacher = await signup('teacher');
+  const legacyReviewTeacher = await signup('teacher');
   const student = await signup('student');
   const student2 = await signup('student');
   const spoof = await signup('admin');
@@ -68,6 +70,33 @@ try {
   await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`, {token:service,method:'PATCH',body:{approved:true}});
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`, {token:service,method:'PATCH',body:{approved:true}});
   await success(`/rest/v1/profiles?id=eq.${spoof.id}`, {token:service,method:'PATCH',body:{role:'admin'}});
+  const reviewState = await success('/rest/v1/rpc/teacher_review_status',{token:reviewTeacher.token,method:'POST',body:{}});
+  check(reviewState.status==='pending' && reviewState.request_id && reviewState.events.some(event=>event.kind==='requested'),'new Auth teacher starts pending with one request event');
+  const rawReviewWrite = await request(`/rest/v1/teacher_review_state?teacher_id=eq.${reviewTeacher.id}`,{token:reviewTeacher.token,method:'PATCH',body:{status:'approved'}});
+  const reviewAfterRawWrite = await success('/rest/v1/rpc/teacher_review_status',{token:reviewTeacher.token,method:'POST',body:{}});
+  check(!rawReviewWrite.ok && reviewAfterRawWrite.status==='pending','teacher cannot change review state through raw Data API writes');
+  const firstDecision = await success('/rest/v1/rpc/admin_decide_teacher_review',{token:spoof.token,method:'POST',body:{p_teacher_id:reviewTeacher.id,p_expected_request_id:reviewState.request_id,p_decision:'declined',p_reason:'Add a teaching experience example.'}});
+  const staleDecision = await request('/rest/v1/rpc/admin_decide_teacher_review',{token:spoof.token,method:'POST',body:{p_teacher_id:reviewTeacher.id,p_expected_request_id:reviewState.request_id,p_decision:'approved',p_reason:null}});
+  const declinedReview = await success('/rest/v1/rpc/teacher_review_status',{token:reviewTeacher.token,method:'POST',body:{}});
+  check(firstDecision && !staleDecision.ok && declinedReview.status==='declined' && declinedReview.decline_reason==='Add a teaching experience example.','decline saves its reason and rejects a repeated stale decision');
+  const newRequestId = await success('/rest/v1/rpc/request_teacher_review',{token:reviewTeacher.token,method:'POST',body:{}});
+  const pendingAgain = await success('/rest/v1/rpc/teacher_review_status',{token:reviewTeacher.token,method:'POST',body:{}});
+  const duplicateRequestId = await success('/rest/v1/rpc/request_teacher_review',{token:reviewTeacher.token,method:'POST',body:{}});
+  check(newRequestId!==reviewState.request_id && duplicateRequestId===newRequestId && pendingAgain.status==='pending' && pendingAgain.decline_reason===null,'explicit resubmission creates one new pending token and pending clicks reuse it');
+  const competingDecisions = await Promise.all([
+    request('/rest/v1/rpc/admin_decide_teacher_review',{token:spoof.token,method:'POST',body:{p_teacher_id:reviewTeacher.id,p_expected_request_id:newRequestId,p_decision:'approved',p_reason:null}}),
+    request('/rest/v1/rpc/admin_decide_teacher_review',{token:spoof.token,method:'POST',body:{p_teacher_id:reviewTeacher.id,p_expected_request_id:newRequestId,p_decision:'declined',p_reason:'Concurrent decline'}}),
+  ]);
+  const reviewEvents = await success(`/rest/v1/teacher_review_events?teacher_id=eq.${reviewTeacher.id}&kind=in.(approved,declined)`,{token:spoof.token});
+  check(competingDecisions.filter(result=>result.ok).length===1 && competingDecisions.filter(result=>!result.ok).length===1 && reviewEvents.length===2,'concurrent decisions produce one winner per pending request');
+  const selfAdminTarget = await request('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:spoof.id,p_status:'suspended',p_approved:null}});
+  const adminTargetReview = await request('/rest/v1/rpc/admin_decide_teacher_review',{token:spoof.token,method:'POST',body:{p_teacher_id:spoof.id,p_expected_request_id:null,p_decision:'approved',p_reason:null}});
+  check(!selfAdminTarget.ok && !adminTargetReview.ok,'database guards reject self-target and administrative-target review changes');
+  await success('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:legacyReviewTeacher.id,p_status:'active',p_approved:true}});
+  const legacyApproved = await success('/rest/v1/rpc/teacher_review_status',{token:legacyReviewTeacher.token,method:'POST',body:{}});
+  const contradictoryLegacy = await request('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:legacyReviewTeacher.id,p_status:'suspended',p_approved:false}});
+  const legacyProfile = await success(`/rest/v1/profiles?id=eq.${legacyReviewTeacher.id}&select=status`,{token:service});
+  check(legacyApproved.status==='approved' && !contradictoryLegacy.ok && legacyProfile[0].status==='active','legacy approval synchronizes review status and rejects contradictory completed decisions before suspension');
   const adminSubject = (await success('/rest/v1/subjects', {token:spoof.token,method:'POST',body:{name_ar:'اختبار تكامل',name_en:'Integration subject',slug:`integration-${suffix}`}}))[0];
   check(Boolean(adminSubject?.id), 'active admin can create catalogue records');
   const ordinaryCatalogueWrite = await request('/rest/v1/subjects', {token:student.token,method:'POST',body:{name_ar:'مرفوض',name_en:'Denied',slug:`denied-${suffix}`}});

@@ -17,6 +17,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
   if (role === 'admin') return [
     { href: `/${locale}/admin`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/admin/users`, label: ar ? 'المستخدمون' : 'People' },
+    { href: `/${locale}/admin/teachers`, label: ar ? 'طلبات المعلمين' : 'Teacher requests' },
     { href: `/${locale}/admin/education`, label: ar ? 'الدليل التعليمي' : 'Education' },
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },

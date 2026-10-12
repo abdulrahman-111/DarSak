@@ -3,8 +3,37 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { words } from './labels';
-import { nodeSchema,subjectSchema,offeringSchema,userSchema,validHierarchy,canManageUser,safeSetting,type Node } from './domain';
-export type AdminState={error?:string;success?:string}|null;
+import { nodeSchema,subjectSchema,offeringSchema,userSchema,teacherReviewDecisionSchema,validHierarchy,canManageUser,safeSetting,type Node } from './domain';
+export type AdminState={error?:string;success?:string;eventId?:string;fieldError?:string}|null;
+
+const reviewCopy=(locale:string)=>locale==='ar'?{
+ denied:'يلزم حساب مسؤول نشط.',invalid:'راجع القرار وسبب الرفض ثم حاول مجددًا.',
+ stale:'تغيرت حالة الطلب منذ فتحه. حدّث الصفحة لمراجعة أحدث حالة.',
+ failed:'تعذر حفظ القرار. حدّث الصفحة وحاول مرة أخرى.',approved:'تم اعتماد طلب المعلم.',declined:'تم رفض الطلب وحفظ السبب.',reason:'أدخل سببًا للرفض لا يتجاوز ١٠٠٠ حرف.',
+}:{denied:'An active administrator account is required.',invalid:'Check the decision and decline reason, then try again.',
+ stale:'This request changed after you opened it. Refresh to review the current status.',
+ failed:'The decision could not be saved. Refresh and try again.',approved:'Teacher request approved.',declined:'Request declined with the reason saved.',reason:'Enter a decline reason of up to 1,000 characters.'};
+
+export async function decideTeacherReview(locale:string,_previous:AdminState,form:FormData):Promise<AdminState>{
+ const l=locale==='ar'?'ar':'en',t=reviewCopy(l);
+ const parsed=teacherReviewDecisionSchema.safeParse({teacher_id:String(form.get('teacher_id')||''),expected_request_id:String(form.get('expected_request_id')||''),decision:String(form.get('decision')||''),reason:String(form.get('reason')||'')});
+ if(!parsed.success)return {error:t.invalid,fieldError:parsed.error.issues.some(issue=>issue.path.includes('reason'))?t.reason:undefined};
+ const db=await createClient();
+ const {data:{user}}=await db.auth.getUser();if(!user)return {error:t.denied};
+ const {data:actor}=await db.from('profiles').select('role,status').eq('id',user.id).maybeSingle();
+ if(actor?.role!=='admin'||actor.status!=='active')return {error:t.denied};
+ const {data,error}=await db.rpc('admin_decide_teacher_review',{
+  p_teacher_id:parsed.data.teacher_id,p_expected_request_id:parsed.data.expected_request_id,
+  p_decision:parsed.data.decision,p_reason:parsed.data.decision==='declined'?parsed.data.reason:null,
+ });
+ if(error){const raw=error.message.toLowerCase();return {error:raw.includes('stale')||raw.includes('serialization')||raw.includes('40001')||raw.includes('not pending')?t.stale:t.failed};}
+ const eventId=typeof data==='string'?data:undefined;
+ for(const current of ['en','ar']){
+  revalidatePath(`/${current}/admin/teachers`);revalidatePath(`/${current}/admin/teachers/${parsed.data.teacher_id}`);
+  revalidatePath(`/${current}/admin/users`);revalidatePath(`/${current}/teacher`);revalidatePath(`/${current}/teachers`);
+ }
+ return {success:parsed.data.decision==='approved'?t.approved:t.declined,eventId};
+}
 export async function adminAction(locale:string,operation:string,_state:AdminState,form:FormData):Promise<AdminState>{
  const l=locale==='ar'?'ar':'en',t=words(l);const db=await createClient();
  try{
@@ -12,9 +41,9 @@ export async function adminAction(locale:string,operation:string,_state:AdminSta
  const {data:actor}=await db.from('profiles').select('role,status').eq('id',user.id).single();if(actor?.role!=='admin'||actor.status!=='active')return {error:t.denied};
  const value=(key:string)=>String(form.get(key)||'');const id=value('id');let result:{error:unknown}|undefined;
  if(operation==='user'){
- const payload=userSchema.parse({id,status:value('status'),approved:form.has('approved')?value('approved')==='true':undefined});
+ const payload=userSchema.parse({id,status:value('status')});
  const {data:target}=await db.from('profiles').select('id,role').eq('id',id).single();if(!target||!canManageUser(user.id,target))return {error:t.self};
- result=await db.rpc('admin_update_user',{p_user_id:payload.id,p_status:payload.status,p_approved:target.role==='teacher'?payload.approved??null:null});
+ result=await db.rpc('admin_update_user',{p_user_id:payload.id,p_status:payload.status,p_approved:null});
  }else if(operation==='node'){
  const payload=nodeSchema.parse({...Object.fromEntries(form),id:id||undefined,parent_id:value('parent_id')||null});
  const {data:nodes,error}=await db.from('education_nodes').select('*');if(error)return {error:t.failed};if(!validHierarchy(payload as Node,(nodes||[]) as Node[]))return {error:t.blocked};
@@ -39,6 +68,6 @@ export async function adminAction(locale:string,operation:string,_state:AdminSta
  }else if(operation==='setting'){
  const key=z.string().regex(/^[a-z][a-z0-9_]{1,79}$/).parse(value('key'));const parsed=safeSetting(value('value'));result=await db.from('platform_settings').upsert({key,value:parsed}).select('key').single();
  }else return {error:t.invalid};
- if(result?.error)return {error:t.error};revalidatePath(`/${l}/admin`,'layout');return {success:t.saved};
+ if(result?.error)return {error:t.error};revalidatePath(`/${l}/admin`,'layout');revalidatePath(`/${l}/admin/users`);return {success:t.saved};
  }catch(error){return {error:error instanceof z.ZodError||error instanceof SyntaxError?t.invalid:t.error};}
 }
