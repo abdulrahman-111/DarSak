@@ -1,14 +1,12 @@
 import 'server-only';
 import { redirect } from 'next/navigation';
-import { createClient } from '@/lib/supabase/server';
+import { getRequestViewer } from '@/features/platform/request-viewer';
 import type { Locale } from '@/features/student/domain';
 import { buildTeacherSetupTasks, cairoDayBounds, dashboardGroupIdBatches, dashboardListCount, dashboardNextPageOffset, DASHBOARD_PAGE_SIZE, teacherDashboardError } from './dashboard-domain';
 
 export async function teacherViewer(locale: Locale) {
-  const db = await createClient();
-  const { data: { user } } = await db.auth.getUser();
+  const { db, user, profile } = await getRequestViewer();
   if (!user) redirect(`/${locale}/login`);
-  const { data: profile } = await db.from('profiles').select('id,full_name,role,status').eq('id', user.id).single();
   if (!profile || profile.role !== 'teacher' || profile.status !== 'active') redirect(`/${locale}/dashboard`);
   const { data: teacher } = await db.from('teacher_profiles').select('headline,bio,approved').eq('id', user.id).single();
   return { db, id: user.id, profile, teacher };

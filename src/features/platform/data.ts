@@ -1,8 +1,9 @@
 import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
-import type { DiscoverGroupRow, Group, Teacher, Profile, Slot, Lesson } from '@/lib/supabase/types';
+import { getRequestViewer } from './request-viewer';
+import type { DiscoverGroupRow, Group, Teacher, Slot, Lesson } from '@/lib/supabase/types';
 import { discoveryRpcArgs, normalizeDiscoveryFilters, type DiscoveryFilters } from './discovery-domain';
-export async function currentUser(){ const supabase=await createClient(); const {data:{user}}=await supabase.auth.getUser(); if(!user)return null; const {data:profile}=await supabase.from('profiles').select('*').eq('id',user.id).single(); return {user,profile:profile as Profile|null}; }
+export async function currentUser(){ const viewer=await getRequestViewer(); if(!viewer.user)return null; return {user:viewer.user,profile:viewer.profile}; }
 export async function publicTeachers(){ const db=await createClient(); const {data,error}=await db.rpc('public_teachers'); return {data:(data||[]) as Teacher[],error}; }
 function mapDiscoverGroup(group: DiscoverGroupRow): Group {
  return {

@@ -16,9 +16,10 @@ export async function loginAction(locale: string, _previous: unknown, formData: 
   const parsed = loginSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: locale === 'ar' ? 'أدخل بريدًا إلكترونيًا وكلمة مرور صالحين.' : 'Enter a valid email and password.' };
   const db = await createClient();
-  const { error } = await db.auth.signInWithPassword(parsed.data);
-  if (error) return { error: locale === 'ar' ? 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.' : 'Unable to sign in. Check your credentials and try again.' };
-  redirect(loginRedirectPath(locale as 'ar' | 'en', formData.get('next')));
+  const { data, error } = await db.auth.signInWithPassword(parsed.data);
+  if (error || !data.user) return { error: locale === 'ar' ? 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.' : 'Unable to sign in. Check your credentials and try again.' };
+  const { data: profile } = await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle();
+  redirect(loginRedirectPath(locale as 'ar' | 'en', formData.get('next'), profile));
 }
 export async function signupAction(locale: string, _previous: unknown, formData: FormData) {
   const unavailable = configurationError(locale);

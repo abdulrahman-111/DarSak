@@ -10,6 +10,10 @@ export function safeLoginReturnPath(locale: Locale, candidate: unknown): string 
   return pathPattern.test(candidate) ? candidate : null;
 }
 
-export function loginRedirectPath(locale: Locale, candidate: unknown): string {
-  return safeLoginReturnPath(locale, candidate) ?? `/${locale}/dashboard`;
+export function loginRedirectPath(locale: Locale, candidate: unknown, profile?: { role?: unknown; status?: unknown } | null): string {
+  const safeReturn = safeLoginReturnPath(locale, candidate);
+  if (safeReturn) return safeReturn;
+  const role = profile?.role;
+  if (profile?.status === 'active' && (role === 'student' || role === 'teacher' || role === 'admin')) return `/${locale}/${role}`;
+  return `/${locale}/dashboard`;
 }
