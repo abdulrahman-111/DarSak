@@ -1,24 +1,28 @@
 'use client';
 
 import Link from 'next/link';
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { Locale } from '@/features/student/domain';
 import { deleteScheduleSlot, saveGroupDraft, saveScheduleSlot, type GroupDraftActionState, type ScheduleSlotActionState } from './setup-actions';
 import type { GroupDetailsFormValues, GroupScheduleProposal, GroupScheduleSlot } from './setup-data';
-import type { SetupCatalogueChoice, SetupStep } from './setup-domain';
+import { isRetainedCataloguePair, type SetupStep } from './setup-domain';
+import { CatalogueLabelEditor } from './catalogue-forms';
+import { isTeacherCatalogueCategory } from './catalogue-domain';
+import type { SetupCatalogue } from './setup-data';
+import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
-  name: 'اسم المجموعة', description: 'الوصف', subject: 'المادة والسياق الدراسي', capacity: 'السعة', location: 'المكان',
-  save: 'حفظ التفاصيل', saving: 'جارٍ الحفظ…', emptyCatalogue: 'لا توجد مواد وسياقات دراسية متاحة الآن. حاول مرة أخرى لاحقًا.',
+  name: 'اسم المجموعة', description: 'الوصف', subject: 'المادة', category: 'السنة / فئة الطلاب', capacity: 'السعة', location: 'المكان', addSubject: 'إضافة مادة', addCategory: 'إضافة سنة / فئة',
+  save: 'حفظ التفاصيل', saving: 'جارٍ الحفظ…',
   nameRequired: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 120 حرفاً.', descriptionBounds: 'يجب ألا يتجاوز الوصف 2000 حرف.',
-  locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وسياقاً دراسياً.',
+  locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وفئة دراسية نشطتين.',
   details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
 } : {
-  name: 'Group name', description: 'Description', subject: 'Subject and education context', capacity: 'Capacity', location: 'Location',
-  save: 'Save details', saving: 'Saving…', emptyCatalogue: 'No subjects and education contexts are available yet. Please try again later.',
+  name: 'Group name', description: 'Description', subject: 'Subject', category: 'Year / student category', capacity: 'Capacity', location: 'Location', addSubject: 'Add subject', addCategory: 'Add year / category',
+  save: 'Save details', saving: 'Saving…',
   nameRequired: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 120 characters.', descriptionBounds: 'Description must be no longer than 2,000 characters.',
-  locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose a subject and education context.',
+  locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose an active subject and year or student category.',
   details: 'Details', schedule: 'Schedule', review: 'Review', reviewPending: 'Review your group setup here before publishing.',
 };
 
@@ -26,7 +30,7 @@ type Props = {
   locale: Locale;
   values?: GroupDetailsFormValues | null;
   groupId?: string;
-  catalogue: SetupCatalogueChoice[];
+  catalogue: SetupCatalogue;
   copyScheduleFrom?: string;
 };
 
@@ -36,10 +40,16 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   const [formValues, setFormValues] = useState<GroupDetailsFormValues>({
     name: values?.name ?? '',
     description: values?.description ?? '',
-    offering_id: values?.offering_id ?? '',
+    subject_id: values?.subject_id ?? '',
+    category_id: values?.category_id ?? '',
     capacity: values?.capacity ?? 10,
     location: values?.location ?? '',
+    updated_at: values?.updated_at ?? null,
   });
+  const [subjects, setSubjects] = useState(catalogue.subjects);
+  const [nodes, setNodes] = useState(catalogue.nodes);
+  const [addSubject, setAddSubject] = useState(false);
+  const [addCategory, setAddCategory] = useState(false);
   const [state, action, pending] = useActionState<GroupDraftActionState, FormData>(saveGroupDraft.bind(null, locale), null);
 
   useEffect(() => {
@@ -55,13 +65,50 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     if (field === 'description') return t.descriptionBounds;
     if (field === 'location') return t.locationBounds;
     if (field === 'capacity') return t.capacityError;
-    if (field === 'offering_id') return t.offeringError;
+    if (field === 'subject_id' || field === 'category_id') return t.offeringError;
     return t.nameRequired;
   };
   const invalid = (field: string) => ({ 'aria-invalid': !!fieldError(field), 'aria-describedby': fieldError(field) ? `group-${field}-error` : undefined });
 
-  return <form action={action} onReset={event => event.preventDefault()} className="grid gap-5">
+  const savedSubjectRow = subjects.find(item => item.id === catalogue.retained?.subject_id);
+  const savedCategoryRow = nodes.find(item => item.id === catalogue.retained?.category_id);
+  const retainedSubjectIsArchived = !!savedSubjectRow && savedSubjectRow.archived_at !== null;
+  const retainedCategoryIsArchived = !!savedCategoryRow && savedCategoryRow.archived_at !== null;
+  const retainedSubjectArchived = retainedSubjectIsArchived && catalogue.retained?.subject_id === formValues.subject_id;
+  const retainedCategoryArchived = retainedCategoryIsArchived && catalogue.retained?.category_id === formValues.category_id;
+  const onSubjectSaved = useCallback((row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
+    const subject = row as TeacherCatalogueSubject;
+    setSubjects(current => current.some(item => item.id === subject.id) ? current.map(item => item.id === subject.id ? subject : item) : [...current, subject]);
+    setFormValues(current => ({ ...current, subject_id: subject.id, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }));
+    setAddSubject(false);
+  }, [catalogue.retained, retainedCategoryIsArchived]);
+  const onCategorySaved = useCallback((row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
+    const category = row as TeacherCatalogueCategory;
+    setNodes(current => current.some(item => item.id === category.id) ? current.map(item => item.id === category.id ? category : item) : [...current, category]);
+    setFormValues(current => ({ ...current, category_id: category.id, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }));
+    setAddCategory(false);
+  }, [catalogue.retained, retainedSubjectIsArchived]);
+  const retainedPairUnchanged = isRetainedCataloguePair(formValues, catalogue.retained);
+  const subjectNeedsActiveChoice = !!catalogue.retained && retainedSubjectIsArchived && formValues.category_id !== catalogue.retained.category_id && !formValues.subject_id;
+  const categoryNeedsActiveChoice = !!catalogue.retained && retainedCategoryIsArchived && formValues.subject_id !== catalogue.retained.subject_id && !formValues.category_id;
+  const activeSubjects = subjects.filter(item => item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.subject_id));
+  const eligibleNodes = nodes.filter(item => (item.archived_at === null || (retainedPairUnchanged && item.id === catalogue.retained?.category_id)) && isTeacherCatalogueCategory(item));
+  const contextLabel = (nodeId: string) => {
+    const labels: string[] = [];
+    const seen = new Set<string>();
+    let node = nodes.find(item => item.id === nodeId);
+    while (node && !seen.has(node.id)) {
+      seen.add(node.id);
+      labels.unshift(locale === 'ar' ? node.name_ar || node.name_en : node.name_en || node.name_ar);
+      node = node.parent_id ? nodes.find(item => item.id === node?.parent_id) : undefined;
+    }
+    return labels.join(' › ');
+  };
+
+  return <div className="grid gap-5">
+  <form action={action} onReset={event => event.preventDefault()} className="grid gap-5">
     {groupId && <input type="hidden" name="group_id" value={groupId} />}
+    {groupId && <input type="hidden" name="expected_updated_at" value={formValues.updated_at ?? ''} />}
     <div>
       <label htmlFor="group-name" className="block text-sm font-bold">{t.name}</label>
       <input id="group-name" name="name" value={formValues.name} onChange={event => setFormValues(current => ({ ...current, name: event.target.value }))} required minLength={2} maxLength={120} {...invalid('name')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
@@ -73,13 +120,24 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
       {fieldError('description') && <p id="group-description-error" className="mt-1 text-sm text-red-700">{fieldMessage('description')}</p>}
     </div>
     <div>
-      <label htmlFor="group-offering" className="block text-sm font-bold">{t.subject}</label>
-      <select id="group-offering" name="offering_id" value={formValues.offering_id} onChange={event => setFormValues(current => ({ ...current, offering_id: event.target.value }))} required disabled={!catalogue.length} {...invalid('offering_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+      <label htmlFor="group-subject" className="block text-sm font-bold">{t.subject}</label>
+      <select id="group-subject" name="subject_id" value={formValues.subject_id} onChange={event => setFormValues(current => ({ ...current, subject_id: event.target.value, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }))} required {...invalid('subject_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
         <option value="">—</option>
-        {catalogue.map(choice => <option key={choice.id} value={choice.id}>{choice.label}</option>)}
+        {activeSubjects.map(subject => <option key={subject.id} value={subject.id}>{subject.id === catalogue.retained?.subject_id && retainedSubjectArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}` : locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}</option>)}
       </select>
-      {!catalogue.length && <p className="mt-2 text-sm text-muted">{t.emptyCatalogue}</p>}
-      {fieldError('offering_id') && <p id="group-offering_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('offering_id')}</p>}
+      {fieldError('subject_id') && <p id="group-subject_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('subject_id')}</p>}
+      {subjectNeedsActiveChoice && <p className="mt-1 text-sm text-muted">{t.offeringError}</p>}
+      <button type="button" onClick={() => setAddSubject(value => !value)} className="mt-2 text-sm font-bold text-teal underline">{t.addSubject}</button>
+    </div>
+    <div>
+      <label htmlFor="group-category" className="block text-sm font-bold">{t.category}</label>
+      <select id="group-category" name="category_id" value={formValues.category_id} onChange={event => setFormValues(current => ({ ...current, category_id: event.target.value, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }))} required {...invalid('category_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+        <option value="">—</option>
+        {eligibleNodes.map(node => <option key={node.id} value={node.id}>{node.id === catalogue.retained?.category_id && retainedCategoryArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${contextLabel(node.id)}` : contextLabel(node.id)}</option>)}
+      </select>
+      {fieldError('category_id') && <p id="group-category_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('category_id')}</p>}
+      {categoryNeedsActiveChoice && <p className="mt-1 text-sm text-muted">{t.offeringError}</p>}
+      <button type="button" onClick={() => setAddCategory(value => !value)} className="mt-2 text-sm font-bold text-teal underline">{t.addCategory}</button>
     </div>
     <div className="grid gap-5 sm:grid-cols-2">
       <div>
@@ -94,8 +152,11 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
       </div>
     </div>
     {state?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}
-    <button type="submit" disabled={pending || !catalogue.length} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.save}</button>
-  </form>;
+    <button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.save}</button>
+  </form>
+  {addSubject && <section className="rounded-2xl border border-line bg-cream p-4"><h3 className="mb-3 font-bold text-teal">{t.addSubject}</h3><CatalogueLabelEditor locale={locale} kind="subject" onSaved={onSubjectSaved} /></section>}
+  {addCategory && <section className="rounded-2xl border border-line bg-cream p-4"><h3 className="mb-3 font-bold text-teal">{t.addCategory}</h3><CatalogueLabelEditor locale={locale} kind="category" onSaved={onCategorySaved} /></section>}
+  </div>;
 }
 
 export function GroupSetupSteps({ locale, groupId, current, copyScheduleFrom }: { locale: Locale; groupId: string; current: SetupStep; copyScheduleFrom?: string }) {

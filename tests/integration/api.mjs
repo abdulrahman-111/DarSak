@@ -1,6 +1,7 @@
 /** Real local Supabase API verification. Refuses cloud hosts. */
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { execFileSync, spawn } from 'node:child_process';
 const origin = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
 assert(['127.0.0.1', 'localhost'].includes(new URL(origin).hostname), 'Integration fixtures are local-only');
 const anon = process.env.SUPABASE_ANON_KEY;
@@ -12,6 +13,7 @@ const uploadedPaths = [];
 const uploadedAvatarPaths = [];
 const uploadedCoverPaths = [];
 const signBody = {expiresIn:60};
+const wait = milliseconds => new Promise(resolve=>setTimeout(resolve,milliseconds));
 let passed = 0;
 async function request(path, {token = anon, method = 'GET', body, headers = {}, timeoutMs = 10000} = {}) {
   const response = await fetch(`${origin}${path}`, {
@@ -417,6 +419,87 @@ try {
   check(approvedPublicRead.ok,'referenced avatar becomes public after its teacher is approved');
   const visibleSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
   check(visibleSpecializations.some(row=>row.offering_id===offerings[0].id),'public specialization RPC exposes offerings for an approved active teacher');
+  const customSubjectId = randomUUID();
+  const customNodeId = randomUUID();
+  const customOfferingId = randomUUID();
+  await success('/rest/v1/subjects',{token:service,method:'POST',body:{id:customSubjectId,owner_teacher_id:teacher.id,name_ar:'مادة REST خاصة',name_en:'REST private subject',slug:customSubjectId}});
+  await success('/rest/v1/education_nodes',{token:service,method:'POST',body:{id:customNodeId,parent_id:null,kind:'student_category',name_ar:'فئة REST خاصة',name_en:'REST private category',slug:customNodeId,owner_teacher_id:teacher.id}});
+  await success('/rest/v1/offerings',{token:service,method:'POST',body:{id:customOfferingId,node_id:customNodeId,subject_id:customSubjectId,owner_teacher_id:teacher.id}});
+  const ownerPrivateSubject = await success(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:teacher.token});
+  const peerPrivateSubject = await success(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:otherTeacher.token});
+  const anonymousPrivateSubject = await success(`/rest/v1/subjects?id=eq.${customSubjectId}`);
+  const draftCatalogue = await success('/rest/v1/rpc/public_discovery_catalogue',{method:'POST',body:{}});
+  check(ownerPrivateSubject.length===1 && peerPrivateSubject.length===0 && anonymousPrivateSubject.length===0 && !draftCatalogue.subjects.some(row=>row.id===customSubjectId),'private custom catalogue labels stay owner-only and out of public discovery while unreferenced');
+  const spoofOwner = await request(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:teacher.token,method:'PATCH',body:{owner_teacher_id:otherTeacher.id}});
+  const retainedOwner = await success(`/rest/v1/subjects?id=eq.${customSubjectId}&select=owner_teacher_id`,{token:service});
+  check((!spoofOwner.ok || spoofOwner.data.length===0) && retainedOwner[0]?.owner_teacher_id===teacher.id,'catalogue owner cannot be forged through the REST API');
+  const adminOwnerSpoof = await request(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:spoof.token,method:'PATCH',body:{owner_teacher_id:otherTeacher.id}});
+  const adminDeleteOwned = await request(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:spoof.token,method:'DELETE'});
+  const retainedOwnedSubject = await success(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:service});
+  const adminLabelChange = await request(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:spoof.token,method:'PATCH',body:{name_en:'Forged private label'}});
+  const adminKindChange = await request(`/rest/v1/education_nodes?id=eq.${customNodeId}`,{token:spoof.token,method:'PATCH',body:{kind:'year'}});
+  const adminPairChange = await request(`/rest/v1/offerings?id=eq.${customOfferingId}`,{token:spoof.token,method:'PATCH',body:{node_id:offerings[0].node_id}});
+  check(!adminOwnerSpoof.ok && !adminDeleteOwned.ok && !adminLabelChange.ok && !adminKindChange.ok && !adminPairChange.ok && retainedOwnedSubject.length===1,'admin cannot reassign, relabel, physically delete, reshape, or relink owned catalogue rows');
+  const rpcSubjectId = await success('/rest/v1/rpc/save_teacher_subject',{token:teacher.token,method:'POST',body:{p_id:null,p_name_ar:'  مادة RPC خاصة  ',p_name_en:''}});
+  const rpcCategoryId = await success('/rest/v1/rpc/save_teacher_category',{token:teacher.token,method:'POST',body:{p_id:null,p_kind:'student_category',p_name_ar:'',p_name_en:' RPC category '}});
+  const concurrentPairs = await Promise.all([1,2].map(()=>request('/rest/v1/rpc/save_teacher_offering',{token:teacher.token,method:'POST',body:{p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId}})));
+  check(concurrentPairs.every(result=>result.ok) && concurrentPairs[0].data===concurrentPairs[1].data,'concurrent pair requests reuse one teacher-owned offering');
+  const rpcOfferingId = concurrentPairs[0].data;
+  const foreignRename = await request('/rest/v1/rpc/save_teacher_subject',{token:otherTeacher.token,method:'POST',body:{p_id:rpcSubjectId,p_name_ar:'Foreign edit',p_name_en:''}});
+  const lockApp = `task2b_catalogue_lock_${suffix}`;
+  const holderSql = `begin; select pg_advisory_xact_lock(hashtextextended('teacher-calendar:${teacher.id}',0)); select pg_sleep(3); commit;`;
+  const lockHolder = spawn('docker',['exec','-e',`PGAPPNAME=${lockApp}`,'supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-c',holderSql],{stdio:'ignore'});
+  const holderExit = new Promise(resolve=>lockHolder.once('exit',resolve));
+  const lockQuery = `select count(*) from pg_stat_activity a join pg_locks l on l.pid=a.pid where a.application_name='${lockApp}' and l.locktype='advisory' and l.granted`;
+  let holderReady = false;
+  for (let attempt=0;attempt<40 && !holderReady;attempt++) {
+    await wait(50);
+    holderReady = execFileSync('docker',['exec','supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-Atc',lockQuery],{encoding:'utf8'}).trim()==='1';
+  }
+  assert(holderReady,'Local advisory-lock fixture became active');
+  const queuedSubjectSave = request('/rest/v1/rpc/save_teacher_subject',{token:teacher.token,method:'POST',body:{p_id:null,p_name_ar:'Suspended while queued',p_name_en:''}});
+  const queuedQuery = `select count(*) from pg_stat_activity where query ilike '%save_teacher_subject%' and wait_event_type='Lock'`;
+  let saveIsQueued = false;
+  for (let attempt=0;attempt<40 && !saveIsQueued;attempt++) {
+    await wait(50);
+    saveIsQueued = execFileSync('docker',['exec','supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-Atc',queuedQuery],{encoding:'utf8'}).trim()==='1';
+  }
+  assert(saveIsQueued,'Catalogue mutation waited for the teacher calendar lock');
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  const suspendedQueuedSave = await queuedSubjectSave;
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
+  await holderExit;
+  const suspendedWriteRows = await success(`/rest/v1/subjects?owner_teacher_id=eq.${teacher.id}&name_ar=eq.Suspended%20while%20queued&select=id`,{token:service});
+  check(!suspendedQueuedSave.ok && suspendedQueuedSave.data?.code==='42501' && suspendedWriteRows.length===0,'a teacher suspended while queued cannot mutate after the calendar lock releases');
+  const rpcDraftId = await success('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:null,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`RPC ${suffix}`,p_description:'Atomic draft',p_capacity:8,p_location:'Cairo',p_expected_updated_at:null}});
+  const rpcDraftBefore = (await success(`/rest/v1/groups?id=eq.${rpcDraftId}&select=updated_at,name,offering_id`,{token:teacher.token}))[0];
+  const rpcDraftSaved = await success('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:rpcDraftId,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`RPC ${suffix} updated`,p_description:'Saved',p_capacity:9,p_location:'Giza',p_expected_updated_at:rpcDraftBefore.updated_at}});
+  const staleNewSubject = await success('/rest/v1/rpc/save_teacher_subject',{token:teacher.token,method:'POST',body:{p_id:null,p_name_ar:'Stale subject',p_name_en:''}});
+  const staleDraftSave = await request('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:rpcDraftId,p_subject_id:staleNewSubject,p_category_id:rpcCategoryId,p_name:'Must not save',p_description:'',p_capacity:10,p_location:'',p_expected_updated_at:rpcDraftBefore.updated_at}});
+  const danglingStalePair = await success(`/rest/v1/offerings?owner_teacher_id=eq.${teacher.id}&subject_id=eq.${staleNewSubject}&select=id`,{token:service});
+  check(!foreignRename.ok && rpcDraftSaved===rpcDraftId && !staleDraftSave.ok && danglingStalePair.length===0,'catalogue rename ownership and atomic draft timestamp CAS reject foreign or stale writes before pair creation');
+  const archiveSaveRaceGroup = await Promise.all([
+    request('/rest/v1/rpc/set_teacher_catalogue_archived',{token:teacher.token,method:'POST',body:{p_kind:'offering',p_id:rpcOfferingId,p_archived:true}}),
+    request('/rest/v1/rpc/save_teacher_group_draft',{token:teacher.token,method:'POST',body:{p_group_id:null,p_subject_id:rpcSubjectId,p_category_id:rpcCategoryId,p_name:`Race ${suffix}`,p_description:'',p_capacity:5,p_location:'',p_expected_updated_at:null}}),
+  ]);
+  const raceGroup = archiveSaveRaceGroup[1].ok ? await success(`/rest/v1/groups?id=eq.${archiveSaveRaceGroup[1].data}&select=offering_id,status`,{token:service}) : [];
+  check(archiveSaveRaceGroup[0].ok && (!archiveSaveRaceGroup[1].ok || (raceGroup.length===1 && raceGroup[0].offering_id===rpcOfferingId && raceGroup[0].status==='draft')),'archive and draft-save race serializes without a foreign or dangling pair');
+  const customDraft = (await success('/rest/v1/groups',{token:service,method:'POST',body:{teacher_id:teacher.id,offering_id:customOfferingId,name:`Custom ${suffix}`,capacity:5,status:'draft',updated_at:'2100-01-01T00:00:00Z'}}))[0];
+  const foreignCustomGroup = await request('/rest/v1/groups',{token:otherTeacher.token,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:customOfferingId,name:'Foreign custom pair',capacity:5,status:'draft'}});
+  const sharedStudentChoice = await success(`/rest/v1/student_profiles?id=eq.${student.id}`,{token:student.token,method:'PATCH',body:{offering_id:offerings[0].id}});
+  const studentCustomChoice = await request(`/rest/v1/student_profiles?id=eq.${student.id}`,{token:student.token,method:'PATCH',body:{offering_id:customOfferingId}});
+  check(Boolean(customDraft?.id) && customDraft.updated_at!=='2100-01-01T00:00:00Z' && sharedStudentChoice[0]?.offering_id===offerings[0].id && !foreignCustomGroup.ok && !studentCustomChoice.ok,'REST guards allow shared student selection and reject foreign or owned selections and forged updated_at');
+  await success('/rest/v1/teacher_specializations',{token:teacher.token,method:'POST',body:{teacher_id:teacher.id,offering_id:customOfferingId}});
+  const hiddenCustomSpecialization = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:teacher.id}});
+  check(!hiddenCustomSpecialization.some(row=>row.offering_id===customOfferingId),'public specialization omits a custom pair until that same teacher publishes it');
+  await success('/rest/v1/rpc/save_schedule_slot',{token:teacher.token,method:'POST',body:{p_group_id:customDraft.id,p_weekday:4,p_start_time:'14:00',p_end_time:'15:00'}});
+  await success('/rest/v1/rpc/publish_group',{token:teacher.token,method:'POST',body:{p_group_id:customDraft.id,p_from:null,p_until:null}});
+  const publishedCustomSubject = await success(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:otherTeacher.token});
+  const visibleCustomSpecialization = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:teacher.id}});
+  const publishedCatalogue = await success('/rest/v1/rpc/public_discovery_catalogue',{method:'POST',body:{}});
+  check(publishedCustomSubject.length===1 && visibleCustomSpecialization.some(row=>row.offering_id===customOfferingId) && publishedCatalogue.subjects.some(row=>row.id===customSubjectId) && publishedCatalogue.nodes.some(row=>row.id===customNodeId),'eligible published custom pair becomes readable and discoverable with exact specialization visibility');
+  const customEnrollment = await success('/rest/v1/rpc/request_enrollment',{token:student.token,method:'POST',body:{p_group_id:customDraft.id}});
+  await success('/rest/v1/rpc/decide_enrollment',{token:teacher.token,method:'POST',body:{p_enrollment_id:customEnrollment,p_status:'accepted'}});
   const themeProfileBase = {
     about:{ar:'',en:''},approach:{ar:'',en:''},goals:{ar:'',en:''},qualifications:[],experience:[],
     languages:[],city:{ar:'',en:''},teaching_mode:null,
@@ -575,6 +658,10 @@ try {
   const hiddenSlots = await success(`/rest/v1/group_schedule_slots?group_id=eq.${otherGroup.id}`);
   check(hiddenSlots.length===0,'published slots disappear when their teacher is suspended');
   await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
+  await success(`/rest/v1/groups?id=eq.${customDraft.id}`,{token:service,method:'PATCH',body:{status:'archived'}});
+  const suspendedCustomGroupWrite = await request('/rest/v1/groups',{token:teacher.token,method:'POST',body:{teacher_id:teacher.id,offering_id:customOfferingId,name:'Suspended custom selection',capacity:5,status:'draft'}});
+  const historicalCustomSubject = await success(`/rest/v1/subjects?id=eq.${customSubjectId}`,{token:student.token});
+  check(!suspendedCustomGroupWrite.ok && historicalCustomSubject.length===1,'suspension blocks new custom selection while accepted member keeps archived group labels');
   const suspendedDetailsBefore = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];
   const suspendedRawBioWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{bio:'Suspended overwrite'}});
   const suspendedDetailsAfter = (await success(`/rest/v1/teacher_profile_details?teacher_id=eq.${teacher.id}&select=details,version`,{token:teacher.token}))[0];

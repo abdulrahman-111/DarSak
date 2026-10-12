@@ -4,9 +4,16 @@ import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
-import { avatarPathIsCurrent, profileFieldErrors, storageRemovalConfirmed, teacherAvatarExtension, teacherAvatarPath, teacherProfileSchema } from './profile-domain';
+import { avatarPathIsCurrent, profileFieldErrors, storageRemovalConfirmed, teacherAvatarExtension, teacherAvatarPath, teacherProfileSchema, teacherSpecializationPairSchema } from './profile-domain';
 
 export type TeacherProfileActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
+export type TeacherSpecializationActionState = {
+  error?: string;
+  success?: string;
+  fieldErrors?: Record<string, string>;
+  id?: string;
+  row?: { id: string; owner_teacher_id: string | null; archived_at: string | null; node_id: string; subject_id: string };
+} | null;
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
 
 async function activeTeacher() {
@@ -16,6 +23,44 @@ async function activeTeacher() {
   const { data: profile, error } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
   if (error || profile?.role !== 'teacher' || profile.status !== 'active') return null;
   return { db, id: user.id };
+}
+
+export async function addTeacherSpecialization(locale: Locale, _state: TeacherSpecializationActionState, form: FormData): Promise<TeacherSpecializationActionState> {
+  const parsed = teacherSpecializationPairSchema.safeParse({ subject_id: form.get('subject_id'), category_id: form.get('category_id') });
+  if (!parsed.success) {
+    const fieldErrors: Record<string, string> = {};
+    for (const issue of parsed.error.issues) fieldErrors[String(issue.path[0] ?? 'form')] ??= 'invalid';
+    return { error: message(locale, 'Choose a subject and category.', 'اختر مادة وفئة.'), fieldErrors };
+  }
+
+  const me = await activeTeacher();
+  if (!me) return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
+  const { data: id, error } = await me.db.rpc('save_teacher_offering', {
+    p_subject_id: parsed.data.subject_id,
+    p_category_id: parsed.data.category_id,
+  });
+  if (error || typeof id !== 'string') {
+    const detail = error?.message.toLowerCase() ?? '';
+    if (detail.includes('restore the archived specialization')) return { error: message(locale,
+      'This specialization is archived. Restore it in your catalogue before adding it again.',
+      'هذا التخصص مؤرشف. أعده من الدليل التعليمي قبل إضافته مرة أخرى.') };
+    if (detail.includes('active shared or owned') || detail.includes('not selectable')) return { error: message(locale,
+      'This subject or category is unavailable. Choose an active shared or personal item.',
+      'هذه المادة أو الفئة غير متاحة. اختر عنصراً نشطاً مشتركاً أو خاصاً بك.') };
+    return { error: message(locale, 'Could not add this specialization. Refresh and try again.', 'تعذرت إضافة هذا التخصص. حدّث الصفحة وحاول مرة أخرى.') };
+  }
+  const { data: offering, error: offeringError } = await me.db.from('offerings')
+    .select('id,owner_teacher_id,archived_at,node_id,subject_id')
+    .eq('id', id)
+    .maybeSingle();
+  if (offeringError || !offering || offering.id !== id || offering.subject_id !== parsed.data.subject_id || offering.node_id !== parsed.data.category_id || offering.archived_at !== null || (offering.owner_teacher_id !== null && offering.owner_teacher_id !== me.id)) {
+    return { error: message(locale, 'This specialization is no longer available. Refresh and choose another.', 'لم يعد هذا التخصص متاحاً. حدّث الصفحة واختر غيره.') };
+  }
+  return {
+    id,
+    row: offering,
+    success: message(locale, 'Specialization added to your profile draft.', 'أُضيف التخصص إلى مسودة ملفك الشخصي.'),
+  };
 }
 
 function revalidateTeacherProfilePaths(locale: Locale, teacherId: string) {

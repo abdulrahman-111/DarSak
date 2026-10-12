@@ -7,7 +7,8 @@ const optionalSlotId = z.preprocess(value => value === '' || value == null ? und
 export const groupDetailsSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(2000).default(''),
-  offering_id: z.string().uuid(),
+  subject_id: z.string().uuid(),
+  category_id: z.string().uuid(),
   capacity: capacitySchema,
   location: z.string().trim().max(200).default(''),
 });
@@ -31,10 +32,17 @@ export function normalizeSetupStep(value: string | string[] | undefined): SetupS
   return step === 'schedule' || step === 'review' ? step : 'details';
 }
 
-export type SetupCatalogueNode = { id: string; parent_id: string | null; name_ar: string; name_en: string };
-export type SetupCatalogueSubject = { id: string; name_ar: string; name_en: string };
-export type SetupCatalogueOffering = { id: string; node_id: string; subject_id: string };
-export type SetupCatalogueChoice = { id: string; subject: string; context: string; label: string };
+export type SetupCatalogueNode = { id: string; owner_teacher_id: string | null; archived_at: string | null; parent_id: string | null; kind: string; name_ar: string; name_en: string };
+export type SetupCatalogueSubject = { id: string; owner_teacher_id: string | null; archived_at: string | null; name_ar: string; name_en: string };
+export type SetupCatalogueOffering = { id: string; owner_teacher_id: string | null; archived_at: string | null; node_id: string; subject_id: string };
+export type SetupCatalogueChoice = { id: string; subject_id: string; category_id: string; subject: string; context: string; label: string };
+
+export function isRetainedCataloguePair(
+  selected: { subject_id: string; category_id: string },
+  retained: Pick<SetupCatalogueChoice, 'subject_id' | 'category_id'> | null,
+): boolean {
+  return !!retained && selected.subject_id === retained.subject_id && selected.category_id === retained.category_id;
+}
 
 export function setupCatalogueChoices(
   locale: Locale,
@@ -60,8 +68,8 @@ export function setupCatalogueChoices(
     const subject = subjects.find(item => item.id === offering.subject_id);
     const subjectLabel = subject ? name(subject) : '';
     const context = contextFor(offering.node_id);
-    if (!subjectLabel || !context) return [];
-    return [{ id: offering.id, subject: subjectLabel, context, label: `${subjectLabel} · ${context}` }];
+    if (!subject || !subjectLabel || !context) return [];
+    return [{ id: offering.id, subject_id: subject.id, category_id: offering.node_id, subject: subjectLabel, context, label: `${subjectLabel} · ${context}` }];
   }).sort((a, b) => a.label.localeCompare(b.label, ar ? 'ar' : 'en'));
 }
 

@@ -6,7 +6,7 @@ import type { Locale } from '@/features/student/domain';
 import { groupDetailsFieldErrors, groupDetailsSchema, groupScheduleSlotFieldErrors, groupScheduleSlotSchema } from './setup-domain';
 import { idSchema } from '@/features/student/domain';
 
-export type GroupDraftActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; id?: string } | null;
+export type GroupDraftActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; id?: string; updated_at?: string } | null;
 export type ScheduleSlotActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
 
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -15,7 +15,8 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
   const parsed = groupDetailsSchema.safeParse({
     name: form.get('name'),
     description: form.get('description') ?? '',
-    offering_id: form.get('offering_id'),
+    subject_id: form.get('subject_id'),
+    category_id: form.get('category_id'),
     capacity: form.get('capacity') ?? undefined,
     location: form.get('location') ?? '',
   });
@@ -29,6 +30,10 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
   if (id && !idSchema.safeParse(id).success) return {
     error: message(locale, 'This group could not be saved. Refresh the page and try again.', 'تعذر حفظ هذه المجموعة. حدّث الصفحة وحاول مرة أخرى.'),
   };
+  const expectedUpdatedAt = form.get('expected_updated_at');
+  if ((id && (typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)) || (!id && expectedUpdatedAt !== null && expectedUpdatedAt !== '')) {
+    return { error: message(locale, 'This draft is missing its save version. Refresh the page and try again.', 'بيانات إصدار المسودة غير متاحة. حدّث الصفحة وحاول مرة أخرى.') };
+  }
 
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
@@ -38,34 +43,29 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
   if (profileError) return { error: message(locale, 'Could not verify your teacher account. Please try again.', 'تعذر التحقق من حساب المعلم. حاول مرة أخرى.') };
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
 
-  const details = {
-    name: parsed.data.name,
-    description: parsed.data.description,
-    offering_id: parsed.data.offering_id,
-    capacity: parsed.data.capacity,
-    location: parsed.data.location,
-  };
-  let savedId: string | null = null;
-  if (id) {
-    const { data, error } = await db.from('groups')
-      .update(details)
-      .eq('id', id)
-      .eq('teacher_id', user.id)
-      .eq('status', 'draft')
-      .select('id')
-      .maybeSingle();
-    if (error) return { error: message(locale, 'Your draft could not be saved. It may no longer be a draft; refresh and try again.', 'تعذر حفظ المسودة. ربما لم تعد مسودة؛ حدّث الصفحة وحاول مرة أخرى.') };
-    savedId = data?.id ?? null;
-    if (!savedId) return { error: message(locale, 'Your draft could not be saved. It may no longer be a draft; refresh and try again.', 'تعذر حفظ المسودة. ربما لم تعد مسودة؛ حدّث الصفحة وحاول مرة أخرى.') };
-  } else {
-    const { data, error } = await db.from('groups')
-      .insert({ ...details, teacher_id: user.id, status: 'draft' })
-      .select('id')
-      .single();
-    if (error || !data?.id) return { error: message(locale, 'Your group could not be saved. Your changes are still in the form; please try again.', 'تعذر حفظ المجموعة. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
-    savedId = data.id;
+  const { data: savedId, error } = await db.rpc('save_teacher_group_draft', {
+    p_group_id: id,
+    p_subject_id: parsed.data.subject_id,
+    p_category_id: parsed.data.category_id,
+    p_name: parsed.data.name,
+    p_description: parsed.data.description,
+    p_capacity: parsed.data.capacity,
+    p_location: parsed.data.location,
+    p_expected_updated_at: id ? expectedUpdatedAt : null,
+  });
+  if (error) {
+    const raw = error.message.toLowerCase();
+    if (error.code === '40001' || raw.includes('changed') || raw.includes('concurrent')) return {
+      error: message(locale, 'This draft changed in another tab. Refresh it, review the latest details, and try again.', 'تغيرت هذه المسودة في علامة تبويب أخرى. حدّث الصفحة وراجع أحدث التفاصيل ثم حاول مرة أخرى.'),
+    };
+    if (raw.includes('archiv') || raw.includes('subject') || raw.includes('category') || raw.includes('offering') || raw.includes('catalogue') || raw.includes('not a draft') || raw.includes('not found') || raw.includes('owner')) return {
+      error: message(locale, 'This selection or draft is no longer available. Choose active catalogue items, refresh, and try again.', 'لم يعد هذا الاختيار أو هذه المسودة متاحاً. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.'),
+    };
+    return { error: message(locale, id ? 'Your draft could not be saved. Your changes are still in the form; please refresh and try again.' : 'Your group could not be saved. Your changes are still in the form; please try again.', id ? 'تعذر حفظ المسودة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.' : 'تعذر حفظ المجموعة. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
   }
   if (!savedId) return { error: message(locale, 'Your group could not be saved. Please try again.', 'تعذر حفظ المجموعة. حاول مرة أخرى.') };
+
+  const { data: savedDraft } = await db.from('groups').select('id,updated_at').eq('id', savedId).eq('teacher_id', user.id).maybeSingle();
 
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/teacher/groups`);
@@ -73,7 +73,7 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
     revalidatePath(`/${currentLocale}/teacher/groups/${savedId}`);
     revalidatePath(`/${currentLocale}/teacher/groups/${savedId}/setup`);
   }
-  return { id: savedId, success: message(locale, 'Draft saved.', 'تم حفظ المسودة.') };
+  return { id: savedId, updated_at: savedDraft?.updated_at, success: message(locale, 'Draft saved.', 'تم حفظ المسودة.') };
 }
 
 function scheduleError(locale: Locale, rawError: string): string {

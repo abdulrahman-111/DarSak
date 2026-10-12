@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { teacherProfileSchema } from '@/features/teacher/profile-domain';
+import { addUniqueOfferingId, teacherProfileSchema, teacherSpecializationPairSchema } from '@/features/teacher/profile-domain';
+import { canSelectCatalogueRow, catalogueDisplayName, isTeacherCatalogueCategory } from '@/features/teacher/catalogue-domain';
 
 const validProfile = {
   full_name: 'Mona Ali',
@@ -58,5 +59,34 @@ describe('teacher profile validation', () => {
     const id = '22222222-2222-4222-8222-222222222222';
     expect(teacherProfileSchema.safeParse({ ...validProfile, offering_ids: [id, id] }).success).toBe(false);
     expect(teacherProfileSchema.safeParse({ ...validProfile, offering_ids: ['not-a-uuid'] }).success).toBe(false);
+  });
+
+  it('requires valid subject and category IDs for a new specialization pair', () => {
+    const id = '22222222-2222-4222-8222-222222222222';
+    expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: id }).success).toBe(true);
+    expect(teacherSpecializationPairSchema.safeParse({ subject_id: 'bad', category_id: id }).success).toBe(false);
+    expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: null }).success).toBe(false);
+  });
+
+  it('does not duplicate a specialization returned by pair creation', () => {
+    const id = '22222222-2222-4222-8222-222222222222';
+    expect(addUniqueOfferingId([id], id)).toEqual([id]);
+    expect(addUniqueOfferingId([], id)).toEqual([id]);
+  });
+
+  it('uses locale fallback for saved labels and excludes foreign retained rows', () => {
+    const label = { name_ar: '', name_en: 'Algebra' };
+    expect(catalogueDisplayName(label, 'ar')).toBe('Algebra');
+    expect(catalogueDisplayName({ name_ar: 'الجبر', name_en: '' }, 'en')).toBe('الجبر');
+    expect(canSelectCatalogueRow({ id: 'own-archived', owner_teacher_id: 'teacher', archived_at: '2026-01-01' }, 'teacher', 'own-archived')).toBe(true);
+    expect(canSelectCatalogueRow({ id: 'foreign', owner_teacher_id: 'another-teacher', archived_at: null }, 'teacher', 'foreign')).toBe(false);
+  });
+
+  it('offers only system learning levels and teacher categories as profile categories', () => {
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: null, kind: 'grade' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'custom_year' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'student_category' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: null, kind: 'faculty' })).toBe(false);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'department' })).toBe(false);
   });
 });

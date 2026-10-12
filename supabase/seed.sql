@@ -19,7 +19,7 @@ insert into public.offerings(node_id,subject_id) values
 ('00000000-0000-0000-0000-000000000021','00000000-0000-0000-0000-000000000101'),
 ('00000000-0000-0000-0000-000000000022','00000000-0000-0000-0000-000000000102'),
 ('00000000-0000-0000-0000-000000000023','00000000-0000-0000-0000-000000000103')
-on conflict(node_id,subject_id) do nothing;
+on conflict(node_id,subject_id) where owner_teacher_id is null do nothing;
 insert into public.platform_settings(key,value) values('catalogue_version','"starter-2026"'::jsonb),('max_material_size_bytes','10485760'::jsonb)
 on conflict(key) do update set value=excluded.value;
 commit;

@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { idSchema } from '@/features/student/domain';
-import { groupDetailsSchema, groupScheduleSlotSchema, normalizeSetupStep, setupCatalogueChoices } from '@/features/teacher/setup-domain';
+import { groupDetailsSchema, groupScheduleSlotSchema, isRetainedCataloguePair, normalizeSetupStep, setupCatalogueChoices } from '@/features/teacher/setup-domain';
 
 const validDetails = {
   name: 'Algebra group',
   description: 'A weekly algebra class.',
-  offering_id: '22222222-2222-4222-8222-222222222222',
+  subject_id: '22222222-2222-4222-8222-222222222222',
+  category_id: '33333333-3333-4333-8333-333333333333',
   capacity: '10',
   location: '',
 };
@@ -27,10 +28,19 @@ describe('teacher group setup details', () => {
     expect(groupDetailsSchema.safeParse({ ...validDetails, capacity: '501' }).success).toBe(false);
   });
 
-  it('rejects malformed offering IDs and capacity values', () => {
-    expect(groupDetailsSchema.safeParse({ ...validDetails, offering_id: 'english-only' }).success).toBe(false);
+  it('requires separate valid subject and category IDs and valid capacity values', () => {
+    expect(groupDetailsSchema.safeParse({ ...validDetails, subject_id: 'english-only' }).success).toBe(false);
+    expect(groupDetailsSchema.safeParse({ ...validDetails, category_id: 'english-only' }).success).toBe(false);
     expect(groupDetailsSchema.safeParse({ ...validDetails, capacity: 'ten' }).success).toBe(false);
     expect(idSchema.safeParse('malformed-group-id').success).toBe(false);
+  });
+
+  it('retains an archived pair only while both saved component IDs stay unchanged', () => {
+    const retained = { subject_id: 'subject-1', category_id: 'category-1' };
+    expect(isRetainedCataloguePair(retained, retained)).toBe(true);
+    expect(isRetainedCataloguePair({ ...retained, category_id: 'category-2' }, retained)).toBe(false);
+    expect(isRetainedCataloguePair({ ...retained, subject_id: 'subject-2' }, retained)).toBe(false);
+    expect(isRetainedCataloguePair(retained, null)).toBe(false);
   });
 
   it('normalizes unsupported setup steps to details', () => {
@@ -43,14 +53,14 @@ describe('teacher group setup details', () => {
 
   it('uses localized subject and education context labels for offerings', () => {
     const nodes = [
-      { id: 'level', parent_id: null, name_ar: 'المرحلة الثانوية', name_en: 'Secondary school' },
-      { id: 'grade', parent_id: 'level', name_ar: 'الصف العاشر', name_en: 'Grade 10' },
+      { id: 'level', owner_teacher_id: null, archived_at: null, kind: 'system', parent_id: null, name_ar: 'المرحلة الثانوية', name_en: 'Secondary school' },
+      { id: 'grade', owner_teacher_id: null, archived_at: null, kind: 'grade', parent_id: 'level', name_ar: 'الصف العاشر', name_en: 'Grade 10' },
     ];
-    const subjects = [{ id: 'math', name_ar: 'الرياضيات', name_en: 'Mathematics' }];
-    const offerings = [{ id: 'offering-uuid', node_id: 'grade', subject_id: 'math' }];
+    const subjects = [{ id: 'math', owner_teacher_id: null, archived_at: null, name_ar: 'الرياضيات', name_en: 'Mathematics' }];
+    const offerings = [{ id: 'offering-uuid', owner_teacher_id: null, archived_at: null, node_id: 'grade', subject_id: 'math' }];
 
     expect(setupCatalogueChoices('en', nodes, subjects, offerings)).toEqual([
-      { id: 'offering-uuid', subject: 'Mathematics', context: 'Secondary school › Grade 10', label: 'Mathematics · Secondary school › Grade 10' },
+      { id: 'offering-uuid', subject_id: 'math', category_id: 'grade', subject: 'Mathematics', context: 'Secondary school › Grade 10', label: 'Mathematics · Secondary school › Grade 10' },
     ]);
     expect(setupCatalogueChoices('ar', nodes, subjects, offerings)[0].label).toBe('الرياضيات · المرحلة الثانوية › الصف العاشر');
   });

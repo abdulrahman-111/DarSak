@@ -8,6 +8,7 @@ import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
 import { canRequest } from '@/features/student/domain';
 import { EnrollmentForm } from '@/features/student/forms';
+import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 
 const weekdays = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -27,7 +28,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
   const me = await currentUser();
   const enrollment = me?.profile?.role === 'student' ? await enrollmentForGroup(id) : null;
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
-  const subject = data.offering?.subject?.[locale === 'ar' ? 'name_ar' : 'name_en'] || t.groups;
+  const subject = data.offering?.subject ? catalogueDisplayName(data.offering.subject, locale) || t.groups : t.groups;
   const nextLesson = data.next_lesson_at
     ? new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(data.next_lesson_at))
     : null;

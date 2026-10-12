@@ -28,7 +28,15 @@ export async function publicGroupDetail(groupId:string):Promise<{data:Group|null
 }
 export async function groupById(id:string){ const db=await createClient(); return db.from('groups').select('*, offering:offerings(id,subject:subjects(name_ar,name_en))').eq('id',id).single(); }
 export async function teacherById(id:string){ const db=await createClient(); return db.rpc('public_teachers').eq('id',id).single(); }
-export async function catalogue(){ const db=await createClient(); const [nodes,subjects,offerings]=await Promise.all([db.from('education_nodes').select('*').order('name_en'),db.from('subjects').select('*').order('name_en'),db.from('offerings').select('*,subject:subjects(*)').order('id')]); return {nodes:nodes.data||[],subjects:subjects.data||[],offerings:offerings.data||[],error:nodes.error||subjects.error||offerings.error}; }
+export async function catalogue(){
+ const db=await createClient();
+ const {data,error}=await db.rpc('public_discovery_catalogue');
+ const projection=data&&typeof data==='object'?data as {nodes?:unknown;subjects?:unknown}:null;
+ const nodes=Array.isArray(projection?.nodes)?projection.nodes:[];
+ const subjects=Array.isArray(projection?.subjects)?projection.subjects:[];
+ const invalidProjection=!projection||!Array.isArray(projection.nodes)||!Array.isArray(projection.subjects);
+ return {nodes,subjects,offerings:[],error:error||(invalidProjection?{message:'Public discovery catalogue was unavailable.'}:null)};
+}
 export async function myGroups(role:string){ const db=await createClient(); if(role==='teacher'){const {data:{user}}=await db.auth.getUser();if(!user)return {data:[],error:null};return db.from('groups').select('*, offering:offerings(id,subject:subjects(name_ar,name_en))').eq('teacher_id',user.id).order('created_at',{ascending:false});} return db.from('enrollments').select('status, group:groups(*, offering:offerings(id,subject:subjects(name_ar,name_en)))').in('status',['pending','accepted']).order('updated_at',{ascending:false}); }
 export async function myLessons(role:string){ const db=await createClient(); return role==='teacher'?db.from('lessons').select('*').order('starts_at'):db.from('lessons').select('*, groups!inner(*)').order('starts_at'); }
 export async function notifications(){ const me=await currentUser(); if(!me)return {data:[],error:null}; const db=await createClient(); return db.from('notifications').select('*').eq('user_id',me.user.id).order('created_at',{ascending:false}); }
