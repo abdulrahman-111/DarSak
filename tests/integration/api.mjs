@@ -712,6 +712,40 @@ try {
   check(!suspendedAvatarOwner.ok && suspendedAvatarPublic===false && !suspendedAvatarPublicSign.ok && !suspendedAvatarUpload.ok,'suspension blocks avatar reads and uploads');
   const suspendedWrite = await request('/rest/v1/rpc/create_lesson',{token:teacher.token,method:'POST',body:{p_group_id:group.id,p_title:'Should fail',p_starts_at:'2027-01-04T16:00:00Z',p_ends_at:'2027-01-04T18:00:00Z'}});
   check(!suspendedWrite.ok,'suspension blocks a previously authenticated session');
+  // Management controls exercise historical safety through authenticated RPCs.
+  await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
+  await success(`/rest/v1/profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{status:'active'}});
+  const deletableManual = await success('/rest/v1/rpc/create_lesson',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_title:'Delete safely',p_starts_at:'2035-05-01T10:00:00Z',p_ends_at:'2035-05-01T11:00:00Z'}});
+  const foreignLessonDelete = await request('/rest/v1/rpc/delete_manual_teacher_lesson',{token:teacher.token,method:'POST',body:{p_lesson_id:deletableManual}});
+  const studentLessonDelete = await request('/rest/v1/rpc/delete_manual_teacher_lesson',{token:student.token,method:'POST',body:{p_lesson_id:deletableManual}});
+  check(!foreignLessonDelete.ok && !studentLessonDelete.ok,'foreign teacher and student cannot delete a manual lesson');
+  await success('/rest/v1/rpc/delete_manual_teacher_lesson',{token:otherTeacher.token,method:'POST',body:{p_lesson_id:deletableManual}});
+  const absentManual = await success(`/rest/v1/lessons?id=eq.${deletableManual}`,{token:service});
+  check(absentManual.length===0,'owner can delete a future manual lesson without history or files');
+  const objectGuardLesson = await success('/rest/v1/rpc/create_lesson',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_title:'Keep uploaded object',p_starts_at:'2036-05-01T10:00:00Z',p_ends_at:'2036-05-01T11:00:00Z'}});
+  const guardPath = `${otherTeacher.id}/${objectGuardLesson}/${randomUUID()}.pdf`;
+  const guardUpload = await fetch(`${origin}/storage/v1/object/lesson-materials/${guardPath}`,{method:'POST',headers:{apikey:anon,Authorization:`Bearer ${otherTeacher.token}`,'Content-Type':'application/pdf'},body:'%PDF-1.4\n%%EOF'});
+  assert(guardUpload.ok,`Storage-only deletion guard fixture upload failed: ${guardUpload.status}`);
+  uploadedPaths.push(guardPath);
+  const objectGuardDelete = await request('/rest/v1/rpc/delete_manual_teacher_lesson',{token:otherTeacher.token,method:'POST',body:{p_lesson_id:objectGuardLesson}});
+  check(!objectGuardDelete.ok,'lesson deletion refuses a stored object at teacher_id/lesson_id/object-id path even without metadata');
+  const emptyManagementGroup = (await success('/rest/v1/groups',{token:service,method:'POST',body:{teacher_id:otherTeacher.id,offering_id:offerings[0].id,name:`Unused ${suffix}`,capacity:4,status:'draft'}}))[0];
+  const managementSlot = (await success('/rest/v1/group_schedule_slots',{token:service,method:'POST',body:{group_id:emptyManagementGroup.id,weekday:4,start_time:'10:00',end_time:'11:00'}}))[0];
+  const anonGroupDelete = await request('/rest/v1/rpc/delete_unused_teacher_group',{method:'POST',body:{p_group_id:emptyManagementGroup.id}});
+  const foreignGroupDelete = await request('/rest/v1/rpc/delete_unused_teacher_group',{token:otherTeacher.token,method:'POST',body:{p_group_id:emptyManagementGroup.id}});
+  check(!anonGroupDelete.ok && !foreignGroupDelete.ok,'anonymous and foreign teacher cannot delete an unused group');
+  await success('/rest/v1/rpc/delete_unused_teacher_group',{token:otherTeacher.token,method:'POST',body:{p_group_id:emptyManagementGroup.id}});
+  const removedManagementSchedule = await success(`/rest/v1/group_schedule_slots?id=eq.${managementSlot.id}`,{token:service});
+  check(removedManagementSchedule.length===0,'owner can delete an unused draft and its schedule');
+  const ownerGroupLessons = await success(`/rest/v1/lessons?group_id=eq.${group.id}&select=id,starts_at,status`,{token:service});
+  const preservedEnrollmentRows = await success(`/rest/v1/enrollments?group_id=eq.${group.id}&select=id,status`,{token:service});
+  const storedFilesBeforeCancel = await success(`/rest/v1/lesson_materials?lesson_id=eq.${lessonId}&kind=eq.file&select=id,storage_path`,{token:service});
+  const cancelledFutureCount = await success('/rest/v1/rpc/cancel_teacher_group',{token:teacher.token,method:'POST',body:{p_group_id:group.id}});
+  const cancelledGroup = (await success(`/rest/v1/groups?id=eq.${group.id}&select=status`,{token:service}))[0];
+  const afterCancelLessons = await success(`/rest/v1/lessons?group_id=eq.${group.id}&select=id,starts_at,status`,{token:service});
+  const preservedEnrollmentsAfterCancel = await success(`/rest/v1/enrollments?group_id=eq.${group.id}&select=id,status`,{token:service});
+  const preservedFilesAfterCancel = await success(`/rest/v1/lesson_materials?lesson_id=eq.${lessonId}&kind=eq.file&select=id,storage_path`,{token:service});
+  check(cancelledGroup.status==='archived' && cancelledFutureCount>0 && afterCancelLessons.length===ownerGroupLessons.length && afterCancelLessons.some(row=>row.status==='cancelled') && preservedEnrollmentRows.length===preservedEnrollmentsAfterCancel.length && preservedEnrollmentsAfterCancel.some(row=>row.status==='accepted') && preservedEnrollmentsAfterCancel.some(row=>row.status==='rejected') && storedFilesBeforeCancel.length===preservedFilesAfterCancel.length,'group cancellation archives, cancels future lessons, rejects pending requests, and preserves accepted memberships, lessons, and materials');
   console.log(`Verified ${passed} real API assertions.`);
 } finally {
   if (uploadedPaths.length) {
