@@ -2,8 +2,11 @@
 
 import { useActionState, useId, useState } from 'react';
 import { Eye, EyeOff, GraduationCap, Presentation, ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 import { loginAction, signupAction } from '@/features/auth/actions';
 import { authCopy, type AuthLocale } from './copy';
+import { GoogleButton, googleEnabled } from './google-button';
+import { Turnstile } from './turnstile';
 
 type Props = {
   locale: AuthLocale;
@@ -13,7 +16,7 @@ type Props = {
   returnPath?: string | null;
 };
 
-const inputClass = 'mt-2 h-12 w-full rounded-xl border border-[#d8ccb8] bg-white px-4 text-ink outline-none transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
+export const inputClass = 'mt-2 h-12 w-full rounded-xl border border-[#d8ccb8] bg-white px-4 text-ink outline-none transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
 
 export function AuthForm({ locale, mode, labels, initialRole = 'student', returnPath }: Props) {
   const copy = authCopy[locale];
@@ -24,7 +27,10 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
   const passwordHintId = useId();
   const errorId = useId();
 
+  const showGoogle = googleEnabled && (mode === 'login' || role === 'student');
+
   return (
+    <>
     <form action={formAction} className="space-y-5" aria-describedby={state?.error ? errorId : undefined}>
       {mode === 'login' && returnPath && <input type="hidden" name="next" value={returnPath}/>}
       {mode === 'signup' && (
@@ -90,13 +96,24 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
         {mode === 'signup' && <span id={passwordHintId} className="mt-2 block text-xs font-normal text-muted">{copy.passwordHint}</span>}
       </label>
 
+      {mode === 'login' && (
+        <p className="-mt-2 text-sm"><Link className="font-bold text-teal" href={`/${locale}/forgot-password`}>{copy.forgotLink}</Link></p>
+      )}
+
       {mode === 'signup' && role === 'teacher' && (
         <div className="flex gap-3 rounded-xl bg-[#e0eeec] p-4 text-sm leading-6 text-[#0e3b3c]" role="note">
           <ShieldCheck className="mt-0.5 flex-none" size={19}/><span>{copy.approval}</span>
         </div>
       )}
 
-      {state?.error && <p id={errorId} role="alert" className="rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{state.error}</p>}
+      <Turnstile locale={locale} resetSignal={state}/>
+
+      {state?.error && (
+        <p id={errorId} role="alert" className="rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">
+          {state.error}
+          {state.resendHref && <> <Link className="font-bold underline" href={state.resendHref}>{copy.resend}</Link></>}
+        </p>
+      )}
 
       <button
         className="h-[52px] w-full rounded-[.9rem] bg-orange px-5 text-base font-bold text-white transition hover:bg-[#c4561a] disabled:cursor-wait disabled:opacity-60"
@@ -106,6 +123,15 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
         {pending ? (mode === 'login' ? copy.signingIn : copy.creating) : (mode === 'login' ? copy.signIn : copy.create)}
       </button>
     </form>
+    {showGoogle && (
+      <div className="mt-5 space-y-5">
+        <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[.14em] text-muted" aria-hidden="true">
+          <span className="h-px flex-1 bg-[#e3d9c8]"/>{copy.orDivider}<span className="h-px flex-1 bg-[#e3d9c8]"/>
+        </div>
+        <GoogleButton locale={locale} next={mode === 'login' ? returnPath : null}/>
+      </div>
+    )}
+    </>
   );
 }
 
