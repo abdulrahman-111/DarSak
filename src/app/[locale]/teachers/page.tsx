@@ -47,6 +47,8 @@ export default async function Teachers({
     filters.subjectId || filters.nodeId || filters.teacherId || filters.weekday !== null ||
     filters.hasSeats || filters.query || filters.page > 1
   );
+  const retryUrl = urlFor(locale, filters, filters.page);
+  const retryHref = `${retryUrl}${retryUrl.includes('?') ? '&' : '?'}retry=1`;
 
   return (
     <div className="min-h-[70vh] bg-[#f6f0e4]">
@@ -108,7 +110,7 @@ export default async function Teachers({
         </form>
 
         {error ? (
-          <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-700">{t.error}</p>
+          <div className="rounded-xl bg-red-50 p-4 text-red-700"><p role="alert">{t.error}</p><a href={retryHref} className="mt-3 inline-flex font-bold underline">{c.retry}</a></div>
         ) : groups.length ? (
           <>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{groups.map(group => <GroupCard key={group.id} group={group} locale={locale} t={t}/>)}</div>

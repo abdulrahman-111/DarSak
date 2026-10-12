@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
@@ -5,6 +6,7 @@ import { LessonForm } from '@/components/platform/forms';
 import { TeacherMaterialForms } from '@/components/platform/actions';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
 import { CopyLessonForm, DeleteLessonMaterialButton, LessonShortcutStatusControls } from '@/features/teacher/shortcuts-forms';
+import { DeleteManualTeacherLessonForm } from '@/features/teacher/management-forms';
 
 export default async function TeacherLesson({ params }: { params: Promise<{ locale: string; id: string }> }) {
   const { locale: raw, id } = await params;
@@ -12,45 +14,61 @@ export default async function TeacherLesson({ params }: { params: Promise<{ loca
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'teacher');
   const lessonResult = await me.db.from('lessons')
-    .select('id,group_id,title,starts_at,ends_at,status,notes,group:groups!inner(id,name,teacher_id)')
+    .select('id,group_id,title,starts_at,ends_at,status,notes,slot_id,local_date,group:groups!inner(id,name,teacher_id,status)')
     .eq('id', id)
     .eq('group.teacher_id', me.id)
     .maybeSingle();
   if (!lessonResult.data) notFound();
   const lesson = lessonResult.data;
+  const group = Array.isArray(lesson.group) ? lesson.group[0] : lesson.group;
+  if (!group) notFound();
   const [materials, groups] = await Promise.all([
     me.db.from('lesson_materials').select('id,title,kind,url,content,file_size,mime_type').eq('lesson_id', id).order('created_at'),
-    me.db.from('groups').select('id,name').eq('teacher_id', me.id).order('name').order('id'),
+    me.db.from('groups').select('id,name').eq('teacher_id', me.id).neq('status', 'archived').order('name').order('id'),
   ]);
+  const archived = group.status === 'archived';
+  const canOfferDelete = lesson.slot_id === null && lesson.starts_at > new Date().toISOString() && lesson.status !== 'completed' && !materials.error && !(materials.data?.length);
 
   const copy = ar ? {
     workspace: 'مساحة الحصة', edit: 'تعديل التفاصيل', status: 'حالة الحصة', resources: 'مواد الحصة',
     privateHint: 'الملفات خاصة بطلاب المجموعة المقبولين.', copyLesson: 'نسخ الحصة إلى مجموعة أخرى',
     copyHint: 'سيتم نسخ العنوان والملاحظات فقط. لن يتم نسخ الملفات أو المواد الخاصة.', materialsError: 'تعذر تحميل المواد.',
+    back: 'العودة إلى المجموعة', archived: 'المجموعة مؤرشفة. يمكنك مراجعة هذه الحصة وموادها، لكن لا يمكن إضافة أو تعديل محتوى جديد.',
+    generatedHint: 'الحصة مرتبطة بموعد متكرر أو بتاريخ محفوظ؛ ألغها بدلًا من حذف سجلها.',
+    materialDeleteHint: 'احذف مواد الحصة أولاً. ستمنع الملفات المخزنة حذف الحصة حتى بعد إزالة بيانات المادة.',
+    deleteUnavailable: 'لا يمكن حذف الحصص المكتملة أو الماضية. يمكنك إلغاء الحصة القادمة أو الاحتفاظ بالسجل.',
   } : {
     workspace: 'Lesson workspace', edit: 'Edit details', status: 'Lesson status', resources: 'Lesson materials',
     privateHint: 'Resources are private to accepted students.', copyLesson: 'Copy lesson to a group',
     copyHint: 'Only the title and notes will be copied. Private files and materials stay with this lesson.', materialsError: 'Could not load lesson materials.',
+    back: 'Back to group', archived: 'The group is archived. You can review this lesson and its materials, but cannot add or change new content.',
+    generatedHint: 'This lesson has a recurring or saved date identity. Cancel it instead of deleting its history.',
+    materialDeleteHint: 'Remove lesson materials first. Stored files must also be removed before the lesson can be deleted.',
+    deleteUnavailable: 'Past or completed lessons cannot be deleted. Cancel a future lesson or keep its history.',
   };
 
   return <>
+    <Link href={`/${locale}/teacher/groups/${lesson.group_id}`} className="mb-4 inline-flex font-bold text-teal underline">← {copy.back}</Link>
+    {archived && <Panel className="mb-6"><p className="text-sm font-semibold text-muted">{copy.archived}</p></Panel>}
     <ScreenTitle eyebrow={copy.workspace} title={lesson.title} description={cairoDate(lesson.starts_at, locale)} action={<Status value={lesson.status} locale={locale} />} />
     <div className="grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
       <div className="grid content-start gap-6">
         <Panel>
           <h2 className="mb-4 text-xl font-black text-teal">{copy.edit}</h2>
-          <LessonForm locale={locale} groupId={lesson.group_id} lesson={lesson} />
-          <div className="mt-6 border-t border-line pt-5">
+          {!archived && <LessonForm locale={locale} groupId={lesson.group_id} lesson={lesson} />}
+          {!archived && <div className="mt-6 border-t border-line pt-5">
             <h3 className="mb-3 font-black text-teal">{copy.status}</h3>
             <LessonShortcutStatusControls locale={locale} lessonId={id} status={lesson.status} />
-          </div>
+          </div>}
+          {!archived && canOfferDelete && <div className="mt-6 border-t border-line pt-5"><DeleteManualTeacherLessonForm locale={locale} lessonId={id} groupId={lesson.group_id} /></div>}
+          {!archived && !canOfferDelete && <p className="mt-4 border-t border-line pt-4 text-sm text-muted">{lesson.slot_id !== null ? copy.generatedHint : materials.data?.length ? copy.materialDeleteHint : copy.deleteUnavailable}</p>}
         </Panel>
-        <Panel>
+        {!archived && <Panel>
           <h2 className="text-xl font-black text-teal">{copy.copyLesson}</h2>
           <p className="mt-2 text-sm text-muted">{copy.copyHint}</p>
           {groups.error ? <p role="alert" className="mt-4 text-sm text-red-700">{ar ? 'تعذر تحميل مجموعاتك.' : 'Could not load your groups.'}</p> :
             <div className="mt-4"><CopyLessonForm locale={locale} sourceLessonId={id} groups={groups.data ?? []} /></div>}
-        </Panel>
+        </Panel>}
       </div>
       <Panel>
         <div className="flex items-baseline justify-between gap-3">
@@ -70,7 +88,7 @@ export default async function TeacherLesson({ params }: { params: Promise<{ loca
               {material.kind === 'file' && <p className="mt-2 text-sm text-muted">{material.mime_type} · {material.file_size ? `${Math.ceil(material.file_size / 1024)} KB` : '—'}</p>}
             </div>) : <EmptyState>{ar ? 'لا توجد مواد بعد.' : 'No materials yet.'}</EmptyState>}
           </div>}
-        <div className="mt-6 border-t border-line pt-5"><TeacherMaterialForms locale={locale} lessonId={id} /></div>
+        {!archived && <div className="mt-6 border-t border-line pt-5"><TeacherMaterialForms locale={locale} lessonId={id} /></div>}
       </Panel>
     </div>
   </>;
