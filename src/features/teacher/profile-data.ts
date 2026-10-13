@@ -16,26 +16,6 @@ export type ProfileCatalogueSubject = TeacherCatalogueSubject;
 export type ProfileCatalogueOffering = TeacherCatalogueOffering;
 type PublicTeacherRow = { id: string; full_name: string; headline: string | null; avatar_path: string | null };
 
-async function publicNodeAncestors(db: Awaited<ReturnType<typeof createClient>>, nodeIds: string[]) {
-  const rows = new Map<string, ProfileCatalogueNode>();
-  let frontier = [...new Set(nodeIds)];
-  while (frontier.length) {
-    const next = new Set<string>();
-    for (let offset = 0; offset < frontier.length; offset += 100) {
-      const batch = frontier.slice(offset, offset + 100);
-      const result = await db.from('education_nodes').select('id,parent_id,kind,name_ar,name_en').in('id', batch);
-      if (result.error) return { rows: [] as ProfileCatalogueNode[], error: result.error };
-      for (const node of (result.data ?? []) as ProfileCatalogueNode[]) {
-        if (rows.has(node.id)) continue;
-        rows.set(node.id, node);
-        if (node.parent_id && !rows.has(node.parent_id)) next.add(node.parent_id);
-      }
-    }
-    frontier = [...next].filter(id => !rows.has(id));
-  }
-  return { rows: [...rows.values()], error: null };
-}
-
 export async function teacherProfile(locale: Locale) {
   const me = await teacherViewer(locale);
   const ar = locale === 'ar';
@@ -148,7 +128,7 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
   const [teacherResult, contactsResult, specializationResult] = await Promise.all([
     db.rpc('public_teachers').eq('id', teacherId).maybeSingle(),
     db.from('teacher_contacts').select('phone_number,whatsapp_number,contact_email,visibility').eq('teacher_id', teacherId).maybeSingle(),
-    db.rpc('public_teacher_specializations', { p_teacher_id: teacherId }),
+    db.rpc('public_teacher_specialization_labels', { p_teacher_id: teacherId }),
   ]);
   const ar = locale === 'ar';
   if (teacherResult.error || contactsResult.error || specializationResult.error) {
@@ -157,44 +137,27 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
   const teacher = teacherResult.data as unknown as PublicTeacherRow | null;
   if (!teacher) return { teacher: null, visitor: null, avatarUrl: null, error: null };
 
-  const offeringIds = ((specializationResult.data ?? []) as Array<{ offering_id: string }>).map(row => row.offering_id);
-  const [offerings, detailsResult, coverResult, groupsResult] = await Promise.all([
-    offeringIds.length ? db.from('offerings').select('id,node_id,subject_id').in('id', offeringIds) : Promise.resolve({ data: [], error: null }),
+  const [detailsResult, coverResult, groupsResult] = await Promise.all([
     db.rpc('public_teacher_profile_details', { p_teacher_id: teacherId }),
     db.rpc('public_teacher_cover_path', { p_teacher_id: teacherId }),
     publicGroups(normalizeDiscoveryFilters({ teacher_id: teacherId })),
   ]);
-  if (offerings.error || detailsResult.error || coverResult.error || groupsResult.error) {
+  if (detailsResult.error || coverResult.error || groupsResult.error) {
     return { teacher: null, visitor: null, avatarUrl: null, error: ar ? 'تعذر تحميل ملف المعلم. حاول مرة أخرى.' : 'Could not load this teacher profile. Please try again.' };
   }
 
-  const offeringRows = (offerings.data ?? []) as ProfileCatalogueOffering[];
-  const subjectIds = [...new Set(offeringRows.map(row => row.subject_id))];
-  const nodeIds = [...new Set(offeringRows.map(row => row.node_id))];
-  const [subjects, nodes] = await Promise.all([
-    subjectIds.length ? db.from('subjects').select('id,name_ar,name_en').in('id', subjectIds) : Promise.resolve({ data: [], error: null }),
-    publicNodeAncestors(db, nodeIds),
-  ]);
-  if (subjects.error || nodes.error) {
-    return { teacher: null, visitor: null, avatarUrl: null, error: ar ? 'تعذر تحميل ملف المعلم. حاول مرة أخرى.' : 'Could not load this teacher profile. Please try again.' };
-  }
-
-  const localized = (row: { name_ar: string; name_en: string }) => catalogueDisplayName(row, locale);
-  const nodeRows = nodes.rows;
-  const subjectRows = (subjects.data ?? []) as ProfileCatalogueSubject[];
-  const specializations = offeringRows.flatMap(offering => {
-    const subject = subjectRows.find(row => row.id === offering.subject_id);
-    if (!subject) return [];
-    const labels: string[] = [];
-    const seen = new Set<string>();
-    let node = nodeRows.find(row => row.id === offering.node_id);
-    while (node && !seen.has(node.id)) {
-      seen.add(node.id);
-      labels.unshift(localized(node));
-      node = node.parent_id ? nodeRows.find(row => row.id === node?.parent_id) : undefined;
-    }
-    return [{ id: offering.id, subject: localized(subject), context: labels.join(' › ') }];
-  });
+  const specializationRows = (specializationResult.data ?? []) as Array<{
+    offering_id: string;
+    subject_name_ar: string;
+    subject_name_en: string;
+    context_ar: string;
+    context_en: string;
+  }>;
+  const specializations = specializationRows.map(row => ({
+    id: row.offering_id,
+    subject: locale === 'ar' ? row.subject_name_ar : row.subject_name_en,
+    context: locale === 'ar' ? row.context_ar : row.context_en,
+  }));
   const [avatar, coverUrl] = await Promise.all([
     teacher.avatar_path
     ? await db.storage.from('teacher-avatars').createSignedUrl(teacher.avatar_path, 300)
