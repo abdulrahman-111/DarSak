@@ -15,9 +15,18 @@ after deploying. Everything below is free.
 
 ## 1. URL configuration
 
-Auth -> URL Configuration: set the Site URL, and add the redirect URL
-`http://localhost:3000/api/auth/callback` plus the production equivalent
-(`https://<your-domain>/api/auth/callback`).
+Auth -> URL Configuration:
+
+- Site URL: the production origin (for example `https://<your-domain>`).
+- Redirect URLs: add both wildcard entries
+  - `http://localhost:3000/**`
+  - `https://<your-domain>/**`
+
+Use the `/**` wildcard, not the bare `/api/auth/callback` path. Supabase matches the
+allow-list against the full redirect URL including the query string, and the app sends
+URLs like `/api/auth/callback?next=/en/reset-password`. An exact
+`.../api/auth/callback` entry does not match, so Supabase silently falls back to the Site
+URL and the email link lands on the home page instead of the app page.
 
 ## 2. Email confirmation
 
@@ -53,6 +62,17 @@ Do not enable captcha in Supabase without setting the site key: the forms would 
 token and every sign-up, sign-in, reset and resend would fail with `captcha_failed`.
 For local `supabase start`, uncomment the `[auth.captcha]` block in
 `supabase/config.toml` and set `SUPABASE_AUTH_CAPTCHA_SECRET`.
+
+## Troubleshooting
+
+- Email links land on the Site URL or home page instead of the app page: the redirect URL
+  is not allow-listed. Add the `/**` wildcard entries from section 1.
+- Emails not arriving or SMTP errors: the dashboard hides them. Open Supabase -> Logs ->
+  Auth and expand the row details. Gmail `535 BadCredentials` means you must use a Google
+  App Password (not the account password) and the full Gmail address as the username.
+- PKCE links (`?code=`) must be opened in the same browser that requested them, because
+  the code verifier is stored there.
+- Email links expire after 1 hour. Request a new one.
 
 ## Manual checks
 
