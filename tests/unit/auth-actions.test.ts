@@ -222,8 +222,26 @@ describe('auth actions', () => {
       expect(await redirectTarget(() => googleSignInAction('en', null, form({ next: '//evil.com' })))).toBe('https://accounts.google.com/o/oauth2');
       expect(signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
-        options: { redirectTo: 'https://dars.example/api/auth/callback?next=/en/dashboard' },
+        options: { redirectTo: 'https://dars.example/api/auth/callback?next=/en/dashboard&google_role=student' },
       });
+    });
+
+    it('passes an allowlisted signup role to the callback without provider authorization parameters', async () => {
+      vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
+      const signInWithOAuth = vi.fn(async () => ({ data: { url: 'https://accounts.google.com/o/oauth2' }, error: null }));
+      createClientMock.mockResolvedValue({ auth: { signInWithOAuth } });
+      await redirectTarget(() => googleSignInAction('en', null, form({ google_role: 'teacher' })));
+      expect(signInWithOAuth).toHaveBeenCalledWith({
+        provider: 'google',
+        options: { redirectTo: 'https://dars.example/api/auth/callback?next=/en/dashboard&google_role=teacher' },
+      });
+    });
+
+    it('rejects a malformed signup role before starting OAuth', async () => {
+      vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
+      const result = await googleSignInAction('en', null, form({ google_role: 'admin' }));
+      expect(result?.error).toBeTruthy();
+      expect(createClientMock).not.toHaveBeenCalled();
     });
   });
 });

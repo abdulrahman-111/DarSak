@@ -14,11 +14,12 @@ type Props = {
   labels: Record<string, string>;
   initialRole?: 'student' | 'teacher';
   returnPath?: string | null;
+  googleRetryRole?: 'student' | 'teacher' | null;
 };
 
 export const inputClass = 'mt-2 h-12 w-full rounded-xl border border-[#d8ccb8] bg-white px-4 text-ink outline-none transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
 
-export function AuthForm({ locale, mode, labels, initialRole = 'student', returnPath }: Props) {
+export function AuthForm({ locale, mode, labels, initialRole = 'student', returnPath, googleRetryRole = null }: Props) {
   const copy = authCopy[locale];
   const action = mode === 'login' ? loginAction.bind(null, locale) : signupAction.bind(null, locale);
   const [state, formAction, pending] = useActionState(action, null);
@@ -27,7 +28,7 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
   const passwordHintId = useId();
   const errorId = useId();
 
-  const showGoogle = googleEnabled && (mode === 'login' || role === 'student');
+  const showGoogle = googleEnabled;
 
   return (
     <>
@@ -128,7 +129,7 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
         <div className="flex items-center gap-3 text-xs font-bold uppercase tracking-[.14em] text-muted" aria-hidden="true">
           <span className="h-px flex-1 bg-[#e3d9c8]"/>{copy.orDivider}<span className="h-px flex-1 bg-[#e3d9c8]"/>
         </div>
-        <GoogleButton locale={locale} next={mode === 'login' ? returnPath : null}/>
+        <GoogleButton locale={locale} next={mode === 'login' ? returnPath : null} signupRole={mode === 'signup' ? role : googleRetryRole}/>
       </div>
     )}
     </>

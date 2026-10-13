@@ -23,10 +23,27 @@ export async function GET(request: NextRequest) {
   const db = await createClient();
 
   let error: unknown = new Error('Missing auth parameters');
-  if (code) ({ error } = await db.auth.exchangeCodeForSession(code));
+  let setupError = false;
+  if (code) {
+    ({ error } = await db.auth.exchangeCodeForSession(code));
+    if (!error && params.has('google_role')) {
+      const googleRole = params.get('google_role');
+      if (googleRole !== 'student' && googleRole !== 'teacher') {
+        setupError = true;
+      } else {
+        const completion = await db.rpc('complete_google_signup', { p_role: googleRole });
+        setupError = !!completion.error;
+      }
+    }
+  }
   else if (tokenHash && type && OTP_TYPES.includes(type)) ({ error } = await db.auth.verifyOtp({ type, token_hash: tokenHash }));
 
-  const response = NextResponse.redirect(error ? failure : new URL(destination, request.nextUrl.origin));
+  const setupFailure = new URL(`/${locale}/login?error=setup`, request.nextUrl.origin);
+  if (setupError) {
+    const googleRole = params.get('google_role');
+    if (googleRole === 'student' || googleRole === 'teacher') setupFailure.searchParams.set('google_role', googleRole);
+  }
+  const response = NextResponse.redirect(error ? failure : setupError ? setupFailure : new URL(destination, request.nextUrl.origin));
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }
