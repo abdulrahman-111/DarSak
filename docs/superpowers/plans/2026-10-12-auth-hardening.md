@@ -123,7 +123,7 @@ Modified:
 
 ## Supabase dashboard steps (for AUTH_SETUP.md; done manually by the owner)
 
-1. Auth → URL Configuration: Site URL plus redirect URL `http://localhost:3000/api/auth/callback` (and the prod URL).
+1. Auth → URL Configuration: Site URL (production origin) plus wildcard redirect URLs `http://localhost:3000/**` and `https://<your-domain>/**` (the allow-list matches the full URL including `?next=`).
 2. Auth → Providers → Email: enable "Confirm email". Optional: custom SMTP
    (free tiers from Resend or Brevo), because the built-in sender is heavily rate-limited.
 3. Auth → Providers → Google: create an OAuth client in Google Cloud Console
