@@ -7,7 +7,7 @@ import { authCopy, type AuthLocale } from './copy';
 export const googleEnabled = process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED === 'true';
 
 /** "Continue with Google" form; renders nothing unless NEXT_PUBLIC_AUTH_GOOGLE_ENABLED is 'true'. */
-export function GoogleButton({ locale, next }: { locale: AuthLocale; next?: string | null }) {
+export function GoogleButton({ locale, next, signupRole }: { locale: AuthLocale; next?: string | null; signupRole?: 'student' | 'teacher' | null }) {
   const copy = authCopy[locale];
   const [state, formAction, pending] = useActionState(googleSignInAction.bind(null, locale), null);
   const errorId = useId();
@@ -16,6 +16,7 @@ export function GoogleButton({ locale, next }: { locale: AuthLocale; next?: stri
   return (
     <form action={formAction} className="space-y-3" aria-describedby={state?.error ? errorId : undefined}>
       {next && <input type="hidden" name="next" value={next}/>}
+      {signupRole && <input type="hidden" name="google_role" value={signupRole}/>}
       <button
         className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[.9rem] border border-[#d8ccb8] bg-white px-5 text-base font-bold text-ink transition hover:bg-[#f6f0e4] disabled:cursor-wait disabled:opacity-60"
         disabled={pending}

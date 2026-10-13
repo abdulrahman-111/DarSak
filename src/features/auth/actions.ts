@@ -6,6 +6,7 @@ import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema } 
 import { isLocale, type Locale } from '@/i18n/config';
 import { authErrorMessage } from './errors';
 import { loginRedirectPath, safeAuthNext } from './return-path';
+import { authCopy } from '@/components/auth/copy';
 
 /** Non-secret fields echoed back on error so the reset form can repopulate them. Passwords are never included. */
 export type AuthState = {
@@ -95,9 +96,14 @@ export async function googleSignInAction(locale: string, _previous: unknown, for
   const unavailable = configurationError(locale);
   if (unavailable) return { error: unavailable };
   if (process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED !== 'true') return { error: authErrorMessage(locale, undefined, 'login') };
+  const requestedRole = formData.get('google_role');
+  const googleRole = requestedRole === null ? 'student' : requestedRole;
+  if (googleRole !== 'student' && googleRole !== 'teacher') {
+    return { error: authCopy[locale as Locale].googleRoleInvalid };
+  }
   const next = safeAuthNext(formData.get('next'), locale as Locale);
   const db = await createClient();
-  const { data, error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callbackUrl(next) } });
+  const { data, error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${callbackUrl(next)}&google_role=${googleRole}` } });
   if (error || !data.url) return { error: authErrorMessage(locale, error?.code, 'login') };
   redirect(data.url);
 }

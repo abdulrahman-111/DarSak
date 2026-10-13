@@ -46,8 +46,11 @@ PKCE links (`?code=`) work without template changes.
 3. Auth -> Providers -> Google: enable it and paste the client ID and secret.
 4. Set `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true`.
 
-New Google accounts are created as students. Teachers register with email, and role
-changes stay admin-only. For local `supabase start`, set
+New Google accounts can choose student or teacher during registration. Teacher accounts
+start pending administrator review and cannot publish groups until approved. Existing
+Google users keep their current role; signing in with Google never changes an account
+role. A failed first-time setup can be retried with the selected role from the login
+screen. For local `supabase start`, set
 `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` and `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` and
 flip `[auth.external.google] enabled = true` in `supabase/config.toml`.
 
