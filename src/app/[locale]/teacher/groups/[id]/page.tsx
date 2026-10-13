@@ -8,19 +8,36 @@ import { GenerationPreviewForm } from '@/features/teacher/generation-form';
 import { DuplicateGroupForm } from '@/features/teacher/shortcuts-forms';
 import { EnrollmentDecisionButtons } from '@/components/platform/actions';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
+import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
+import { StudentPagination } from '@/features/student/pagination';
 
-export default async function TeacherGroupDetail({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const { locale: raw, id } = await params;
+export default async function TeacherGroupDetail({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ page?: string }> }) {
+  const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'teacher');
-  const [group, slots, lessons, students, exclusions] = await Promise.all([
+  const fetchLessons = (page: number) => me.db.from('lessons')
+    .select('id,title,starts_at,status,group:groups!inner(teacher_id)', { count: 'exact' })
+    .eq('group_id', id).eq('group.teacher_id', me.id)
+    .order('starts_at', { ascending: false }).order('id', { ascending: false })
+    .range((page - 1) * STUDENT_PAGE_SIZE, page * STUDENT_PAGE_SIZE - 1);
+  let page = normalizeStudentPage(query.page);
+  const [group, slots, initialLessons, students, exclusions] = await Promise.all([
     me.db.from('groups').select('id,name,description,status,capacity,location').eq('id', id).eq('teacher_id', me.id).maybeSingle(),
     me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id).order('weekday').order('start_time'),
-    me.db.from('lessons').select('id,title,starts_at,status').eq('group_id', id).order('starts_at', { ascending: false }).limit(20),
+    fetchLessons(page),
     me.db.rpc('group_students', { p_group_id: id }),
     me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id).order('local_date'),
   ]);
+  let lessons = initialLessons;
+  const lessonCount = lessons.count ?? 0;
+  const lessonPageCount = studentPageCount(lessonCount);
+  if (!lessons.error && lessons.count != null && page > lessonPageCount) {
+    page = lessonPageCount;
+    lessons = await fetchLessons(page);
+  }
+  const lessonsFailed = !!lessons.error || lessons.count == null;
+  const pageLabels = ar ? { previous: 'السابق', next: 'التالي', page: 'صفحة' } : { previous: 'Previous', next: 'Next', page: 'Page' };
   const currentGroup = group.data;
   if (!currentGroup) notFound();
   const copy = ar ? {
@@ -54,7 +71,7 @@ export default async function TeacherGroupDetail({ params }: { params: Promise<{
     </Panel>}
 
     <div className="mt-6 grid gap-6 xl:grid-cols-2">
-      <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.lessons}</h2>{lessons.error ? <p role="alert" className="text-sm text-red-700">{copy.lessonsError}</p> : lessons.data?.length ? <div className="grid gap-2">{lessons.data.map(lesson => <RowLink key={lesson.id} href={`/${locale}/teacher/lessons/${lesson.id}`} title={lesson.title} meta={cairoDate(lesson.starts_at, locale)} trailing={<Status value={lesson.status} locale={locale} />} />)}</div> : <EmptyState>{copy.noLessons}</EmptyState>}</Panel>
+      <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.lessons}</h2>{lessonsFailed ? <><p role="alert" className="text-sm text-red-700">{copy.lessonsError}</p><a href={`/${locale}/teacher/groups/${id}?retry=1`} className="mt-3 inline-flex font-bold text-orange underline">{ar ? 'إعادة المحاولة' : 'Try again'}</a></> : lessons.data?.length ? <div className="grid gap-2">{lessons.data.map(lesson => <RowLink key={lesson.id} href={`/${locale}/teacher/lessons/${lesson.id}`} title={lesson.title} meta={cairoDate(lesson.starts_at, locale)} trailing={<Status value={lesson.status} locale={locale} />} />)}</div> : <EmptyState>{copy.noLessons}</EmptyState>}<StudentPagination locale={locale} href={`/${locale}/teacher/groups/${id}`} page={page} pageCount={lessonPageCount} labels={pageLabels}/></Panel>
       <Panel>
         <h2 className="mb-4 text-xl font-black text-teal">{copy.students}</h2>
         {students.error ? <p role="alert" className="text-sm text-red-700">{copy.studentsError}</p> : students.data?.length ? <div className="grid gap-2">{students.data.map((student: { enrollment_id: string; full_name: string; status: string }) => <div key={student.enrollment_id} className="rounded-xl border border-line p-3"><div className="flex items-center justify-between gap-3"><strong>{student.full_name}</strong><Status value={student.status} locale={locale} /></div>{currentGroup.status !== 'archived' && <EnrollmentDecisionButtons locale={locale} id={student.enrollment_id} status={student.status} />}</div>)}</div> : <EmptyState>{copy.noStudents}</EmptyState>}

@@ -129,6 +129,19 @@ try {
   const acceptResults = await Promise.all([enroll1,enroll2].map(id=>request('/rest/v1/rpc/decide_enrollment',{token:teacher.token,method:'POST',body:{p_enrollment_id:id,p_status:'accepted'}})));
   const accepted = await success(`/rest/v1/enrollments?group_id=eq.${group.id}&status=eq.accepted`,{token:teacher.token});
   check(accepted.length === 1 && acceptResults.filter(r=>r.ok).length === 1, 'concurrent last-seat approvals cannot overfill capacity');
+  const acceptedPage = await success('/rest/v1/rpc/teacher_enrollment_page',{token:teacher.token,method:'POST',body:{p_status:'accepted',p_offset:0,p_limit:20}});
+  const foreignEnrollmentPage = await success('/rest/v1/rpc/teacher_enrollment_page',{token:otherTeacher.token,method:'POST',body:{p_status:'accepted',p_offset:0,p_limit:20}});
+  const studentEnrollmentPage = await request('/rest/v1/rpc/teacher_enrollment_page',{token:student.token,method:'POST',body:{p_status:'accepted',p_offset:0,p_limit:20}});
+  const anonymousEnrollmentPage = await request('/rest/v1/rpc/teacher_enrollment_page',{method:'POST',body:{p_status:'accepted',p_offset:0,p_limit:20}});
+  const serviceEnrollmentPage = await request('/rest/v1/rpc/teacher_enrollment_page',{token:service,method:'POST',body:{p_status:'accepted',p_offset:0,p_limit:20}});
+  check(acceptedPage.total===1 && acceptedPage.rows[0]?.enrollment_id===accepted[0].id && acceptedPage.rows[0]?.full_name
+    && foreignEnrollmentPage.total===0 && foreignEnrollmentPage.rows.length===0
+    && !studentEnrollmentPage.ok && !anonymousEnrollmentPage.ok && !serviceEnrollmentPage.ok,
+    'teacher enrollment projection is paged, tenant-scoped, and denies student, anonymous, and service callers');
+  await success('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:pendingTeacher.id,p_status:'suspended',p_approved:null}});
+  const suspendedEnrollmentPage = await request('/rest/v1/rpc/teacher_enrollment_page',{token:pendingTeacher.token,method:'POST',body:{p_status:'pending',p_offset:0,p_limit:20}});
+  await success('/rest/v1/rpc/admin_update_user',{token:spoof.token,method:'POST',body:{p_user_id:pendingTeacher.id,p_status:'active',p_approved:null}});
+  check(!suspendedEnrollmentPage.ok,'suspended teacher cannot call teacher enrollment projection');
   const publicGroup = await success(`/rest/v1/rpc/public_groups?id=eq.${group.id}`);
   check(publicGroup.length===1 && publicGroup[0].accepted_count===1 && publicGroup[0].available_seats===0 && publicGroup[0].teacher_name, 'anonymous discovery exposes safe capacity and teacher projection');
   const discovery = await success('/rest/v1/rpc/discover_groups',{method:'POST',body:{p_teacher_id:teacher.id,p_weekday:0,p_query:`Integration ${suffix}`,p_offset:0,p_limit:12}});
