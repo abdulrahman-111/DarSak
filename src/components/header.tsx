@@ -20,7 +20,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
       <div className="container flex min-h-16 flex-wrap items-center gap-4 py-3 md:gap-5">
         <Link href={homeHref} className="flex items-center gap-2.5 text-xl font-black text-teal" aria-label={t.home}>
           <span className="grid size-9 place-items-center rounded-[.7rem] bg-teal text-lg font-black text-cream">
-            {locale === 'ar' ? 'د' : <BookOpen size={18}/>}
+            <BookOpen size={18}/>
           </span>
           {t.brand}
         </Link>
