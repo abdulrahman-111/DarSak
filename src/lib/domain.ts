@@ -33,3 +33,7 @@ export function cairoDateTimeToUtc(value: string): string {
   if (matches.length !== 1) throw new Error('Cairo time is missing or ambiguous during a daylight-saving change; choose another time');
   return new Date(matches[0]).toISOString();
 }
+
+export const forgotPasswordSchema = z.object({ email: z.string().trim().email() });
+export const resetPasswordSchema = z.object({ password: z.string().min(8).max(72), confirmPassword: z.string() })
+  .refine(v => v.password === v.confirmPassword, { message: 'Passwords do not match', path: ['confirmPassword'] });

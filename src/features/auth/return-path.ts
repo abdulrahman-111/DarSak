@@ -17,3 +17,14 @@ export function loginRedirectPath(locale: Locale, candidate: unknown, profile?: 
   if (profile?.status === 'active' && (role === 'student' || role === 'teacher' || role === 'admin')) return `/${locale}/${role}`;
   return `/${locale}/dashboard`;
 }
+
+const AUTH_NEXT_PATTERN = /^\/(?:ar|en)(?:\/[A-Za-z0-9\-_/]*)?$/;
+
+/** Sanitize the `next` of an auth callback: local, locale-prefixed paths only. */
+export function safeAuthNext(candidate: unknown, fallbackLocale: Locale): string {
+  const fallback = `/${fallbackLocale}/dashboard`;
+  if (typeof candidate !== 'string') return fallback;
+  if (!AUTH_NEXT_PATTERN.test(candidate)) return fallback;
+  if (candidate.includes('//') || candidate.includes('\\') || candidate.includes('..')) return fallback;
+  return candidate;
+}
