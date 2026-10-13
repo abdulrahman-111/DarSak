@@ -122,7 +122,7 @@ async function calendarLessonRows(me: Awaited<ReturnType<typeof teacherViewer>>,
   const targetPage = normalizeTeacherPage(requestedPage);
   let total: number | null = null;
   if (targetPage > 1) {
-    const count = await me.db.from('lessons').select('id,group:groups!inner(teacher_id)', { count: 'exact', head: true }).eq('groups.teacher_id', me.id);
+    const count = await me.db.from('lessons').select('id,group:groups!inner(teacher_id)', { count: 'exact', head: true }).eq('group.teacher_id', me.id);
     if (count.error || count.count == null) return { rows: [] as LessonRow[], total: 0, page: 1, pageCount: 1, error: count.error ?? { message: 'Exact lesson count unavailable.' } };
     total = count.count;
   }
@@ -131,7 +131,7 @@ async function calendarLessonRows(me: Awaited<ReturnType<typeof teacherViewer>>,
   if (total != null) page = clampTeacherPage(targetPage, total);
   let result = await me.db.from('lessons')
     .select(selected, total == null ? { count: 'exact' } : {})
-    .eq('groups.teacher_id', me.id)
+    .eq('group.teacher_id', me.id)
     .order('starts_at', { ascending: false })
     .order('id', { ascending: false })
     .range(teacherPageOffset(page), teacherPageOffset(page) + TEACHER_PAGE_SIZE - 1);
@@ -144,7 +144,7 @@ async function calendarLessonRows(me: Awaited<ReturnType<typeof teacherViewer>>,
     page = latestPage;
     result = await me.db.from('lessons')
       .select(selected)
-      .eq('groups.teacher_id', me.id)
+      .eq('group.teacher_id', me.id)
       .order('starts_at', { ascending: false })
       .order('id', { ascending: false })
       .range(teacherPageOffset(page), teacherPageOffset(page) + TEACHER_PAGE_SIZE - 1);
