@@ -1,0 +1,13 @@
+# Role UX and profile reliability — 2026-10-14
+
+Mobile account navigation is expandable; daily teaching tasks precede secondary shortcuts; student lesson previews include group names. Admin review links preserve validated queue filters and oversight links reach existing routes. Discovery controls have visible focus. Published groups reuse the guided schedule editor with edit/delete guards and a future-generation explanation. Targeted legacy action errors/successes are Arabic/English and do not expose raw database errors.
+
+Account/contact/specialization and rich profile forms share an unsaved-change indicator and one confirmation for link navigation or logout. Saving a section advances only its submitted baseline, preserving newer edits and other unsaved sections. Native beforeunload protects reload/close; SPA browser-history back/forward is not intercepted in this first version.
+
+Avatar uploads/removal use an active-owner expected-path RPC and confirm ambiguous results before cleanup. Stale removals keep the newer photo. Raw avatar column writes are removed only after the app using the RPC is live. The cover preview uses Next Image with explicit dimensions and unoptimized private signed URLs.
+
+Validation: 291 units/41 files, all 25 SQL regression files, 173 real local API assertions including real competing uploaded avatars and stale removal, typecheck, lint (zero errors/warnings), and local webpack production build pass. Vercel default preview READY at f646765 source; later migration split is SQL-only and produces the same tested final schema.
+
+Built-app checks passed: EN/AR 390px compact/expanded menus for student, teacher, admin; next-lesson group names; canceled link/logout preserves teacher drafts; successful profile save clears its warning; saving one section leaves another dirty section protected; published weekly time editing via the shared form; admin detail Back retains queue filters. Initial browser harness used an incorrect logout label; the dictionary label corrected it. Separately, synthetic roster users inserted directly in SQL lacked Auth instance metadata, so the Auth admin API did not remove them; local SQL cleanup removed those exact fixture rows and the harness was corrected. No production data was involved.
+
+Release order: apply additive teacher_avatar_compare_and_set first; merge/deploy the app; verify exact production commit; apply enforce_teacher_avatar_compare_and_set afterward. The guard is staged to avoid breaking the previous uploader during deployment. PR https://github.com/abdulrahman-111/Dars/pull/14. Deployment and focused zoom results are recorded in the release ledger.
