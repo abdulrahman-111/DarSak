@@ -5,10 +5,12 @@ import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui
 import { StudentPagination } from '@/features/student/pagination';
 import { teacherStudents } from '@/features/teacher/data';
 import { TeacherRosterFilterForm } from '@/features/teacher/roster-filter-form';
+import { requireTeachingAccess } from '@/components/platform/access';
 
 export default async function TeacherStudents({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{page?:string|string[];q?:string|string[];group_id?:string|string[]}>}){
   const [{locale:raw},query]=await Promise.all([params,searchParams]);
   const locale=ensureLocale(raw),ar=locale==='ar';
+  await requireTeachingAccess(locale);
   const data=await teacherStudents(locale,query.page,query.q,query.group_id);
   const copy=ar
     ?{eyebrow:'المجموعات الحالية',title:'طلابي',description:'الطلاب المقبولون في مجموعاتك.',failed:'تعذر تحميل طلابك. حاول مرة أخرى.',retry:'إعادة المحاولة',empty:'لا يوجد طلاب مقبولون بعد.',previous:'السابق',next:'التالي',page:'الصفحة'}

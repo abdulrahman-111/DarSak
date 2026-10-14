@@ -37,6 +37,17 @@ describe('calendar route', () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
+  it('maps the exact expired-teacher RPC denial to private 403 while student export remains intact', async () => {
+    getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: { id: 'teacher' }, profile: { role: 'teacher', status: 'active' } });
+    rpc.mockResolvedValueOnce({ data: null, error: { code: '42501', message: 'teacher teaching access expired' } });
+    const expired=await GET(request());
+    expect(expired.status).toBe(403);expect(expired.headers.get('cache-control')).toBe('private, no-store');
+    expect(await expired.json()).toEqual({error:'teaching_access_expired'});
+    getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: { id: 'student' }, profile: { role: 'student', status: 'active' } });
+    rpc.mockResolvedValueOnce({data:{total:0,rows:[]},error:null});
+    expect(await GET(request()).then(r=>r.status)).toBe(200);
+  });
+
   it('rejects invalid and oversized ranges and hides RPC errors', async () => {
     const invalid = await GET(request('from=2026-02-30&until=2026-03-01&locale=en'));
     expect(invalid.status).toBe(400);

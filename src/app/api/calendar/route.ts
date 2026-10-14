@@ -24,7 +24,9 @@ export async function GET(request: NextRequest) {
     if (!profile || profile.status !== 'active' || !['student', 'teacher'].includes(profile.role)) return error(403, 'unavailable');
 
     const { data, error: rpcError } = await db.rpc('calendar_lesson_export', { p_from: range.from, p_until: range.until });
-    if (rpcError) return rpcError.code === '54000'
+    if (rpcError) return rpcError.code === '42501'
+      ? error(403, rpcError.message === 'teacher teaching access expired' ? 'teaching_access_expired' : 'unavailable')
+      : rpcError.code === '54000'
       ? error(400, 'too_many_lessons')
       : rpcError.code === '22023'
         ? error(400, 'invalid_range')

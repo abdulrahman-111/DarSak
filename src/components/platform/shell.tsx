@@ -15,12 +15,14 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
     { href: `/${locale}/teacher/lessons`, label: ar ? 'الحصص' : 'Lessons' },
+    { href: `/${locale}/teacher/access`, label: ar ? 'صلاحية التدريس' : 'Teaching access' },
     notifications,
   ];
   if (role === 'admin') return [
     { href: `/${locale}/admin`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/admin/users`, label: ar ? 'المستخدمون' : 'People' },
     { href: `/${locale}/admin/teachers`, label: ar ? 'طلبات المعلمين' : 'Teacher requests' },
+    { href: `/${locale}/admin/access`, label: ar ? 'صلاحية المعلمين' : 'Teacher access' },
     { href: `/${locale}/admin/education`, label: ar ? 'الدليل التعليمي' : 'Education' },
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },

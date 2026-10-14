@@ -227,6 +227,14 @@ reset role;
 -- A pending teacher with a grant can still prepare drafts, independent of approval.
 set local role authenticated;
 set local request.jwt.claim.sub='9c000000-0000-4000-8000-000000000002';
+insert into public.groups(teacher_id,offering_id,name,capacity,status)
+select auth.uid(),id,'Current pending teacher RETURNING draft',5,'draft'
+from public.offerings where owner_teacher_id is null order by id limit 1
+returning id;
+do $$ begin
+  if not exists(select 1 from public.groups where name='Current pending teacher RETURNING draft' and teacher_id=auth.uid()) then
+    raise exception 'current teacher INSERT RETURNING was denied or inserted no row'; end if;
+end $$;
 do $$ begin
   if not public.is_group_owner('9c100000-0000-4000-8000-000000000002') then raise exception 'pending granted owner draft access was lost'; end if;
   insert into public.groups(id,teacher_id,offering_id,name,capacity,status)

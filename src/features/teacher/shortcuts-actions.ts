@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { deleteMaterial as removeLessonMaterial, setLessonStatus as changeLessonStatus } from './actions';
 import { copyLessonSchema, duplicateGroupSchema, duplicateSetupPath, shortcutMutationMessage } from './shortcuts-domain';
@@ -18,6 +19,7 @@ async function activeTeacher(locale: Locale) {
   const { data: profile, error } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
   if (error) return { error: message(locale, 'Could not verify your teacher account. Please try again.', 'تعذر التحقق من حساب المعلم. حاول مرة أخرى.') } as const;
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') } as const;
+  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)} as const;
   return { db, user } as const;
 }
 

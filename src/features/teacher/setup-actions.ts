@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import { groupDetailsFieldErrors, groupDetailsSchema, groupScheduleSlotFieldErrors, groupScheduleSlotSchema } from './setup-domain';
 import { idSchema } from '@/features/student/domain';
+import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 
 export type GroupDraftActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; id?: string; updated_at?: string } | null;
 export type ScheduleSlotActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
@@ -42,6 +43,7 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
   const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
   if (profileError) return { error: message(locale, 'Could not verify your teacher account. Please try again.', 'تعذر التحقق من حساب المعلم. حاول مرة أخرى.') };
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
+  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
 
   const { data: savedId, error } = await db.rpc('save_teacher_group_draft', {
     p_group_id: id,
@@ -78,6 +80,7 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
 
 function scheduleError(locale: Locale, rawError: string): string {
   const error = rawError.toLowerCase();
+  if(error==='teacher teaching access expired')return teachingGuardMessage(locale,'expired');
   if (error.includes('overlap') && (error.includes('lesson') || error.includes('schedule'))) {
     return message(locale,
       'That time conflicts with another weekly time or an existing lesson. Choose a different time.',
@@ -117,6 +120,7 @@ export async function saveScheduleSlot(locale: Locale, _state: ScheduleSlotActio
   };
 
   const db = await createClient();
+  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
   const { error } = await db.rpc('save_schedule_slot', {
     p_group_id: parsed.data.group_id,
     p_weekday: parsed.data.weekday,
@@ -141,6 +145,7 @@ export async function deleteScheduleSlot(locale: Locale, _state: ScheduleSlotAct
   }
 
   const db = await createClient();
+  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
   const { error } = await db.rpc('delete_schedule_slot', { p_group_id: groupId, p_slot_id: slotId });
   if (error) return { error: scheduleError(locale, error.message) };
 

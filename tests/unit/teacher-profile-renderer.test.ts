@@ -143,4 +143,13 @@ describe('shared teacher visitor projection', () => {
     expect(render(visible)).toContain('Dars does not verify qualifications.');
     expect(render(hidden)).not.toContain('Dars does not verify qualifications.');
   });
+
+  it('shows a localized unavailable-enrollment state when public group projections are empty',()=>{
+    const view=buildTeacherVisitorView({teacher,details:null,specializations:[],groups:[],avatarUrl:null,coverUrl:null});
+    const en=renderToStaticMarkup(createElement(TeacherProfile,{view,locale:'en',backLabel:'Back'}));
+    const ar=renderToStaticMarkup(createElement(TeacherProfile,{view,locale:'ar',backLabel:'عودة'}));
+    expect(en).toContain('No groups available for enrollment.');
+    expect(ar).toContain('لا توجد مجموعات متاحة للتسجيل.');
+    expect(en).not.toContain('View group details');
+  });
 });

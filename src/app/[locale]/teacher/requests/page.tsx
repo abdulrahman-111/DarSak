@@ -5,10 +5,12 @@ import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui
 import { teacherRequests } from '@/features/teacher/data';
 import { StudentPagination } from '@/features/student/pagination';
 import { TeacherRosterFilterForm } from '@/features/teacher/roster-filter-form';
+import { requireTeachingAccess } from '@/components/platform/access';
 
 export default async function TeacherRequests({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{page?:string|string[];q?:string|string[];group_id?:string|string[]}>}){
   const [{locale:raw},query]=await Promise.all([params,searchParams]);
   const locale=ensureLocale(raw),ar=locale==='ar';
+  await requireTeachingAccess(locale);
   const data=await teacherRequests(locale,query.page,query.q,query.group_id);
   const copy=ar
     ?{eyebrow:'طلبات الطلاب',title:'طلبات الانضمام',description:'راجع كل طلب، ثم اقبل الطالب أو ارفضه. تطبق السعة داخل قاعدة البيانات.',failed:'تعذر تحميل طلبات الطلاب. حاول مرة أخرى.',retry:'إعادة المحاولة',empty:'لا توجد طلبات تنتظر المراجعة.',previous:'السابق',next:'التالي',page:'الصفحة'}

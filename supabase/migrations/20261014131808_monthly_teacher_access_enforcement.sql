@@ -16,7 +16,7 @@ alter policy groups_read on public.groups using (
   (status='published' and exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id
    where p.id=groups.teacher_id and p.role='teacher' and p.status='active' and t.approved and dars_private.teacher_has_access(p.id)))
   or public.is_group_owner(id) or (select public.current_role())='admin' or public.is_group_member(id));
-alter policy groups_write on public.groups using (public.is_group_owner(id) or (select public.current_role())='admin')
+alter policy groups_write on public.groups using ((teacher_id=(select auth.uid()) and (select public.current_role())='teacher' and (select public.is_active_user()) and dars_private.teacher_has_access(teacher_id)) or (select public.current_role())='admin')
  with check ((teacher_id=(select auth.uid()) and (select public.current_role())='teacher' and (select public.is_active_user()) and dars_private.teacher_has_access(teacher_id))
    or (select public.current_role())='admin');
 alter policy slots_read on public.group_schedule_slots using (exists(select 1 from public.groups g where g.id=group_schedule_slots.group_id and (

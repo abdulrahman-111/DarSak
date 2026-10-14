@@ -27,7 +27,9 @@ function setup(options: {
   row?: { id: string; owner_teacher_id: string | null; archived_at: string | null; name_ar: string; name_en: string };
 } = {}) {
   const { rpcData = subjectId, rpcError = null, profile = { role: 'teacher', status: 'active' }, row = { id: subjectId, owner_teacher_id: teacherId, archived_at: null, name_ar: 'رياضيات', name_en: 'Mathematics' } } = options;
-  const rpc = vi.fn(async () => ({ data: rpcData, error: rpcError }));
+  const rpc = vi.fn(async (name: string) => name==='teacher_access_status'
+    ? {data:{has_access:true,starts_at:'2026-01-01T00:00:00Z',expires_at:'2027-01-01T00:00:00Z',renewal_opens_at:null,can_renew:false,fees_enabled:false,fee_effective_at:null,announcement_en:null,announcement_ar:null,pending_request_id:null},error:null}
+    : { data: rpcData, error: rpcError });
   const from = (table: string) => ({
     select: () => {
       let filters: string[] = [];

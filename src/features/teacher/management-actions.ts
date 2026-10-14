@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
 
 export type ManagementActionState = { error?: string; success?: string } | null;
@@ -18,11 +19,13 @@ async function activeManager(locale: Locale) {
   if (actor?.status !== 'active' || !['teacher', 'admin'].includes(actor.role)) {
     return { error: copy(locale, 'An active teacher or administrator account is required.', 'يلزم حساب معلم أو مسؤول نشط.') } as const;
   }
+  if(actor.role==='teacher'){const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)} as const;}
   return { db, user, role: actor.role } as const;
 }
 
 function managementError(locale: Locale, raw: string | undefined) {
   const error = (raw ?? '').toLowerCase();
+  if(error==='teacher teaching access expired')return teachingGuardMessage(locale,'expired');
   if (error.includes('enrollment history')) return copy(locale, 'This group has enrollment history and cannot be deleted.', 'للمجموعة سجل طلبات أو عضويات ولا يمكن حذفها.');
   if (error.includes('lesson history')) return copy(locale, 'This group has lessons and cannot be deleted.', 'للمجموعة حصص ولا يمكن حذفها.');
   if (error.includes('published')) return copy(locale, 'Cancel the published group before deleting it.', 'ألغِ المجموعة المنشورة قبل حذفها.');

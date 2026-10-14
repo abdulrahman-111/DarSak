@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { publishRangeFieldErrors, publishRangeSchema } from './publish-domain';
 
@@ -38,6 +39,7 @@ export async function publishGroup(locale: Locale, groupId: string, _state: Teac
   };
 
   const db = await createClient();
+  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
   const { data: { user } } = await db.auth.getUser();
   if (!user) return { error: message(locale, 'Sign in as an approved teacher to publish a group.', 'سجل الدخول بحساب معلم معتمد لنشر المجموعة.') };
   const [profile, teacher] = await Promise.all([
@@ -53,7 +55,7 @@ export async function publishGroup(locale: Locale, groupId: string, _state: Teac
     p_from: range.data.from,
     p_until: range.data.until,
   });
-  if (error) return { error: mutationError(locale, error.message) };
+  if (error) return { error: error.code==='42501'&&error.message==='teacher teaching access expired'?teachingGuardMessage(locale,'expired'):mutationError(locale, error.message) };
 
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/teacher/groups`);

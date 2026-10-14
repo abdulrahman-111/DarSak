@@ -21,6 +21,7 @@ export function duplicateSetupPath(locale: Locale, sourceGroupId: string, draftG
 export function shortcutMutationMessage(locale: Locale, rawError: string): string {
   const error = rawError.toLowerCase();
   const ar = locale === 'ar';
+  if(error==='teacher teaching access expired')return ar?'انتهت صلاحية التدريس. جدّد الوصول من صفحة صلاحية التدريس.':'Teaching access has expired. Renew access from the teaching access page.';
   if (error.includes('conflict') || error.includes('overlap') || error.includes('schedule')) {
     return ar
       ? 'يتعارض هذا الموعد مع الجدول أو حصة موجودة. اختر وقتاً آخر.'

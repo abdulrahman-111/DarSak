@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
-import { requireViewer } from '@/components/platform/access';
+import { requireTeachingAccess } from '@/components/platform/access';
 import { LessonForm } from '@/components/platform/forms';
 import { TeacherMaterialForms } from '@/components/platform/actions';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
@@ -14,7 +14,7 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  const me = await requireViewer(locale, 'teacher');
+  const me = await requireTeachingAccess(locale);
   const lessonResult = await me.db.from('lessons')
     .select('id,group_id,title,starts_at,ends_at,status,notes,slot_id,local_date,group:groups!inner(id,name,teacher_id,status)')
     .eq('id', id)
