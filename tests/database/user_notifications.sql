@@ -110,13 +110,15 @@ do $$ declare v jsonb; v_id uuid; begin
   perform public.mark_notification_read(v_id);
   if (public.notifications_page(0,20)->>'unread')::integer<>6 then raise exception 'mark own read did not update unread count'; end if;
   perform public.mark_notification_read('7f430000-0000-4000-8000-000000000099');
-  if (select read_at from public.user_notifications where id='7f430000-0000-4000-8000-000000000099') is not null then raise exception 'mark read changed another recipient notification'; end if;
   begin perform public.notifications_page(0,21); raise exception 'oversized notification page was accepted'; exception when sqlstate '22023' then null; end;
   begin insert into public.user_notifications(recipient_id,kind,event_key) values(auth.uid(),'lesson_cancelled','raw'); raise exception 'raw notification write succeeded'; exception when insufficient_privilege then null; end;
 end $$;
+reset role;
+do $$ begin
+  if not exists(select 1 from public.user_notifications where id='7f430000-0000-4000-8000-000000000099' and recipient_id='7f400000-0000-4000-8000-000000000001' and read_at is null) then raise exception 'foreign mark changed or hid another recipient notification'; end if;
+end $$;
 
 -- Deterministic newer fixture rows verify the 20-row cap, exact total and stable tie ordering.
-reset role;
 insert into public.user_notifications(id,recipient_id,kind,event_key,created_at)
 select ('7f430000-0000-4000-8000-'||lpad((100+n)::text,12,'0'))::uuid,
   '7f400000-0000-4000-8000-000000000002','lesson_cancelled','page-fixture:'||n,timestamptz '2027-01-01 00:00:00+00'
@@ -133,10 +135,13 @@ do $$ declare v jsonb; begin
      or v->'rows'->0->>'id'<>'7f430000-0000-4000-8000-000000000102' then raise exception 'notification final page bound/order failed: %',v; end if;
   perform public.mark_all_notifications_read();
   if (public.notifications_page(0,20)->>'unread')::integer<>0
-     or exists(select 1 from public.user_notifications where recipient_id=auth.uid() and read_at is null)
-     or (select read_at from public.user_notifications where id='7f430000-0000-4000-8000-000000000099') is not null then raise exception 'mark all did not affect only the current recipient'; end if;
+     or exists(select 1 from public.user_notifications where recipient_id=auth.uid() and read_at is null) then raise exception 'mark all did not mark the current recipient rows'; end if;
 end $$;
 reset role;
+do $$ begin
+  if not exists(select 1 from public.user_notifications where id='7f430000-0000-4000-8000-000000000099' and recipient_id='7f400000-0000-4000-8000-000000000001' and read_at is null)
+     or exists(select 1 from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000002' and read_at is null) then raise exception 'mark all changed a foreign recipient or left an own row unread'; end if;
+end $$;
 
 set local role authenticated;
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000004';
