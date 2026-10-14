@@ -7,6 +7,10 @@ import { currentUser } from '@/features/platform/data';
 import { isConfigured } from '@/lib/supabase/server';
 import { LocaleSwitch } from './locale-switch';
 
+export function globalReportsHref(locale: string, activeRole: string | null) {
+  return activeRole === 'admin' ? `/${locale}/admin/reports` : null;
+}
+
 export async function Header({ locale, t }: { locale: string; t: Record<string, string> }) {
   const me = isConfigured() ? await currentUser() : null;
   const otherLocale = locale === 'ar' ? 'en' : 'ar';
@@ -14,6 +18,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
   const activeRole = me?.profile?.status === 'active' && (role === 'teacher' || role === 'admin' || role === 'student') ? role : null;
   const dashboardHref = activeRole ? `/${locale}/${activeRole}` : `/${locale}/dashboard`;
   const homeHref = activeRole ? dashboardHref : `/${locale}`;
+  const reportsHref = globalReportsHref(locale, activeRole);
 
   return (
     <header className="sticky top-0 z-30 border-b border-[#e3d9c8] bg-[#f6f0e4]/95 backdrop-blur-lg">
@@ -29,7 +34,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}>{t.discover}</ActiveLink>
           {!me && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
           {activeRole && <ActiveLink exact className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
-          {me && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/reports`}>{t.reports}</ActiveLink>}
+          {reportsHref && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{t.reports}</ActiveLink>}
         </nav>
 
         <div className="ms-auto flex items-center gap-2">
@@ -55,7 +60,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           <ActiveLink className="inline-flex items-center gap-1.5 py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}><Search size={16}/>{t.discover}</ActiveLink>
           {!me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
           {activeRole && <ActiveLink exact className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
-          {me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/reports`}>{t.reports}</ActiveLink>}
+          {reportsHref && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{t.reports}</ActiveLink>}
           {!me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/login`}>{t.login}</ActiveLink>}
         </nav>
       </div>
