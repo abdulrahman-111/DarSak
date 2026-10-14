@@ -1,8 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { createClientMock, isConfiguredMock, rpcMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn() }));
+const { createClientMock, isConfiguredMock, rpcMock, afterMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn(), afterMock: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock, isConfigured: isConfiguredMock }));
+vi.mock('server-only',()=>({}));
+vi.mock('next/server',async importOriginal=>({...await importOriginal<typeof import('next/server')>(),after:afterMock}));
 
 import { GET } from '@/app/api/auth/callback/route';
 
@@ -14,6 +16,7 @@ describe('auth callback route', () => {
   const verifyOtp = vi.fn();
 
   beforeEach(() => {
+    afterMock.mockReset();
     exchangeCodeForSession.mockReset().mockResolvedValue({ error: null });
     verifyOtp.mockReset().mockResolvedValue({ error: null });
     rpcMock.mockReset().mockResolvedValue({ data: 'teacher', error: null });
@@ -34,6 +37,13 @@ describe('auth callback route', () => {
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc');
     expect(rpcMock).toHaveBeenCalledWith('complete_google_signup', { p_role: 'teacher' });
     expect(target.pathname).toBe('/en/dashboard');
+    expect(afterMock).toHaveBeenCalledOnce();
+  });
+
+  it('does not schedule a teacher review request when Google completion returns an existing student role', async () => {
+    rpcMock.mockResolvedValue({ data: 'student', error: null });
+    await call('code=abc&next=/en/dashboard&google_role=teacher');
+    expect(afterMock).not.toHaveBeenCalled();
   });
 
   it('reports Google signup completion failures separately from invalid links', async () => {

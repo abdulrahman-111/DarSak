@@ -41,3 +41,4 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/calendar_lesson_
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/user_notifications.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_engine.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_enforcement.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/email_outbox.sql

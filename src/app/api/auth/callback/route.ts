@@ -1,10 +1,13 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { after } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
+import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient, isConfigured } from '@/lib/supabase/server';
 import { defaultLocale, isLocale, type Locale } from '@/i18n/config';
 import { safeAuthNext } from '@/features/auth/return-path';
 
 const OTP_TYPES: readonly EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
+export const maxDuration = 40;
 
 /** Finish PKCE / email-link auth, then send the user to a sanitized `next` path. */
 export async function GET(request: NextRequest) {
@@ -33,6 +36,7 @@ export async function GET(request: NextRequest) {
       } else {
         const completion = await db.rpc('complete_google_signup', { p_role: googleRole });
         setupError = !!completion.error;
+        if (!setupError && completion.data === 'teacher') after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
       }
     }
   }

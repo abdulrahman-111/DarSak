@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import { parseTeacherReviewStatus } from './review-data';
@@ -20,6 +22,7 @@ export async function requestTeacherReview(locale:Locale,_previous:TeacherReview
  if(status.status==='approved')return {error:message(locale,'Your teacher account is already approved.','حسابك معتمد بالفعل.')};
  const {error}=await db.rpc('request_teacher_review');
  if(error){const raw=error.message.toLowerCase();return {error:raw.includes('suspend')||raw.includes('active')?message(locale,'An active teacher account is required. Refresh your account status and try again.','يلزم حساب معلم نشط. حدّث حالة الحساب وحاول مرة أخرى.'):message(locale,'The request could not be sent. Refresh and try again.','تعذر إرسال الطلب. حدّث الصفحة وحاول مرة أخرى.')};}
+ after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
  for(const currentLocale of ['en','ar']){revalidatePath(`/${currentLocale}/teacher`,'layout');revalidatePath(`/${currentLocale}/admin/teachers`);revalidatePath(`/${currentLocale}/admin`);}
  return {success:message(locale,'Your review request was submitted.','تم إرسال طلب المراجعة.')};
 }

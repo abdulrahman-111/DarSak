@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock } = vi.hoisted(() => ({
+const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock, afterMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getVerifiedUserMock: vi.fn(),
   isConfiguredMock: vi.fn(),
   redirectMock: vi.fn((url: string) => { throw new Error(`NEXT_REDIRECT:${url}`); }),
+  afterMock: vi.fn(),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -13,6 +14,8 @@ vi.mock('@/lib/supabase/server', () => ({
   isConfigured: isConfiguredMock,
 }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
+vi.mock('server-only',()=>({}));
+vi.mock('next/server',()=>({after:afterMock}));
 
 import {
   forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction,
@@ -34,6 +37,7 @@ describe('auth actions', () => {
     createClientMock.mockReset();
     getVerifiedUserMock.mockReset();
     redirectMock.mockClear();
+    afterMock.mockReset();
     isConfiguredMock.mockReturnValue(true);
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://dars.example');
   });
@@ -89,6 +93,13 @@ describe('auth actions', () => {
     it('goes to the dashboard when a session is returned', async () => {
       createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: { session: {} }, error: null }) } });
       expect(await redirectTarget(() => signupAction('ar', null, form(signup)))).toBe('/ar/dashboard');
+    });
+
+    it('schedules a bounded outbox flush after teacher signup succeeds', async () => {
+      afterMock.mockReset();
+      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: { session: null, user: { id: 'teacher-id' } }, error: null }) } });
+      expect(await redirectTarget(() => signupAction('en', null, form({ ...signup, role: 'teacher' })))).toBe('/en/check-email?email=sara%40example.com');
+      expect(afterMock).toHaveBeenCalledOnce();
     });
 
     it('maps already-registered and weak-password errors', async () => {
