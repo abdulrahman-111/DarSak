@@ -7,3 +7,5 @@ Student materials opens a resource finder with title/group search, accepted-grou
 Validation: 294 unit assertions across 43 files, 26 database regression files, 173 existing real local API assertions, typecheck, lint (zero errors/warnings), and local webpack production build pass. New SQL assertions cover selected groups outside the first 50, accepted versus pending memberships, private metadata projection, owner scoping and existing unapproved-teacher historical access.
 
 Review corrected a missing Lessons pagination control, default service-role RPC grants and invalid SQL fixtures. The local default Turbopack environment limitation remains; webpack provides the local production build and Vercel's default build is checked at release.
+
+Release: PR15 merged as 8059814f6d22061679dfa64fd5c6f7c2af2b7217. Both additive migrations applied successfully. Vercel default build is READY on production deployment dpl_Cn3pCpvK7hVoPWT7agTfPMQWcjzn with the dars-sooty.vercel.app alias. The local acceptance harness passed tenant/resource-projection assertions plus EN/AR mobile teacher/student filtering, resource pagination and legacy lesson pagination.

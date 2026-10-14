@@ -13,6 +13,7 @@ import { PublicGroupShare } from '@/features/student/public-group-share';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 import { SavedGroupForm } from '@/features/student/saved-form';
 import { savedGroupStatus } from '@/features/student/saved-data';
+import { StudentOverlapWarning } from '@/features/student/overlap-warning';
 
 const weekdays = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -102,6 +103,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
                 <>
                   {enrollment?.status === 'rejected' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.retryEnrollment}</p>}
                   {enrollment?.status === 'cancelled' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.cancelledEnrollment}</p>}
+                  <StudentOverlapWarning locale={locale} groupId={id}/>
                   <EnrollmentForm locale={locale} id={id} kind="request"/>
                 </>
               ) : isStudent && data.available_seats === 0 ? (
