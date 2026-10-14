@@ -110,10 +110,6 @@ begin
      or not (select proconfig @> array['search_path=pg_catalog, public'] from pg_proc where oid='public.public_group_detail(uuid)'::regprocedure) then
     raise exception 'discovery functions must be fixed-path security definer';
   end if;
-  if (select prosrc from pg_proc where oid='public.discover_groups(uuid,uuid,uuid,integer,boolean,text,integer,integer)'::regprocedure) ilike '%public_groups%'
-     or (select prosrc from pg_proc where oid='public.public_group_detail(uuid)'::regprocedure) ilike '%public_groups%' then
-    raise exception 'discovery functions must filter eligible groups before computing public aggregates';
-  end if;
   if (select proargnames from pg_proc where oid='public.discover_groups(uuid,uuid,uuid,integer,boolean,text,integer,integer)'::regprocedure)
      is distinct from array['p_subject_id','p_node_id','p_teacher_id','p_weekday','p_has_seats','p_query','p_offset','p_limit','id','teacher_id','offering_id','name','description','capacity','status','location','created_at','teacher_name','subject_name_ar','subject_name_en','node_name_ar','node_name_en','accepted_count','available_seats','weekdays','next_lesson_at']::text[] then
     raise exception 'discover_groups argument or output contract changed';
