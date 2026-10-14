@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Locale } from '@/features/student/domain';
 
 const messages = {
@@ -13,6 +13,7 @@ const DirtyContext = createContext<ContextValue | null>(null);
 
 export function UnsavedProfileProtection({ locale, children }: { locale: Locale; children: ReactNode }) {
   const [dirtySections, setDirtySections] = useState<Record<string, boolean>>({});
+  const approvedNavigation = useRef(false);
   const setDirty = useCallback((key: string, dirty: boolean) => {
     setDirtySections(current => current[key] === dirty ? current : { ...current, [key]: dirty });
   }, []);
@@ -20,7 +21,15 @@ export function UnsavedProfileProtection({ locale, children }: { locale: Locale;
   const context = useMemo(() => ({ setDirty }), [setDirty]);
 
   useEffect(() => {
+    const approveImmediateNavigation = () => {
+      approvedNavigation.current = true;
+      window.setTimeout(() => { approvedNavigation.current = false; }, 0);
+    };
     const beforeUnload = (event: BeforeUnloadEvent) => {
+      if (approvedNavigation.current) {
+        approvedNavigation.current = false;
+        return;
+      }
       if (!dirty) return;
       event.preventDefault();
       event.returnValue = '';
@@ -34,13 +43,26 @@ export function UnsavedProfileProtection({ locale, children }: { locale: Locale;
       let destination: URL;
       try { destination = new URL(anchor.href, window.location.href); } catch { return; }
       if (destination.origin !== window.location.origin) return;
+      if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
       if (!window.confirm(messages[locale].confirm)) event.preventDefault();
+      else approveImmediateNavigation();
+    };
+    const confirmFormSubmit = (event: SubmitEvent) => {
+      if (!dirty || event.defaultPrevented || !(event.target instanceof HTMLFormElement) || !event.target.hasAttribute('data-confirm-unsaved-navigation')) return;
+      if (!window.confirm(messages[locale].confirm)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+      } else {
+        approveImmediateNavigation();
+      }
     };
     window.addEventListener('beforeunload', beforeUnload);
     document.addEventListener('click', confirmNavigation, true);
+    document.addEventListener('submit', confirmFormSubmit, true);
     return () => {
       window.removeEventListener('beforeunload', beforeUnload);
       document.removeEventListener('click', confirmNavigation, true);
+      document.removeEventListener('submit', confirmFormSubmit, true);
     };
   }, [dirty, locale]);
 
