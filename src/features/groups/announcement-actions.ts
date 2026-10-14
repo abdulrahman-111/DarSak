@@ -6,7 +6,7 @@ import type { Locale } from '@/features/student/domain';
 import { idSchema } from '@/features/student/domain';
 import { validateAnnouncement } from './announcement-domain';
 
-export type AnnouncementActionState = { error?: string; success?: string; editedAt?: string | null; body?: string } | null;
+export type AnnouncementActionState = { error?: string; success?: string; editedAt?: string | null; body?: string; revision?: string } | null;
 
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
 
@@ -31,5 +31,5 @@ export async function saveGroupAnnouncement(locale: Locale, groupId: string, _pr
     revalidatePath(`/${currentLocale}/teacher/groups/${groupId}`);
     revalidatePath(`/${currentLocale}/groups/${groupId}`);
   }
-  return { success: message(locale, data ? 'Announcement saved.' : 'Announcement cleared.', data ? 'تم حفظ الإعلان.' : 'تم مسح الإعلان.'), editedAt: data as string | null, body: data ? bodyText : '' };
+  return { success: message(locale, data ? 'Announcement saved.' : 'Announcement cleared.', data ? 'تم حفظ الإعلان.' : 'تم مسح الإعلان.'), editedAt: data as string | null, body: data ? bodyText : '', revision: crypto.randomUUID() };
 }
