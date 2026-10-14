@@ -18,6 +18,8 @@ set local session_replication_role=replica;
 update public.teacher_profiles set approved=true where id='7e300000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 
+-- Seed the published history row as legacy fixture data without invoking the publication RPC guard.
+set local session_replication_role=replica;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,created_at)
 select ('7e310000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,
        '7e300000-0000-4000-8000-000000000001', o.id,
@@ -28,6 +30,7 @@ from generate_series(1,12) n cross join lateral (select id from public.offerings
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select '7e310000-0000-4000-8000-000000000099','7e300000-0000-4000-8000-000000000002',o.id,'Foreign dashboard group',10,'draft'
 from (select id from public.offerings order by id limit 1) o;
+set local session_replication_role=origin;
 insert into public.group_schedule_slots(group_id,weekday,start_time,end_time)
 values ('7e310000-0000-4000-8000-000000000011',1,'10:00','11:00');
 insert into public.teacher_specializations(teacher_id,offering_id)
