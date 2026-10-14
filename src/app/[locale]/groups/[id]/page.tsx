@@ -11,6 +11,9 @@ import { EnrollmentForm } from '@/features/student/forms';
 import { canSharePublicGroup } from '@/features/student/share-domain';
 import { PublicGroupShare } from '@/features/student/public-group-share';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
+import { SavedGroupForm } from '@/features/student/saved-form';
+import { savedGroupStatus } from '@/features/student/saved-data';
+import { StudentOverlapWarning } from '@/features/student/overlap-warning';
 
 const weekdays = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -35,6 +38,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
     ? new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(data.next_lesson_at))
     : null;
   const isStudent = me?.profile?.role === 'student' && me.profile.status === 'active';
+  const saved = isStudent ? await savedGroupStatus(id) : false;
   const canEnroll = canRequest(enrollment?.status) && data.available_seats !== 0;
 
   return (
@@ -90,6 +94,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
             <div className="mt-6 [&_button]:w-full [&_button]:bg-orange [&_button]:text-white">
+              {isStudent && detail.publiclyEligible && <SavedGroupForm locale={locale} groupId={id} saved={saved}/>}
               {isStudent && enrollment?.status === 'pending' ? (
                 <><p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.pendingEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
               ) : isStudent && enrollment?.status === 'accepted' ? (
@@ -98,6 +103,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
                 <>
                   {enrollment?.status === 'rejected' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.retryEnrollment}</p>}
                   {enrollment?.status === 'cancelled' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.cancelledEnrollment}</p>}
+                  <StudentOverlapWarning locale={locale} groupId={id}/>
                   <EnrollmentForm locale={locale} id={id} kind="request"/>
                 </>
               ) : isStudent && data.available_seats === 0 ? (

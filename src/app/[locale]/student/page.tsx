@@ -12,12 +12,13 @@ export default async function StudentDashboard({ params }: { params: Promise<{ l
   const data = await studentDashboard(locale);
   const preview = data.lessons;
   const copy = ar
-    ? { intro: 'تابع مجموعاتك وحصصك القادمة وموارد التعلم.', classes: 'مجموعاتي', active: 'مجموعات مسجّل بها', pending: 'طلبات قيد المراجعة', upcoming: 'حصص قادمة', timetable: 'التالي في جدولك', noLessons: 'لا توجد حصص قادمة بعد.', error: 'تعذر تحميل بيانات التعلم. حدّث الصفحة وحاول مرة أخرى.', retry: 'إعادة المحاولة', find: 'اكتشف المجموعات', materials: 'موادي التعليمية', schedule: 'الجدول الدراسي', requests: 'حالة الطلبات' }
-    : { intro: 'Keep track of your classes, next lessons, and learning resources.', classes: 'My classes', active: 'Enrolled classes', pending: 'Pending requests', upcoming: 'Upcoming lessons', timetable: 'Next on your timetable', noLessons: 'No upcoming lessons yet.', error: 'Could not load your learning data. Refresh and try again.', retry: 'Try again', find: 'Find classes', materials: 'My materials', schedule: 'Weekly timetable', requests: 'Enrollment status' };
+    ? { intro: 'تابع مجموعاتك وحصصك القادمة وموارد التعلم.', classes: 'مجموعاتي', active: 'مجموعات مسجّل بها', pending: 'طلبات قيد المراجعة', upcoming: 'حصص قادمة', timetable: 'التالي في جدولك', noLessons: 'لا توجد حصص قادمة بعد.', error: 'تعذر تحميل بيانات التعلم. حدّث الصفحة وحاول مرة أخرى.', retry: 'إعادة المحاولة', find: 'اكتشف المجموعات', materials: 'موادي التعليمية', schedule: 'الجدول الدراسي', requests: 'حالة الطلبات', saved: 'المجموعات المحفوظة' }
+    : { intro: 'Keep track of your classes, next lessons, and learning resources.', classes: 'My classes', active: 'Enrolled classes', pending: 'Pending requests', upcoming: 'Upcoming lessons', timetable: 'Next on your timetable', noLessons: 'No upcoming lessons yet.', error: 'Could not load your learning data. Refresh and try again.', retry: 'Try again', find: 'Find classes', materials: 'My materials', schedule: 'Weekly timetable', requests: 'Enrollment status', saved: 'Saved groups' };
   return <>
     <ScreenTitle eyebrow={ar ? 'مساحة الطالب' : 'Student workspace'} title={`${ar ? 'أهلاً' : 'Hello'}, ${me.fullName}`} description={copy.intro}/>
     <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
       <QuickAction href={`/${locale}/student/classes`}>{copy.classes}</QuickAction>
+      <QuickAction href={`/${locale}/student/saved`}>{copy.saved}</QuickAction>
       <QuickAction href={`/${locale}/student/classes`}>{copy.requests}</QuickAction>
       <QuickAction href={`/${locale}/timetable`}>{copy.schedule}</QuickAction>
       <QuickAction href={`/${locale}/student/materials`}>{copy.materials}</QuickAction>
