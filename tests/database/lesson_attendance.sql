@@ -58,6 +58,8 @@ insert into public.lessons(id,group_id,title,starts_at,ends_at,status) values
  ('7f200000-0000-4000-8000-000000000004','7f100000-0000-4000-8000-000000000003','Attendance archived',now()-interval '1 hour',now()+interval '1 hour','scheduled'),
  ('7f200000-0000-4000-8000-000000000005','7f100000-0000-4000-8000-000000000002','Attendance foreign',now()-interval '1 hour',now()+interval '1 hour','scheduled'),
  ('7f200000-0000-4000-8000-000000000006','7f100000-0000-4000-8000-000000000004','Attendance unapproved',now()-interval '1 hour',now()+interval '1 hour','scheduled');
+insert into public.lesson_attendance(lesson_id,student_id,status,recorded_at,recorded_by)
+values('7f200000-0000-4000-8000-000000000004','7f000000-0000-4000-8000-000000000003','late',now()-interval '1 day','7f000000-0000-4000-8000-000000000001');
 
 set local role authenticated;
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000001';
@@ -87,6 +89,7 @@ set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000003';
 do $$ begin
   if (select count(*) from public.lesson_attendance where lesson_id='7f200000-0000-4000-8000-000000000001')<>1
      or not exists(select 1 from public.lesson_attendance where lesson_id='7f200000-0000-4000-8000-000000000001' and student_id=auth.uid() and status='present') then raise exception 'student did not see only their own attendance result'; end if;
+  if not exists(select 1 from public.lesson_attendance where lesson_id='7f200000-0000-4000-8000-000000000004' and student_id=auth.uid() and status='late') then raise exception 'accepted student could not read their archived-group attendance history'; end if;
   begin perform public.set_lesson_attendance('7f200000-0000-4000-8000-000000000001','7f000000-0000-4000-8000-000000000003','present'); raise exception 'student wrote attendance'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
@@ -102,7 +105,7 @@ reset role;
 set local role authenticated;
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000005';
 do $$ begin
-  if (public.teacher_lesson_attendance_page('7f200000-0000-4000-8000-000000000001')->>'total')::integer<>1 then raise exception 'admin could not read lesson attendance history'; end if;
+  if (public.teacher_lesson_attendance_page('7f200000-0000-4000-8000-000000000001')->>'total')::integer<>2 then raise exception 'admin could not read lesson attendance history'; end if;
 end $$;
 reset role;
 

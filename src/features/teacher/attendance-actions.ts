@@ -2,14 +2,17 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import type { Locale } from '@/features/student/domain';
+import { idSchema, type Locale } from '@/features/student/domain';
 
 export type AttendanceActionState = { error?: string; success?: string } | null;
 
 export async function saveLessonAttendance(locale: Locale, lessonId: string, studentId: string, status: string | null): Promise<AttendanceActionState> {
+  const msg = (en: string, ar: string) => locale === 'ar' ? ar : en;
+  if ((locale !== 'en' && locale !== 'ar') || !idSchema.safeParse(lessonId).success || !idSchema.safeParse(studentId).success || (status !== null && !['present', 'absent', 'late', 'excused'].includes(status))) {
+    return { error: msg('Choose valid attendance details.', 'اختر بيانات حضور صالحة.') };
+  }
   const db = await createClient();
   const { data: { user } } = await db.auth.getUser();
-  const msg = (en: string, ar: string) => locale === 'ar' ? ar : en;
   if (!user) return { error: msg('Sign in to update attendance.', 'سجل الدخول لتحديث الحضور.') };
   const { data: profile } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: msg('An active teacher account is required.', 'يلزم حساب معلم نشط.') };

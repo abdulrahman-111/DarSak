@@ -20,7 +20,7 @@ function AttendanceRowForm({ locale, lessonId, row, readOnly }: { locale: Locale
     <div className="min-w-0">
       <p className="font-bold text-teal">{row.full_name}</p>
       <p className="mt-1 text-sm text-muted">{row.status ? labels[locale][row.status] : ar ? 'غير مسجل' : 'Not marked'}</p>
-      {row.recorded_at && <p className="mt-1 text-xs text-muted">{new Intl.DateTimeFormat(locale === 'ar' ? 'ar' : 'en', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(row.recorded_at))}</p>}
+      {row.recorded_at && <p className="mt-1 text-xs text-muted">{new Intl.DateTimeFormat(locale === 'ar' ? 'ar' : 'en', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(row.recorded_at))}</p>}
     </div>
     <div className="flex flex-wrap items-center gap-2">
       <label className="sr-only" htmlFor={`attendance-${row.student_id}`}>{ar ? `حضور ${row.full_name}` : `Attendance for ${row.full_name}`}</label>

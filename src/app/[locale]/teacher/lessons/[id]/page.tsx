@@ -8,7 +8,7 @@ import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/
 import { CopyLessonForm, DeleteLessonMaterialButton, LessonShortcutStatusControls } from '@/features/teacher/shortcuts-forms';
 import { DeleteManualTeacherLessonForm } from '@/features/teacher/management-forms';
 import { AttendanceRoster } from '@/features/teacher/attendance-forms';
-import { attendancePageHref, teacherAttendancePage } from '@/features/teacher/attendance-data';
+import { attendancePageCount as getAttendancePageCount, attendancePageHref, clampAttendancePage, normalizeAttendancePage, teacherAttendancePage } from '@/features/teacher/attendance-data';
 
 export default async function TeacherLesson({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
@@ -24,17 +24,19 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
   const lesson = lessonResult.data;
   const group = Array.isArray(lesson.group) ? lesson.group[0] : lesson.group;
   if (!group) notFound();
-  const [materials, groups] = await Promise.all([
+  const requestedPage = normalizeAttendancePage(Array.isArray(query.attendance_page) ? query.attendance_page[0] : query.attendance_page);
+  const [materials, groups, approval, requestedAttendance] = await Promise.all([
     me.db.from('lesson_materials').select('id,title,kind,url,content,file_size,mime_type').eq('lesson_id', id).order('created_at'),
     me.db.from('groups').select('id,name').eq('teacher_id', me.id).neq('status', 'archived').order('name').order('id'),
+    me.db.from('teacher_profiles').select('approved').eq('id', me.id).maybeSingle(),
+    teacherAttendancePage(me.db, id, (requestedPage - 1) * 20),
   ]);
   const archived = group.status === 'archived';
-  const currentPage = Math.max(1, Number(Array.isArray(query.page) ? query.page[0] : query.page) || 1);
-  const attendance = await teacherAttendancePage(me.db, id, (currentPage - 1) * 20);
-  const approval = await me.db.from('teacher_profiles').select('approved').eq('id', me.id).maybeSingle();
+  const attendancePageCount = requestedAttendance ? getAttendancePageCount(requestedAttendance.total) : 1;
+  const currentPage = requestedAttendance ? clampAttendancePage(requestedPage, requestedAttendance.total) : 1;
+  const attendance = currentPage === requestedPage ? requestedAttendance : await teacherAttendancePage(me.db, id, (currentPage - 1) * 20);
   const future = lesson.starts_at > new Date().toISOString();
   const attendanceReadOnly = archived || lesson.status === 'cancelled' || future || approval.data?.approved !== true;
-  const attendancePageCount = attendance ? Math.max(1, Math.ceil(attendance.total / 20)) : 1;
   const canOfferDelete = lesson.slot_id === null && lesson.starts_at > new Date().toISOString() && lesson.status !== 'completed' && !materials.error && !(materials.data?.length);
 
   const copy = ar ? {
