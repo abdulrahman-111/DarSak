@@ -71,6 +71,9 @@ set local request.jwt.claim.sub='9c000000-0000-4000-8000-000000000001';
 do $$ begin
   if dars_private.teacher_has_access(auth.uid()) or public.is_group_owner('9c100000-0000-4000-8000-000000000001') then
     raise exception 'expired owner helper allowed access'; end if;
+  if exists(select 1 from public.groups where id='9c100000-0000-4000-8000-000000000001')
+     or exists(select 1 from public.group_schedule_slots where id='9c200000-0000-4000-8000-000000000001') then
+    raise exception 'expired teacher SELECT leaked through permissive FOR ALL policies'; end if;
   if (public.teacher_access_status()->>'has_access')::boolean
      or not exists(select 1 from public.profiles where id=auth.uid())
      or not exists(select 1 from public.teacher_profiles where id=auth.uid())
@@ -208,15 +211,16 @@ do $$ begin
     raise exception 'expired teacher raw announcement insert succeeded'; exception when insufficient_privilege then null; end;
 end $$;
 
+set local request.jwt.claim.sub='';
 set local role anon;
 do $$ begin
-  if not exists(select 1 from public.subjects where id='9c400000-0000-4000-8000-000000000001')
-     or exists(select 1 from public.public_groups() where id='9c100000-0000-4000-8000-000000000001')
-     or ((public.public_discovery_catalogue()->'subjects') @> '[{"id":"9c400000-0000-4000-8000-000000000001"}]'::jsonb)
+  if exists(select 1 from public.public_groups() where id='9c100000-0000-4000-8000-000000000001')
      or exists(select 1 from public.discover_groups(null,null,'9c000000-0000-4000-8000-000000000001',null,false,'',0,12))
      or exists(select 1 from public.public_group_detail('9c100000-0000-4000-8000-000000000001'))
      or exists(select 1 from public.public_teacher_choices(null,'9c000000-0000-4000-8000-000000000001')) then
     raise exception 'anonymous discovery exposed expired teacher group'; end if;
+  if (public.public_discovery_catalogue()->'subjects') @> '[{"id":"9c400000-0000-4000-8000-000000000001"}]'::jsonb then
+    raise exception 'anonymous catalogue exposed expired teacher private label'; end if;
 end $$;
 reset role;
 

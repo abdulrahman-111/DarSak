@@ -1053,7 +1053,7 @@ begin
   return v_slot_id;
 end
 $function$;
--- Latest source: supabase/migrations/20261011194031_teacher_catalogue_writes_and_atomic_drafts.sql
+-- Latest source: supabase/migrations/20261009150802_delete_schedule_slot.sql
 CREATE OR REPLACE FUNCTION public.delete_schedule_slot(p_group_id uuid, p_slot_id uuid)
  RETURNS void
  LANGUAGE plpgsql
@@ -1120,7 +1120,7 @@ begin
   if not found then raise exception 'slot not found'; end if;
 end
 $function$;
--- Latest source: supabase/migrations/20261011194031_teacher_catalogue_writes_and_atomic_drafts.sql
+-- Latest source: supabase/migrations/20261009145704_lesson_generation_exclusions_lock_order.sql
 CREATE OR REPLACE FUNCTION public.set_lesson_exclusions(p_group_id uuid, p_dates date[])
  RETURNS void
  LANGUAGE plpgsql
@@ -1157,7 +1157,7 @@ begin
   select p_group_id,dates.local_date from unnest(p_dates) as dates(local_date) group by dates.local_date;
 end
 $function$;
--- Latest source: supabase/migrations/20261014065340_enrollment_schedule_stability.sql
+-- Latest source: supabase/migrations/20261012131933_teacher_management_controls.sql
 CREATE OR REPLACE FUNCTION public.create_lesson(p_group_id uuid, p_title text, p_starts_at timestamp with time zone, p_ends_at timestamp with time zone, p_notes text DEFAULT ''::text, p_lesson_id uuid DEFAULT NULL::uuid)
  RETURNS uuid
  LANGUAGE plpgsql
@@ -1227,7 +1227,7 @@ begin
   return v_lesson_id;
 end
 $function$;
--- Latest source: supabase/migrations/20261009150802_delete_schedule_slot.sql
+-- Latest source: supabase/migrations/20261012131933_teacher_management_controls.sql
 CREATE OR REPLACE FUNCTION public.set_lesson_status(p_lesson_id uuid, p_status text)
  RETURNS void
  LANGUAGE plpgsql
@@ -1276,7 +1276,7 @@ begin
   update public.lessons set status=p_status::public.lesson_status where id=p_lesson_id;
 end
 $function$;
--- Latest source: supabase/migrations/20261009145704_lesson_generation_exclusions_lock_order.sql
+-- Latest source: supabase/migrations/20261012131933_teacher_management_controls.sql
 CREATE OR REPLACE FUNCTION public.generate_lessons(p_group_id uuid, p_from date, p_until date)
  RETURNS integer
  LANGUAGE plpgsql
@@ -1452,7 +1452,7 @@ begin
   end if;
   delete from public.lessons where id=p_lesson_id;
 end $function$;
--- Latest source: supabase/migrations/20261012131933_teacher_management_controls.sql
+-- Latest source: supabase/migrations/20261014065340_enrollment_schedule_stability.sql
 CREATE OR REPLACE FUNCTION public.decide_enrollment(p_enrollment_id uuid, p_status text)
  RETURNS void
  LANGUAGE plpgsql
