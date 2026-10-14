@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, MapPin, UserRound, Users } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
-import { currentUser } from '@/features/platform/data';
 import { publicCopy } from '@/components/public/copy';
 import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
@@ -14,6 +13,9 @@ import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 import { SavedGroupForm } from '@/features/student/saved-form';
 import { savedGroupStatus } from '@/features/student/saved-data';
 import { StudentOverlapWarning } from '@/features/student/overlap-warning';
+import { getRequestViewer } from '@/features/platform/request-viewer';
+import { groupAnnouncement } from '@/features/groups/announcement-data';
+import { AnnouncementView } from '@/features/groups/announcement-view';
 
 const weekdays = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
@@ -27,10 +29,13 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
   const detail = await classDetail(id);
+  const requestViewer = await getRequestViewer();
+  const activeViewer = !!requestViewer.user && requestViewer.profile?.status === 'active';
   if (!detail || detail.group.status !== 'published') notFound();
   const data = detail.group;
 
-  const me = await currentUser();
+  const me = requestViewer.user ? { user: requestViewer.user, profile: requestViewer.profile } : null;
+  const announcement = activeViewer ? await groupAnnouncement(requestViewer.db, id) : null;
   const enrollment = me?.profile?.role === 'student' ? await enrollmentForGroup(id) : null;
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject ? catalogueDisplayName(data.offering.subject, locale) || t.groups : t.groups;
@@ -54,6 +59,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <p className="mt-8 text-xs font-bold uppercase tracking-[.14em] text-orange">{c.detailEyebrow}</p>
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{data.name}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4d473f]">{data.description || c.detailIntro}</p>
+            {activeViewer && <AnnouncementView locale={locale} announcement={announcement} className="mt-6" />}
 
             <div className="mt-6 rounded-xl bg-[#f6f0e4] p-4" aria-label={c.nextLesson}>
               <p className="flex items-center gap-2 text-sm font-bold text-teal"><CalendarDays size={17}/>{c.nextLesson}</p>
