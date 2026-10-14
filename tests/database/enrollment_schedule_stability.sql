@@ -13,6 +13,9 @@ update public.teacher_profiles set approved=true where id='8e000000-0000-4000-80
 update public.profiles set status='suspended' where id='8e000000-0000-4000-8000-000000000005';
 set local session_replication_role=origin;
 
+-- These rows model legacy published groups, including invalid/past schedules;
+-- bypass publication triggers only while seeding and restore them before RPCs.
+set local session_replication_role=replica;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select f.id,f.teacher_id,o.id,f.name,f.capacity,f.status
 from (values
@@ -24,6 +27,7 @@ from (values
  ('8e100000-0000-4000-8000-000000000006'::uuid,'8e000000-0000-4000-8000-000000000001'::uuid,'Active conflict',3,'draft'::public.group_status)
 ) f(id,teacher_id,name,capacity,status)
 cross join lateral (select id from public.offerings order by id limit 1) o;
+set local session_replication_role=origin;
 insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time) values
  ('8e200000-0000-4000-8000-000000000001','8e100000-0000-4000-8000-000000000004',1,'10:00','11:00'),
  ('8e200000-0000-4000-8000-000000000002','8e100000-0000-4000-8000-000000000006',2,'10:00','11:00');
