@@ -3,11 +3,13 @@ import { EmptyState, Panel, ScreenTitle } from '@/components/platform/ui';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 import { CatalogueArchiveButton, CatalogueLabelEditor } from '@/features/teacher/catalogue-forms';
 import { teacherCatalogue } from '@/features/teacher/catalogue-data';
+import { requireTeachingAccess } from '@/components/platform/access';
 
 export default async function TeacherCataloguePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
+  await requireTeachingAccess(locale);
   const data = await teacherCatalogue(locale);
   const copy = ar ? {
     eyebrow: 'مساحة المعلم', title: 'المواد والفئات', description: 'أنشئ أسماء المواد والسنوات أو فئات الطلاب التي تحتاجها لمجموعاتك.',

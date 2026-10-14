@@ -1,10 +1,10 @@
 import type { PlatformRole } from '@/components/platform/access';
 
-export type NotificationKind = 'lesson_rescheduled' | 'lesson_cancelled' | 'group_cancelled' | 'weekly_schedule_changed' | 'enrollment_requested' | 'teacher_review_requested' | 'teacher_review_decision';
+export type NotificationKind = 'lesson_rescheduled' | 'lesson_cancelled' | 'group_cancelled' | 'weekly_schedule_changed' | 'enrollment_requested' | 'teacher_review_requested' | 'teacher_review_decision' | 'teacher_fee_announcement';
 export type NotificationRow = { id: string; kind: NotificationKind; payload: Record<string, unknown>; created_at: string; read_at: string | null };
 export type NotificationsPage = { rows: NotificationRow[]; total: number; unread: number };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const KINDS = new Set<NotificationKind>(['lesson_rescheduled','lesson_cancelled','group_cancelled','weekly_schedule_changed','enrollment_requested','teacher_review_requested','teacher_review_decision']);
+const KINDS = new Set<NotificationKind>(['lesson_rescheduled','lesson_cancelled','group_cancelled','weekly_schedule_changed','enrollment_requested','teacher_review_requested','teacher_review_decision','teacher_fee_announcement']);
 
 export function parseNotificationsPage(value: unknown): NotificationsPage | null {
   if (!value || typeof value !== 'object') return null;
@@ -31,6 +31,7 @@ export function notificationHref(role: PlatformRole, kind: string, payload: Reco
   if (role==='teacher' && kind==='enrollment_requested') { const value=id(payload,'group_id'); return value?`/${locale}/teacher/requests?group_id=${value}`:`/${locale}/teacher/requests`; }
   if (role==='admin' && kind==='teacher_review_requested') { const value=id(payload,'teacher_id'); return value?`/${locale}/admin/teachers/${value}`:`/${locale}/admin/teachers`; }
   if (role==='teacher' && kind==='teacher_review_decision') return `/${locale}/teacher/profile`;
+  if (role==='teacher' && kind==='teacher_fee_announcement') return `/${locale}/teacher/access`;
   return null;
 }
 
@@ -48,5 +49,11 @@ export function notificationSummary(kind: string, payload: Record<string,unknown
   if (kind==='enrollment_requested') return ar?`${text(payload,'student_name','طالب')} طلب الانضمام إلى ${text(payload,'group_name','مجموعة')}`:`${text(payload,'student_name','A student')} requested to join ${text(payload,'group_name','a group')}`;
   if (kind==='teacher_review_requested') return ar?`${text(payload,'teacher_name','معلم')} طلب مراجعة حسابه`:`${text(payload,'teacher_name','A teacher')} requested account review`;
   if (kind==='teacher_review_decision') return payload.decision==='approved'?(ar?'تمت الموافقة على حسابك':'Your account was approved'):(ar?'تم رفض طلب المراجعة':'Your review request was declined');
+  if (kind==='teacher_fee_announcement') {
+    const announcement=payload[ar?'announcement_ar':'announcement_en'];
+    const raw=payload.effective_at;const when=typeof raw==='string'&&Number.isFinite(Date.parse(raw))?new Intl.DateTimeFormat(ar?'ar-EG':'en-GB',{dateStyle:'medium',timeStyle:'short',timeZone:'Africa/Cairo'}).format(new Date(raw)):'';
+    if(typeof announcement!=='string'||!announcement.trim()||announcement.length>1000)return ar?'تحديث جديد عن صلاحية التدريس.':'A new teaching access update.';
+    return `${announcement.slice(0,1000)}${when?(ar?` يبدأ في ${when} بتوقيت القاهرة.`:` Effective ${when} Africa/Cairo.`):''}`;
+  }
   return null;
 }

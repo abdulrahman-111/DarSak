@@ -8,6 +8,7 @@ import { safeFile } from '@/lib/domain';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { lessonStatusSchema, materialSchema, storageObjectPath } from './domain';
 import { storageRemovalConfirmed } from './profile-domain';
+import { checkTeachingAccess, teachingGuardMessage, teachingMutationMessage } from '@/features/teacher-access/guard';
 
 export type TeacherActionState = { error?: string; success?: string } | null;
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -17,7 +18,8 @@ async function activeTeacher() {
   const { data: { user } } = await db.auth.getUser();
   if (!user) return null;
   const { data: profile } = await db.from('profiles').select('role,status').eq('id', user.id).single();
-  return profile?.role === 'teacher' && profile.status === 'active' ? { db, id: user.id } : null;
+  if(profile?.role !== 'teacher' || profile.status !== 'active') return null;
+  return { db, id: user.id, access: await checkTeachingAccess(db) };
 }
 
 async function ownsLesson(db: Awaited<ReturnType<typeof createClient>>, teacherId: string, lessonId: string) {
@@ -51,6 +53,7 @@ export async function addMaterial(locale: Locale, lessonId: string, _state: Teac
   if (!parsed.success) return { error: message(locale, 'Check the material details.', 'تحقق من بيانات المادة.') };
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'Teacher access required.', 'يلزم حساب مدرس نشط.') };
+  if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
   const owned = await ownsLesson(me.db, me.id, lessonId);
   if (owned.error) logActionFailure('materials.ownership.lookup', startedAt, owned.error, 'DB_ERROR');
   else if (!owned.data) logActionFailure('materials.ownership.lookup', startedAt, undefined, 'NOT_FOUND');
@@ -60,6 +63,7 @@ export async function addMaterial(locale: Locale, lessonId: string, _state: Teac
     : await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'note', title: parsed.data.title, content: parsed.data.content });
   if (error) {
     logActionFailure('materials.metadata.save', startedAt, error, 'DB_ERROR');
+    if(error.code==='42501'&&error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,error,'')};
     return { error: message(locale, 'Could not add the material.', 'تعذرت إضافة المادة.') };
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
@@ -75,6 +79,7 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
   }
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'Teacher access required.', 'يلزم حساب مدرس نشط.') };
+  if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
   const owned = await ownsLesson(me.db, me.id, lessonId);
   if (owned.error) logActionFailure('materials.ownership.lookup', startedAt, owned.error, 'DB_ERROR');
   else if (!owned.data) logActionFailure('materials.ownership.lookup', startedAt, undefined, 'NOT_FOUND');
@@ -85,11 +90,16 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
   const uploaded = await me.db.storage.from('lesson-materials').upload(path, file, { contentType: file.type, upsert: false });
   if (uploaded.error) {
     logActionFailure('materials.storage.upload', startedAt, uploaded.error, 'STORAGE_ERROR');
+    if('code' in uploaded.error&&uploaded.error.code==='42501'&&uploaded.error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,{code:'42501',message:uploaded.error.message},'')};
     return { error: message(locale, 'Upload failed.', 'فشل رفع الملف.') };
   }
   const inserted = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'file', title, storage_path: path, file_size: file.size, mime_type: file.type });
   if (inserted.error) {
     logActionFailure('materials.metadata.save', startedAt, inserted.error, 'DB_ERROR');
+    if(inserted.error.code==='42501'&&inserted.error.message==='teacher teaching access expired'){
+      await removeMaterialObject(me.db,path);
+      return {error:teachingMutationMessage(locale,inserted.error,'')};
+    }
     const cleaned = await removeMaterialObject(me.db, path);
     return { error: message(locale,
       cleaned ? 'Could not save the uploaded file.' : 'Could not save the file, and cleanup is incomplete. Retry or contact support.',
@@ -104,11 +114,13 @@ export async function setLessonStatus(locale: Locale, lessonId: string, status: 
   if (!idSchema.safeParse(lessonId).success || !lessonStatusSchema.safeParse(status).success) return { error: message(locale, 'Choose a valid lesson status.', 'اختر حالة صالحة للحصة.') };
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
+  if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
   const { error } = await me.db.rpc('set_lesson_status', { p_lesson_id: lessonId, p_status: status });
   if (error) logActionFailure('lesson_status.save', startedAt, error, 'DB_ERROR');
   if (!error) revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   if (!error) return { ok: true };
   const raw = error.message.toLowerCase();
+  if(error.code==='42501'&&error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,error,'')};
   if (raw.includes('not authorized') || error.code === '42501') return { error: message(locale, 'You are not authorized to change this lesson.', 'ليست لديك صلاحية لتغيير هذه الحصة.') };
   if (raw.includes('archived')) return { error: message(locale, 'This group is archived. You can review its lesson history, but cannot schedule lessons.', 'هذه المجموعة مؤرشفة. يمكنك مراجعة سجل الحصص، لكن لا يمكن جدولة حصص جديدة.') };
   if (raw.includes('overlap') || raw.includes('conflict')) return { error: message(locale, 'This lesson overlaps another lesson. Choose a different time.', 'يتعارض موعد هذه الحصة مع حصة أخرى. اختر موعداً مختلفاً.') };
@@ -121,9 +133,11 @@ export async function deleteMaterial(locale: Locale, lessonId: string, materialI
   if (!idSchema.safeParse(lessonId).success || !idSchema.safeParse(materialId).success) return { error: message(locale, 'This material is not available.', 'هذه المادة غير متاحة.') };
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
+  if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
   const { data: material, error: lookupError } = await me.db.from('lesson_materials').select('storage_path').eq('id', materialId).eq('lesson_id', lessonId).maybeSingle();
   if (lookupError) {
     logActionFailure('materials.metadata.lookup', startedAt, lookupError, 'DB_ERROR');
+    if(lookupError.code==='42501'&&lookupError.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,lookupError,'')};
     return { error: message(locale, 'Could not load the material. Refresh and try again.', 'تعذر تحميل المادة. حدّث الصفحة وحاول مرة أخرى.') };
   }
   if (!material) return { error: message(locale, 'This material is no longer available.', 'لم تعد هذه المادة متاحة.') };
@@ -133,6 +147,7 @@ export async function deleteMaterial(locale: Locale, lessonId: string, materialI
   const removed = await me.db.from('lesson_materials').delete().eq('id', materialId);
   if (removed.error) {
     logActionFailure('materials.metadata.delete', startedAt, removed.error, 'DB_ERROR');
+    if(removed.error.code==='42501'&&removed.error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,removed.error,'')};
     return { error: message(locale, 'Could not delete the material. Refresh and try again.', 'تعذر حذف المادة. حدّث الصفحة وحاول مرة أخرى.') };
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);

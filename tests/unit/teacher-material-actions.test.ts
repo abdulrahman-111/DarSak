@@ -40,6 +40,7 @@ function setup(options: { objectPath?: string | null; removeData?: Array<{ name:
       insert: async () => ({ error: options.insertError ?? null }),
       delete: () => ({ eq: async () => { calls.push('metadata'); return { error: null }; } }),
     }),
+    rpc: async () => ({data:{has_access:true,starts_at:'2026-01-01T00:00:00Z',expires_at:'2027-01-01T00:00:00Z',renewal_opens_at:null,can_renew:false,fees_enabled:false,fee_effective_at:null,announcement_en:null,announcement_ar:null,pending_request_id:null},error:null}),
     storage: { from: () => storage },
   };
   createClientMock.mockResolvedValue(db);

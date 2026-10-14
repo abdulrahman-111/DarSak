@@ -2,6 +2,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import { createClient, isConfigured } from '@/lib/supabase/server';
 import { getRequestViewer } from '@/features/platform/request-viewer';
+import { readTeacherAccessStatus } from '@/features/teacher-access/data';
 
 export type PlatformRole = 'student' | 'teacher' | 'admin';
 export type PlatformViewer = {
@@ -19,6 +20,14 @@ export async function requireViewer(locale: string, role?: PlatformRole): Promis
   if (!profile || profile.status !== 'active') redirect(`/${locale}/login`);
   if (role && profile.role !== role) redirect(`/${locale}/dashboard`);
   return { db, id: profile.id, fullName: profile.full_name, role: profile.role as PlatformRole, status: profile.status };
+}
+
+export async function requireTeachingAccess(locale: string): Promise<PlatformViewer> {
+  const me = await requireViewer(locale, 'teacher');
+  const { status, error } = await readTeacherAccessStatus(me.db);
+  if (error) redirect(`/${locale}/teacher/access?error=unavailable`);
+  if (!status?.has_access) redirect(`/${locale}/teacher/access`);
+  return me;
 }
 
 export function roleHome(locale: string, role: PlatformRole) {

@@ -3,11 +3,18 @@ import { ensureLocale } from '@/i18n/config';
 import { EnrollmentDecisionButtons } from '@/components/platform/actions';
 import { EmptyState, Metric, Panel, QuickAction, RowLink, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
 import { teacherOverview } from '@/features/teacher/data';
+import { requireViewer } from '@/components/platform/access';
+import { readTeacherAccessStatus } from '@/features/teacher-access/data';
+import { TeacherAccessPanel } from '@/features/teacher-access/panel';
 
 export default async function TeacherDashboard({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
+  const me=await requireViewer(locale,'teacher');
+  const access=await readTeacherAccessStatus(me.db);
+  if(access.error||!access.status)return <><ScreenTitle eyebrow={ar?'مساحة المعلم':'Teacher workspace'} title={ar?'صلاحية التدريس':'Teaching access'} /><TeacherAccessPanel locale={locale} status={null} error/><Panel><p role="alert" className="text-sm text-red-800">{ar?'تعذر تحميل لوحة التدريس. حدّث الصفحة وحاول مرة أخرى.':'Could not load teaching access. Refresh and try again.'}</p></Panel></>;
+  if(!access.status.has_access)return <><ScreenTitle eyebrow={ar?'مساحة المعلم':'Teacher workspace'} title={ar?'صلاحية التدريس':'Teaching access'} description={ar?'يمكنك إدارة صلاحية التدريس ومواصلة استخدام حسابك وملفك والإشعارات.':'Manage teaching access and continue using your account, profile, and notifications.'}/><TeacherAccessPanel locale={locale} status={access.status} error={false}/><Panel><p className="text-sm text-muted">{ar?'تظل هذه الصفحات متاحة: الملف الشخصي، مراجعة الحساب، الإشعارات، وطلب التجديد.':'Your profile, account review, notifications, and renewal request remain available.'}</p></Panel></>;
   const data = await teacherOverview(locale);
   const copy = ar ? {
     welcome: 'مرحباً', intro: 'مجموعاتك وطلبات الطلاب وحصص اليوم والخطوات التالية في مكان واحد.',

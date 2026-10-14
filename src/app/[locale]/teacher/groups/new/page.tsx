@@ -3,11 +3,13 @@ import { ensureLocale } from '@/i18n/config';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { teacherGroupSetup } from '@/features/teacher/setup-data';
 import { GroupDetailsForm } from '@/features/teacher/setup-forms';
+import { requireTeachingAccess } from '@/components/platform/access';
 
 export default async function NewTeacherGroupPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
+  await requireTeachingAccess(locale);
   const data = await teacherGroupSetup(locale);
   return <>
     <ScreenTitle eyebrow={ar ? 'إعداد التدريس' : 'Teaching setup'} title={ar ? 'إنشاء مجموعة' : 'Create a group'} description={ar ? 'احفظ تفاصيل مجموعتك كمسودة، ثم أكمل إعداد الجدول قبل النشر.' : 'Save your group details as a draft, then continue to its schedule before publishing.'} />

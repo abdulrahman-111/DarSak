@@ -67,6 +67,8 @@ update public.profiles set status='suspended' where id='80000000-0000-4000-8000-
 update public.profiles set status='suspended' where id='80000000-0000-4000-8000-000000000005';
 set local session_replication_role=origin;
 
+-- Trusted fixture inserts must not inherit the last suspended teacher actor.
+set local request.jwt.claim.sub='';
 insert into public.enrollments(group_id,student_id,status) values
  ('80100000-0000-4000-8000-000000000001','80000000-0000-4000-8000-000000000005','accepted'),
  ('80100000-0000-4000-8000-000000000002','80000000-0000-4000-8000-000000000005','accepted'),

@@ -406,6 +406,8 @@ begin
 end $$;
 reset role;
 
+-- Trusted cascade fixture cleanup must not inherit the last authenticated teacher actor.
+select set_config('request.jwt.claim.sub','',true);
 delete from auth.users where id='7a000000-0000-4000-8000-000000000002';
 do $$
 begin

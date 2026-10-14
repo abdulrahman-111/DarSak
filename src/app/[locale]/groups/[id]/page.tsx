@@ -44,7 +44,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
     : null;
   const isStudent = me?.profile?.role === 'student' && me.profile.status === 'active';
   const saved = isStudent ? await savedGroupStatus(id) : false;
-  const canEnroll = canRequest(enrollment?.status) && data.available_seats !== 0;
+  const canEnroll = detail.publiclyEligible && canRequest(enrollment?.status) && data.available_seats !== 0;
 
   return (
     <div className="min-h-[72vh] bg-[#f6f0e4]">
@@ -112,6 +112,8 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
                   <StudentOverlapWarning locale={locale} groupId={id}/>
                   <EnrollmentForm locale={locale} id={id} kind="request"/>
                 </>
+              ) : isStudent && !detail.publiclyEligible ? (
+                <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{c.notPublished}</p>
               ) : isStudent && data.available_seats === 0 ? (
                 <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">{c.fullEnrollment}</p>
               ) : !isStudent ? (

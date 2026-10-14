@@ -16,11 +16,14 @@ describe('notifications domain', () => {
     expect(notificationHref('admin', 'teacher_review_requested', { teacher_id: uuid }, 'ar')).toBe(`/ar/admin/teachers/${uuid}`);
     expect(notificationHref('teacher', 'enrollment_requested', { group_id: uuid }, 'en')).toBe(`/en/teacher/requests?group_id=${uuid}`);
     expect(notificationHref('student', 'lesson_rescheduled', { lesson_id: 'javascript:alert(1)' }, 'en')).toBeNull();
+    expect(notificationHref('teacher','teacher_fee_announcement',{},'ar')).toBe('/ar/teacher/access');
   });
 
   it('renders bounded plain text summaries from known kinds', () => {
     expect(notificationSummary('lesson_rescheduled', { title: '<img src=x>' }, 'en')).toContain('<img src=x>');
     expect(notificationSummary('weekly_schedule_changed', {}, 'ar')).toContain('المواعيد');
     expect(notificationSummary('unknown', {}, 'en')).toBeNull();
+    expect(notificationSummary('teacher_fee_announcement',{announcement_en:'Fees begin soon.',effective_at:'2026-05-01T10:00:00Z'},'en')).toContain('Fees begin soon.');
+    expect(notificationSummary('teacher_fee_announcement',{announcement_ar:'تبدأ الرسوم قريباً'},'ar')).toContain('تبدأ الرسوم قريباً');
   });
 });

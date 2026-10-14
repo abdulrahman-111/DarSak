@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { generationRangeSchema, lessonExclusionsSchema, type GenerationPreviewRow } from './generation-domain';
 
@@ -14,6 +15,7 @@ async function activeTeacher(locale: Locale) {
   const { data: profile, error } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
   if (error) return { db, error: message(locale, 'Could not verify your teacher account. Please try again.', 'تعذر التحقق من حساب المعلم. حاول مرة أخرى.') };
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { db, error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
+  const access=await checkTeachingAccess(db);if(!access.allowed)return {db,error:teachingGuardMessage(locale,access.reason)};
   return { db, error: null };
 }
 
@@ -38,7 +40,7 @@ export async function previewLessons(locale: Locale, groupId: string, from: stri
     p_from: range.data.from,
     p_until: range.data.until,
   });
-  if (error) return { error: message(locale, 'Could not load this preview. Check the group schedule and try again.', 'تعذر تحميل المعاينة. تحقق من جدول المجموعة وحاول مرة أخرى.') };
+  if (error) return { error: error.code==='42501'&&error.message==='teacher teaching access expired'?teachingGuardMessage(locale,'expired'):message(locale, 'Could not load this preview. Check the group schedule and try again.', 'تعذر تحميل المعاينة. تحقق من جدول المجموعة وحاول مرة أخرى.') };
   return { rows: (data ?? []) as GenerationPreviewRow[] };
 }
 
@@ -49,7 +51,7 @@ export async function saveLessonExclusions(locale: Locale, groupId: string, date
   const auth = await activeTeacher(locale);
   if (auth.error) return { error: auth.error };
   const { error } = await auth.db.rpc('set_lesson_exclusions', { p_group_id: groupId, p_dates: parsed.data });
-  if (error) return { error: message(locale, 'Could not save excluded days. Your changes are still available here; try again.', 'تعذر حفظ الأيام المستثناة. ستبقى تغييراتك هنا؛ حاول مرة أخرى.') };
+  if (error) return { error: error.code==='42501'&&error.message==='teacher teaching access expired'?teachingGuardMessage(locale,'expired'):message(locale, 'Could not save excluded days. Your changes are still available here; try again.', 'تعذر حفظ الأيام المستثناة. ستبقى تغييراتك هنا؛ حاول مرة أخرى.') };
   revalidateGroup(locale, groupId);
   return { success: message(locale, 'Excluded days saved.', 'تم حفظ الأيام المستثناة.') };
 }
@@ -65,7 +67,7 @@ export async function confirmLessonGeneration(locale: Locale, groupId: string, f
     p_from: range.data.from,
     p_until: range.data.until,
   });
-  if (error) return { error: message(locale, 'Generation could not be completed. Refresh the preview and review any conflicts.', 'تعذر إنشاء الحصص. حدّث المعاينة وراجع أي تعارضات.') };
+  if (error) return { error: error.code==='42501'&&error.message==='teacher teaching access expired'?teachingGuardMessage(locale,'expired'):message(locale, 'Generation could not be completed. Refresh the preview and review any conflicts.', 'تعذر إنشاء الحصص. حدّث المعاينة وراجع أي تعارضات.') };
   revalidateGroup(locale, groupId);
   return { generated: data ?? 0 };
 }

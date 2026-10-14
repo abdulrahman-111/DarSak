@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
-import { requireViewer } from '@/components/platform/access';
+import { requireTeachingAccess } from '@/components/platform/access';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
@@ -10,7 +10,7 @@ export default async function TeacherGroups({ params, searchParams }: { params: 
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  const me = await requireViewer(locale, 'teacher');
+  const me = await requireTeachingAccess(locale);
   const fetchGroups = (page: number) => me.db.from('groups')
     .select('id,name,description,status,capacity,location,offering:offerings(subject:subjects(name_ar,name_en))', { count: 'exact' })
     .eq('teacher_id', me.id).order('created_at', { ascending: false }).order('id', { ascending: false })

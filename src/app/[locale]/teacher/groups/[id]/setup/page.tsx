@@ -7,11 +7,13 @@ import { GroupDetailsForm, GroupSetupSteps, WeeklyScheduleStepForm } from '@/fea
 import { normalizeSetupStep } from '@/features/teacher/setup-domain';
 import { PublishReviewForm } from '@/features/teacher/publish-form';
 import { parseTeacherReviewStatus } from '@/features/teacher/review-data';
+import { requireTeachingAccess } from '@/components/platform/access';
 
 export default async function TeacherGroupSetupPage({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ step?: string | string[]; copyScheduleFrom?: string | string[] }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   if (!idSchema.safeParse(id).success) notFound();
+  await requireTeachingAccess(locale);
   const requestedSource = Array.isArray(query.copyScheduleFrom) ? query.copyScheduleFrom[0] : query.copyScheduleFrom;
   const data = await teacherGroupSetup(locale, id, requestedSource);
   if (data.notFound) notFound();

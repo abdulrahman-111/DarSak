@@ -23,7 +23,9 @@ function setup({ rpcData = groupId, rpcError = null, profile = { role: 'teacher'
   rpcError?: { code: string; message: string } | null;
   profile?: { role: string; status: string };
 } = {}) {
-  const rpc = vi.fn(async () => ({ data: rpcData, error: rpcError }));
+  const rpc = vi.fn(async (name: string) => name==='teacher_access_status'
+    ? {data:{has_access:true,starts_at:'2026-01-01T00:00:00Z',expires_at:'2027-01-01T00:00:00Z',renewal_opens_at:null,can_renew:false,fees_enabled:false,fee_effective_at:null,announcement_en:null,announcement_ar:null,pending_request_id:null},error:null}
+    : { data: rpcData, error: rpcError });
   const writes: string[] = [];
   const from = (table: string) => {
     const builder = {
@@ -55,7 +57,7 @@ describe('teacher group draft action', () => {
     const { rpc, writes } = setup();
     const result = await saveGroupDraft('en', null, form(fields));
 
-    expect(rpc).toHaveBeenCalledOnce();
+    expect(rpc).toHaveBeenCalledTimes(2);
     expect(rpc).toHaveBeenCalledWith('save_teacher_group_draft', {
       p_group_id: null, p_subject_id: subjectId, p_category_id: categoryId,
       p_name: 'Algebra group', p_description: 'weekly', p_capacity: 12, p_location: 'Room 2', p_expected_updated_at: null,

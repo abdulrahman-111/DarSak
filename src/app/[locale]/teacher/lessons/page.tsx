@@ -6,11 +6,13 @@ import { teacherLessons } from '@/features/teacher/data';
 import { StudentPagination } from '@/features/student/pagination';
 import { CalendarExportForm } from '@/features/calendar/export-form';
 import { defaultCalendarRange } from '@/features/calendar/domain';
+import { requireTeachingAccess } from '@/components/platform/access';
 
 export default async function TeacherLessons({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string; groupId?: string; deleted?: string; page?: string | string[] }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
+  await requireTeachingAccess(locale);
   const data = await teacherLessons(locale, query.page);
   const requestedNew = query.new === '1';
   const exportRange = defaultCalendarRange();

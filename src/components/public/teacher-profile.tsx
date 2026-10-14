@@ -53,8 +53,8 @@ const sectionTitles = {
 } as const;
 
 const visitorLabels = {
-  en: { groups: 'Groups', findTutor: 'View group details', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. Dars does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
-  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق Dars من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
+  en: { groups: 'Groups', findTutor: 'View group details', noGroups: 'No groups available for enrollment.', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. Dars does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
+  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', noGroups: 'لا توجد مجموعات متاحة للتسجيل.', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق Dars من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
 } as const;
 
 function entryYears(entry: { start_year: number | null; end_year: number | null; current: boolean }, locale: 'en' | 'ar') {
@@ -122,10 +122,10 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
           </ul> : <p className="mt-3 text-muted">{labels.noSubjects}</p>}
         </section>
 
-        {view.groups.length > 0 && <section className={`mt-8 border-t pt-7 ${theme.border}`}>
+        <section className={`mt-8 border-t pt-7 ${theme.border}`}>
           <h2 className={`text-xl font-black ${theme.accent}`}>{labels.groups}</h2>
-          <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2">{view.groups.map(group => <div key={group.id} className="min-w-0"><GroupCard group={group} locale={locale} t={{ groups: labels.groups, findTutor: labels.findTutor }} /></div>)}</div>
-        </section>}
+          {view.groups.length ? <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2">{view.groups.map(group => <div key={group.id} className="min-w-0"><GroupCard group={group} locale={locale} t={{ groups: labels.groups, findTutor: labels.findTutor }} /></div>)}</div> : <p className="mt-3 text-muted">{labels.noGroups}</p>}
+        </section>
 
         {hasContact && <section className={`mt-8 border-t pt-7 ${theme.border}`}>
           <h2 className={`text-xl font-black ${theme.accent}`}>{labels.contact}</h2>

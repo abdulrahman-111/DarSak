@@ -55,8 +55,23 @@ do $$
 declare before_count bigint;
 begin
   if not exists(select 1 from pg_namespace where nspname='dars_private') then raise exception 'private schema missing'; end if;
-  if has_schema_privilege('anon','dars_private','USAGE') or has_schema_privilege('authenticated','dars_private','USAGE') then
-    raise exception 'dars_private schema is exposed';
+  -- RLS needs this narrow boolean predicate to evaluate published-group eligibility.
+  -- Namespace USAGE alone exposes no private rows; only the predicate is executable.
+  if not has_schema_privilege('anon','dars_private','USAGE') or not has_schema_privilege('authenticated','dars_private','USAGE')
+     or not has_function_privilege('anon','dars_private.teacher_has_access(uuid)','EXECUTE')
+     or not has_function_privilege('authenticated','dars_private.teacher_has_access(uuid)','EXECUTE') then
+    raise exception 'private eligibility predicate grants are incorrect';
+  end if;
+  if exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
+    where n.nspname='dars_private' and c.relkind in ('r','p','v','m','f')
+      and (has_table_privilege('anon',c.oid,'SELECT') or has_table_privilege('anon',c.oid,'INSERT') or has_table_privilege('anon',c.oid,'UPDATE') or has_table_privilege('anon',c.oid,'DELETE')
+        or has_table_privilege('authenticated',c.oid,'SELECT') or has_table_privilege('authenticated',c.oid,'INSERT') or has_table_privilege('authenticated',c.oid,'UPDATE') or has_table_privilege('authenticated',c.oid,'DELETE'))) then
+    raise exception 'private table or view privileges are exposed';
+  end if;
+  if exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+    where n.nspname='dars_private' and p.proname<>'teacher_has_access'
+      and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE'))) then
+    raise exception 'an unexpected private function is directly executable';
   end if;
   if has_function_privilege('anon','public.preview_lesson_generation(uuid,date,date)','EXECUTE')
      or not has_function_privilege('authenticated','public.preview_lesson_generation(uuid,date,date)','EXECUTE') then
