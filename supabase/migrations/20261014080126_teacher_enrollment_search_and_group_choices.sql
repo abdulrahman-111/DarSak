@@ -18,9 +18,8 @@ declare
 begin
   if auth.uid() is null
      or public.current_role() is distinct from 'teacher'::public.user_role
-     or not coalesce(public.is_active_user(auth.uid()), false)
-     or not exists (select 1 from public.teacher_profiles tp where tp.id = auth.uid() and tp.approved) then
-    raise exception 'active approved teacher required' using errcode = '42501';
+     or not coalesce(public.is_active_user(auth.uid()), false) then
+    raise exception 'active teacher required' using errcode = '42501';
   end if;
   if p_status is null or p_status not in ('pending', 'accepted') then
     raise exception 'invalid enrollment status' using errcode = '22023';
@@ -70,9 +69,8 @@ declare
 begin
   if auth.uid() is null
      or public.current_role() is distinct from 'teacher'::public.user_role
-     or not coalesce(public.is_active_user(auth.uid()), false)
-     or not exists (select 1 from public.teacher_profiles tp where tp.id = auth.uid() and tp.approved) then
-    raise exception 'active approved teacher required' using errcode = '42501';
+     or not coalesce(public.is_active_user(auth.uid()), false) then
+    raise exception 'active teacher required' using errcode = '42501';
   end if;
   v_like := '%' || replace(replace(replace(v_query, E'\\', E'\\\\'), '%', E'\\%'), '_', E'\\_') || '%';
 

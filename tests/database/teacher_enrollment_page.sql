@@ -45,11 +45,15 @@ from public.offerings o order by o.id limit 1;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select '7e100000-0000-4000-8000-000000000003','7e000000-0000-4000-8000-000000000002',o.id,'Foreign group',10,'draft'
 from public.offerings o order by o.id limit 1;
+insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
+select '7e100000-0000-4000-8000-000000000004','7e000000-0000-4000-8000-000000000006',o.id,'Unapproved teacher group',10,'archived'
+from public.offerings o order by o.id limit 1;
 insert into public.enrollments(id,group_id,student_id,status) values
  ('7e200000-0000-4000-8000-000000000001','7e100000-0000-4000-8000-000000000001','7e000000-0000-4000-8000-000000000003','pending'),
  ('7e200000-0000-4000-8000-000000000002','7e100000-0000-4000-8000-000000000001','7e000000-0000-4000-8000-000000000004','pending'),
  ('7e200000-0000-4000-8000-000000000003','7e100000-0000-4000-8000-000000000002','7e000000-0000-4000-8000-000000000003','accepted'),
- ('7e200000-0000-4000-8000-000000000004','7e100000-0000-4000-8000-000000000003','7e000000-0000-4000-8000-000000000004','accepted');
+ ('7e200000-0000-4000-8000-000000000004','7e100000-0000-4000-8000-000000000003','7e000000-0000-4000-8000-000000000004','accepted'),
+ ('7e200000-0000-4000-8000-000000000005','7e100000-0000-4000-8000-000000000004','7e000000-0000-4000-8000-000000000003','accepted');
 set local session_replication_role=replica;
 update public.enrollments set updated_at='2026-01-01 00:00:00+00' where id='7e200000-0000-4000-8000-000000000001';
 update public.enrollments set updated_at='2026-01-02 00:00:00+00' where id='7e200000-0000-4000-8000-000000000002';
@@ -147,10 +151,17 @@ reset role;
 
 set local role authenticated;
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000006';
-do $$ begin
-  begin perform public.teacher_enrollment_search('pending');
-    raise exception 'unapproved teacher called filtered enrollment search';
-  exception when insufficient_privilege then null; end;
+do $$
+declare v_page jsonb;
+begin
+  v_page:=public.teacher_enrollment_search('accepted');
+  if (v_page->>'total')::integer<>1 or v_page->'rows'->0->>'group_name'<>'Unapproved teacher group' then
+    raise exception 'active unapproved teacher could not read their own historical enrollment';
+  end if;
+  v_page:=public.teacher_group_choices('','7e100000-0000-4000-8000-000000000004');
+  if jsonb_array_length(v_page)<>1 or v_page->0->>'id'<>'7e100000-0000-4000-8000-000000000004' then
+    raise exception 'active unapproved teacher could not read their own group choice';
+  end if;
 end $$;
 reset role;
 
