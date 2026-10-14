@@ -34,14 +34,9 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
       title={`${copy.welcome}, ${data.me.profile.full_name}`}
       description={copy.intro}
     />
-    <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
-      <QuickAction href={`/${locale}/teacher/groups`}>{copy.groupsLink}</QuickAction>
+    <div className="mb-6 grid grid-cols-2 gap-3">
       <QuickAction href={`/${locale}/teacher/groups/new`}>{copy.create}</QuickAction>
       <QuickAction href={`/${locale}/teacher/lessons?new=1`}>{copy.addLesson}</QuickAction>
-      <QuickAction href={`/${locale}/teacher/lessons`}>{copy.lessonsLink}</QuickAction>
-      <QuickAction href={`/${locale}/teacher/profile`}>{copy.profileLink}</QuickAction>
-      <QuickAction href={`/${locale}/teacher/catalogue`}>{copy.catalogueLink}</QuickAction>
-      <QuickAction href={`/${locale}/teacher/students`}>{copy.studentsLink}</QuickAction>
     </div>
     {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p><a href={`/${locale}/teacher?retry=1`} className="mt-3 inline-flex font-bold text-orange underline">{ar ? 'إعادة المحاولة' : 'Try again'}</a></Panel> : <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -70,5 +65,15 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
         </Panel>
       </div>
     </>}
+    <nav aria-label={ar ? 'روابط التدريس' : 'Teaching shortcuts'} className="mt-6">
+      <h2 className="mb-3 text-sm font-bold text-muted">{ar ? 'روابط أخرى' : 'More teaching links'}</h2>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+        <QuickAction href={`/${locale}/teacher/groups`}>{copy.groupsLink}</QuickAction>
+        <QuickAction href={`/${locale}/teacher/lessons`}>{copy.lessonsLink}</QuickAction>
+        <QuickAction href={`/${locale}/teacher/profile`}>{copy.profileLink}</QuickAction>
+        <QuickAction href={`/${locale}/teacher/catalogue`}>{copy.catalogueLink}</QuickAction>
+        <QuickAction href={`/${locale}/teacher/students`}>{copy.studentsLink}</QuickAction>
+      </div>
+    </nav>
   </>;
 }

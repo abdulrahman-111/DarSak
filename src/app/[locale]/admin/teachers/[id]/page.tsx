@@ -5,6 +5,7 @@ import { requireViewer } from '@/components/platform/access';
 import { Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
 import { ReviewDecisionForm } from '@/features/admin/review-form';
 import { idSchema } from '@/features/student/domain';
+import { teacherReviewListSchema } from '@/features/admin/domain';
 import { richProfileSchema, localizedProfileText } from '@/features/teacher/profile-details-domain';
 
 type ReviewStatus={teacher_id:string;status:'pending'|'approved'|'declined';request_id:string|null;requested_at:string;reviewed_at:string|null;decline_reason:string|null;events:Array<{id:string;kind:string;reason:string|null;created_at:string}>};
@@ -14,9 +15,13 @@ function readStatus(value:unknown):ReviewStatus|null{
  return data as ReviewStatus;
 }
 
-export default async function AdminTeacherReviewDetail({params}:{params:Promise<{locale:string;id:string}>}){
- const {locale:raw,id}=await params,locale=ensureLocale(raw),ar=locale==='ar';if(!idSchema.safeParse(id).success)notFound();
+export default async function AdminTeacherReviewDetail({params,searchParams}:{params:Promise<{locale:string;id:string}>;searchParams:Promise<{q?:string;status?:string;page?:string}>}){
+ const [{locale:raw,id},query]=await Promise.all([params,searchParams]),locale=ensureLocale(raw),ar=locale==='ar';if(!idSchema.safeParse(id).success)notFound();
  const me=await requireViewer(locale,'admin');
+ const listFilters=teacherReviewListSchema.safeParse({query:typeof query.q==='string'?query.q:'',status:query.status,offset:((typeof query.page==='string'&&/^[1-9]\d{0,5}$/.test(query.page)?Number(query.page):1)-1)*30,limit:30});
+ const preserved=listFilters.success?listFilters.data:{query:'',status:'pending' as const,offset:0,limit:30};
+ const backParams=new URLSearchParams();if(preserved.query)backParams.set('q',preserved.query);backParams.set('status',preserved.status);if(preserved.offset>0)backParams.set('page',String(Math.floor(preserved.offset/30)+1));
+ const backHref=`/${locale}/admin/teachers?${backParams}`;
  const [profile,teacher,reviewResult,specializations]=await Promise.all([
   me.db.from('profiles').select('id,full_name,status').eq('id',id).maybeSingle(),
   me.db.from('teacher_profiles').select('headline,bio,approved').eq('id',id).maybeSingle(),
@@ -42,7 +47,7 @@ export default async function AdminTeacherReviewDetail({params}:{params:Promise<
   const trail:string[]=[];let cursor=node;const visited=new Set<string>();while(cursor&&!visited.has(cursor.id)){visited.add(cursor.id);trail.unshift(ar?cursor.name_ar:cursor.name_en);cursor=cursor.parent_id?nodeRows.find(row=>row.id===cursor?.parent_id):undefined;}
   return [subject&&(ar?subject.name_ar:subject.name_en),trail.join(' › ')].filter(Boolean).join(' · ');
  }).filter(Boolean);
- return <><ScreenTitle eyebrow={text.eyebrow} title={profile.data.full_name} description={teacher.data.headline||undefined} action={<Link href={`/${locale}/admin/teachers`} className="rounded-xl border border-line px-4 py-2 font-bold text-teal">{text.back}</Link>}/>
+ return <><ScreenTitle eyebrow={text.eyebrow} title={profile.data.full_name} description={teacher.data.headline||undefined} action={<Link href={backHref} className="rounded-xl border border-line px-4 py-2 font-bold text-teal">{text.back}</Link>}/>
   {failed?<Panel className="mb-5"><p role="alert" className="text-red-800">{text.error}</p></Panel>:null}
   <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,.9fr)]">
    <div className="grid content-start gap-5">

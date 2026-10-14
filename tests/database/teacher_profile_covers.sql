@@ -17,11 +17,11 @@ begin
     raise exception 'cover helper grants are too broad or incomplete';
   end if;
   if has_column_privilege('authenticated','public.teacher_profiles','cover_path','UPDATE')
-     or not has_column_privilege('authenticated','public.teacher_profiles','avatar_path','UPDATE')
+     or has_column_privilege('authenticated','public.teacher_profiles','avatar_path','UPDATE')
      or not has_column_privilege('authenticated','public.teacher_profiles','headline','UPDATE')
      or not has_column_privilege('authenticated','public.teacher_profiles','bio','UPDATE')
      or not has_column_privilege('authenticated','public.teacher_profiles','approved','UPDATE') then
-    raise exception 'authenticated column updates must preserve avatar/headline while withholding cover_path';
+    raise exception 'authenticated column updates must use avatar CAS while withholding cover_path';
   end if;
   if has_table_privilege('anon','public.teacher_profiles','SELECT') then
     raise exception 'anonymous users gained raw teacher_profiles access';
@@ -97,7 +97,15 @@ begin
     raise exception 'raw owner cover update bypassed the CAS RPC';
   exception when insufficient_privilege then null;
   end;
-  update public.teacher_profiles set avatar_path=avatar_path where id='34000000-0000-4000-8000-000000000001';
+  begin
+    update public.teacher_profiles set avatar_path=avatar_path where id='34000000-0000-4000-8000-000000000001';
+    raise exception 'raw owner avatar update bypassed the CAS RPC';
+  exception when insufficient_privilege then null;
+  end;
+  if not public.set_teacher_avatar_path(
+    '34000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png',
+    '34000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png'
+  ) then raise exception 'avatar CAS rejected its unchanged expected path'; end if;
   if not public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp') then
     raise exception 'active owner cannot read unreferenced pending cover';
   end if;

@@ -29,7 +29,7 @@ export default async function StudentDashboard({ params }: { params: Promise<{ l
         <Link href={`/${locale}/student/classes`}><Metric label={copy.pending} value={data.pendingCount}/></Link>
         <Link href={`/${locale}/timetable`}><Metric label={copy.upcoming} value={data.upcomingCount}/></Link>
       </div>
-      <Panel className="mt-6"><div className="mb-4 flex flex-wrap items-baseline justify-between gap-3"><h2 className="text-xl font-black text-teal">{copy.timetable}</h2><Link className="font-bold text-orange underline" href={`/${locale}/timetable`}>{copy.schedule}</Link></div>{preview.length ? <div className="grid gap-3">{preview.map(lesson => <RowLink key={lesson.id} href={`/${locale}/student/lessons/${lesson.id}`} title={lesson.title} meta={cairoDate(lesson.starts_at, locale)} trailing={<Status value={lesson.status} locale={locale}/>}/>)}</div> : <EmptyState>{copy.noLessons}</EmptyState>}</Panel>
+      <Panel className="mt-6"><div className="mb-4 flex flex-wrap items-baseline justify-between gap-3"><h2 className="text-xl font-black text-teal">{copy.timetable}</h2><Link className="font-bold text-orange underline" href={`/${locale}/timetable`}>{copy.schedule}</Link></div>{preview.length ? <div className="grid gap-3">{preview.map(lesson => <RowLink key={lesson.id} href={`/${locale}/student/lessons/${lesson.id}`} title={lesson.title} meta={[Array.isArray(lesson.group) ? lesson.group[0]?.name : lesson.group?.name, cairoDate(lesson.starts_at, locale)].filter(Boolean).join(' · ')} trailing={<Status value={lesson.status} locale={locale}/>}/>)}</div> : <EmptyState>{copy.noLessons}</EmptyState>}</Panel>
     </>}
   </>;
 }

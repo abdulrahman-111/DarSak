@@ -71,37 +71,37 @@ export default async function Teachers({
             <label className="flex h-12 min-w-0 items-center gap-3 rounded-xl bg-[#f6f0e4] px-4 sm:col-span-2 lg:col-span-1">
               <Search size={18} className="shrink-0 text-muted"/>
               <span className="sr-only">{c.searchLabel}</span>
-              <input className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" name="query" maxLength={120} defaultValue={filters.query} placeholder={c.searchPlaceholder}/>
+              <input className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="query" maxLength={120} defaultValue={filters.query} placeholder={c.searchPlaceholder}/>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
               <SlidersHorizontal size={17} className="shrink-0 text-muted"/>
               <span className="sr-only">{c.subject}</span>
-              <select className="min-w-0 flex-1 bg-transparent outline-none" name="subject_id" defaultValue={filters.subjectId || ''}>
+              <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="subject_id" defaultValue={filters.subjectId || ''}>
                 <option value="">{c.allSubjects}</option>
                 {subjects.map(subject => <option key={subject.id} value={subject.id}>{catalogueDisplayName(subject, locale)}</option>)}
               </select>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
               <span className="sr-only">{c.context}</span>
-              <select className="min-w-0 flex-1 bg-transparent outline-none" name="node_id" defaultValue={filters.nodeId || ''}>
+              <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="node_id" defaultValue={filters.nodeId || ''}>
                 <option value="">{c.allContexts}</option>
                 {nodes.map(node => <option key={node.id} value={node.id}>{catalogueDisplayName(node, locale)}</option>)}
               </select>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
               <span className="sr-only">{locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}</span>
-              <input aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
+              <input aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
               <span className="sr-only">{c.teacherFilter}</span>
-              <select aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent outline-none" name="teacher_id" defaultValue={filters.teacherId || ''}>
+              <select aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="teacher_id" defaultValue={filters.teacherId || ''}>
                 <option value="">{c.allTeachers}</option>
                 {teachers.map(teacher => <option key={teacher.id} value={teacher.id}>{teacher.full_name}</option>)}
               </select>
             </label>
             <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
               <span className="sr-only">{c.weekday}</span>
-              <select className="min-w-0 flex-1 bg-transparent outline-none" name="weekday" defaultValue={filters.weekday === null ? '' : String(filters.weekday)}>
+              <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="weekday" defaultValue={filters.weekday === null ? '' : String(filters.weekday)}>
                 <option value="">{c.anyDay}</option>
                 {c.weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}
               </select>

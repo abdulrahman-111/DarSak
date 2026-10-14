@@ -83,34 +83,32 @@ export async function uploadTeacherAvatar(locale: Locale, _state: TeacherProfile
 
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'An active teacher account is required to change your photo.', 'يلزم حساب معلم نشط لتغيير الصورة.') };
-  const { data: teacher, error: teacherError } = await me.db.from('teacher_profiles').select('avatar_path').eq('id', me.id).maybeSingle();
-  if (teacherError) return { error: message(locale, 'Could not load your current photo. Please try again.', 'تعذر تحميل الصورة الحالية. حاول مرة أخرى.') };
-  if (!teacher) return { error: message(locale, 'Teacher profile was not found.', 'ملف المعلم غير موجود.') };
+  const current = await currentAvatarPath(me.db, me.id);
+  if (current.error) return { error: message(locale, 'Could not load your current photo. Please try again.', 'تعذر تحميل الصورة الحالية. حاول مرة أخرى.') };
 
   const path = teacherAvatarPath(me.id, randomUUID(), file.type);
   const uploaded = await me.db.storage.from('teacher-avatars').upload(path, file, { contentType: file.type, upsert: false });
   if (uploaded.error) return { error: message(locale, 'Photo upload failed. Please try again.', 'تعذر رفع الصورة. حاول مرة أخرى.') };
 
-  const saved = await me.db.from('teacher_profiles').update({ avatar_path: path }).eq('id', me.id).select('id').maybeSingle();
-  let avatarSaved = !saved.error && !!saved.data;
+  const saved = await me.db.rpc('set_teacher_avatar_path', { p_avatar_path: path, p_expected_path: current.path });
+  let avatarSaved = !saved.error && saved.data === true;
   if (!avatarSaved) {
-    const verified = await me.db.from('teacher_profiles').select('avatar_path').eq('id', me.id).maybeSingle();
-    if (verified.error || !verified.data) {
-      return { error: message(locale, 'The save result could not be confirmed. The uploaded file remains private; please retry or contact support.', 'تعذر التحقق من نتيجة الحفظ. بقي الملف المرفوع خاصاً؛ حاول مرة أخرى أو تواصل مع الدعم.') };
+    const verified = await currentAvatarPath(me.db, me.id);
+    if (verified.error) return { error: message(locale, 'The save result could not be confirmed. The uploaded file remains private; please retry or contact support.', 'تعذر التحقق من نتيجة الحفظ. بقي الملف المرفوع خاصاً؛ حاول مرة أخرى أو تواصل مع الدعم.') };
+    avatarSaved = avatarPathIsCurrent(path, verified.path);
+    if (!avatarSaved) {
+      const cleaned = await removeAvatarObject(me.db, path);
+      return { error: !cleaned
+        ? message(locale, 'The photo could not be saved or cleaned up. Please contact support.', 'تعذر حفظ الصورة أو تنظيف الملف المرفوع. تواصل مع الدعم.')
+        : verified.path
+          ? message(locale, 'Your photo changed in another request. The newer photo was kept.', 'تغيرت صورتك في طلب آخر. تم الاحتفاظ بالصورة الأحدث.')
+          : message(locale, 'Your photo changed in another request. Please try again.', 'تغيرت صورتك في طلب آخر. حاول مرة أخرى.') };
     }
-    avatarSaved = avatarPathIsCurrent(path, verified.data.avatar_path);
-  }
-  if (!avatarSaved) {
-    const cleanup = await me.db.storage.from('teacher-avatars').remove([path]);
-    return { error: !storageRemovalConfirmed(path, cleanup.data, cleanup.error)
-      ? message(locale, 'The photo could not be saved or cleaned up. Please contact support.', 'تعذر حفظ الصورة أو تنظيف الملف المرفوع. تواصل مع الدعم.')
-      : message(locale, 'The photo could not be saved. Your previous photo is unchanged.', 'تعذر حفظ الصورة. لم تتغير صورتك السابقة.') };
   }
 
   let oldPhotoCleanupFailed = false;
-  if (teacher.avatar_path && teacher.avatar_path !== path) {
-    const removed = await me.db.storage.from('teacher-avatars').remove([teacher.avatar_path]);
-    oldPhotoCleanupFailed = !storageRemovalConfirmed(teacher.avatar_path, removed.data, removed.error);
+  if (current.path && current.path !== path) {
+    oldPhotoCleanupFailed = !await removeAvatarObject(me.db, current.path);
   }
   revalidateTeacherProfilePaths(locale, me.id);
   return { success: oldPhotoCleanupFailed
@@ -121,22 +119,36 @@ export async function uploadTeacherAvatar(locale: Locale, _state: TeacherProfile
 export async function removeTeacherAvatar(locale: Locale, _state: TeacherProfileActionState, _form: FormData): Promise<TeacherProfileActionState> {
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'An active teacher account is required to change your photo.', 'يلزم حساب معلم نشط لتغيير الصورة.') };
-  const { data: teacher, error: teacherError } = await me.db.from('teacher_profiles').select('avatar_path').eq('id', me.id).maybeSingle();
-  if (teacherError) return { error: message(locale, 'Could not load your current photo. Please try again.', 'تعذر تحميل الصورة الحالية. حاول مرة أخرى.') };
-  if (!teacher) return { error: message(locale, 'Teacher profile was not found.', 'ملف المعلم غير موجود.') };
-  if (!teacher.avatar_path) return { success: message(locale, 'There is no photo to remove.', 'لا توجد صورة لحذفها.') };
+  const current = await currentAvatarPath(me.db, me.id);
+  if (current.error) return { error: message(locale, 'Could not load your current photo. Please try again.', 'تعذر تحميل الصورة الحالية. حاول مرة أخرى.') };
+  if (!current.path) return { success: message(locale, 'There is no photo to remove.', 'لا توجد صورة لحذفها.') };
 
-  const cleared = await me.db.from('teacher_profiles').update({ avatar_path: null }).eq('id', me.id).select('id').maybeSingle();
-  if (cleared.error || !cleared.data) {
-    const verified = await me.db.from('teacher_profiles').select('avatar_path').eq('id', me.id).maybeSingle();
-    if (verified.error || !verified.data) return { error: message(locale, 'The removal result could not be confirmed. Please retry or contact support.', 'تعذر التحقق من نتيجة الإزالة. حاول مرة أخرى أو تواصل مع الدعم.') };
-    if (avatarPathIsCurrent(teacher.avatar_path, verified.data.avatar_path)) return { error: message(locale, 'Your photo could not be removed from the profile.', 'تعذر إزالة الصورة من الملف الشخصي.') };
+  const cleared = await me.db.rpc('set_teacher_avatar_path', { p_avatar_path: null, p_expected_path: current.path });
+  let replacedByNewerPhoto = false;
+  if (cleared.error || cleared.data !== true) {
+    const verified = await currentAvatarPath(me.db, me.id);
+    if (verified.error) return { error: message(locale, 'The removal result could not be confirmed. Please retry or contact support.', 'تعذر التحقق من نتيجة الإزالة. حاول مرة أخرى أو تواصل مع الدعم.') };
+    if (avatarPathIsCurrent(current.path, verified.path)) return { error: message(locale, 'Your photo could not be removed from the profile.', 'تعذر إزالة الصورة من الملف الشخصي.') };
+    replacedByNewerPhoto = verified.path !== null;
   }
-  const removed = await me.db.storage.from('teacher-avatars').remove([teacher.avatar_path]);
+  const cleaned = await removeAvatarObject(me.db, current.path);
   revalidateTeacherProfilePaths(locale, me.id);
-  return { success: !storageRemovalConfirmed(teacher.avatar_path, removed.data, removed.error)
-    ? message(locale, 'Photo removed from your profile, but its file could not be cleaned up.', 'تمت إزالة الصورة من ملفك، لكن تعذر تنظيف الملف.')
-    : message(locale, 'Photo removed.', 'تم حذف الصورة.') };
+  if (replacedByNewerPhoto) return { error: cleaned
+    ? message(locale, 'Your photo changed during removal. The newer photo was kept.', 'تغيرت صورتك أثناء الإزالة. تم الاحتفاظ بالصورة الأحدث.')
+    : message(locale, 'Your photo changed during removal. The newer photo was kept, but the previous file could not be cleaned up.', 'تغيرت صورتك أثناء الإزالة. تم الاحتفاظ بالصورة الأحدث، لكن تعذر تنظيف الملف السابق.') };
+  return cleaned
+    ? { success: message(locale, 'Photo removed.', 'تم حذف الصورة.') }
+    : { error: message(locale, 'Photo removed from your profile, but its file could not be cleaned up. Please contact support.', 'تمت إزالة الصورة من ملفك، لكن تعذر تنظيف الملف. تواصل مع الدعم.') };
+}
+
+async function currentAvatarPath(db: Awaited<ReturnType<typeof createClient>>, teacherId: string) {
+  const current = await db.from('teacher_profiles').select('avatar_path').eq('id', teacherId).maybeSingle();
+  return current.error || !current.data ? { error: true as const } : { error: false as const, path: current.data.avatar_path as string | null };
+}
+
+async function removeAvatarObject(db: Awaited<ReturnType<typeof createClient>>, path: string) {
+  const removed = await db.storage.from('teacher-avatars').remove([path]);
+  return storageRemovalConfirmed(path, removed.data, removed.error);
 }
 
 export async function saveTeacherProfile(locale: Locale, _state: TeacherProfileActionState, form: FormData): Promise<TeacherProfileActionState> {

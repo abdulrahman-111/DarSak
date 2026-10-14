@@ -46,7 +46,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
             />
           </Suspense>
           {me ? (
-            <form action={logoutAction}>
+            <form action={logoutAction} data-confirm-unsaved-navigation>
               <button className="h-10 rounded-xl border border-[#d8ccb8] px-3 text-sm font-bold text-teal transition hover:bg-white">{t.logout}</button>
             </form>
           ) : (

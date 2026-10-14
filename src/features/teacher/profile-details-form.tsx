@@ -1,11 +1,12 @@
 'use client';
 
-import { useActionState, useRef, useState } from 'react';
+import { useActionState, useEffect, useRef, useState } from 'react';
 import { buildTeacherVisitorView, TeacherProfile } from '@/components/public/teacher-profile';
 import type { Locale } from '@/features/student/domain';
 import type { Group } from '@/lib/supabase/types';
 import { emptyRichProfile, profileEntryHasContent, profileSectionIds, visiblePublicTeacherProfile, type LocalizedText, type ProfileEntry, type ProfileSectionId, type RichProfileInput, type PublicTeacherVisitorContacts } from './profile-details-domain';
 import { saveTeacherProfileDetails, type RichProfileActionState } from './profile-details-actions';
+import { useUnsavedProfileSection } from './unsaved-profile-protection';
 
 const copy = {
   en: {
@@ -96,6 +97,22 @@ export function TeacherProfileDetailsForm({ locale, details, version, error, tea
   const [snapshotVersion] = useState(version);
   const [value, setValue] = useState<RichProfileInput>(() => details ?? emptyRichProfile());
   const [state, action, pending] = useActionState<RichProfileActionState, FormData>(saveTeacherProfileDetails.bind(null, locale), null);
+  const comparable = (profile: RichProfileInput) => ({
+    ...profile,
+    qualifications: profile.qualifications.filter(profileEntryHasContent),
+    experience: profile.experience.filter(profileEntryHasContent),
+  });
+  const [baseline, setBaseline] = useState(() => JSON.stringify(comparable(details ?? emptyRichProfile())));
+  const submittedSnapshot = useRef<string | null>(null);
+  const handledSuccess = useRef<RichProfileActionState>(null);
+  const dirty = JSON.stringify(comparable(value)) !== baseline;
+  useUnsavedProfileSection('details', dirty);
+  useEffect(() => {
+    if (state?.success && state !== handledSuccess.current) {
+      handledSuccess.current = state;
+      if (submittedSnapshot.current) setBaseline(submittedSnapshot.current);
+    }
+  }, [state]);
   const [showPreview, setShowPreview] = useState(false);
   const [languageIds, setLanguageIds] = useState(() => (details?.languages ?? []).map((_, index) => `language-${index}`));
   const nextLanguageId = useRef(languageIds.length);
@@ -166,7 +183,7 @@ export function TeacherProfileDetailsForm({ locale, details, version, error, tea
       <TeacherProfile view={preview} locale={locale} backLabel={ar ? 'العودة إلى اكتشف' : 'Back to discover'} />
     </aside>}
 
-    <form action={action} className="mt-6 space-y-7">
+    <form action={action} onSubmit={() => { submittedSnapshot.current = JSON.stringify(comparable(value)); }} className="mt-6 space-y-7">
       {/* Keep editor array indices intact until schema validation returns field paths. The save action removes blank rows before persistence. */}
       <input type="hidden" name="details" value={JSON.stringify(value)} />
       <input type="hidden" name="expected_version" value={state?.version ?? snapshotVersion} />

@@ -12,7 +12,10 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/security_hardeni
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/recurring_generation.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_contacts.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_profile_details.sql
+# The avatar race/permission fixtures assume the app is live and both
+# avatar CAS migrations, including the post-rollout column revoke, are applied.
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_avatars.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_avatar_concurrency.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_profile_covers.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_preview.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_generation.sql

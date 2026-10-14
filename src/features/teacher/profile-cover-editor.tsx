@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState } from 'react';
+import Image from 'next/image';
 import type { Locale } from '@/features/student/domain';
 import type { TeacherProfileActionState } from './profile-actions';
 import { removeTeacherCover, uploadTeacherCover } from './profile-cover-actions';
@@ -12,7 +13,7 @@ export function TeacherCoverEditor({ locale, coverUrl, hasCover }: { locale: Loc
   return <section aria-labelledby="teacher-cover-heading" className="mb-6 border-b border-line pb-6">
     <h2 id="teacher-cover-heading" className="text-lg font-black text-teal">{ar ? 'صورة الغلاف' : 'Cover image'}</h2>
     <p className="mt-1 text-sm text-muted">{ar ? 'JPG أو PNG أو WebP، بحد أقصى ٢ ميجابايت.' : 'JPG, PNG, or WebP, up to 2 MB.'}</p>
-    {coverUrl && <img src={coverUrl} alt={ar ? 'صورة غلاف ملفك الشخصي' : 'Your profile cover image'} className="mt-4 aspect-[3/1] w-full rounded-2xl object-cover"/>}
+    {coverUrl && <Image src={coverUrl} alt={ar ? 'صورة غلاف ملفك الشخصي' : 'Your profile cover image'} width={1200} height={400} unoptimized className="mt-4 aspect-[3/1] w-full rounded-2xl object-cover"/>}
     <form action={uploadAction} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
       <label className="min-w-0 flex-1 text-sm font-bold">
         <span className="sr-only">{ar ? 'اختر صورة الغلاف' : 'Choose a cover image'}</span>

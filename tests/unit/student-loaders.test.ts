@@ -22,6 +22,7 @@ describe('student dashboard loader query contract', () => {
         starts_at: `2025-01-${String((index % 28) + 1).padStart(2, '0')}T08:00:00.000Z`,
         ends_at: '2025-01-01T09:00:00.000Z',
         status: 'scheduled',
+        group: { name: 'Algebra group' },
       })),
       ...Array.from({ length: 8 }, (_, index) => ({
         id: `future-${index}`,
@@ -30,6 +31,7 @@ describe('student dashboard loader query contract', () => {
         starts_at: `2026-10-1${2 + index}T12:00:00.000Z`,
         ends_at: `2026-10-1${2 + index}T13:00:00.000Z`,
         status: 'scheduled',
+        group: { name: 'Algebra group' },
       })),
     ];
     const queries: Array<{ table: string; filters: Array<[string, string, unknown]>; limit?: number; selectOptions?: unknown; fields?: string }> = [];
@@ -72,12 +74,13 @@ describe('student dashboard loader query contract', () => {
     expect(result.pendingCount).toBe(3);
     expect(result.upcomingCount).toBe(8);
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['future-0', 'future-1', 'future-2', 'future-3', 'future-4']);
+    expect(Array.isArray(result.lessons[0].group) ? result.lessons[0].group[0]?.name : result.lessons[0].group?.name).toBe('Algebra group');
     expect(queries.find(query => query.table === 'lessons')).toMatchObject({
       filters: [['eq', 'status', 'scheduled'], ['eq', 'group.enrollments.student_id', 'student-id'], ['eq', 'group.enrollments.status', 'accepted'], ['gt', 'ends_at', now.toISOString()]],
       limit: 5,
       selectOptions: { count: 'exact' },
     });
-    expect(queries.find(query => query.table === 'lessons')?.fields).toContain('groups!inner(id,enrollments!inner(id))');
+    expect(queries.find(query => query.table === 'lessons')?.fields).toContain('groups!inner(id,name,enrollments!inner(id))');
   });
 
   it('limits recurring timetable slots to this student’s accepted groups through the RLS-visible join', async () => {
