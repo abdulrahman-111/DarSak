@@ -44,8 +44,11 @@ insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time)
 
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000002';
 do $$
-declare v_result record; v_date date := date '2030-01-01';
+declare v_result record; v_date date := date '2030-04-26';
 begin
+  if extract(epoch from ((v_date + time '10:30') - (((v_date + time '10:30') at time zone 'Africa/Cairo') at time zone 'UTC')))<>10800 then
+    raise exception 'Cairo daylight-saving fixture did not resolve to the expected local offset';
+  end if;
   select * into v_result from public.student_group_schedule_overlap('7f100000-0000-4000-8000-000000000001');
   if v_result.weekly_overlap or v_result.dated_overlap then raise exception 'adjacent weekly slots were treated as overlapping'; end if;
 
@@ -54,12 +57,12 @@ begin
   if not v_result.weekly_overlap then raise exception 'overlapping weekly templates were not detected'; end if;
   update public.group_schedule_slots set start_time='09:00',end_time='10:00' where id='7f300000-0000-4000-8000-000000000002';
 
-  -- A Cairo-local Tuesday occurrence must match the weekly candidate slot,
-  -- even where UTC has a different date or offset around timezone changes.
+  -- April 26, 2030 is in Cairo daylight time. Compare using the local calendar
+  -- date and time rather than assuming a fixed UTC offset.
   insert into public.lessons(id,group_id,title,starts_at,ends_at,status) values
    ('7f400000-0000-4000-8000-000000000001','7f100000-0000-4000-8000-000000000002','Private accepted lesson',
     ((v_date + time '10:30') at time zone 'Africa/Cairo'),((v_date + time '11:30') at time zone 'Africa/Cairo'),'scheduled');
-  update public.group_schedule_slots set start_time='10:00',end_time='11:00' where id='7f300000-0000-4000-8000-000000000001';
+  update public.group_schedule_slots set weekday=5,start_time='10:00',end_time='11:00' where id='7f300000-0000-4000-8000-000000000001';
   select * into v_result from public.student_group_schedule_overlap('7f100000-0000-4000-8000-000000000001');
   if v_result.weekly_overlap or not v_result.dated_overlap then raise exception 'weekly-versus-dated Cairo-local overlap was classified incorrectly'; end if;
 
@@ -85,7 +88,7 @@ begin
   if v_result.dated_overlap then raise exception 'past lesson caused a warning'; end if;
 
   -- A multi-day dated candidate lesson overlaps a weekly accepted slot after midnight.
-  update public.group_schedule_slots set weekday=3,start_time='10:00',end_time='11:00' where id='7f300000-0000-4000-8000-000000000002';
+  update public.group_schedule_slots set weekday=0,start_time='10:00',end_time='11:00' where id='7f300000-0000-4000-8000-000000000002';
   insert into public.lessons(id,group_id,title,starts_at,ends_at,status) values
    ('7f400000-0000-4000-8000-000000000003','7f100000-0000-4000-8000-000000000001','Private candidate lesson',
     ((v_date + time '23:00') at time zone 'Africa/Cairo'),(((v_date + 2) + time '11:00') at time zone 'Africa/Cairo'),'scheduled');
