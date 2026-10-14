@@ -71,8 +71,7 @@ begin
 end;
 $$;
 
-revoke all on function public.calendar_lesson_export(date, date) from public;
-revoke all on function public.calendar_lesson_export(date, date) from anon, service_role;
+revoke all on function public.calendar_lesson_export(date, date) from public, anon, authenticated, service_role;
 grant execute on function public.calendar_lesson_export(date, date) to authenticated;
 
 commit;
