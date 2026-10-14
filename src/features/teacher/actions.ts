@@ -3,6 +3,7 @@
 import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { logActionFailure } from '@/lib/action-diagnostics';
 import { safeFile } from '@/lib/domain';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { lessonStatusSchema, materialSchema, storageObjectPath } from './domain';
@@ -24,36 +25,49 @@ async function ownsLesson(db: Awaited<ReturnType<typeof createClient>>, teacherI
 }
 
 async function removeMaterialObject(db: Awaited<ReturnType<typeof createClient>>, path: string): Promise<boolean> {
+  const startedAt = Date.now();
   const bucket = db.storage.from('lesson-materials');
   const removed = await bucket.remove([path]);
   if (storageRemovalConfirmed(path, removed.data, removed.error)) return true;
-  if (removed.error) return false;
+  if (removed.error) {
+    logActionFailure('materials.storage.remove', startedAt, removed.error, 'STORAGE_ERROR');
+    return false;
+  }
 
   // Storage removal is idempotent at the API, but an empty result can also mean
   // no object was removed. Confirm absence while metadata still grants visibility.
   const parent = path.slice(0, path.lastIndexOf('/'));
   const name = path.slice(path.lastIndexOf('/') + 1);
   const listed = await bucket.list(parent, { search: name, limit: 100 });
+  if (listed.error) logActionFailure('materials.storage.remove_confirm', startedAt, listed.error, 'STORAGE_ERROR');
+  else if (Array.isArray(listed.data) && listed.data.some(object => object.name === name)) logActionFailure('materials.storage.remove', startedAt, undefined, 'STORAGE_FAILURE');
   return !listed.error && Array.isArray(listed.data) && !listed.data.some(object => object.name === name);
 }
 
 export async function addMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
+  const startedAt = Date.now();
   if (!idSchema.safeParse(lessonId).success) return { error: message(locale, 'Invalid lesson.', 'الحصة غير صالحة.') };
   const parsed = materialSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: message(locale, 'Check the material details.', 'تحقق من بيانات المادة.') };
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'Teacher access required.', 'يلزم حساب مدرس نشط.') };
   const owned = await ownsLesson(me.db, me.id, lessonId);
+  if (owned.error) logActionFailure('materials.ownership.lookup', startedAt, owned.error, 'DB_ERROR');
+  else if (!owned.data) logActionFailure('materials.ownership.lookup', startedAt, undefined, 'NOT_FOUND');
   if (owned.error || !owned.data) return { error: message(locale, 'Lesson not found.', 'الحصة غير موجودة.') };
   const { error } = parsed.data.kind === 'link'
     ? await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'link', title: parsed.data.title, url: parsed.data.url })
     : await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'note', title: parsed.data.title, content: parsed.data.content });
-  if (error) return { error: message(locale, 'Could not add the material.', 'تعذرت إضافة المادة.') };
+  if (error) {
+    logActionFailure('materials.metadata.save', startedAt, error, 'DB_ERROR');
+    return { error: message(locale, 'Could not add the material.', 'تعذرت إضافة المادة.') };
+  }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   return { success: message(locale, 'Material added.', 'تمت إضافة المادة.') };
 }
 
 export async function uploadMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
+  const startedAt = Date.now();
   const file = form.get('file');
   const title = String(form.get('title') ?? '').trim();
   if (!idSchema.safeParse(lessonId).success || !(file instanceof File) || !title || title.length > 180 || !safeFile(file)) {
@@ -62,14 +76,20 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'Teacher access required.', 'يلزم حساب مدرس نشط.') };
   const owned = await ownsLesson(me.db, me.id, lessonId);
+  if (owned.error) logActionFailure('materials.ownership.lookup', startedAt, owned.error, 'DB_ERROR');
+  else if (!owned.data) logActionFailure('materials.ownership.lookup', startedAt, undefined, 'NOT_FOUND');
   if (owned.error || !owned.data) return { error: message(locale, 'Lesson not found.', 'الحصة غير موجودة.') };
   let path: string;
   try { path = storageObjectPath(me.id, lessonId, file.name, randomUUID()); }
   catch { return { error: message(locale, 'Unsupported file type.', 'نوع الملف غير مدعوم.') }; }
   const uploaded = await me.db.storage.from('lesson-materials').upload(path, file, { contentType: file.type, upsert: false });
-  if (uploaded.error) return { error: message(locale, 'Upload failed.', 'فشل رفع الملف.') };
+  if (uploaded.error) {
+    logActionFailure('materials.storage.upload', startedAt, uploaded.error, 'STORAGE_ERROR');
+    return { error: message(locale, 'Upload failed.', 'فشل رفع الملف.') };
+  }
   const inserted = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'file', title, storage_path: path, file_size: file.size, mime_type: file.type });
   if (inserted.error) {
+    logActionFailure('materials.metadata.save', startedAt, inserted.error, 'DB_ERROR');
     const cleaned = await removeMaterialObject(me.db, path);
     return { error: message(locale,
       cleaned ? 'Could not save the uploaded file.' : 'Could not save the file, and cleanup is incomplete. Retry or contact support.',
@@ -80,26 +100,35 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
 }
 
 export async function setLessonStatus(locale: Locale, lessonId: string, status: string) {
+  const startedAt = Date.now();
   if (!idSchema.safeParse(lessonId).success || !lessonStatusSchema.safeParse(status).success) return { error: 'Invalid status' };
   const me = await activeTeacher();
   if (!me) return { error: 'Not authorized' };
   const { error } = await me.db.rpc('set_lesson_status', { p_lesson_id: lessonId, p_status: status });
+  if (error) logActionFailure('lesson_status.save', startedAt, error, 'DB_ERROR');
   if (!error) revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   return error ? { error: error.message } : { ok: true };
 }
 
 export async function deleteMaterial(locale: Locale, lessonId: string, materialId: string) {
+  const startedAt = Date.now();
   if (!idSchema.safeParse(lessonId).success || !idSchema.safeParse(materialId).success) return { error: 'Invalid material' };
   const me = await activeTeacher();
   if (!me) return { error: 'Not authorized' };
   const { data: material, error: lookupError } = await me.db.from('lesson_materials').select('storage_path').eq('id', materialId).eq('lesson_id', lessonId).maybeSingle();
-  if (lookupError) return { error: 'Could not load material. Please retry.' };
+  if (lookupError) {
+    logActionFailure('materials.metadata.lookup', startedAt, lookupError, 'DB_ERROR');
+    return { error: 'Could not load material. Please retry.' };
+  }
   if (!material) return { error: 'Material not found' };
   if (material.storage_path && !(await removeMaterialObject(me.db, material.storage_path))) {
     return { error: 'Could not remove the file. The material is still available; please retry.' };
   }
   const removed = await me.db.from('lesson_materials').delete().eq('id', materialId);
-  if (removed.error) return { error: removed.error.message };
+  if (removed.error) {
+    logActionFailure('materials.metadata.delete', startedAt, removed.error, 'DB_ERROR');
+    return { error: removed.error.message };
+  }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   return { ok: true };
 }
