@@ -97,7 +97,15 @@ begin
     raise exception 'raw owner cover update bypassed the CAS RPC';
   exception when insufficient_privilege then null;
   end;
-  update public.teacher_profiles set avatar_path=avatar_path where id='34000000-0000-4000-8000-000000000001';
+  begin
+    update public.teacher_profiles set avatar_path=avatar_path where id='34000000-0000-4000-8000-000000000001';
+    raise exception 'raw owner avatar update bypassed the CAS RPC';
+  exception when insufficient_privilege then null;
+  end;
+  if not public.set_teacher_avatar_path(
+    '34000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png',
+    '34000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png'
+  ) then raise exception 'avatar CAS rejected its unchanged expected path'; end if;
   if not public.can_read_teacher_cover('34000000-0000-4000-8000-000000000001/cover/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.webp') then
     raise exception 'active owner cannot read unreferenced pending cover';
   end if;

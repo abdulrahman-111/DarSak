@@ -385,7 +385,24 @@ try {
   const coverAfterRawClear = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
   check((!rawCoverClear.ok || rawCoverClear.data.length===0) && coverAfterRawClear===initialCoverPath,'active teacher cannot bypass compare-and-set with a raw cover update');
   const directAvatarWrite = await request(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:teacher.token,method:'PATCH',body:{avatar_path:avatarPath}});
-  check(directAvatarWrite.ok && directAvatarWrite.data.length===1,'legacy authenticated avatar reference update remains available');
+  const avatarAfterRawWrite = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=avatar_path`,{token:service}))[0].avatar_path;
+  check((!directAvatarWrite.ok || directAvatarWrite.data.length===0) && avatarAfterRawWrite===avatarPath,'active teacher cannot bypass avatar compare-and-set with a raw column update');
+  const competingAvatarPaths = [`${teacher.id}/${randomUUID()}.webp`,`${teacher.id}/${randomUUID()}.jpg`];
+  const competingAvatarUploads = await Promise.all([
+    uploadAvatar(competingAvatarPaths[0],'image/webp',Buffer.from('UklGRgAAAABXRUJQVlA4','ascii'),teacher.token),
+    uploadAvatar(competingAvatarPaths[1],'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),teacher.token),
+  ]);
+  assert(competingAvatarUploads.every(result=>result.ok),`Competing avatar fixtures uploaded: ${JSON.stringify(competingAvatarUploads)}`);
+  uploadedAvatarPaths.push(...competingAvatarPaths);
+  const concurrentAvatarSaves = await Promise.all(competingAvatarPaths.map(path=>
+    request('/rest/v1/rpc/set_teacher_avatar_path',{token:teacher.token,method:'POST',body:{p_avatar_path:path,p_expected_path:avatarPath}})
+  ));
+  assert(concurrentAvatarSaves.every(result=>result.ok),`Concurrent avatar saves failed: ${JSON.stringify(concurrentAvatarSaves)}`);
+  const avatarWinnerPath = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=avatar_path`,{token:service}))[0].avatar_path;
+  check(concurrentAvatarSaves.filter(result=>result.data===true).length===1 && competingAvatarPaths.includes(avatarWinnerPath),'concurrent avatar compare-and-set replacements have one winner');
+  const staleAvatarRemoval = await success('/rest/v1/rpc/set_teacher_avatar_path',{token:teacher.token,method:'POST',body:{p_avatar_path:null,p_expected_path:avatarPath}});
+  const avatarAfterStaleRemoval = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=avatar_path`,{token:service}))[0].avatar_path;
+  check(staleAvatarRemoval===false && avatarAfterStaleRemoval===avatarWinnerPath,'stale avatar removal leaves the concurrent winning photo selected');
   const publicCoverAccess = await success('/rest/v1/rpc/can_read_teacher_cover',{method:'POST',body:{p_name:initialCoverPath}});
   const publicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
   const publicCoverRead = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
@@ -395,7 +412,7 @@ try {
   const coverAfterDeniedDelete = await request(`/storage/v1/object/sign/teacher-avatars/${initialCoverPath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
   check(coverAfterDeniedDelete.ok,'denied concurrent cover deletion preserves the current object');
   const preservedAvatar = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=avatar_path`,{token:service}))[0].avatar_path;
-  check(preservedAvatar===avatarPath,'cover save preserves the independent avatar reference');
+  check(preservedAvatar===avatarWinnerPath,'cover save preserves the independent avatar reference');
 
   const secondCoverPath = `${teacher.id}/cover/${randomUUID()}.webp`;
   const thirdCoverPath = `${teacher.id}/cover/${randomUUID()}.jpg`;
@@ -419,7 +436,7 @@ try {
   const afterFailedCoverSave = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path,avatar_path`,{token:service}))[0];
   const failedSavePublicRead = await request(`/storage/v1/object/sign/teacher-avatars/${failedSavePath.split('/').map(encodeURIComponent).join('/')}`,{method:'POST',body:signBody});
   const failedSaveOwnerRead = await request(`/storage/v1/object/sign/teacher-avatars/${failedSavePath.split('/').map(encodeURIComponent).join('/')}`,{token:teacher.token,method:'POST',body:signBody});
-  check(failedMetadataSave===false && afterFailedCoverSave.cover_path===currentCover && afterFailedCoverSave.avatar_path===avatarPath && !failedSavePublicRead.ok && failedSaveOwnerRead.ok,'failed metadata save keeps the current cover and avatar while the new object stays private');
+  check(failedMetadataSave===false && afterFailedCoverSave.cover_path===currentCover && afterFailedCoverSave.avatar_path===avatarWinnerPath && !failedSavePublicRead.ok && failedSaveOwnerRead.ok,'failed metadata save keeps the current cover and avatar while the new object stays private');
   const failedCoverDelete = await request('/storage/v1/object/teacher-avatars',{token:teacher.token,method:'DELETE',body:{prefixes:[failedSavePath]}});
   assert(failedCoverDelete.ok && failedCoverDelete.data.some(row=>row.name===failedSavePath),'owner can clean an unreferenced cover after a failed save');
   uploadedCoverPaths.splice(uploadedCoverPaths.indexOf(failedSavePath),1);
