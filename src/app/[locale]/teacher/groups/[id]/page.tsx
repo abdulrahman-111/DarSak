@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
-import { LessonForm, SlotForm } from '@/components/platform/forms';
+import { LessonForm } from '@/components/platform/forms';
 import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate, weekday } from '@/components/platform/ui';
 import { GenerationPreviewForm } from '@/features/teacher/generation-form';
 import { DuplicateGroupForm } from '@/features/teacher/shortcuts-forms';
@@ -10,6 +10,7 @@ import { EnrollmentDecisionButtons } from '@/components/platform/actions';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
 import { StudentPagination } from '@/features/student/pagination';
+import { WeeklyScheduleEditor } from '@/features/teacher/setup-forms';
 
 export default async function TeacherGroupDetail({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ page?: string; roster_page?: string }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
@@ -53,11 +54,11 @@ export default async function TeacherGroupDetail({ params, searchParams }: { par
   const currentGroup = group.data;
   if (!currentGroup) notFound();
   const copy = ar ? {
-    schedule: 'الجدول الأسبوعي', cairo: 'كل الأوقات بتوقيت القاهرة.', addTime: 'أضف أول موعد أسبوعي.',
+    schedule: 'الجدول الأسبوعي', cairo: 'كل الأوقات بتوقيت القاهرة.', addTime: 'أضف أول موعد أسبوعي.', scheduleEffect: 'تغييرات الجدول تؤثر في إنشاء الحصص مستقبلاً. الحصص التي أُنشئت بالفعل تبقى كما هي؛ عدّلها أو أعد جدولتها بشكل منفصل.',
     newLesson: 'حصة جديدة', lessons: 'الحصص', noLessons: 'لا توجد حصص بعد.', students: 'الطلاب والطلبات', noStudents: 'لا توجد طلبات بعد.',
     generation: 'إنشاء الحصص من الجدول', slotError: 'تعذر تحميل المواعيد الأسبوعية.', lessonsError: 'تعذر تحميل الحصص.', studentsError: 'تعذر تحميل الطلاب والطلبات.', exclusionsError: 'تعذر تحميل الأيام المستثناة.', back: 'العودة إلى مجموعاتي', archived: 'هذه المجموعة مؤرشفة. يمكنك مراجعة سجلها، لكن لن تُضاف مواعيد أو حصص جديدة.', archivedNoSchedule: 'لا توجد مواعيد أسبوعية محفوظة.',
   } : {
-    schedule: 'Weekly schedule', cairo: 'All times use Africa/Cairo.', addTime: 'Add the first weekly time.',
+    schedule: 'Weekly schedule', cairo: 'All times use Africa/Cairo.', addTime: 'Add the first weekly time.', scheduleEffect: 'Schedule changes affect future lesson generation. Lessons already generated remain as they are; edit or reschedule them separately.',
     newLesson: 'New lesson', lessons: 'Lessons', noLessons: 'No lessons yet.', students: 'Students and requests', noStudents: 'No requests yet.',
     generation: 'Generate lessons from schedule', slotError: 'Could not load weekly times.', lessonsError: 'Could not load lessons.', studentsError: 'Could not load students and requests.', exclusionsError: 'Could not load excluded days.', back: 'Back to my groups', archived: 'This group is archived. You can review its history, but no new times or lessons can be added.', archivedNoSchedule: 'No weekly schedule was saved for this group.',
   };
@@ -70,8 +71,9 @@ export default async function TeacherGroupDetail({ params, searchParams }: { par
       <Panel>
         <h2 className="text-xl font-black text-teal">{copy.schedule}</h2>
         <p className="mt-1 text-sm text-muted">{copy.cairo}</p>
-        {slots.error ? <p role="alert" className="my-5 text-sm text-red-700">{copy.slotError}</p> : <div className="my-5 grid gap-2">{slots.data?.length ? slots.data.map(slot => <div key={slot.id} className="flex justify-between rounded-xl bg-cream px-4 py-3"><strong>{weekday(slot.weekday, locale)}</strong><span dir="ltr">{slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}</span></div>) : <EmptyState>{currentGroup.status === 'archived' ? copy.archivedNoSchedule : copy.addTime}</EmptyState>}</div>}
-        {currentGroup.status !== 'archived' && <><SlotForm locale={locale} groupId={id} />
+        {currentGroup.status !== 'archived' && <p className="mt-1 text-sm text-muted">{copy.scheduleEffect}</p>}
+        {slots.error ? <p role="alert" className="my-5 text-sm text-red-700">{copy.slotError}</p> : currentGroup.status === 'archived' ? <div className="my-5 grid gap-2">{slots.data?.length ? slots.data.map(slot => <div key={slot.id} className="flex justify-between rounded-xl bg-cream px-4 py-3"><strong>{weekday(slot.weekday, locale)}</strong><span dir="ltr">{slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}</span></div>) : <EmptyState>{copy.archivedNoSchedule}</EmptyState>}</div> : <WeeklyScheduleEditor locale={locale} groupId={id} slots={slots.data ?? []} />}
+        {currentGroup.status !== 'archived' && <>
           <div className="mt-5 border-t border-line pt-5"><DuplicateGroupForm locale={locale} groupId={id} /></div></>}
       </Panel>
       {currentGroup.status !== 'archived' && <Panel><h2 className="mb-4 text-xl font-black text-teal">{copy.newLesson}</h2><LessonForm locale={locale} groupId={id} /></Panel>}

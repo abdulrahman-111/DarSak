@@ -292,7 +292,6 @@ export function WeeklyScheduleStepForm({ locale, groupId, slots, scheduleProposa
   copyScheduleFrom?: string;
 }) {
   const t = scheduleCopy(locale);
-  const [deleteState, deleteAction, deletePending] = useActionState<ScheduleSlotActionState, FormData>(deleteScheduleSlot.bind(null, locale), null);
   const sourceQuery = copyScheduleFrom ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}` : '';
   return <section className="grid gap-4">
     <div>
@@ -310,16 +309,36 @@ export function WeeklyScheduleStepForm({ locale, groupId, slots, scheduleProposa
         : <p className="text-sm text-muted">{t.proposalEmpty}</p>}
       <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=schedule`} className="justify-self-start text-sm font-bold text-teal underline">{t.clearProposal}</Link>
     </aside>}
-    {deleteState?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{deleteState.error}</p>}
-    {deleteState?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-green-900">{deleteState.success}</p>}
-    {slots.length
-      ? <ul className="grid gap-3">{slots.map(slot => <ScheduleSlotEditor key={slot.id} locale={locale} groupId={groupId} slot={slot} deleteAction={deleteAction} deletePending={deletePending} />)}</ul>
-      : <p className="rounded-xl bg-cream p-4 text-sm text-muted">{t.empty}</p>}
-    <AddScheduleSlotForm locale={locale} groupId={groupId} />
+    <ScheduleSlotsEditor locale={locale} groupId={groupId} slots={slots} />
     <div className="flex flex-col gap-3 border-t border-line pt-4 sm:flex-row sm:justify-between">
       <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=details${sourceQuery}`} className="rounded-xl border border-line px-4 py-3 text-center font-bold text-teal">{t.back}</Link>
       <Link href={`/${locale}/teacher/groups/${groupId}/setup?step=review${sourceQuery}`} className="rounded-xl bg-teal px-4 py-3 text-center font-bold text-white">{t.next}</Link>
     </div>
+  </section>;
+}
+
+export function WeeklyScheduleEditor({ locale, groupId, slots }: {
+  locale: Locale;
+  groupId: string;
+  slots: GroupScheduleSlot[];
+}) {
+  const t = scheduleCopy(locale);
+  return <section className="grid gap-4">
+    <p className="mt-1 text-sm text-muted">{t.description}</p>
+    <ScheduleSlotsEditor locale={locale} groupId={groupId} slots={slots} />
+  </section>;
+}
+
+function ScheduleSlotsEditor({ locale, groupId, slots }: { locale: Locale; groupId: string; slots: GroupScheduleSlot[] }) {
+  const t = scheduleCopy(locale);
+  const [deleteState, deleteAction, deletePending] = useActionState<ScheduleSlotActionState, FormData>(deleteScheduleSlot.bind(null, locale), null);
+  return <section className="grid gap-4">
+    {deleteState?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{deleteState.error}</p>}
+    {deleteState?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-teal">{deleteState.success}</p>}
+    {slots.length
+      ? <ul className="grid gap-3">{slots.map(slot => <ScheduleSlotEditor key={slot.id} locale={locale} groupId={groupId} slot={slot} deleteAction={deleteAction} deletePending={deletePending} />)}</ul>
+      : <p className="rounded-xl bg-cream p-4 text-sm text-muted">{t.empty}</p>}
+    <AddScheduleSlotForm locale={locale} groupId={groupId} />
   </section>;
 }
 

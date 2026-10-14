@@ -101,33 +101,39 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
 
 export async function setLessonStatus(locale: Locale, lessonId: string, status: string) {
   const startedAt = Date.now();
-  if (!idSchema.safeParse(lessonId).success || !lessonStatusSchema.safeParse(status).success) return { error: 'Invalid status' };
+  if (!idSchema.safeParse(lessonId).success || !lessonStatusSchema.safeParse(status).success) return { error: message(locale, 'Choose a valid lesson status.', 'اختر حالة صالحة للحصة.') };
   const me = await activeTeacher();
-  if (!me) return { error: 'Not authorized' };
+  if (!me) return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
   const { error } = await me.db.rpc('set_lesson_status', { p_lesson_id: lessonId, p_status: status });
   if (error) logActionFailure('lesson_status.save', startedAt, error, 'DB_ERROR');
   if (!error) revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
-  return error ? { error: error.message } : { ok: true };
+  if (!error) return { ok: true };
+  const raw = error.message.toLowerCase();
+  if (raw.includes('not authorized') || error.code === '42501') return { error: message(locale, 'You are not authorized to change this lesson.', 'ليست لديك صلاحية لتغيير هذه الحصة.') };
+  if (raw.includes('archived')) return { error: message(locale, 'This group is archived. You can review its lesson history, but cannot schedule lessons.', 'هذه المجموعة مؤرشفة. يمكنك مراجعة سجل الحصص، لكن لا يمكن جدولة حصص جديدة.') };
+  if (raw.includes('overlap') || raw.includes('conflict')) return { error: message(locale, 'This lesson overlaps another lesson. Choose a different time.', 'يتعارض موعد هذه الحصة مع حصة أخرى. اختر موعداً مختلفاً.') };
+  if (raw.includes('not found') || raw.includes('changed')) return { error: message(locale, 'This lesson has changed or is no longer available. Refresh the page and try again.', 'تغيرت هذه الحصة أو لم تعد متاحة. حدّث الصفحة وحاول مرة أخرى.') };
+  return { error: message(locale, 'Could not update the lesson status. Refresh the page and try again.', 'تعذر تحديث حالة الحصة. حدّث الصفحة وحاول مرة أخرى.') };
 }
 
 export async function deleteMaterial(locale: Locale, lessonId: string, materialId: string) {
   const startedAt = Date.now();
-  if (!idSchema.safeParse(lessonId).success || !idSchema.safeParse(materialId).success) return { error: 'Invalid material' };
+  if (!idSchema.safeParse(lessonId).success || !idSchema.safeParse(materialId).success) return { error: message(locale, 'This material is not available.', 'هذه المادة غير متاحة.') };
   const me = await activeTeacher();
-  if (!me) return { error: 'Not authorized' };
+  if (!me) return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
   const { data: material, error: lookupError } = await me.db.from('lesson_materials').select('storage_path').eq('id', materialId).eq('lesson_id', lessonId).maybeSingle();
   if (lookupError) {
     logActionFailure('materials.metadata.lookup', startedAt, lookupError, 'DB_ERROR');
-    return { error: 'Could not load material. Please retry.' };
+    return { error: message(locale, 'Could not load the material. Refresh and try again.', 'تعذر تحميل المادة. حدّث الصفحة وحاول مرة أخرى.') };
   }
-  if (!material) return { error: 'Material not found' };
+  if (!material) return { error: message(locale, 'This material is no longer available.', 'لم تعد هذه المادة متاحة.') };
   if (material.storage_path && !(await removeMaterialObject(me.db, material.storage_path))) {
-    return { error: 'Could not remove the file. The material is still available; please retry.' };
+    return { error: message(locale, 'Could not remove the file. The material is still available; please retry.', 'تعذر حذف الملف. ما زالت المادة متاحة؛ حاول مرة أخرى.') };
   }
   const removed = await me.db.from('lesson_materials').delete().eq('id', materialId);
   if (removed.error) {
     logActionFailure('materials.metadata.delete', startedAt, removed.error, 'DB_ERROR');
-    return { error: removed.error.message };
+    return { error: message(locale, 'Could not delete the material. Refresh and try again.', 'تعذر حذف المادة. حدّث الصفحة وحاول مرة أخرى.') };
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   return { ok: true };
