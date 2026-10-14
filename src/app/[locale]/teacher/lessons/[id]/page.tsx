@@ -7,9 +7,11 @@ import { TeacherMaterialForms } from '@/components/platform/actions';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
 import { CopyLessonForm, DeleteLessonMaterialButton, LessonShortcutStatusControls } from '@/features/teacher/shortcuts-forms';
 import { DeleteManualTeacherLessonForm } from '@/features/teacher/management-forms';
+import { AttendanceRoster } from '@/features/teacher/attendance-forms';
+import { attendancePageCount as getAttendancePageCount, attendancePageHref, clampAttendancePage, normalizeAttendancePage, teacherAttendancePage } from '@/features/teacher/attendance-data';
 
-export default async function TeacherLesson({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const { locale: raw, id } = await params;
+export default async function TeacherLesson({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'teacher');
@@ -22,11 +24,19 @@ export default async function TeacherLesson({ params }: { params: Promise<{ loca
   const lesson = lessonResult.data;
   const group = Array.isArray(lesson.group) ? lesson.group[0] : lesson.group;
   if (!group) notFound();
-  const [materials, groups] = await Promise.all([
+  const requestedPage = normalizeAttendancePage(Array.isArray(query.attendance_page) ? query.attendance_page[0] : query.attendance_page);
+  const [materials, groups, approval, requestedAttendance] = await Promise.all([
     me.db.from('lesson_materials').select('id,title,kind,url,content,file_size,mime_type').eq('lesson_id', id).order('created_at'),
     me.db.from('groups').select('id,name').eq('teacher_id', me.id).neq('status', 'archived').order('name').order('id'),
+    me.db.from('teacher_profiles').select('approved').eq('id', me.id).maybeSingle(),
+    teacherAttendancePage(me.db, id, (requestedPage - 1) * 20),
   ]);
   const archived = group.status === 'archived';
+  const attendancePageCount = requestedAttendance ? getAttendancePageCount(requestedAttendance.total) : 1;
+  const currentPage = requestedAttendance ? clampAttendancePage(requestedPage, requestedAttendance.total) : 1;
+  const attendance = currentPage === requestedPage ? requestedAttendance : await teacherAttendancePage(me.db, id, (currentPage - 1) * 20);
+  const future = lesson.starts_at > new Date().toISOString();
+  const attendanceReadOnly = archived || lesson.status === 'cancelled' || future || approval.data?.approved !== true;
   const canOfferDelete = lesson.slot_id === null && lesson.starts_at > new Date().toISOString() && lesson.status !== 'completed' && !materials.error && !(materials.data?.length);
 
   const copy = ar ? {
@@ -36,6 +46,7 @@ export default async function TeacherLesson({ params }: { params: Promise<{ loca
     back: 'العودة إلى المجموعة', archived: 'المجموعة مؤرشفة. يمكنك مراجعة هذه الحصة وموادها، لكن لا يمكن إضافة أو تعديل محتوى جديد.',
     generatedHint: 'الحصة مرتبطة بموعد متكرر أو بتاريخ محفوظ؛ ألغها بدلًا من حذف سجلها.',
     materialDeleteHint: 'احذف مواد الحصة أولاً. ستمنع الملفات المخزنة حذف الحصة حتى بعد إزالة بيانات المادة.',
+    attendance: 'سجل الحضور', notApproved: 'يمكنك مراجعة السجل، لكن يلزم اعتماد المعلم لتعديل الحضور.', readonly: 'الحضور للقراءة فقط للحصص المستقبلية أو الملغاة والمجموعات المؤرشفة.', attendanceError: 'تعذر تحميل سجل الحضور.', previous: 'السابق', next: 'التالي',
     deleteUnavailable: 'لا يمكن حذف الحصص المكتملة أو الماضية. يمكنك إلغاء الحصة القادمة أو الاحتفاظ بالسجل.',
   } : {
     workspace: 'Lesson workspace', edit: 'Edit details', status: 'Lesson status', resources: 'Lesson materials',
@@ -44,6 +55,7 @@ export default async function TeacherLesson({ params }: { params: Promise<{ loca
     back: 'Back to group', archived: 'The group is archived. You can review this lesson and its materials, but cannot add or change new content.',
     generatedHint: 'This lesson has a recurring or saved date identity. Cancel it instead of deleting its history.',
     materialDeleteHint: 'Remove lesson materials first. Stored files must also be removed before the lesson can be deleted.',
+    attendance: 'Attendance', notApproved: 'You can review attendance history, but teacher approval is required to edit it.', readonly: 'Attendance is read only for future or cancelled lessons and archived groups.', attendanceError: 'Could not load attendance history.', previous: 'Previous', next: 'Next',
     deleteUnavailable: 'Past or completed lessons cannot be deleted. Cancel a future lesson or keep its history.',
   };
 
@@ -89,6 +101,20 @@ export default async function TeacherLesson({ params }: { params: Promise<{ loca
             </div>) : <EmptyState>{ar ? 'لا توجد مواد بعد.' : 'No materials yet.'}</EmptyState>}
           </div>}
         {!archived && <div className="mt-6 border-t border-line pt-5"><TeacherMaterialForms locale={locale} lessonId={id} /></div>}
+      </Panel>
+      <Panel className="xl:col-span-2">
+        <div className="mb-4 flex items-baseline justify-between gap-3">
+          <div><h2 className="text-xl font-black text-teal">{copy.attendance}</h2><p className="mt-1 text-sm text-muted">{attendance ? `${attendance.total}` : ''}</p></div>
+          <span className="text-sm text-muted">{attendance ? `${currentPage} / ${attendancePageCount}` : ''}</span>
+        </div>
+        {attendanceReadOnly && <p className="mb-4 text-sm text-muted">{approval.data?.approved !== true ? copy.notApproved : copy.readonly}</p>}
+        {!attendance ? <p role="alert" className="text-sm text-red-700">{copy.attendanceError}</p> : <>
+          <AttendanceRoster locale={locale} lessonId={id} rows={attendance.rows} readOnly={attendanceReadOnly} />
+          {attendancePageCount > 1 && <nav aria-label={copy.attendance} className="mt-5 flex justify-between gap-3">
+            {currentPage > 1 ? <Link className="font-bold text-orange underline" href={attendancePageHref(locale,id,currentPage-1,query)}>← {copy.previous}</Link> : <span />}
+            {currentPage < attendancePageCount ? <Link className="font-bold text-orange underline" href={attendancePageHref(locale,id,currentPage+1,query)}>{copy.next} →</Link> : <span />}
+          </nav>}
+        </>}
       </Panel>
     </div>
   </>;
