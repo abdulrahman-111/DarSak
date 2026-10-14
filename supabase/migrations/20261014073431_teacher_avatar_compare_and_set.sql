@@ -1,6 +1,5 @@
--- Avatar references are changed only through this owner-scoped compare-and-set
--- so an older concurrent upload or removal cannot replace a newer selection.
-revoke update (avatar_path) on public.teacher_profiles from authenticated;
+-- Add the compare-and-set RPC before deploying actions that call it. The
+-- authenticated column permission is revoked separately after that app is live.
 
 create or replace function public.set_teacher_avatar_path(p_avatar_path text,p_expected_path text)
 returns boolean
