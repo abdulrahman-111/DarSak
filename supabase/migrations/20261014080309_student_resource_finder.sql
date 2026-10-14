@@ -20,7 +20,7 @@ as $$
   order by (g.id=p_selected_id) desc,g.name,g.id
   limit 50
 $$;
-revoke all on function public.student_resource_group_choices(text,uuid) from public,anon,authenticated;
+revoke all on function public.student_resource_group_choices(text,uuid) from public,anon,authenticated,service_role;
 grant execute on function public.student_resource_group_choices(text,uuid) to authenticated;
 
 create or replace function public.student_resource_page(
@@ -86,5 +86,5 @@ begin
   return jsonb_build_object('rows',v_rows,'total',v_total);
 end
 $$;
-revoke all on function public.student_resource_page(uuid,text,text,integer,integer) from public,anon,authenticated;
+revoke all on function public.student_resource_page(uuid,text,text,integer,integer) from public,anon,authenticated,service_role;
 grant execute on function public.student_resource_page(uuid,text,text,integer,integer) to authenticated;
