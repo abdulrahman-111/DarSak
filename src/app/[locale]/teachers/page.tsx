@@ -88,13 +88,13 @@ export default async function Teachers({
                 {nodes.map(node => <option key={node.id} value={node.id}>{catalogueDisplayName(node, locale)}</option>)}
               </select>
             </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
+            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
               <span className="sr-only">{locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}</span>
-              <input className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
+              <input aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
             </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
+            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
               <span className="sr-only">{c.teacherFilter}</span>
-              <select className="min-w-0 flex-1 bg-transparent outline-none" name="teacher_id" defaultValue={filters.teacherId || ''}>
+              <select aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent outline-none" name="teacher_id" defaultValue={filters.teacherId || ''}>
                 <option value="">{c.allTeachers}</option>
                 {teachers.map(teacher => <option key={teacher.id} value={teacher.id}>{teacher.full_name}</option>)}
               </select>
@@ -111,6 +111,11 @@ export default async function Teachers({
               {c.seatsAvailable}
             </label>
           </div>
+          <p id="teacher-search-help" className="mt-2 text-sm text-muted">
+            {locale === 'ar'
+              ? 'ابحث عن المدرسين المعتمدين بالاسم (حتى ٥٠ نتيجة)، ثم اضغط «تصفية» واختر المدرس.'
+              : 'Search approved teachers by name (up to 50 matches), press Apply filters, then choose a teacher.'}
+          </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button className="h-12 rounded-xl bg-teal px-5 font-bold text-white transition hover:bg-[#0e4a4b]" type="submit">{c.filter}</button>
             {hasActiveFilters && <Link className="px-1 text-sm font-bold text-orange" href={`/${locale}/teachers`}>{c.clear}</Link>}

@@ -21,4 +21,11 @@ describe('readAllPages', () => {
     expect(result.data).toEqual([]);
     expect(result.error).toBeInstanceOf(Error);
   });
+
+  it('rejects invalid page sizes and null successful responses', async () => {
+    const invalidSize = await readAllPages(async () => ({ data: [], error: null }), 0);
+    const missingRows = await readAllPages(async () => ({ data: null, error: null }));
+    expect(invalidSize.error).toBeInstanceOf(RangeError);
+    expect(missingRows.error).toBeInstanceOf(Error);
+  });
 });
