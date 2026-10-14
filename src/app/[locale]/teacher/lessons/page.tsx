@@ -4,6 +4,8 @@ import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate } from '@/co
 import { LessonForm } from '@/components/platform/forms';
 import { teacherLessons } from '@/features/teacher/data';
 import { StudentPagination } from '@/features/student/pagination';
+import { CalendarExportForm } from '@/features/calendar/export-form';
+import { defaultCalendarRange } from '@/features/calendar/domain';
 
 export default async function TeacherLessons({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ new?: string; groupId?: string; deleted?: string; page?: string | string[] }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
@@ -11,6 +13,7 @@ export default async function TeacherLessons({ params, searchParams }: { params:
   const ar = locale === 'ar';
   const data = await teacherLessons(locale, query.page);
   const requestedNew = query.new === '1';
+  const exportRange = defaultCalendarRange();
   const selectedGroup = data.groups.find(group => group.id === query.groupId);
   const copy = ar ? {
     title: 'الحصص', description: 'افتح مساحة الحصة لتعديل التفاصيل ومراجعة المواد.', add: 'إضافة حصة', group: 'اختر المجموعة', choose: '— اختر مجموعة —', select: 'اختيار',
@@ -29,6 +32,7 @@ export default async function TeacherLessons({ params, searchParams }: { params:
       description={copy.description}
       action={<Link href={`/${locale}/teacher/lessons?new=1`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{copy.add}</Link>}
     />
+    <CalendarExportForm locale={locale} initialFrom={exportRange.from} initialUntil={exportRange.until}/>
     {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف الحصة.' : 'Lesson deleted.'}</p></Panel>}
     {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p><Link href={`/${locale}/teacher/lessons?page=${data.page}`} className="mt-3 inline-flex font-bold text-orange underline">{copy.retry}</Link></Panel> : <>
       {requestedNew && <Panel className="mb-6">
