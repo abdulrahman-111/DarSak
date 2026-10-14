@@ -3,6 +3,7 @@ import { getDictionary } from '@/i18n/config';
 import { AuthAside } from '@/components/auth/auth-aside';
 import { AuthForm } from '@/components/auth/auth-form';
 import { authCopy } from '@/components/auth/copy';
+export const maxDuration = 40;
 
 type SearchValue = string | string[] | undefined;
 

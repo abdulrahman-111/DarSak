@@ -16,6 +16,7 @@ import { StudentOverlapWarning } from '@/features/student/overlap-warning';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
 import { AnnouncementView } from '@/features/groups/announcement-view';
+export const maxDuration = 40;
 
 const weekdays = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],

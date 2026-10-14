@@ -1,5 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { flushEmailOutbox } from '@/features/email/worker';
 import { copy } from './copy';
 import { viewer } from './data';
 import { idSchema,type Locale } from './domain';
@@ -10,6 +12,7 @@ export async function enrollmentAction(locale:Locale,kind:'request'|'cancel',id:
  if(kind!=='request'&&kind!=='cancel')return {error:t.failed};
  if(kind==='cancel'){const owned=await me.db.from('enrollments').select('id').eq('id',id).eq('student_id',me.id).in('status',['accepted','pending']).maybeSingle();if(owned.error||!owned.data)return {error:t.failed};}
  const {error}=kind==='request'?await me.db.rpc('request_enrollment',{p_group_id:id}):await me.db.rpc('cancel_enrollment',{p_enrollment_id:id});if(error)return {error:t.failed};
+ if(kind==='request')after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
  revalidatePath(`/${locale}`,'layout');return {success:t.success};
 }
 export async function downloadMaterial(locale:Locale,id:string,_previous:ActionState):Promise<ActionState>{

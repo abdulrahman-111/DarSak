@@ -1,5 +1,7 @@
 'use server';
 import { redirect } from 'next/navigation';
+import { after } from 'next/server';
+import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient, getVerifiedUser, isConfigured } from '@/lib/supabase/server';
 import { siteUrl } from '@/lib/supabase/config';
 import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema } from '@/lib/domain';
@@ -88,6 +90,7 @@ export async function signupAction(locale: string, _previous: unknown, formData:
     },
   });
   if (error) return { error: authErrorMessage(locale, error.code, 'signup'), ...signupEcho(formData) };
+  if (parsed.data.role === 'teacher' && data.user) after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
   // Email confirmation is on: no session until the link is opened.
   if (!data.session) redirect(`/${locale}/check-email?email=${encodeURIComponent(parsed.data.email)}`);
   redirect(`/${locale}/dashboard`);

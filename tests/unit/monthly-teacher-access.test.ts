@@ -1,5 +1,7 @@
 import { beforeEach,describe,expect,it,vi } from 'vitest';
 const {createClient}=vi.hoisted(()=>({createClient:vi.fn()}));
+vi.mock('server-only',()=>({}));
+vi.mock('next/server',()=>({after:vi.fn()}));
 vi.mock('@/lib/supabase/server',()=>({createClient}));
 vi.mock('next/cache',()=>({revalidatePath:vi.fn()}));
 import { cairoDateTime,cairoLocalToIso,parseAdminAccessHistory,parseAdminAccessPage,parseRenewalResult,parseTeacherAccessStatus } from '@/features/teacher-access/domain';

@@ -6,6 +6,7 @@ import { parseTeacherReviewStatus } from '@/features/teacher/review-data';
 import { unreadNotificationCount } from '@/features/notifications/data';
 import { readTeacherAccessStatus } from '@/features/teacher-access/data';
 import { TeacherAccessPanel } from '@/features/teacher-access/panel';
+export const maxDuration = 40;
 
 export default async function TeacherLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params; const locale = ensureLocale(raw); const me = await requireViewer(locale, 'teacher');

@@ -1,5 +1,7 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { flushEmailOutbox } from '@/features/email/worker';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { words } from './labels';
@@ -27,6 +29,7 @@ export async function decideTeacherReview(locale:string,_previous:AdminState,for
   p_decision:parsed.data.decision,p_reason:parsed.data.decision==='declined'?parsed.data.reason:null,
  });
  if(error){const raw=error.message.toLowerCase();return {error:raw.includes('stale')||raw.includes('serialization')||raw.includes('40001')||raw.includes('not pending')?t.stale:t.failed};}
+ after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
  const eventId=typeof data==='string'?data:undefined;
  for(const current of ['en','ar']){
   revalidatePath(`/${current}/admin/teachers`);revalidatePath(`/${current}/admin/teachers/${parsed.data.teacher_id}`);
