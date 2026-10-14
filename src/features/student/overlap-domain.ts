@@ -27,7 +27,7 @@ export function scheduleOverlapCopy(locale: 'ar' | 'en') {
 }
 
 export function overlapMessage(locale: 'ar' | 'en', overlap: StudentScheduleOverlap) {
-  const copy = scheduleOverlapCopy(locale, overlap);
+  const copy = scheduleOverlapCopy(locale);
   if (overlap.weekly_overlap && overlap.dated_overlap) return copy.both;
   if (overlap.weekly_overlap) return copy.weekly;
   if (overlap.dated_overlap) return copy.dated;
