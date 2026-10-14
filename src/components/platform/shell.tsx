@@ -6,6 +6,7 @@ type NavItem = { href: string; label: string };
 
 function navigation(locale: string, role: PlatformRole): NavItem[] {
   const ar = locale === 'ar';
+  const notifications={href:`/${locale}/notifications`,label:ar?'الإشعارات':'Notifications'};
   if (role === 'teacher') return [
     { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/teacher/profile`, label: ar ? 'الملف الشخصي' : 'Profile' },
@@ -14,6 +15,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
     { href: `/${locale}/teacher/lessons`, label: ar ? 'الحصص' : 'Lessons' },
+    notifications,
   ];
   if (role === 'admin') return [
     { href: `/${locale}/admin`, label: ar ? 'نظرة عامة' : 'Overview' },
@@ -23,6 +25,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },
     { href: `/${locale}/admin/settings`, label: ar ? 'الإعدادات' : 'Settings' },
+    notifications,
   ];
   return [
     { href: `/${locale}/student`, label: ar ? 'نظرة عامة' : 'Overview' },
@@ -31,10 +34,16 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/timetable`, label: ar ? 'الجدول الأسبوعي' : 'Weekly timetable' },
     { href: `/${locale}/student/materials`, label: ar ? 'المواد' : 'Materials' },
     { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Discover' },
+    notifications,
   ];
 }
 
-export function PlatformShell({ locale, role, name, children }: { locale: string; role: PlatformRole; name: string; children: React.ReactNode }) {
+function itemLabel(item: NavItem, unreadCount: number|null, locale:string) {
+  const ar=locale==='ar';
+  return <span className="flex min-w-0 items-center justify-between gap-2"><span className="truncate">{item.label}</span>{item.href.endsWith('/notifications') && unreadCount!==null && unreadCount>0 && <span aria-label={ar?`${unreadCount} غير مقروء`:`${unreadCount} unread`} className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}</span>;
+}
+
+export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {
   const ar = locale === 'ar';
   const items = navigation(locale, role);
   const overview = items[0].label;
@@ -51,11 +60,11 @@ export function PlatformShell({ locale, role, name, children }: { locale: string
           <span aria-hidden="true" className="shrink-0 text-sm text-cream/80 group-open:rotate-180">⌄</span>
         </summary>
         <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
-          {items.map((item, index) => <ActiveLink key={item.href} href={item.href} exact={index === 0} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{item.label}</ActiveLink>)}
+          {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
         </nav>
       </details>
       <nav className="mt-5 hidden gap-2 pb-2 lg:grid" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
-        {items.map((item, index) => <ActiveLink key={item.href} href={item.href} exact={index === 0} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{item.label}</ActiveLink>)}
+        {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
       </nav>
       <div className="mt-5 hidden rounded-2xl bg-black/10 px-3 py-3 text-sm lg:block"><span className="block truncate font-bold">{name}</span><span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span></div>
     </aside>

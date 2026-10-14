@@ -7,11 +7,13 @@ import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate, weekday } f
 import { StudentPagination } from '@/features/student/pagination';
 import { CalendarExportForm } from '@/features/calendar/export-form';
 import { defaultCalendarRange } from '@/features/calendar/domain';
+import { unreadNotificationCount } from '@/features/notifications/data';
 
 export default async function Timetable({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams?: Promise<{ page?: string }> }) {
   const { locale: raw } = await params;
   const locale = ensureLocale(raw), ar = locale === 'ar';
   const me = await requireViewer(locale, 'student');
+  const unreadCount=await unreadNotificationCount(me.db);
   const search = await searchParams;
   const data = await studentTimetable(locale, search?.page);
   const exportRange = defaultCalendarRange();
@@ -19,7 +21,7 @@ export default async function Timetable({ params, searchParams }: { params: Prom
     ? { title: 'الجدول الأسبوعي', intro: 'مواعيد مجموعاتك والحصص القادمة في مكان واحد.', eyebrow: 'بتوقيت القاهرة', error: 'تعذر تحميل جدولك. حدّث الصفحة وحاول مرة أخرى.', retry: 'إعادة المحاولة', dated: 'الحصص القادمة', empty: 'لا توجد حصص قادمة أو مواعيد أسبوعية لمجموعاتك بعد.', previous: 'السابق', next: 'التالي', page: 'صفحة', open: 'عرض الحصة' }
     : { title: 'Weekly timetable', intro: 'Your class times and upcoming lessons in one place.', eyebrow: 'Africa/Cairo', error: 'Could not load your timetable. Refresh and try again.', retry: 'Try again', dated: 'Upcoming lessons', empty: 'There are no upcoming lessons or weekly times for your classes yet.', previous: 'Previous', next: 'Next', page: 'Page', open: 'Open lesson' };
   const byDay = Array.from({ length: 7 }, (_, day) => ({ day, slots: data.slots.filter(slot => slot.weekday === day) }));
-  return <PlatformShell locale={locale} role="student" name={me.fullName}>
+  return <PlatformShell locale={locale} role="student" name={me.fullName} unreadCount={unreadCount}>
     <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.intro}/>
     <CalendarExportForm locale={locale} initialFrom={exportRange.from} initialUntil={exportRange.until}/>
     {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.error}</p><a href={`/${locale}/timetable?retry=1`} className="mt-3 inline-flex font-bold text-orange underline">{copy.retry}</a></Panel> : <>
