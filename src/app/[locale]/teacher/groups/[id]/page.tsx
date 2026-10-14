@@ -11,6 +11,8 @@ import { GroupManagementControls } from '@/features/teacher/management-forms';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
 import { StudentPagination } from '@/features/student/pagination';
 import { WeeklyScheduleEditor } from '@/features/teacher/setup-forms';
+import { AnnouncementForm } from '@/features/groups/announcement-form';
+import { groupAnnouncement } from '@/features/groups/announcement-data';
 
 export default async function TeacherGroupDetail({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ page?: string; roster_page?: string }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
@@ -28,12 +30,13 @@ export default async function TeacherGroupDetail({ params, searchParams }: { par
   let page = normalizeStudentPage(query.page);
   const maxRosterPage = Math.floor(2_147_483_647 / STUDENT_PAGE_SIZE);
   let rosterPage = Math.min(normalizeStudentPage(query.roster_page), maxRosterPage);
-  const [group, slots, initialLessons, initialStudents, exclusions] = await Promise.all([
+  const [group, slots, initialLessons, initialStudents, exclusions, announcement] = await Promise.all([
     me.db.from('groups').select('id,name,description,status,capacity,location').eq('id', id).eq('teacher_id', me.id).maybeSingle(),
     me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id).order('weekday').order('start_time'),
     fetchLessons(page),
     fetchRoster(rosterPage),
     me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id).order('local_date'),
+    groupAnnouncement(me.db, id),
   ]);
   let lessons = initialLessons;
   const lessonCount = lessons.count ?? 0;
@@ -68,6 +71,7 @@ export default async function TeacherGroupDetail({ params, searchParams }: { par
     <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={currentGroup.name} description={currentGroup.description} action={<div className="grid justify-items-end gap-3"><div className="flex flex-wrap items-center gap-3"><Status value={currentGroup.status} locale={locale} />{currentGroup.status !== 'archived' && <Link href={`/${locale}/teacher/lessons?new=1&groupId=${id}`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{ar ? 'إضافة حصة' : 'Add lesson'}</Link>}</div><GroupManagementControls locale={locale} groupId={id} status={currentGroup.status} /></div>} />
     {currentGroup.status === 'archived' && <Panel className="mb-6"><p className="text-sm font-semibold text-muted">{copy.archived}</p></Panel>}
     <div className="grid gap-6 xl:grid-cols-2">
+      <Panel><h2 className="text-xl font-black text-teal">{ar ? 'إعلان المجموعة' : 'Group announcement'}</h2><p className="mt-1 text-sm text-muted">{ar ? 'انشر رسالة للطلاب المقبولين. يمكنهم قراءتها في صفحات المجموعة والحصص.' : 'Post a message for accepted students. They can read it on the group and lesson pages.'}</p>{currentGroup.status === 'archived' && <p className="mt-2 text-sm font-semibold text-muted">{ar ? 'المجموعة مؤرشفة؛ يمكنك مراجعة الإعلان المحفوظ فقط.' : 'This group is archived; you can review its saved announcement only.'}</p>}<AnnouncementForm locale={locale} groupId={id} announcement={announcement} readOnly={currentGroup.status === 'archived'} /></Panel>
       <Panel>
         <h2 className="text-xl font-black text-teal">{copy.schedule}</h2>
         <p className="mt-1 text-sm text-muted">{copy.cairo}</p>
