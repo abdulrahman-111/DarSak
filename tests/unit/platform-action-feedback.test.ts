@@ -8,9 +8,13 @@ import { decideEnrollment, requestEnrollment, saveLesson, saveSlot } from '@/fea
 
 const groupId = '44444444-4444-4444-8444-444444444444';
 const lessonId = '55555555-5555-4555-8555-555555555555';
-function setup(error: { code?: string; message: string } | null) {
-  const rpc = vi.fn(async () => ({ data: null, error }));
-  createClientMock.mockResolvedValue({ rpc });
+const teacherId = '11111111-1111-4111-8111-111111111111';
+const currentStatus = { has_access: true, starts_at: '2026-01-01T00:00:00Z', expires_at: '2027-01-01T00:00:00Z', renewal_opens_at: null, can_renew: false, fees_enabled: false, fee_effective_at: null, announcement_en: null, announcement_ar: null, pending_request_id: null };
+function setup(error: { code?: string; message: string } | null, access: unknown = currentStatus) {
+  const rpc = vi.fn(async (name: string) => name === 'teacher_access_status' ? ({ data: access, error: null }) : ({ data: null, error }));
+  const profile = { maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }) };
+  const db = { rpc, auth: { getUser: async () => ({ data: { user: { id: teacherId } } }) }, from: () => ({ select: () => ({ eq: () => profile }) }) };
+  createClientMock.mockResolvedValue(db);
   return rpc;
 }
 function form(entries: Record<string, string>) {
@@ -49,5 +53,15 @@ describe('localized platform action feedback', () => {
     const result = await saveLesson('en', null, form({ groupId, lessonId, title: 'Lesson', startsAt: '2026-10-01T10:00:00Z', endsAt: '2026-10-01T11:00:00Z', notes: '' }));
     expect(result?.error).toMatch(/could not save this change/i);
     expect(result?.error).not.toContain('private database trace');
+  });
+
+  it('blocks expired or unavailable teacher access before a teaching mutation with distinct guidance', async () => {
+    setup(null, { ...currentStatus, has_access: false });
+    const expired = await saveLesson('en', null, form({ groupId, title: 'Lesson', startsAt: '2026-10-01T10:00:00Z', endsAt: '2026-10-01T11:00:00Z', notes: '' }));
+    expect(expired?.error).toMatch(/access has expired.*renew/i);
+
+    setup(null, null);
+    const unavailable = await saveLesson('ar', null, form({ groupId, title: 'Lesson', startsAt: '2026-10-01T10:00:00Z', endsAt: '2026-10-01T11:00:00Z', notes: '' }));
+    expect(unavailable?.error).toMatch(/تعذر التحقق من صلاحية التدريس/);
   });
 });
