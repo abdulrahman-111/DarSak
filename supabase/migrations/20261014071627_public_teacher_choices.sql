@@ -24,5 +24,5 @@ language sql stable security definer set search_path=pg_catalog,public as $$
   order by full_name, id
 $$;
 
-revoke all on function public.public_teacher_choices(text,uuid) from public;
+revoke all on function public.public_teacher_choices(text,uuid) from public,anon,authenticated,service_role;
 grant execute on function public.public_teacher_choices(text,uuid) to anon,authenticated;
