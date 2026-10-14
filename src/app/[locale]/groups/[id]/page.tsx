@@ -50,8 +50,8 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
     <div className="min-h-[72vh] bg-[#f6f0e4]">
       <section className="container py-10 md:py-16">
         <Link className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-orange" href={`/${locale}/teachers`}><BackArrow size={17}/>{c.back}</Link>
-        <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
-          <article className="rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 md:p-9">
+        <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
+          <article className="min-w-0 rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 md:p-9">
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-lg bg-[#d5ebe6] px-3 py-1.5 text-sm font-bold text-teal">{subject}</span>
               <span className="rounded-full bg-[#dfedd5] px-3 py-1.5 text-xs font-bold text-[#2c5620]">{c.published}</span>
