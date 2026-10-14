@@ -106,6 +106,7 @@ set local role authenticated;
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000005';
 do $$ begin
   if (public.teacher_lesson_attendance_page('7f200000-0000-4000-8000-000000000001')->>'total')::integer<>2 then raise exception 'admin could not read lesson attendance history'; end if;
+  begin perform public.set_lesson_attendance('7f200000-0000-4000-8000-000000000001','7f000000-0000-4000-8000-000000000003','absent'); raise exception 'admin wrote attendance'; exception when insufficient_privilege then null; end;
 end $$;
 reset role;
 
