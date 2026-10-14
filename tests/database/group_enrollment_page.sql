@@ -22,7 +22,6 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('7e000000-0000-4000-8000-000000000003','authenticated','authenticated','roster-suspended@test.invalid','{"full_name":"Suspended owner","requested_role":"teacher"}'),
  ('7e000000-0000-4000-8000-000000000004','authenticated','authenticated','roster-admin@test.invalid','{"full_name":"Roster admin","requested_role":"student"}');
 set local session_replication_role=replica;
-update public.profiles set status='suspended' where id='7e000000-0000-4000-8000-000000000003';
 update public.profiles set role='admin' where id='7e000000-0000-4000-8000-000000000004';
 set local session_replication_role=origin;
 
@@ -35,6 +34,9 @@ from public.offerings o order by o.id limit 1;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select '7e100000-0000-4000-8000-000000000003','7e000000-0000-4000-8000-000000000003',o.id,'Suspended roster group',30,'draft'
 from public.offerings o order by o.id limit 1;
+set local session_replication_role=replica;
+update public.profiles set status='suspended' where id='7e000000-0000-4000-8000-000000000003';
+set local session_replication_role=origin;
 
 insert into public.enrollments(id,group_id,student_id,status,created_at)
 select ('7e200000-0000-4000-8000-' || lpad((i + 1)::text, 12, '0'))::uuid,
@@ -49,7 +51,7 @@ select ('7e200000-0000-4000-8000-' || lpad((i + 1)::text, 12, '0'))::uuid,
 from generate_series(1,22) i;
 insert into public.enrollments(id,group_id,student_id,status)
 values ('7e200000-0000-4000-8000-000000000030','7e100000-0000-4000-8000-000000000002',
-  '7f000000-0000-4000-8000-000000000001','accepted');
+  '7f000000-0000-4000-8000-000000000002','accepted');
 
 set local role authenticated;
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
