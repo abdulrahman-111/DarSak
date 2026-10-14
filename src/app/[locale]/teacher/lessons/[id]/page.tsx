@@ -40,7 +40,7 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
   const canOfferDelete = lesson.slot_id === null && lesson.starts_at > new Date().toISOString() && lesson.status !== 'completed' && !materials.error && !(materials.data?.length);
 
   const copy = ar ? {
-    workspace: 'مساحة الحصة', edit: 'تعديل التفاصيل', status: 'حالة الحصة', resources: 'مواد الحصة',
+    workspace: 'مساحة الحصة', edit: 'تعديل التفاصيل', status: 'حالة الحصة', resources: 'مواد الحصة', note: 'ملاحظة', link: 'رابط', file: 'ملف',
     privateHint: 'الملفات خاصة بطلاب المجموعة المقبولين.', copyLesson: 'نسخ الحصة إلى مجموعة أخرى',
     copyHint: 'سيتم نسخ العنوان والملاحظات فقط. لن يتم نسخ الملفات أو المواد الخاصة.', materialsError: 'تعذر تحميل المواد.',
     back: 'العودة إلى المجموعة', archived: 'المجموعة مؤرشفة. يمكنك مراجعة هذه الحصة وموادها، لكن لا يمكن إضافة أو تعديل محتوى جديد.',
@@ -49,7 +49,7 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
     attendance: 'سجل الحضور', notApproved: 'يمكنك مراجعة السجل، لكن يلزم اعتماد المعلم لتعديل الحضور.', readonly: 'الحضور للقراءة فقط للحصص المستقبلية أو الملغاة والمجموعات المؤرشفة.', attendanceError: 'تعذر تحميل سجل الحضور.', previous: 'السابق', next: 'التالي',
     deleteUnavailable: 'لا يمكن حذف الحصص المكتملة أو الماضية. يمكنك إلغاء الحصة القادمة أو الاحتفاظ بالسجل.',
   } : {
-    workspace: 'Lesson workspace', edit: 'Edit details', status: 'Lesson status', resources: 'Lesson materials',
+    workspace: 'Lesson workspace', edit: 'Edit details', status: 'Lesson status', resources: 'Lesson materials', note: 'Note', link: 'Link', file: 'File',
     privateHint: 'Resources are private to accepted students.', copyLesson: 'Copy lesson to a group',
     copyHint: 'Only the title and notes will be copied. Private files and materials stay with this lesson.', materialsError: 'Could not load lesson materials.',
     back: 'Back to group', archived: 'The group is archived. You can review this lesson and its materials, but cannot add or change new content.',
@@ -90,13 +90,13 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
         <p className="mt-2 text-sm text-muted">{copy.privateHint}</p>
         {materials.error ? <p role="alert" className="mt-4 text-sm text-red-700">{copy.materialsError}</p> :
           <div className="mt-5 grid gap-3">
-            {materials.data?.length ? materials.data.map(material => <div key={material.id} className="rounded-2xl border border-line p-4">
+            {materials.data?.length ? materials.data.map(material => <div key={material.id} className="min-w-0 rounded-2xl border border-line p-4">
               <div className="flex items-center justify-between gap-3">
-                <div><strong className="text-teal">{material.title}</strong><span className="ms-2 rounded-lg bg-cream px-2 py-1 text-xs font-bold uppercase">{material.kind}</span></div>
+                <div className="min-w-0"><strong className="break-words text-teal [overflow-wrap:anywhere]">{material.title}</strong><span className="ms-2 rounded-lg bg-cream px-2 py-1 text-xs font-bold">{material.kind==='note'?copy.note:material.kind==='link'?copy.link:copy.file}</span></div>
                 <DeleteLessonMaterialButton locale={locale} lessonId={id} materialId={material.id} />
               </div>
-              {material.kind === 'note' && <p className="mt-2 whitespace-pre-wrap text-sm text-muted">{material.content}</p>}
-              {material.kind === 'link' && <p className="mt-2 truncate text-sm text-orange" dir="ltr">{material.url}</p>}
+              {material.kind === 'note' && <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">{material.content}</p>}
+              {material.kind === 'link' && <p className="mt-2 break-all text-sm text-orange" dir="ltr">{material.url}</p>}
               {material.kind === 'file' && <p className="mt-2 text-sm text-muted">{material.mime_type} · {material.file_size ? `${Math.ceil(material.file_size / 1024)} KB` : '—'}</p>}
             </div>) : <EmptyState>{ar ? 'لا توجد مواد بعد.' : 'No materials yet.'}</EmptyState>}
           </div>}

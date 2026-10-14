@@ -49,7 +49,7 @@ function itemLabel(item: NavItem, unreadCount: number|null, locale:string) {
 export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {
   const ar = locale === 'ar';
   const items = navigation(locale, role);
-  const overview = items[0].label;
+  const accountMenu = ar ? 'قائمة الحساب' : 'Account menu';
   const roleName = role === 'teacher' ? (ar ? 'معلم' : 'Teacher') : role === 'admin' ? (ar ? 'مسؤول' : 'Administrator') : (ar ? 'طالب' : 'Student');
   return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
     <aside className="min-w-0 rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:p-4">
@@ -59,8 +59,10 @@ export function PlatformShell({ locale, role, name, unreadCount=null, children }
       </Link>
       <details className="group lg:hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0"><span className="block truncate text-xs font-semibold text-cream/70">{roleName} · {overview}</span><span className="block truncate font-bold">{name}</span></span>
+          <span className="min-w-0"><span className="block truncate text-xs font-semibold text-cream/70">{roleName} · {accountMenu}</span><span className="block truncate font-bold">{name}</span></span>
           <span aria-hidden="true" className="shrink-0 text-sm text-cream/80 group-open:rotate-180">⌄</span>
+          {unreadCount!==null&&unreadCount>0&&<span aria-hidden="true" className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}
+          {unreadCount!==null&&unreadCount>0&&<span className="sr-only">{ar?`${unreadCount} إشعارات غير مقروءة`:`${unreadCount} unread notifications`}</span>}
         </summary>
         <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
           {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}

@@ -34,7 +34,6 @@ export default async function TeacherLessons({ params, searchParams }: { params:
       description={copy.description}
       action={<Link href={`/${locale}/teacher/lessons?new=1`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{copy.add}</Link>}
     />
-    <CalendarExportForm locale={locale} initialFrom={exportRange.from} initialUntil={exportRange.until}/>
     {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف الحصة.' : 'Lesson deleted.'}</p></Panel>}
     {data.error ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p><Link href={`/${locale}/teacher/lessons?page=${data.page}`} className="mt-3 inline-flex font-bold text-orange underline">{copy.retry}</Link></Panel> : <>
       {requestedNew && <Panel className="mb-6">
@@ -62,5 +61,6 @@ export default async function TeacherLessons({ params, searchParams }: { params:
       </Panel>
       <StudentPagination locale={locale} href={`/${locale}/teacher/lessons`} page={data.page} pageCount={data.pageCount} labels={copy}/>
     </>}
+    <CalendarExportForm locale={locale} initialFrom={exportRange.from} initialUntil={exportRange.until}/>
   </>;
 }

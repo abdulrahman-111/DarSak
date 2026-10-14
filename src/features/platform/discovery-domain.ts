@@ -5,6 +5,13 @@ export const DISCOVERY_FETCH_LIMIT = DISCOVERY_PAGE_SIZE + 1;
 const MAX_PAGE = Math.floor(2_147_483_647 / DISCOVERY_PAGE_SIZE) + 1;
 const MAX_QUERY_LENGTH = 120;
 
+export function preserveTeacherSearch(input: URLSearchParams): URLSearchParams {
+  const params = new URLSearchParams();
+  const teacherSearch = (input.get('teacher_search') ?? '').trim().slice(0, 80);
+  if (teacherSearch) params.set('teacher_search', teacherSearch);
+  return params;
+}
+
 export type DiscoveryFilterInput = URLSearchParams | Record<string, string | string[] | undefined>;
 export type DiscoveryFilters = {
   subjectId: string | null;

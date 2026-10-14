@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { discoveryRpcArgs, discoverySearchParams, normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
+import { discoveryRpcArgs, discoverySearchParams, normalizeDiscoveryFilters, preserveTeacherSearch } from '@/features/platform/discovery-domain';
 
 const subjectId = 'A70EA958-E2D5-4C9C-90D1-4E001D9AF93C';
 const nodeId = '83b0d1b4-2aac-4e6a-98b9-289b42bca388';
@@ -59,5 +59,11 @@ describe('public discovery filter normalization', () => {
   it('requests one extra row while keeping stable twelve-row page offsets', () => {
     const filters = normalizeDiscoveryFilters({ page: '4', has_seats: 'true' });
     expect(discoveryRpcArgs(filters)).toMatchObject({ p_offset: 36, p_limit: 13, p_has_seats: true });
+  });
+
+  it('preserves a trimmed and bounded teacher name search during locale switching', () => {
+    const params = preserveTeacherSearch(new URLSearchParams('teacher_search=%20Ada%20Lovelace%20&query=algebra'));
+    expect(params.toString()).toBe('teacher_search=Ada+Lovelace');
+    expect(preserveTeacherSearch(new URLSearchParams(`teacher_search=${'x'.repeat(200)}`)).get('teacher_search')).toHaveLength(80);
   });
 });
