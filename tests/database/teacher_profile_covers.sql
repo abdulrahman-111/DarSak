@@ -17,11 +17,11 @@ begin
     raise exception 'cover helper grants are too broad or incomplete';
   end if;
   if has_column_privilege('authenticated','public.teacher_profiles','cover_path','UPDATE')
-     or not has_column_privilege('authenticated','public.teacher_profiles','avatar_path','UPDATE')
+     or has_column_privilege('authenticated','public.teacher_profiles','avatar_path','UPDATE')
      or not has_column_privilege('authenticated','public.teacher_profiles','headline','UPDATE')
      or not has_column_privilege('authenticated','public.teacher_profiles','bio','UPDATE')
      or not has_column_privilege('authenticated','public.teacher_profiles','approved','UPDATE') then
-    raise exception 'authenticated column updates must preserve avatar/headline while withholding cover_path';
+    raise exception 'authenticated column updates must use avatar CAS while withholding cover_path';
   end if;
   if has_table_privilege('anon','public.teacher_profiles','SELECT') then
     raise exception 'anonymous users gained raw teacher_profiles access';
