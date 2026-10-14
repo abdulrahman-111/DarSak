@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTeacherSetupTasks,
   cairoDayBounds,
-  dashboardGroupIdBatches,
   dashboardListCount,
-  dashboardNextPageOffset,
   isDashboardTodayLesson,
   isDashboardUpcomingLesson,
   teacherDashboardError,
@@ -47,18 +45,6 @@ describe('teacher dashboard date and setup domain', () => {
     expect(dashboardListCount(null, ['one', 'two'])).toBe(2);
   });
 
-  it('paginates every owned-group page and batches large ID lists without losing IDs', () => {
-    expect(dashboardNextPageOffset(0, 1000)).toBe(1000);
-    expect(dashboardNextPageOffset(1000, 1000)).toBe(2000);
-    expect(dashboardNextPageOffset(2000, 17)).toBeNull();
-    const ids = Array.from({ length: 2501 }, (_, index) => `group-${index}`);
-    const batches = dashboardGroupIdBatches(ids);
-    expect(batches).toHaveLength(26);
-    expect(batches.slice(0, -1).every(batch => batch.length === 100)).toBe(true);
-    expect(batches.at(-1)).toHaveLength(1);
-    expect(batches.flat()).toEqual(ids);
-  });
-
   it('creates setup tasks for incomplete profile, approval, drafts, missing slots, and no upcoming lessons', () => {
     const tasks = buildTeacherSetupTasks({
       teacher: { headline: '', bio: '', approved: false },
@@ -74,6 +60,35 @@ describe('teacher dashboard date and setup domain', () => {
     expect(tasks.find(task => task.id === 'draft')?.href).toContain('/groups/draft-id/setup?step=details');
     expect(tasks.find(task => task.id === 'schedule')?.href).toContain('/groups/published-id');
     expect(tasks.find(task => task.id === 'lessons')?.href).toBe('/teacher/lessons?new=1');
+  });
+
+  it('keeps setup candidates available even when their groups are outside the dashboard preview', () => {
+    const tasks = buildTeacherSetupTasks({
+      teacher: { headline: 'Math teacher', bio: 'About me', approved: true },
+      specializationCount: 1,
+      groups: Array.from({ length: 8 }, (_, index) => ({ id: `recent-${index}`, name: `Recent ${index}`, status: 'archived' })),
+      groupIdsWithSlots: new Set(),
+      upcomingLessonCount: 1,
+      draftCandidate: { id: 'old-draft', name: 'Old draft', status: 'draft' },
+      missingScheduleCandidate: { id: 'unscheduled', name: 'Unscheduled group', status: 'published' },
+    });
+    expect(tasks).toEqual([
+      { id: 'draft', href: '/teacher/groups/old-draft/setup?step=details', groupName: 'Old draft' },
+      { id: 'schedule', href: '/teacher/groups/unscheduled', groupName: 'Unscheduled group' },
+    ]);
+  });
+
+  it('does not infer setup work from a preview when the summary has no candidates', () => {
+    const tasks = buildTeacherSetupTasks({
+      teacher: { headline: 'Math teacher', bio: 'About me', approved: true },
+      specializationCount: 1,
+      groups: [{ id: 'preview-only', name: 'Preview only', status: 'draft' }],
+      groupIdsWithSlots: new Set(),
+      upcomingLessonCount: 1,
+      draftCandidate: null,
+      missingScheduleCandidate: null,
+    });
+    expect(tasks).toEqual([]);
   });
 
   it('treats contacts and avatar as optional for profile completeness', () => {

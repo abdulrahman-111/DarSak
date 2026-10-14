@@ -55,20 +55,6 @@ export function dashboardListCount<T>(exactCount: number | null, items: T[]): nu
   return exactCount ?? items.length;
 }
 
-export const DASHBOARD_PAGE_SIZE = 1000;
-export const DASHBOARD_GROUP_ID_BATCH_SIZE = 100;
-
-export function dashboardNextPageOffset(offset: number, rowsRead: number, pageSize = DASHBOARD_PAGE_SIZE): number | null {
-  return rowsRead === pageSize ? offset + pageSize : null;
-}
-
-export function dashboardGroupIdBatches<T>(ids: T[], batchSize = DASHBOARD_GROUP_ID_BATCH_SIZE): T[][] {
-  if (batchSize < 1) throw new RangeError('batchSize must be positive');
-  const batches: T[][] = [];
-  for (let index = 0; index < ids.length; index += batchSize) batches.push(ids.slice(index, index + batchSize));
-  return batches;
-}
-
 export type SetupTaskId = 'profile' | 'approval' | 'draft' | 'schedule' | 'lessons';
 export type TeacherSetupTask = { id: SetupTaskId; href: string; groupName?: string };
 
@@ -80,6 +66,8 @@ export function buildTeacherSetupTasks({
   groups,
   groupIdsWithSlots,
   upcomingLessonCount,
+  draftCandidate,
+  missingScheduleCandidate,
 }: {
   teacher: { headline: string | null; bio: string | null; approved: boolean; avatar_path?: string | null };
   contacts?: unknown;
@@ -87,15 +75,19 @@ export function buildTeacherSetupTasks({
   groups: SetupGroup[];
   groupIdsWithSlots: Set<string>;
   upcomingLessonCount: number;
+  draftCandidate?: SetupGroup | null;
+  missingScheduleCandidate?: SetupGroup | null;
 }): TeacherSetupTask[] {
   const tasks: TeacherSetupTask[] = [];
   if (!teacher.headline?.trim() || !teacher.bio?.trim() || specializationCount === 0) {
     tasks.push({ id: 'profile', href: '/teacher/profile' });
   }
   if (!teacher.approved) tasks.push({ id: 'approval', href: '/teacher/profile' });
-  const draft = groups.find(group => group.status === 'draft');
+  const draft = draftCandidate !== undefined ? draftCandidate : groups.find(group => group.status === 'draft');
   if (draft) tasks.push({ id: 'draft', href: `/teacher/groups/${draft.id}/setup?step=details`, groupName: draft.name });
-  const groupWithoutSlots = groups.find(group => group.status !== 'archived' && !groupIdsWithSlots.has(group.id));
+  const groupWithoutSlots = missingScheduleCandidate !== undefined
+    ? missingScheduleCandidate
+    : groups.find(group => group.status !== 'archived' && !groupIdsWithSlots.has(group.id));
   if (groupWithoutSlots) {
     const href = groupWithoutSlots.status === 'draft'
       ? `/teacher/groups/${groupWithoutSlots.id}/setup?step=schedule`

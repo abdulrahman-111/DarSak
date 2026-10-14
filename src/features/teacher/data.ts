@@ -2,7 +2,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import type { Locale } from '@/features/student/domain';
-import { buildTeacherSetupTasks, cairoDayBounds, dashboardGroupIdBatches, dashboardListCount, dashboardNextPageOffset, DASHBOARD_PAGE_SIZE, teacherDashboardError } from './dashboard-domain';
+import { buildTeacherSetupTasks, cairoDayBounds, teacherDashboardError } from './dashboard-domain';
 import { clampTeacherPage, normalizeTeacherPage, TEACHER_PAGE_SIZE, teacherPageCount, teacherPageOffset } from './enrollment-pagination';
 
 export async function teacherViewer(locale: Locale) {
@@ -19,20 +19,13 @@ type TeacherEnrollmentPage = { rows: GroupStudentRow[]; total: number };
 
 async function readAllPages<T>(fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
   const rows: T[] = [];
-  let offset = 0;
-  while (true) {
-    const result = await fetchPage(offset, offset + DASHBOARD_PAGE_SIZE - 1);
+  for (let offset = 0; ; offset += 1000) {
+    const result = await fetchPage(offset, offset + 999);
     if (result.error) return { rows: [] as T[], error: result.error };
     const page = result.data ?? [];
     rows.push(...page);
-    const nextOffset = dashboardNextPageOffset(offset, page.length);
-    if (nextOffset === null) return { rows, error: null };
-    offset = nextOffset;
+    if (page.length < 1000) return { rows, error: null };
   }
-}
-
-async function dashboardGroups(me: Awaited<ReturnType<typeof teacherViewer>>) {
-  return readAllPages<OwnedGroup>((from, to) => me.db.from('groups').select('id,name,capacity,status,location,description,offering:offerings(subject:subjects(name_ar,name_en))').eq('teacher_id', me.id).order('created_at', { ascending: false }).order('id').range(from, to));
 }
 
 async function calendarGroups(me: Awaited<ReturnType<typeof teacherViewer>>) {
@@ -44,76 +37,45 @@ async function teacherEnrollmentPage(
   status: 'pending' | 'accepted',
   requestedPage: unknown,
 ): Promise<{ rows: GroupStudentRow[]; total: number; page: number; pageCount: number; error: { message: string } | null }> {
-  const first = await me.db.rpc('teacher_enrollment_page', {
+  const requested = normalizeTeacherPage(requestedPage);
+  const result = await me.db.rpc('teacher_enrollment_page', {
     p_status: status,
-    p_offset: 0,
+    p_offset: teacherPageOffset(requested),
     p_limit: TEACHER_PAGE_SIZE,
   });
-  if (first.error) return { rows: [], total: 0, page: 1, pageCount: 1, error: first.error };
-  const firstPayload = first.data as TeacherEnrollmentPage | null;
-  if (!firstPayload || !Array.isArray(firstPayload.rows) || !Number.isSafeInteger(firstPayload.total) || firstPayload.total < 0) {
+  if (result.error) return { rows: [], total: 0, page: 1, pageCount: 1, error: result.error };
+  const payload = result.data as TeacherEnrollmentPage | null;
+  if (!payload || !Array.isArray(payload.rows) || !Number.isSafeInteger(payload.total) || payload.total < 0) {
     return { rows: [], total: 0, page: 1, pageCount: 1, error: { message: 'Invalid enrollment page response.' } };
   }
-  const pageCount = teacherPageCount(firstPayload.total);
-  const page = clampTeacherPage(normalizeTeacherPage(requestedPage), firstPayload.total);
-  if (page === 1) return { ...firstPayload, page, pageCount, error: null };
-
-  const result = await me.db.rpc('teacher_enrollment_page', {
+  const pageCount = teacherPageCount(payload.total);
+  const page = clampTeacherPage(requested, payload.total);
+  if (page === requested) return { ...payload, page, pageCount, error: null };
+  const lastPage = await me.db.rpc('teacher_enrollment_page', {
     p_status: status,
     p_offset: teacherPageOffset(page),
     p_limit: TEACHER_PAGE_SIZE,
   });
-  if (result.error) return { rows: [], total: 0, page, pageCount, error: result.error };
-  const payload = result.data as TeacherEnrollmentPage | null;
-  if (!payload || !Array.isArray(payload.rows) || !Number.isSafeInteger(payload.total) || payload.total < 0) {
+  if (lastPage.error) return { rows: [], total: 0, page, pageCount, error: lastPage.error };
+  const lastPayload = lastPage.data as TeacherEnrollmentPage | null;
+  if (!lastPayload || !Array.isArray(lastPayload.rows) || !Number.isSafeInteger(lastPayload.total) || lastPayload.total < 0) {
     return { rows: [], total: 0, page, pageCount, error: { message: 'Invalid enrollment page response.' } };
   }
-  const latestPageCount = teacherPageCount(payload.total);
-  const latestPage = clampTeacherPage(page, payload.total);
+  const latestPage = clampTeacherPage(page, lastPayload.total);
   if (latestPage !== page) {
-    const lastPage = await me.db.rpc('teacher_enrollment_page', {
+    const retry = await me.db.rpc('teacher_enrollment_page', {
       p_status: status,
       p_offset: teacherPageOffset(latestPage),
       p_limit: TEACHER_PAGE_SIZE,
     });
-    if (lastPage.error) return { rows: [], total: 0, page: latestPage, pageCount: latestPageCount, error: lastPage.error };
-    const lastPayload = lastPage.data as TeacherEnrollmentPage | null;
-    if (!lastPayload || !Array.isArray(lastPayload.rows) || !Number.isSafeInteger(lastPayload.total) || lastPayload.total < 0) {
-      return { rows: [], total: 0, page: latestPage, pageCount: latestPageCount, error: { message: 'Invalid enrollment page response.' } };
+    if (retry.error) return { rows: [], total: 0, page: latestPage, pageCount: teacherPageCount(lastPayload.total), error: retry.error };
+    const retryPayload = retry.data as TeacherEnrollmentPage | null;
+    if (!retryPayload || !Array.isArray(retryPayload.rows) || !Number.isSafeInteger(retryPayload.total) || retryPayload.total < 0) {
+      return { rows: [], total: 0, page: latestPage, pageCount: teacherPageCount(lastPayload.total), error: { message: 'Invalid enrollment page response.' } };
     }
-    return { ...lastPayload, page: latestPage, pageCount: teacherPageCount(lastPayload.total), error: null };
+    return { ...retryPayload, page: latestPage, pageCount: teacherPageCount(retryPayload.total), error: null };
   }
-  return { ...payload, page, pageCount: latestPageCount, error: null };
-}
-
-async function lessonRowsForGroups(
-  me: Awaited<ReturnType<typeof teacherViewer>>,
-  groupIds: string[],
-  range: { kind: 'today'; start: string; end: string } | { kind: 'upcoming'; from: string },
-) {
-  if (!groupIds.length) return { rows: [] as Array<{ id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown }>, count: 0, error: null };
-  const batches = dashboardGroupIdBatches(groupIds);
-  const results = await Promise.all(batches.map(async ids => {
-    let query = me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups(name)', { count: 'exact' }).in('group_id', ids);
-    if (range.kind === 'today') query = query.lt('starts_at', range.end).gt('ends_at', range.start).in('status', ['scheduled', 'completed']);
-    else query = query.eq('status', 'scheduled').gte('starts_at', range.from);
-    return query.order('starts_at').limit(8);
-  }));
-  const failed = results.find(result => result.error || (result.count == null && (result.data?.length ?? 0) >= 8));
-  if (failed) return { rows: [] as Array<{ id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown }>, count: 0, error: failed.error ?? { message: 'Exact lesson count unavailable.' } };
-  const rows = results.flatMap(result => result.data ?? []).sort((left, right) => left.starts_at.localeCompare(right.starts_at)).slice(0, 8);
-  const count = results.reduce((sum, result) => sum + (result.count ?? result.data?.length ?? 0), 0);
-  return { rows, count, error: null };
-}
-
-async function slotGroupIds(me: Awaited<ReturnType<typeof teacherViewer>>, groupIds: string[]) {
-  const found = new Set<string>();
-  for (const ids of dashboardGroupIdBatches(groupIds)) {
-    const result = await readAllPages<{ group_id: string; id: string }>((from, to) => me.db.from('group_schedule_slots').select('group_id,id').in('group_id', ids).order('group_id').order('id').range(from, to));
-    if (result.error) return { groupIds: new Set<string>(), error: result.error };
-    for (const row of result.rows) found.add(row.group_id);
-  }
-  return { groupIds: found, error: null };
+  return { ...lastPayload, page, pageCount: teacherPageCount(lastPayload.total), error: null };
 }
 
 async function calendarLessonRows(me: Awaited<ReturnType<typeof teacherViewer>>, requestedPage: unknown) {
@@ -168,32 +130,38 @@ function emptyTeacherOverview(me: Awaited<ReturnType<typeof teacherViewer>>, loc
 
 export async function teacherOverview(locale: Locale, now = new Date()) {
   const me = await teacherViewer(locale);
-  const groupResult = await dashboardGroups(me);
-  if (groupResult.error) return emptyTeacherOverview(me, locale);
-  const groups = groupResult.rows as OwnedGroup[];
-  const groupIds = groups.map(group => group.id);
-  const nowIso = now.toISOString();
   const bounds = cairoDayBounds(now);
-  const [todayResult, upcomingResult, specializations, slots, students] = await Promise.all([
-    lessonRowsForGroups(me, groupIds, { kind: 'today', start: bounds.start.toISOString(), end: bounds.end.toISOString() }),
-    lessonRowsForGroups(me, groupIds, { kind: 'upcoming', from: nowIso }),
-    me.db.from('teacher_specializations').select('offering_id').eq('teacher_id', me.id),
-    slotGroupIds(me, groupIds),
+  const [summaryResult, students] = await Promise.all([
+    me.db.rpc('teacher_dashboard_summary', {
+      p_day_start: bounds.start.toISOString(), p_day_end: bounds.end.toISOString(), p_now: now.toISOString(),
+    }),
     teacherEnrollmentPage(me, 'pending', 1),
   ]);
-  if (todayResult.error || upcomingResult.error || me.teacherError || !me.teacher || specializations.error || slots.error || students.error) {
+  if (summaryResult.error || students.error || me.teacherError || !me.teacher) {
     return emptyTeacherOverview(me, locale);
   }
+  const summary = summaryResult.data as {
+    groups: OwnedGroup[]; group_count: number; today: Array<{ id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown }>;
+    today_count: number; upcoming: Array<{ id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown }>;
+    upcoming_count: number; has_specializations: boolean; draft_candidate: { id: string; name: string; status: string } | null;
+    missing_schedule_candidate: { id: string; name: string; status: string } | null;
+  } | null;
+  if (!summary || !Array.isArray(summary.groups) || !Array.isArray(summary.today) || !Array.isArray(summary.upcoming)
+      || !Number.isSafeInteger(summary.group_count) || !Number.isSafeInteger(summary.today_count) || !Number.isSafeInteger(summary.upcoming_count)) {
+    return emptyTeacherOverview(me, locale);
+  }
+  const groups = summary.groups;
+  const todayLessons = summary.today;
+  const upcomingLessons = summary.upcoming;
   const pendingRequests = students.rows;
-  const todayLessons = todayResult.rows;
-  const upcomingLessons = upcomingResult.rows;
-  const upcomingCount = dashboardListCount(upcomingResult.count, upcomingLessons);
   const setupTasks = buildTeacherSetupTasks({
     teacher: me.teacher,
-    specializationCount: specializations.data?.length ?? 0,
+    specializationCount: summary.has_specializations ? 1 : 0,
     groups,
-    groupIdsWithSlots: slots.groupIds,
-    upcomingLessonCount: upcomingCount,
+    groupIdsWithSlots: new Set(),
+    upcomingLessonCount: summary.upcoming_count,
+    draftCandidate: summary.draft_candidate,
+    missingScheduleCandidate: summary.missing_schedule_candidate,
   });
   return {
     me,
@@ -202,9 +170,9 @@ export async function teacherOverview(locale: Locale, now = new Date()) {
     upcomingLessons,
     pendingRequests,
     counts: {
-      groups: groups.length,
-      todayLessons: dashboardListCount(todayResult.count, todayLessons),
-      upcomingLessons: upcomingCount,
+      groups: summary.group_count,
+      todayLessons: summary.today_count,
+      upcomingLessons: summary.upcoming_count,
       pendingRequests: students.total,
     },
     setupTasks,
