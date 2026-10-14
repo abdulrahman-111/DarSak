@@ -201,6 +201,7 @@ begin
       next_attempt_at=null,safe_error_code=null
     where id=v_job.id returning * into v_job;
     v_jobs:=v_jobs||jsonb_build_array(jsonb_build_object('id',v_job.id,'lease_token',v_job.lease_token,
+      'attempts',v_job.attempts,
       'kind',v_job.kind,'payload',v_job.payload,'recipient_email',v_email,'created_at',v_job.created_at));
     v_claimed:=v_claimed+1;
     exit when v_claimed>=p_limit;

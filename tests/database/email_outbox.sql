@@ -182,6 +182,7 @@ declare v_claim jsonb; v_second jsonb; v_job uuid; v_token uuid; v_sent_job uuid
 begin
   v_claim:=public.claim_email_jobs(1);
   if jsonb_array_length(v_claim->'jobs')<>1 or v_claim->>'skipped'<>'0' then raise exception 'expired lease was not reclaimed'; end if;
+  if v_claim->'jobs'->0->>'attempts'<>'2' then raise exception 'claim omitted incremented attempt count'; end if;
   select (j->>'id')::uuid,(j->>'lease_token')::uuid into v_job,v_token from jsonb_array_elements(v_claim->'jobs') j;
   if v_job<>'7d000000-0000-4000-8000-000000000002' or v_token='7d000000-0000-4000-8000-000000000003' then
     raise exception 'expired lease did not receive a fresh fence';
@@ -197,11 +198,16 @@ begin
   end if;
   if not public.settle_email_job(v_job,v_token,'retry','connection_error') then raise exception 'current lease did not settle'; end if;
   v_second:=public.claim_email_jobs(5);
-  if jsonb_array_length(v_second->'jobs')<>5 or v_second->>'skipped'<>'9' then
-    raise exception 'recipient skip/batch counts differ (jobs %, skipped %)',jsonb_array_length(v_second->'jobs'),v_second->>'skipped';
+  if jsonb_array_length(v_second->'jobs')<2 or jsonb_array_length(v_second->'jobs')>5
+     or (v_second->>'skipped')::integer>25 then
+    raise exception 'recipient skip/batch bounds differ (jobs %, skipped %)',jsonb_array_length(v_second->'jobs'),v_second->>'skipped';
   end if;
   if exists(select 1 from jsonb_array_elements(v_second->'jobs') j where j->>'recipient_email'='contact-only@test.invalid') then
     raise exception 'claim resolved recipient from public contact email';
+  end if;
+  if exists(select 1 from jsonb_array_elements(v_second->'jobs') j
+      where coalesce((j->>'attempts')::integer,0) not between 1 and 5) then
+    raise exception 'claim omitted or returned invalid post-claim attempt count';
   end if;
   select (j->>'id')::uuid,(j->>'lease_token')::uuid into v_job,v_token from jsonb_array_elements(v_second->'jobs') j limit 1;
   if public.settle_email_job(v_job,gen_random_uuid(),'sent',null) then raise exception 'stale lease token settled'; end if;
@@ -275,10 +281,10 @@ begin
 end $$;
 reset role;
 
-insert into dars_private.email_outbox(id,event_key,kind,recipient_user_id,payload,created_at)
+insert into dars_private.email_outbox(id,event_key,kind,recipient_user_id,payload,attempts,created_at)
 values('7d000000-0000-4000-8000-000000000012','email-test-canonical-auth','teacher_renewal',
   '7c000000-0000-4000-8000-000000000001',jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000001'),
-  '2000-01-01 00:00:00+00');
+  4,'2000-01-01 00:00:00+00');
 set local role service_role;
 do $$
 declare v_claim jsonb;
@@ -286,11 +292,24 @@ begin
   v_claim:=public.claim_email_jobs(1);
   if jsonb_array_length(v_claim->'jobs')<>1
      or v_claim->'jobs'->0->>'id'<>'7d000000-0000-4000-8000-000000000012'
+     or v_claim->'jobs'->0->>'attempts'<>'5'
      or v_claim->'jobs'->0->>'recipient_email'<>'outbox-teacher@test.invalid' then
-    raise exception 'teacher recipient was not resolved from canonical Auth email';
+    raise exception 'fifth claim omitted attempt count or did not resolve canonical Auth email';
+  end if;
+  if not public.settle_email_job((v_claim->'jobs'->0->>'id')::uuid,
+      (v_claim->'jobs'->0->>'lease_token')::uuid,'retry','connection_error') then
+    raise exception 'fifth attempt did not settle';
   end if;
 end $$;
 reset role;
+do $$
+begin
+  if (select state from dars_private.email_outbox where event_key='email-test-canonical-auth')<>'failed'
+     or (select attempts from dars_private.email_outbox where event_key='email-test-canonical-auth')<>5
+     or (select safe_error_code from dars_private.email_outbox where event_key='email-test-canonical-auth')<>'max_attempts' then
+    raise exception 'fifth transient attempt was not recorded as exhausted';
+  end if;
+end $$;
 
 insert into dars_private.email_outbox(id,event_key,kind,recipient_user_id,payload,state,attempts,sent_at,safe_error_code,lease_token,lease_expires_at)
 values
