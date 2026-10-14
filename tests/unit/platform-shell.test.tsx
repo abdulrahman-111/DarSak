@@ -20,7 +20,7 @@ describe('role navigation shell', () => {
     expect(html).toContain('<details class="group lg:hidden">');
     expect(html).toContain('<summary');
     expect(html).toContain('focus-visible:ring-2');
-    expect(html).toContain('Teacher · Overview');
+    expect(html).toContain('Teacher · Account menu');
     expect(html).toContain('A Very Long Teacher Name');
     expect(html).toContain('class="mt-5 hidden gap-2 pb-2 lg:grid"');
     expect(html).toContain('aria-label="Account navigation"');
@@ -31,5 +31,8 @@ describe('role navigation shell', () => {
     expect(html).toContain('href="/ar/notifications"');
     expect(html).toContain('aria-label="4 غير مقروء"');
     expect(html).toContain('>4</span>');
+    expect(html).toContain('قائمة الحساب');
+    expect(html).toContain('4 إشعارات غير مقروءة');
+    expect(html).toContain('aria-hidden="true" class="shrink-0 rounded-full bg-orange');
   });
 });

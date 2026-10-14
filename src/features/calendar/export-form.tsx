@@ -52,8 +52,8 @@ export function CalendarExportForm({ locale, initialFrom, initialUntil }: { loca
     }
   }
 
-  return <section className="mb-6 min-w-0 rounded-2xl border border-line bg-white p-5">
-    <h2 className="text-lg font-black text-teal">{copy.title}</h2>
+  return <details className="mb-6 min-w-0 rounded-2xl border border-line bg-white p-5">
+    <summary className="cursor-pointer font-black text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{copy.title}</summary>
     <p className="mt-2 break-words text-sm text-muted">{copy.note}</p>
     <form onSubmit={submit} className="mt-4 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end">
       <label className="min-w-0 text-sm font-bold">{copy.from}<input type="date" required disabled={loading} value={from} onChange={event => setFrom(event.target.value)} className="mt-2 block w-full min-w-0 rounded-xl border border-line bg-cream p-3 disabled:opacity-60" /></label>
@@ -61,5 +61,5 @@ export function CalendarExportForm({ locale, initialFrom, initialUntil }: { loca
       <button type="submit" disabled={loading} className="rounded-xl bg-teal px-4 py-3 font-bold text-white disabled:opacity-60">{loading ? copy.loading : copy.submit}</button>
     </form>
     {message && <p role={message === copy.success ? 'status' : 'alert'} className="mt-3 break-words text-sm text-muted">{message}{accessDenied&&<> <a className="font-bold text-teal underline" href={`/${locale}/teacher/access`}>{ar?'فتح صفحة الصلاحية':'Open access page'}</a></>}</p>}
-  </section>;
+  </details>;
 }

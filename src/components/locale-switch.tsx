@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Globe2 } from 'lucide-react';
-import { discoverySearchParams, normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
+import { discoverySearchParams, normalizeDiscoveryFilters, preserveTeacherSearch } from '@/features/platform/discovery-domain';
 
 export function LocaleSwitch({ otherLocale, label, ariaLabel }: {
   otherLocale: string;
@@ -13,9 +13,14 @@ export function LocaleSwitch({ otherLocale, label, ariaLabel }: {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const pathWithoutLocale = (pathname ?? '').replace(/^\/(?:ar|en)(?=\/|$)/, '');
-  const query = pathWithoutLocale === '/teachers'
-    ? discoverySearchParams(normalizeDiscoveryFilters(new URLSearchParams(searchParams.toString()))).toString()
-    : searchParams.toString();
+  const currentParams = new URLSearchParams(searchParams.toString());
+  const queryParams = pathWithoutLocale === '/teachers'
+    ? discoverySearchParams(normalizeDiscoveryFilters(currentParams))
+    : currentParams;
+  if (pathWithoutLocale === '/teachers') {
+    for (const [key, value] of preserveTeacherSearch(currentParams)) queryParams.set(key, value);
+  }
+  const query = queryParams.toString();
   const href = `/${otherLocale}${pathWithoutLocale}${query ? `?${query}` : ''}`;
 
   return (
