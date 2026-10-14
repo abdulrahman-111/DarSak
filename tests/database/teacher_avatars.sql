@@ -7,12 +7,24 @@ begin
     select 1 from pg_policies
     where schemaname='storage' and tablename='objects' and policyname='lesson_objects_read'
       and roles=array['authenticated']::name[]
-      and qual like '%bucket_id = ''lesson-materials''%storage_lesson_access%'
+      and qual like '%bucket_id = ''lesson-materials''%storage_lesson_access%can_cleanup_lesson_object%'
   ) then
     raise exception 'lesson read policy must retain its predicate and authenticated-only role scope';
   end if;
   if has_function_privilege('anon','public.storage_lesson_access(text,boolean)','EXECUTE') then
     raise exception 'anonymous lesson access helper privilege was broadened';
+  end if;
+  if has_function_privilege('anon','public.can_cleanup_lesson_object(text)','EXECUTE')
+     or not has_function_privilege('authenticated','public.can_cleanup_lesson_object(text)','EXECUTE') then
+    raise exception 'orphan cleanup helper must be available only to authenticated callers';
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='storage' and tablename='objects' and policyname='lesson_objects_delete'
+      and roles=array['authenticated']::name[]
+      and qual like '%bucket_id = ''lesson-materials''%storage_lesson_access%can_cleanup_lesson_object%'
+  ) then
+    raise exception 'lesson delete policy must scope orphan cleanup to the authenticated owner/lesson path';
   end if;
   if not exists(select 1 from storage.buckets where id='teacher-avatars' and not public
       and file_size_limit=2097152 and allowed_mime_types @> array['image/jpeg','image/png','image/webp']::text[]

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { safeFile } from '@/lib/domain';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { lessonStatusSchema, materialSchema, storageObjectPath } from './domain';
+import { storageRemovalConfirmed } from './profile-domain';
 
 export type TeacherActionState = { error?: string; success?: string } | null;
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -19,7 +20,21 @@ async function activeTeacher() {
 }
 
 async function ownsLesson(db: Awaited<ReturnType<typeof createClient>>, teacherId: string, lessonId: string) {
-  return db.from('lessons').select('id,group:groups!inner(teacher_id)').eq('id', lessonId).eq('groups.teacher_id', teacherId).maybeSingle();
+  return db.from('lessons').select('id,group:groups!inner(teacher_id)').eq('id', lessonId).eq('group.teacher_id', teacherId).maybeSingle();
+}
+
+async function removeMaterialObject(db: Awaited<ReturnType<typeof createClient>>, path: string): Promise<boolean> {
+  const bucket = db.storage.from('lesson-materials');
+  const removed = await bucket.remove([path]);
+  if (storageRemovalConfirmed(path, removed.data, removed.error)) return true;
+  if (removed.error) return false;
+
+  // Storage removal is idempotent at the API, but an empty result can also mean
+  // no object was removed. Confirm absence while metadata still grants visibility.
+  const parent = path.slice(0, path.lastIndexOf('/'));
+  const name = path.slice(path.lastIndexOf('/') + 1);
+  const listed = await bucket.list(parent, { search: name, limit: 100 });
+  return !listed.error && !listed.data?.some(object => object.name === name);
 }
 
 export async function addMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
@@ -55,8 +70,10 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
   if (uploaded.error) return { error: message(locale, 'Upload failed.', 'فشل رفع الملف.') };
   const inserted = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'file', title, storage_path: path, file_size: file.size, mime_type: file.type });
   if (inserted.error) {
-    await me.db.storage.from('lesson-materials').remove([path]);
-    return { error: message(locale, 'Could not save the uploaded file.', 'تعذر حفظ الملف المرفوع.') };
+    const cleaned = await removeMaterialObject(me.db, path);
+    return { error: message(locale,
+      cleaned ? 'Could not save the uploaded file.' : 'Could not save the file, and cleanup is incomplete. Retry or contact support.',
+      cleaned ? 'تعذر حفظ الملف المرفوع.' : 'تعذر حفظ الملف ولم يكتمل تنظيفه. أعد المحاولة أو تواصل مع الدعم.' ) };
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   return { success: message(locale, 'File uploaded.', 'تم رفع الملف.') };
@@ -75,11 +92,14 @@ export async function deleteMaterial(locale: Locale, lessonId: string, materialI
   if (!idSchema.safeParse(lessonId).success || !idSchema.safeParse(materialId).success) return { error: 'Invalid material' };
   const me = await activeTeacher();
   if (!me) return { error: 'Not authorized' };
-  const { data: material } = await me.db.from('lesson_materials').select('storage_path').eq('id', materialId).eq('lesson_id', lessonId).maybeSingle();
+  const { data: material, error: lookupError } = await me.db.from('lesson_materials').select('storage_path').eq('id', materialId).eq('lesson_id', lessonId).maybeSingle();
+  if (lookupError) return { error: 'Could not load material. Please retry.' };
   if (!material) return { error: 'Material not found' };
+  if (material.storage_path && !(await removeMaterialObject(me.db, material.storage_path))) {
+    return { error: 'Could not remove the file. The material is still available; please retry.' };
+  }
   const removed = await me.db.from('lesson_materials').delete().eq('id', materialId);
   if (removed.error) return { error: removed.error.message };
-  if (material.storage_path) await me.db.storage.from('lesson-materials').remove([material.storage_path]);
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   return { ok: true };
 }
