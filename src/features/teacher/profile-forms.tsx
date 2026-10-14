@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState, useTransition } from 'react';
+import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
 import { addTeacherSpecialization, removeTeacherAvatar, saveTeacherProfile, uploadTeacherAvatar, type TeacherProfileActionState, type TeacherSpecializationActionState } from './profile-actions';
 import { TeacherAvatarImage } from './profile-avatar-image';
 import type { Locale } from '@/features/student/domain';
@@ -9,6 +9,7 @@ import type { ProfileCatalogueNode, ProfileCatalogueOffering, ProfileCatalogueSu
 import { CatalogueLabelEditor } from './catalogue-forms';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
 import { isTeacherCatalogueCategory } from './catalogue-domain';
+import { useUnsavedProfileSection } from './unsaved-profile-protection';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
   save: 'حفظ الملف الشخصي', saving: 'جارٍ الحفظ…', fullName: 'الاسم الكامل', headline: 'العنوان المهني',
@@ -74,6 +75,17 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings,
   const ar = locale === 'ar';
   const [formValues, setFormValues] = useState(values);
   const [state, action, pending] = useActionState<TeacherProfileActionState, FormData>(saveTeacherProfile.bind(null, locale), null);
+  const [baseline, setBaseline] = useState(values);
+  const submittedSnapshot = useRef<ProfileFormValues | null>(null);
+  const handledSuccess = useRef<TeacherProfileActionState>(null);
+  const dirty = JSON.stringify(formValues) !== JSON.stringify(baseline);
+  useUnsavedProfileSection('account', dirty);
+  useEffect(() => {
+    if (state?.success && state !== handledSuccess.current) {
+      handledSuccess.current = state;
+      if (submittedSnapshot.current) setBaseline(submittedSnapshot.current);
+    }
+  }, [state]);
   const [pairState, setPairState] = useState<TeacherSpecializationActionState>(null);
   const [pairPending, startPairTransition] = useTransition();
   const [choiceSubjects, setChoiceSubjects] = useState(subjects.filter(row => row.archived_at === null));
@@ -152,7 +164,7 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings,
   };
 
   return <div className="space-y-6">
-  <form action={action} onReset={event => event.preventDefault()} className="space-y-6">
+  <form action={action} onSubmit={() => { submittedSnapshot.current = { ...formValues, offering_ids: [...formValues.offering_ids] }; }} onReset={event => event.preventDefault()} className="space-y-6">
     <div className="grid gap-5 md:grid-cols-2">
       <div>
         <label htmlFor="profile-full-name" className="block text-sm font-bold">{t.fullName}</label>
