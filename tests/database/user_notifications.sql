@@ -20,7 +20,8 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('7f400000-0000-4000-8000-000000000002','authenticated','authenticated','notify-student@test.invalid','{"full_name":"Notify Student","requested_role":"student"}'),
  ('7f400000-0000-4000-8000-000000000003','authenticated','authenticated','notify-pending@test.invalid','{"full_name":"Notify Pending","requested_role":"student"}'),
  ('7f400000-0000-4000-8000-000000000004','authenticated','authenticated','notify-suspended@test.invalid','{"full_name":"Notify Suspended","requested_role":"student"}'),
- ('7f400000-0000-4000-8000-000000000005','authenticated','authenticated','notify-admin@test.invalid','{"full_name":"Notify Admin","requested_role":"student"}');
+ ('7f400000-0000-4000-8000-000000000005','authenticated','authenticated','notify-admin@test.invalid','{"full_name":"Notify Admin","requested_role":"student"}'),
+ ('7f400000-0000-4000-8000-000000000006','authenticated','authenticated','notify-removed@test.invalid','{"full_name":"Notify Removed","requested_role":"student"}');
 
 -- Fixture-only role, approval and account state setup. Restore triggers before behavior assertions.
 set local session_replication_role=replica;
@@ -35,7 +36,8 @@ insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select '7f410000-0000-4000-8000-000000000001','7f400000-0000-4000-8000-000000000001',o.id,'Notify Group',10,'draft' from public.offerings o order by o.id limit 1;
 insert into public.enrollments(group_id,student_id,status) values
  ('7f410000-0000-4000-8000-000000000001','7f400000-0000-4000-8000-000000000002','accepted'),
- ('7f410000-0000-4000-8000-000000000001','7f400000-0000-4000-8000-000000000004','accepted');
+ ('7f410000-0000-4000-8000-000000000001','7f400000-0000-4000-8000-000000000004','accepted'),
+ ('7f410000-0000-4000-8000-000000000001','7f400000-0000-4000-8000-000000000006','removed');
 insert into public.lessons(id,group_id,title,starts_at,ends_at,status) values
  ('7f420000-0000-4000-8000-000000000001','7f410000-0000-4000-8000-000000000001','Notify Lesson',now()+interval '2 days',now()+interval '2 days 1 hour','scheduled'),
  ('7f420000-0000-4000-8000-000000000002','7f410000-0000-4000-8000-000000000001','Suppressed Cancel',now()+interval '4 days',now()+interval '4 days 1 hour','scheduled');
@@ -89,6 +91,7 @@ do $$ begin
   if (select count(*) from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000002' and kind='group_cancelled' and payload->>'group_id'='7f410000-0000-4000-8000-000000000001')<>1
      or exists(select 1 from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000002' and kind='lesson_cancelled' and payload->>'lesson_id' in ('7f420000-0000-4000-8000-000000000001','7f420000-0000-4000-8000-000000000002')) then raise exception 'group archive flooded students with lesson cancellation alerts'; end if;
   if (select count(*) from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000004')<>0 then raise exception 'suspended recipient received an alert'; end if;
+  if (select count(*) from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000006')<>0 then raise exception 'removed student received an alert'; end if;
   if (select count(*) from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000001' and kind='enrollment_requested')<>1 then raise exception 'pending enrollment/repeat notification count is wrong'; end if;
   if (select count(*) from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000005' and kind='teacher_review_requested')<>1
      or (select count(*) from public.user_notifications where recipient_id='7f400000-0000-4000-8000-000000000001' and kind='teacher_review_decision')<>1 then raise exception 'teacher review recipient notifications are missing'; end if;
@@ -107,8 +110,41 @@ do $$ declare v jsonb; v_id uuid; begin
   perform public.mark_notification_read(v_id);
   if (public.notifications_page(0,20)->>'unread')::integer<>6 then raise exception 'mark own read did not update unread count'; end if;
   perform public.mark_notification_read('7f430000-0000-4000-8000-000000000099');
+  if (select read_at from public.user_notifications where id='7f430000-0000-4000-8000-000000000099') is not null then raise exception 'mark read changed another recipient notification'; end if;
   begin perform public.notifications_page(0,21); raise exception 'oversized notification page was accepted'; exception when sqlstate '22023' then null; end;
   begin insert into public.user_notifications(recipient_id,kind,event_key) values(auth.uid(),'lesson_cancelled','raw'); raise exception 'raw notification write succeeded'; exception when insufficient_privilege then null; end;
+end $$;
+
+-- Deterministic newer fixture rows verify the 20-row cap, exact total and stable tie ordering.
+reset role;
+insert into public.user_notifications(id,recipient_id,kind,event_key,created_at)
+select ('7f430000-0000-4000-8000-'||lpad((100+n)::text,12,'0'))::uuid,
+  '7f400000-0000-4000-8000-000000000002','lesson_cancelled','page-fixture:'||n,timestamptz '2027-01-01 00:00:00+00'
+from generate_series(0,22) as g(n);
+set local role authenticated;
+set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000002';
+do $$ declare v jsonb; begin
+  v:=public.notifications_page(0,20);
+  if (v->>'total')::integer<>30 or (v->>'unread')::integer<>29 or jsonb_array_length(v->'rows')<>20
+     or v->'rows'->0->>'id'<>'7f430000-0000-4000-8000-000000000122'
+     or v->'rows'->19->>'id'<>'7f430000-0000-4000-8000-000000000103' then raise exception 'notification first page bound, total or stable order failed: %',v; end if;
+  v:=public.notifications_page(20,20);
+  if (v->>'total')::integer<>30 or jsonb_array_length(v->'rows')<>10
+     or v->'rows'->0->>'id'<>'7f430000-0000-4000-8000-000000000102' then raise exception 'notification final page bound/order failed: %',v; end if;
+  perform public.mark_all_notifications_read();
+  if (public.notifications_page(0,20)->>'unread')::integer<>0
+     or exists(select 1 from public.user_notifications where recipient_id=auth.uid() and read_at is null)
+     or (select read_at from public.user_notifications where id='7f430000-0000-4000-8000-000000000099') is not null then raise exception 'mark all did not affect only the current recipient'; end if;
+end $$;
+reset role;
+
+set local role authenticated;
+set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000004';
+do $$ begin
+  begin perform public.notifications_page(0,20); raise exception 'suspended account read notifications'; exception when sqlstate '42501' then null; end;
+  begin perform public.notifications_unread_count(); raise exception 'suspended account read unread count'; exception when sqlstate '42501' then null; end;
+  begin perform public.mark_notification_read('7f430000-0000-4000-8000-000000000099'); raise exception 'suspended account marked notification'; exception when sqlstate '42501' then null; end;
+  begin perform public.mark_all_notifications_read(); raise exception 'suspended account marked all notifications'; exception when sqlstate '42501' then null; end;
 end $$;
 reset role;
 
