@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
-import { catalogue, publicGroups, publicTeachers } from '@/features/platform/data';
+import { catalogue, publicGroups, publicTeacherChoices } from '@/features/platform/data';
 import { discoverySearchParams, normalizeDiscoveryFilters, DISCOVERY_PAGE_SIZE } from '@/features/platform/discovery-domain';
 import { GroupCard, SetupCard } from '@/components/ui';
 import { isConfigured } from '@/lib/supabase/server';
@@ -11,10 +11,13 @@ import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 type SearchValue = string | string[] | undefined;
 type Query = Record<string, SearchValue>;
 
-function urlFor(locale: string, filters: ReturnType<typeof normalizeDiscoveryFilters>, page: number) {
+function urlFor(locale: string, filters: ReturnType<typeof normalizeDiscoveryFilters>, page: number, teacherSearch = '') {
   const next = { ...filters, page };
   const search = discoverySearchParams(next).toString();
-  return `/${locale}/teachers${search ? `?${search}` : ''}`;
+  const params = new URLSearchParams(search);
+  if (teacherSearch) params.set('teacher_search', teacherSearch);
+  const query = params.toString();
+  return `/${locale}/teachers${query ? `?${query}` : ''}`;
 }
 
 export default async function Teachers({
@@ -27,6 +30,7 @@ export default async function Teachers({
   const { locale } = await params;
   const query = await searchParams;
   const filters = normalizeDiscoveryFilters(query);
+  const teacherSearch = (Array.isArray(query.teacher_search) ? query.teacher_search[0] : query.teacher_search ?? '').trim().slice(0, 80);
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
 
@@ -35,7 +39,7 @@ export default async function Teachers({
   const [result, catalogueResult, teacherResult] = await Promise.all([
     publicGroups(filters),
     catalogue(),
-    publicTeachers(),
+    publicTeacherChoices(teacherSearch, filters.teacherId),
   ]);
   const error = !!(result.error || catalogueResult.error || teacherResult.error);
   const groups = result.data.slice(0, DISCOVERY_PAGE_SIZE);
@@ -45,9 +49,9 @@ export default async function Teachers({
   const teachers = teacherResult.data;
   const hasActiveFilters = !!(
     filters.subjectId || filters.nodeId || filters.teacherId || filters.weekday !== null ||
-    filters.hasSeats || filters.query || filters.page > 1
+    filters.hasSeats || filters.query || filters.page > 1 || teacherSearch
   );
-  const retryUrl = urlFor(locale, filters, filters.page);
+  const retryUrl = urlFor(locale, filters, filters.page, teacherSearch);
   const retryHref = `${retryUrl}${retryUrl.includes('?') ? '&' : '?'}retry=1`;
 
   return (
@@ -84,9 +88,13 @@ export default async function Teachers({
                 {nodes.map(node => <option key={node.id} value={node.id}>{catalogueDisplayName(node, locale)}</option>)}
               </select>
             </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
+            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
+              <span className="sr-only">{locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}</span>
+              <input aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
+            </label>
+            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
               <span className="sr-only">{c.teacherFilter}</span>
-              <select className="min-w-0 flex-1 bg-transparent outline-none" name="teacher_id" defaultValue={filters.teacherId || ''}>
+              <select aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent outline-none" name="teacher_id" defaultValue={filters.teacherId || ''}>
                 <option value="">{c.allTeachers}</option>
                 {teachers.map(teacher => <option key={teacher.id} value={teacher.id}>{teacher.full_name}</option>)}
               </select>
@@ -103,6 +111,11 @@ export default async function Teachers({
               {c.seatsAvailable}
             </label>
           </div>
+          <p id="teacher-search-help" className="mt-2 text-sm text-muted">
+            {locale === 'ar'
+              ? 'ابحث عن المدرسين المعتمدين بالاسم (حتى ٥٠ نتيجة)، ثم اضغط «تصفية» واختر المدرس.'
+              : 'Search approved teachers by name (up to 50 matches), press Apply filters, then choose a teacher.'}
+          </p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <button className="h-12 rounded-xl bg-teal px-5 font-bold text-white transition hover:bg-[#0e4a4b]" type="submit">{c.filter}</button>
             {hasActiveFilters && <Link className="px-1 text-sm font-bold text-orange" href={`/${locale}/teachers`}>{c.clear}</Link>}
@@ -115,16 +128,16 @@ export default async function Teachers({
           <>
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{groups.map(group => <GroupCard key={group.id} group={group} locale={locale} t={t}/>)}</div>
             <nav className="mt-8 flex items-center justify-between" aria-label={c.pagination}>
-              {filters.page > 1 ? <Link rel="prev" className="rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1)}>{c.previous}</Link> : <span/>}
+              {filters.page > 1 ? <Link rel="prev" className="rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1, teacherSearch)}>{c.previous}</Link> : <span/>}
               <span className="text-sm font-bold text-muted">{c.pageLabel(filters.page)}</span>
-              {more ? <Link rel="next" className="rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page + 1)}>{c.next}</Link> : <span/>}
+              {more ? <Link rel="next" className="rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page + 1, teacherSearch)}>{c.next}</Link> : <span/>}
             </nav>
           </>
         ) : (
           <div className="rounded-[1.15rem] border-2 border-dashed border-[#d8ccb8] bg-[#fffdf8] px-6 py-14 text-center">
             <h2 className="text-xl font-bold text-teal">{c.noResults}</h2>
             <p className="mt-2 text-muted">{c.noResultsBody}</p>
-            {filters.page > 1 ? <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1)}>{c.previous}</Link> : <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={`/${locale}/teachers`}>{c.clear}</Link>}
+            {filters.page > 1 ? <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1, teacherSearch)}>{c.previous}</Link> : <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={`/${locale}/teachers`}>{c.clear}</Link>}
           </div>
         )}
       </section>

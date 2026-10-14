@@ -6,6 +6,7 @@ const { createClientMock, revalidatePathMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
+vi.mock('@/lib/action-diagnostics', () => ({ logActionFailure: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidatePathMock }));
 
 import { addMaterial, deleteMaterial, uploadMaterial } from '@/features/teacher/actions';

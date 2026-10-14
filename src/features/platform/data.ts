@@ -5,6 +5,12 @@ import type { DiscoverGroupRow, Group, Teacher, Slot, Lesson } from '@/lib/supab
 import { discoveryRpcArgs, normalizeDiscoveryFilters, type DiscoveryFilters } from './discovery-domain';
 export async function currentUser(){ const viewer=await getRequestViewer(); if(!viewer.user)return null; return {user:viewer.user,profile:viewer.profile}; }
 export async function publicTeachers(){ const db=await createClient(); const {data,error}=await db.rpc('public_teachers'); return {data:(data||[]) as Teacher[],error}; }
+export type PublicTeacherChoice = Pick<Teacher,'id'|'full_name'>;
+export async function publicTeacherChoices(search: string, selectedTeacherId: string | null) {
+ const db=await createClient();
+ const {data,error}=await db.rpc('public_teacher_choices',{p_search:search.trim().slice(0,80)||null,p_selected:selectedTeacherId});
+ return {data:(data??[]) as PublicTeacherChoice[],error};
+}
 function mapDiscoverGroup(group: DiscoverGroupRow): Group {
  return {
   id:group.id,teacher_id:group.teacher_id,offering_id:group.offering_id,name:group.name,
