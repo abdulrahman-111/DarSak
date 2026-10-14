@@ -18,9 +18,9 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('7f000000-0000-4000-8000-000000000002','authenticated','authenticated','overlap-student@test.invalid','{"full_name":"Overlap student","requested_role":"student"}'),
  ('7f000000-0000-4000-8000-000000000003','authenticated','authenticated','overlap-foreign@test.invalid','{"full_name":"Overlap foreign","requested_role":"student"}'),
  ('7f000000-0000-4000-8000-000000000004','authenticated','authenticated','overlap-inactive@test.invalid','{"full_name":"Inactive student","requested_role":"student"}');
-update public.profiles set status='suspended' where id='7f000000-0000-4000-8000-000000000004';
 set local session_replication_role = replica;
 update public.teacher_profiles set headline='Teacher',bio='',approved=true where id='7f000000-0000-4000-8000-000000000001';
+update public.profiles set status='suspended' where id='7f000000-0000-4000-8000-000000000004';
 
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select x.id,'7f000000-0000-4000-8000-000000000001',o.id,x.name,10,x.status::public.group_status
@@ -113,7 +113,7 @@ end $$;
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000003';
 do $$ declare v_result record; begin
   select * into v_result from public.student_group_schedule_overlap('7f100000-0000-4000-8000-000000000001');
-  if v_result.weekly_overlap or v_result.dated_overlap then raise exception 'foreign student's accepted groups affected result'; end if;
+  if v_result.weekly_overlap or v_result.dated_overlap then raise exception 'foreign student accepted groups affected result'; end if;
 end $$;
 
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000004';
