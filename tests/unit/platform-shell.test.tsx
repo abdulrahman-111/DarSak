@@ -25,4 +25,11 @@ describe('role navigation shell', () => {
     expect(html).toContain('class="mt-5 hidden gap-2 pb-2 lg:grid"');
     expect(html).toContain('aria-label="Account navigation"');
   });
+
+  it('shows a localized unread count in the shared notification link', () => {
+    const html = renderToStaticMarkup(<PlatformShell locale="ar" role="student" name="طالبة" unreadCount={4}><main>Dashboard</main></PlatformShell>);
+    expect(html).toContain('href="/ar/notifications"');
+    expect(html).toContain('aria-label="4 غير مقروء"');
+    expect(html).toContain('>4</span>');
+  });
 });
