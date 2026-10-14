@@ -27,14 +27,35 @@ begin
      or has_function_privilege('service_role','dars_private.enqueue_email(text,text,uuid,boolean,jsonb)','EXECUTE') then
     raise exception 'private enqueue helper is callable by clients or worker';
   end if;
-  if exists(select 1 from dars_private.email_outbox) then raise exception 'migration backfilled historical email jobs'; end if;
+  if exists(
+    select 1 from public.teacher_review_events e join dars_private.email_outbox o
+      on o.event_key='teacher-review-request:'||e.id::text
+    where e.created_at<'2026-10-14 18:14:00+00'
+    union all
+    select 1 from public.teacher_review_events e join dars_private.email_outbox o
+      on o.event_key='teacher-review-decision:'||e.id::text
+    where e.created_at<'2026-10-14 18:14:00+00'
+    union all
+    select 1 from public.enrollments e join dars_private.email_outbox o
+      on o.kind='enrollment_requested' and o.payload->>'enrollment_id'=e.id::text
+    where e.created_at<'2026-10-14 18:14:00+00'
+    union all
+    select 1 from dars_private.teacher_access_grants g join dars_private.email_outbox o
+      on o.event_key='teacher-renewal:'||g.id::text
+    where g.source in ('free_renewal','admin_approved') and g.created_at<'2026-10-14 18:14:00+00'
+    union all
+    select 1 from dars_private.teacher_access_announcements a join dars_private.email_outbox o
+      on o.event_key like 'fee-announcement:'||a.id::text||':%'
+    where a.created_at<'2026-10-14 18:14:00+00'
+  ) then raise exception 'migration backfilled historical email jobs'; end if;
 end $$;
 
 insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('7c000000-0000-4000-8000-000000000001','authenticated','authenticated','outbox-teacher@test.invalid','{"full_name":"Outbox Teacher","requested_role":"teacher"}'),
  ('7c000000-0000-4000-8000-000000000002','authenticated','authenticated','outbox-student@test.invalid','{"full_name":"Outbox Student","requested_role":"student"}'),
  ('7c000000-0000-4000-8000-000000000003','authenticated','authenticated','outbox-admin@test.invalid','{"full_name":"Outbox Admin","requested_role":"student"}'),
- ('7c000000-0000-4000-8000-000000000004','authenticated','authenticated','outbox-suspended@test.invalid','{"full_name":"Outbox Suspended","requested_role":"teacher"}');
+ ('7c000000-0000-4000-8000-000000000004','authenticated','authenticated','outbox-suspended@test.invalid','{"full_name":"Outbox Suspended","requested_role":"teacher"}'),
+ ('7c000000-0000-4000-8000-000000000005','authenticated','authenticated','outbox-deleted@test.invalid','{"full_name":"Outbox Deleted","requested_role":"teacher"}');
 set local session_replication_role = replica;
 update public.profiles set role='admin' where id='7c000000-0000-4000-8000-000000000003';
 update public.profiles set status='suspended' where id='7c000000-0000-4000-8000-000000000004';
@@ -102,10 +123,19 @@ begin
      (select count(*) from public.profiles p join public.teacher_profiles tp on tp.id=p.id where p.role='teacher' and p.status='active') then
     raise exception 'announcement was not materialized once per active teacher';
   end if;
-  -- A deleted or suspended teacher is retained as a nullable-by-contract recipient id, not joined by FK.
+  -- Suspended recipients remain pending for a safe skipped result.
   insert into dars_private.email_outbox(event_key,kind,recipient_user_id,payload,created_at)
     values('email-test-unavailable-recipient','teacher_renewal','7c000000-0000-4000-8000-000000000004',
       jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000004'),clock_timestamp()-interval '1 day');
+  -- A real Auth deletion leaves the outbox audit row because recipient IDs have no FK.
+  insert into dars_private.email_outbox(event_key,kind,recipient_user_id,payload,created_at)
+    values('email-test-deleted-recipient','teacher_renewal','7c000000-0000-4000-8000-000000000005',
+      jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000005'),clock_timestamp()-interval '1 day');
+  delete from auth.users where id='7c000000-0000-4000-8000-000000000005';
+  if not exists(select 1 from dars_private.email_outbox where event_key='email-test-deleted-recipient'
+      and recipient_user_id='7c000000-0000-4000-8000-000000000005') then
+    raise exception 'deleting Auth user removed the outbox audit row';
+  end if;
   insert into dars_private.email_outbox(id,event_key,kind,recipient_user_id,payload,state,attempts,
     lease_token,lease_expires_at,created_at)
   values('7d000000-0000-4000-8000-000000000002','email-test-expired-lease','teacher_renewal','7c000000-0000-4000-8000-000000000001',
@@ -116,9 +146,6 @@ begin
   values('7d000000-0000-4000-8000-000000000004','email-test-exhausted-lease','teacher_renewal','7c000000-0000-4000-8000-000000000001',
     jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000001'),'sending',5,
     '7d000000-0000-4000-8000-000000000008',clock_timestamp()-interval '1 minute',clock_timestamp()-interval '4 days');
-  insert into dars_private.email_outbox(event_key,kind,recipient_user_id,payload,created_at)
-    values('email-test-deleted-recipient','teacher_renewal','7c000000-0000-4000-8000-000000000005',
-      jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000005'),clock_timestamp()-interval '1 day');
   insert into dars_private.email_outbox(event_key,kind,recipient_user_id,payload,created_at)
   select 'email-test-invalid-'||n,'teacher_renewal',gen_random_uuid(),jsonb_build_object('teacher_id',gen_random_uuid()),
     statement_timestamp()-interval '2 days'
@@ -170,12 +197,11 @@ begin
   end if;
   if not public.settle_email_job(v_job,v_token,'retry','connection_error') then raise exception 'current lease did not settle'; end if;
   v_second:=public.claim_email_jobs(5);
-  if jsonb_array_length(v_second->'jobs')<>5 or v_second->>'skipped'<>'8' then
+  if jsonb_array_length(v_second->'jobs')<>5 or v_second->>'skipped'<>'9' then
     raise exception 'recipient skip/batch counts differ (jobs %, skipped %)',jsonb_array_length(v_second->'jobs'),v_second->>'skipped';
   end if;
-  if exists(select 1 from jsonb_array_elements(v_second->'jobs') j where j->>'recipient_email' not in
-      ('abdulrahman.gomaa.h05@gmail.com','outbox-teacher@test.invalid')) then
-    raise exception 'claim resolved a noncanonical recipient';
+  if exists(select 1 from jsonb_array_elements(v_second->'jobs') j where j->>'recipient_email'='contact-only@test.invalid') then
+    raise exception 'claim resolved recipient from public contact email';
   end if;
   select (j->>'id')::uuid,(j->>'lease_token')::uuid into v_job,v_token from jsonb_array_elements(v_second->'jobs') j limit 1;
   if public.settle_email_job(v_job,gen_random_uuid(),'sent',null) then raise exception 'stale lease token settled'; end if;
@@ -205,13 +231,15 @@ begin
      or (select attempts from dars_private.email_outbox where event_key='email-test-unavailable-recipient')<>0 then
     raise exception 'unavailable recipient consumed an attempt';
   end if;
-  update dars_private.email_outbox set payload=jsonb_build_object('changed',true)
-    where event_key='teacher-review-request:'||(
-      select id::text from public.teacher_review_events where teacher_id='7c000000-0000-4000-8000-000000000001' and kind='requested' order by created_at desc,id desc limit 1
-    );
-  raise exception 'immutable event metadata update succeeded';
-exception when raise_exception then
-  if sqlerrm='immutable event metadata update succeeded' then raise; end if;
+  begin
+    update dars_private.email_outbox set payload=jsonb_build_object('changed',true)
+      where event_key='teacher-review-request:'||(
+        select id::text from public.teacher_review_events where teacher_id='7c000000-0000-4000-8000-000000000001' and kind='requested' order by created_at desc,id desc limit 1
+      );
+    raise exception 'immutable event metadata update succeeded';
+  exception when raise_exception then
+    if sqlerrm<>'email event metadata is immutable' then raise; end if;
+  end;
 end $$;
 
 -- A same-token settle after expiry is rejected even if the row has not yet been reclaimed.
@@ -243,6 +271,23 @@ begin
      or v_claim->'jobs'->0->>'id'<>'7d000000-0000-4000-8000-000000000011'
      or v_claim->'jobs'->0->>'recipient_email'<>'abdulrahman.gomaa.h05@gmail.com' then
     raise exception 'fixed-admin recipient was not resolved to the contracted address';
+  end if;
+end $$;
+reset role;
+
+insert into dars_private.email_outbox(id,event_key,kind,recipient_user_id,payload,created_at)
+values('7d000000-0000-4000-8000-000000000012','email-test-canonical-auth','teacher_renewal',
+  '7c000000-0000-4000-8000-000000000001',jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000001'),
+  '2000-01-01 00:00:00+00');
+set local role service_role;
+do $$
+declare v_claim jsonb;
+begin
+  v_claim:=public.claim_email_jobs(1);
+  if jsonb_array_length(v_claim->'jobs')<>1
+     or v_claim->'jobs'->0->>'id'<>'7d000000-0000-4000-8000-000000000012'
+     or v_claim->'jobs'->0->>'recipient_email'<>'outbox-teacher@test.invalid' then
+    raise exception 'teacher recipient was not resolved from canonical Auth email';
   end if;
 end $$;
 reset role;
