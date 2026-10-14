@@ -34,7 +34,7 @@ async function removeMaterialObject(db: Awaited<ReturnType<typeof createClient>>
   const parent = path.slice(0, path.lastIndexOf('/'));
   const name = path.slice(path.lastIndexOf('/') + 1);
   const listed = await bucket.list(parent, { search: name, limit: 100 });
-  return !listed.error && !listed.data?.some(object => object.name === name);
+  return !listed.error && Array.isArray(listed.data) && !listed.data.some(object => object.name === name);
 }
 
 export async function addMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
