@@ -21,7 +21,7 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('7e000000-0000-4000-8000-000000000021','authenticated','authenticated','resource-owner@test.invalid','{"full_name":"Resource owner","requested_role":"teacher"}'),
  ('7e000000-0000-4000-8000-000000000022','authenticated','authenticated','resource-student@test.invalid','{"full_name":"Resource student","requested_role":"student"}'),
  ('7e000000-0000-4000-8000-000000000023','authenticated','authenticated','resource-other@test.invalid','{"full_name":"Other student","requested_role":"student"}');
-insert into public.teacher_profiles(id,headline,bio,approved) values('7e000000-0000-4000-8000-000000000021','Teacher','',true);
+update public.teacher_profiles set headline='Teacher',bio='' where id='7e000000-0000-4000-8000-000000000021';
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
 select '7e100000-0000-4000-8000-000000000021','7e000000-0000-4000-8000-000000000021',o.id,'Historical resource group',10,'archived' from public.offerings o order by o.id limit 1;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
@@ -38,7 +38,7 @@ values('7e300000-0000-4000-8000-000000000021','7e100000-0000-4000-8000-000000000
 insert into public.lesson_materials(id,lesson_id,kind,title,content,uploaded_by)
 values('7e400000-0000-4000-8000-000000000021','7e300000-0000-4000-8000-000000000021','note','Revision note','Private note text','7e000000-0000-4000-8000-000000000021');
 insert into public.lesson_materials(id,lesson_id,kind,title,content,uploaded_by)
-select ('7e400000-0000-4000-8000-'||lpad(n::text,12,'0'))::uuid,'7e300000-0000-4000-8000-000000000021','note','Bulk note '||n,'Bounded page fixture','7e000000-0000-4000-8000-000000000021'
+select ('7e400000-0000-4000-8000-'||lpad((100+n)::text,12,'0'))::uuid,'7e300000-0000-4000-8000-000000000021','note','Bulk note '||n,'Bounded page fixture','7e000000-0000-4000-8000-000000000021'
 from generate_series(1,25) n;
 
 set local role authenticated;
