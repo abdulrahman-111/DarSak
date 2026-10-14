@@ -37,3 +37,4 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_saved_gr
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_schedule_overlap.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_pinned_announcements.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_attendance.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/calendar_lesson_export.sql
