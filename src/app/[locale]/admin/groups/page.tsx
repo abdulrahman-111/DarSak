@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
@@ -38,8 +39,8 @@ export default async function AdminGroups({ params, searchParams }: { params: Pr
       : groups.data?.length ? <div className="grid gap-4 lg:grid-cols-2">{groups.data.map(group => <Panel key={group.id}>
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h2 className="font-black text-teal">{group.name}</h2>
-            <p className="mt-1 text-sm text-muted">{teacherMap.get(group.teacher_id) || '—'} · {group.location || '—'} · {ar ? 'السعة' : 'Capacity'} {group.capacity}</p>
+            <h2 id={`group-${group.id}`} className="font-black text-teal"><a href={`#group-${group.id}`} className="underline decoration-transparent hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{group.name}</a></h2>
+            <p className="mt-1 text-sm text-muted"><Link href={`/${locale}/admin/teachers/${group.teacher_id}`} className="underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{teacherMap.get(group.teacher_id) || '—'}</Link> · {group.location || '—'} · {ar ? 'السعة' : 'Capacity'} {group.capacity}</p>
           </div>
           <Status value={group.status} locale={locale} />
         </div>

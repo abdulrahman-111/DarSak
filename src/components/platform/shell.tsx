@@ -36,16 +36,27 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
 export function PlatformShell({ locale, role, name, children }: { locale: string; role: PlatformRole; name: string; children: React.ReactNode }) {
   const ar = locale === 'ar';
   const items = navigation(locale, role);
+  const overview = items[0].label;
+  const roleName = role === 'teacher' ? (ar ? 'معلم' : 'Teacher') : role === 'admin' ? (ar ? 'مسؤول' : 'Administrator') : (ar ? 'طالب' : 'Student');
   return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-    <aside className="min-w-0 rounded-[1.75rem] bg-teal p-4 text-cream lg:sticky lg:top-24">
-      <Link href={`/${locale}/${role}`} className="flex items-center gap-3 px-3 py-3">
+    <aside className="min-w-0 rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:p-4">
+      <Link href={`/${locale}/${role}`} className="hidden items-center gap-3 px-3 py-3 lg:flex">
         <span className="grid size-10 place-items-center rounded-xl bg-cream font-black text-teal">د</span>
         <span><strong className="block text-lg">{ar ? 'درس' : 'Dars'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
       </Link>
-      <nav className="mt-5 grid grid-cols-2 gap-2 pb-2 lg:grid-cols-1" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
+      <details className="group lg:hidden">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0"><span className="block truncate text-xs font-semibold text-cream/70">{roleName} · {overview}</span><span className="block truncate font-bold">{name}</span></span>
+          <span aria-hidden="true" className="shrink-0 text-sm text-cream/80 group-open:rotate-180">⌄</span>
+        </summary>
+        <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
+          {items.map((item, index) => <ActiveLink key={item.href} href={item.href} exact={index === 0} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{item.label}</ActiveLink>)}
+        </nav>
+      </details>
+      <nav className="mt-5 hidden gap-2 pb-2 lg:grid" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
         {items.map((item, index) => <ActiveLink key={item.href} href={item.href} exact={index === 0} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{item.label}</ActiveLink>)}
       </nav>
-      <div className="mt-5 rounded-2xl bg-black/10 px-3 py-3 text-sm"><span className="block truncate font-bold">{name}</span><span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span></div>
+      <div className="mt-5 hidden rounded-2xl bg-black/10 px-3 py-3 text-sm lg:block"><span className="block truncate font-bold">{name}</span><span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span></div>
     </aside>
     <div className="min-w-0">{children}</div>
   </div>;
