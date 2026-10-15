@@ -32,7 +32,7 @@ export default async function AdminTeacherReviewDetail({params,searchParams}:{pa
   const copy=ar
    ?{title:'تعذر تحميل مراجعة المعلم',error:'تعذر تحميل بيانات الحساب والملف التعريفي. حاول إعادة تحميل الصفحة.',back:'العودة إلى الطلبات',retry:'إعادة المحاولة'}
    :{title:'Teacher review could not be loaded',error:'The account and profile could not be loaded. Refresh and try again.',back:'Back to requests',retry:'Retry'};
-  return <><ScreenTitle eyebrow={ar?'مراجعة المعلم':'Teacher review'} title={copy.title} action={<Link href={backHref} className="rounded-xl border border-line px-4 py-2 font-bold text-teal">{copy.back}</Link>}/><Panel><p role="alert" className="text-red-800">{copy.error}</p><form action={`/${locale}/admin/teachers/${encodeURIComponent(id)}?${backParams}`} method="get" className="mt-4"><button type="submit" className="rounded-xl bg-teal px-4 py-2 font-bold text-white">{copy.retry}</button></form></Panel></>;
+  return <><ScreenTitle eyebrow={ar?'مراجعة المعلم':'Teacher review'} title={copy.title} action={<Link href={backHref} className="rounded-xl border border-line px-4 py-2 font-bold text-teal">{copy.back}</Link>}/><Panel><p role="alert" className="text-red-800">{copy.error}</p><form action={`/${locale}/admin/teachers/${encodeURIComponent(id)}`} method="get" className="mt-4"><input type="hidden" name="q" value={preserved.query}/><input type="hidden" name="status" value={preserved.status}/>{preserved.offset>0&&<input type="hidden" name="page" value={Math.floor(preserved.offset/30)+1}/>}<button type="submit" className="min-h-11 touch-manipulation rounded-xl bg-teal px-4 py-2 font-bold text-white">{copy.retry}</button></form></Panel></>;
  }
  if(!profile.data||!teacher.data)notFound();
  const review=readStatus(reviewResult.data);

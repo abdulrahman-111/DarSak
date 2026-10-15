@@ -50,6 +50,13 @@ begin
   ) then raise exception 'migration backfilled historical email jobs'; end if;
 end $$;
 
+-- Keep this rollback-only contract test independent of old audit jobs left by
+-- other local tests (for example, signup cleanup). Fixture jobs inserted below
+-- remain due and are the only claim candidates during this transaction.
+update dars_private.email_outbox set next_attempt_at='infinity' where state='queued';
+update dars_private.email_outbox set lease_expires_at='infinity'
+  where state='sending' and lease_expires_at<=clock_timestamp();
+
 insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('7c000000-0000-4000-8000-000000000001','authenticated','authenticated','outbox-teacher@test.invalid','{"full_name":"Outbox Teacher","requested_role":"teacher"}'),
  ('7c000000-0000-4000-8000-000000000002','authenticated','authenticated','outbox-student@test.invalid','{"full_name":"Outbox Student","requested_role":"student"}'),

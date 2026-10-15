@@ -47,6 +47,10 @@ describe('admin teacher review detail loading', () => {
     expect(markup).toContain('could not be loaded');
     expect(markup).toContain('Refresh and try again');
     expect(markup).toContain('method="get"');
+    expect(markup).toContain('name="q" value="Ada"');
+    expect(markup).toContain('name="status" value="pending"');
+    expect(markup).toContain('name="page" value="2"');
+    expect(markup).toContain('min-h-11');
     expect(markup).not.toContain('Decision controls');
     expect(notFoundMock).not.toHaveBeenCalled();
   });
