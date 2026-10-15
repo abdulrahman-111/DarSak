@@ -21,7 +21,10 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
     <div className="relative pb-10" aria-label={c.thisWeek}>
       <div className="rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-4 shadow-[0_30px_60px_-40px_rgba(14,74,75,.5)] sm:p-6">
         <div className="mb-4 flex items-baseline justify-between gap-3">
-          <p className="text-lg font-bold text-teal">{c.thisWeek}</p>
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-orange">{c.sampleTimetable}</p>
+            <p className="mt-1 text-lg font-bold text-teal">{c.thisWeek}</p>
+          </div>
           <p className="text-xs text-muted">{c.cairo}</p>
         </div>
         <div className="mb-2 grid grid-cols-5 gap-1.5 text-[10px] font-bold text-muted sm:text-xs">
