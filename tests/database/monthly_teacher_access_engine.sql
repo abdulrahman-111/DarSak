@@ -171,9 +171,13 @@ end $$;
 reset role;
 set local role authenticated;
 set local request.jwt.claim.sub='9a000000-0000-4000-8000-000000000003';
-do $$ declare v_request uuid; v_count bigint; begin
+do $$ declare v_request uuid; begin
   v_request:=((public.admin_teacher_access_history('9a000000-0000-4000-8000-000000000005')->'requests'->0)->>'id')::uuid;
   perform public.decide_teacher_access_request(v_request,false);
+  begin
+    perform public.decide_teacher_access_request(v_request,true);
+    raise exception 'approval contradicted a persisted decline';
+  exception when serialization_failure then null; end;
 end $$;
 reset role;
 do $$ begin
@@ -194,7 +198,10 @@ set local request.jwt.claim.sub='9a000000-0000-4000-8000-000000000003';
 do $$ declare v_request uuid; begin
   v_request:=((public.admin_teacher_access_history('9a000000-0000-4000-8000-000000000006')->'requests'->0)->>'id')::uuid;
   perform public.decide_teacher_access_request(v_request,true);
-  perform public.decide_teacher_access_request(v_request,false); -- repeat cannot contradict approval
+  begin
+    perform public.decide_teacher_access_request(v_request,false);
+    raise exception 'decline contradicted a persisted approval';
+  exception when serialization_failure then null; end;
 end $$;
 reset role;
 do $$ begin
@@ -224,7 +231,7 @@ set local role authenticated;
 set local request.jwt.claim.sub='9a000000-0000-4000-8000-000000000003';
 do $$ declare v_request uuid; begin
   v_request:=((public.admin_teacher_access_history('9a000000-0000-4000-8000-000000000001')->'requests'->0)->>'id')::uuid;
-  perform public.decide_teacher_access_request(v_request,true); -- old decision is terminal no-op
+  perform public.decide_teacher_access_request(v_request,true); -- same persisted decision remains idempotent
 end $$;
 reset role;
 do $$ begin
