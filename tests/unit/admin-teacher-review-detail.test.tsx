@@ -39,13 +39,14 @@ beforeEach(() => { requireViewerMock.mockReset(); notFoundMock.mockReset().mockI
 
 describe('admin teacher review detail loading', () => {
   it.each([
-    ['profiles', { profileError: { code: '57014' } }],
-    ['teacher_profiles', { teacherError: { code: '57014' } }],
-  ])('renders a retryable error for a failed %s read', async (_table, options) => {
+    ['profiles', { profileError: { code: '57014' } }, 'en', 'The account and profile could not be loaded. Refresh and try again.'],
+    ['teacher_profiles', { teacherError: { code: '57014' } }, 'en', 'The account and profile could not be loaded. Refresh and try again.'],
+    ['profiles', { profileError: { code: '57014' } }, 'ar', 'تعذر تحميل بيانات الحساب والملف التعريفي. حاول إعادة تحميل الصفحة.'],
+    ['teacher_profiles', { teacherError: { code: '57014' } }, 'ar', 'تعذر تحميل بيانات الحساب والملف التعريفي. حاول إعادة تحميل الصفحة.'],
+  ])('renders a localized retryable error for a failed %s read in %s', async (_table, options, locale, localizedError) => {
     setup(options as { profileError?: unknown; teacherError?: unknown });
-    const markup = renderToStaticMarkup(await page());
-    expect(markup).toContain('could not be loaded');
-    expect(markup).toContain('Refresh and try again');
+    const markup = renderToStaticMarkup(await page(locale as string));
+    expect(markup).toContain(localizedError as string);
     expect(markup).toContain('method="get"');
     expect(markup).toContain('name="q" value="Ada"');
     expect(markup).toContain('name="status" value="pending"');
