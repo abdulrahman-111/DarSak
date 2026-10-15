@@ -17,7 +17,7 @@ as $$ declare v_uid uuid:=auth.uid(); v_req dars_private.teacher_access_requests
   select * into v_req from dars_private.teacher_access_requests where id=p_request_id for update;
   if v_req.status<>'pending' then
     if (v_req.status='approved')=p_approve then return; end if;
-    raise exception 'access request already reviewed' using errcode='40001';
+    raise exception 'access request already reviewed' using errcode='PT409';
   end if;
   select p.role,p.status into v_role,v_teacher_status from public.profiles p where p.id=v_req.teacher_id;
   if v_role is distinct from 'teacher'::public.user_role then raise exception 'request owner is not a teacher'; end if;

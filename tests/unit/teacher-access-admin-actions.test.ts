@@ -32,7 +32,7 @@ beforeEach(() => { createClientMock.mockReset(); afterMock.mockReset(); revalida
 
 describe('monthly teacher access decisions', () => {
   it('maps a stale opposing decision to refresh feedback without success effects', async () => {
-    const rpc = setup({ code: '40001', message: 'access request already reviewed' });
+    const rpc = setup({ code: 'PT409', message: 'access request already reviewed' });
     const result = await decideTeacherAccess('en', null, form('approve'));
 
     expect(result?.error).toMatch(/already been reviewed/i);

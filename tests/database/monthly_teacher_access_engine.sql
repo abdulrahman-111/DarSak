@@ -177,7 +177,7 @@ do $$ declare v_request uuid; begin
   begin
     perform public.decide_teacher_access_request(v_request,true);
     raise exception 'approval contradicted a persisted decline';
-  exception when serialization_failure then null; end;
+  exception when sqlstate 'PT409' then null; end;
 end $$;
 reset role;
 do $$ begin
@@ -201,7 +201,7 @@ do $$ declare v_request uuid; begin
   begin
     perform public.decide_teacher_access_request(v_request,false);
     raise exception 'decline contradicted a persisted approval';
-  exception when serialization_failure then null; end;
+  exception when sqlstate 'PT409' then null; end;
 end $$;
 reset role;
 do $$ begin
