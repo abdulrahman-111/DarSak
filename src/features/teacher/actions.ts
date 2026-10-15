@@ -46,6 +46,10 @@ async function removeMaterialObject(db: Awaited<ReturnType<typeof createClient>>
   return !listed.error && Array.isArray(listed.data) && !listed.data.some(object => object.name === name);
 }
 
+function isDefinitiveMaterialInsertRejection(error: { code?: string } | null | undefined) {
+  return ['42501', '23503', '23505', '23514', '22P02', '22001'].includes(error?.code ?? '');
+}
+
 export async function addMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
   const startedAt = Date.now();
   if (!idSchema.safeParse(lessonId).success) return { error: message(locale, 'Invalid lesson.', 'الحصة غير صالحة.') };
@@ -96,6 +100,26 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
   const inserted = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'file', title, storage_path: path, file_size: file.size, mime_type: file.type });
   if (inserted.error) {
     logActionFailure('materials.metadata.save', startedAt, inserted.error, 'DB_ERROR');
+    let verified: { data: { storage_path: string } | null; error: unknown };
+    try {
+      verified = await me.db.from('lesson_materials').select('storage_path').eq('lesson_id', lessonId).eq('uploaded_by', me.id).eq('storage_path', path).maybeSingle();
+    } catch {
+      verified = { data: null, error: new Error('readback failed') };
+    }
+    if (!verified.error && verified.data?.storage_path === path) {
+      revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
+      return { success: message(locale, 'File uploaded.', 'تم رفع الملف.') };
+    }
+    if (!verified.error && !verified.data && !isDefinitiveMaterialInsertRejection(inserted.error)) {
+      return { error: message(locale,
+        'The save result could not be confirmed. The file is preserved; check the lesson before trying again.',
+        'تعذر التحقق من نتيجة الحفظ. تم الاحتفاظ بالملف؛ تحقق من الحصة قبل المحاولة مرة أخرى.') };
+    }
+    if (!isDefinitiveMaterialInsertRejection(inserted.error)) {
+      return { error: message(locale,
+        'The save result could not be confirmed. The file is preserved; check the lesson before trying again.',
+        'تعذر التحقق من نتيجة الحفظ. تم الاحتفاظ بالملف؛ تحقق من الحصة قبل المحاولة مرة أخرى.') };
+    }
     if(inserted.error.code==='42501'&&inserted.error.message==='teacher teaching access expired'){
       await removeMaterialObject(me.db,path);
       return {error:teachingMutationMessage(locale,inserted.error,'')};

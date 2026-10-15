@@ -16,14 +16,19 @@ const lessonId = '22222222-2222-4222-8222-222222222222';
 const materialId = '33333333-3333-4333-8333-333333333333';
 const path = `${teacherId}/${lessonId}/file.pdf`;
 
-function setup(options: { objectPath?: string | null; removeData?: Array<{ name: string }> | null; removeError?: unknown; listData?: Array<{ name: string }> | null; listContainsMatch?: boolean; insertError?: unknown; ownedLesson?: boolean } = {}) {
+function setup(options: { objectPath?: string | null; removeData?: Array<{ name: string }> | null; removeError?: unknown; listData?: Array<{ name: string }> | null; listContainsMatch?: boolean; insertError?: unknown; ownedLesson?: boolean; metadataOnInsertError?: boolean; readbackError?: unknown } = {}) {
   const calls: string[] = [];
   const eqCalls: Array<[unknown, unknown]> = [];
+  let insertedPath: string | undefined;
   const select = vi.fn((fields: string) => {
     const result = fields.includes('role,')
       ? { data: { role: 'teacher', status: 'active' }, error: null }
       : fields.includes('group:')
         ? { data: options.ownedLesson === false ? null : { id: lessonId }, error: null }
+        : fields.includes('storage_path') && options.insertError && options.metadataOnInsertError
+          ? { data: { storage_path: insertedPath }, error: null }
+        : fields.includes('storage_path') && options.insertError && options.readbackError
+          ? { data: null, error: options.readbackError }
         : { data: options.objectPath === undefined ? { storage_path: path } : options.objectPath ? { storage_path: options.objectPath } : null, error: null };
     const chain = { eq: (column: unknown, value: unknown) => { eqCalls.push([column, value]); return chain; }, single: async () => result, maybeSingle: async () => result };
     return chain;
@@ -37,7 +42,7 @@ function setup(options: { objectPath?: string | null; removeData?: Array<{ name:
     auth: { getUser: async () => ({ data: { user: { id: teacherId } }, error: null }) },
     from: (table: string) => ({
       select,
-      insert: async () => ({ error: options.insertError ?? null }),
+    insert: async (row: { storage_path?: string }) => { insertedPath = row.storage_path; return { error: options.insertError ?? null }; },
       delete: () => ({ eq: async () => { calls.push('metadata'); return { error: null }; } }),
     }),
     rpc: async () => ({data:{has_access:true,starts_at:'2026-01-01T00:00:00Z',expires_at:'2027-01-01T00:00:00Z',renewal_opens_at:null,can_renew:false,fees_enabled:false,fee_effective_at:null,announcement_en:null,announcement_ar:null,pending_request_id:null},error:null}),
@@ -104,12 +109,71 @@ describe('lesson material actions', () => {
     expect(calls).toEqual(['storage']);
   });
 
-  it('reports incomplete compensation when a failed insert leaves the object', async () => {
-    setup({ insertError: new Error('insert failed'), removeData: [], listContainsMatch: true });
+  it('preserves the object when an unknown insert failure cannot be read back', async () => {
+    const { calls } = setup({ insertError: new Error('insert failed'), readbackError: new Error('read failed'), removeData: [], listContainsMatch: true });
+    const form = new FormData();
+    form.set('title', 'worksheet');
+    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/could not be confirmed/i) });
+    expect(calls).toEqual([]);
+  });
+
+  it('keeps an uploaded object and reports success when insert response was lost after commit', async () => {
+    const { calls } = setup({ insertError: new TypeError('fetch failed'), metadataOnInsertError: true });
+    const form = new FormData();
+    form.set('title', 'worksheet');
+    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ success: 'File uploaded.' });
+    expect(calls).toEqual([]);
+  });
+
+  it('preserves the object and explains an uncertain insert when readback fails', async () => {
+    const { calls } = setup({ insertError: new TypeError('fetch failed'), readbackError: new Error('read failed') });
+    const form = new FormData();
+    form.set('title', 'worksheet');
+    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/could not be confirmed/i) });
+    expect(calls).toEqual([]);
+  });
+
+  it('cleans up after a definitive database rejection', async () => {
+    const { calls } = setup({ insertError: { code: '23514', message: 'constraint violation' }, removeData: [{ name: 'file.pdf' }] });
+    const form = new FormData();
+    form.set('title', 'worksheet');
+    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: 'Could not save the uploaded file.' });
+    expect(calls).toEqual(['storage']);
+  });
+
+  it('reports incomplete cleanup after a definitive rejection when the orphan remains', async () => {
+    setup({ insertError: { code: '23514', message: 'constraint violation' }, removeData: [], listContainsMatch: true });
     const form = new FormData();
     form.set('title', 'worksheet');
     form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
 
     expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/cleanup is incomplete/i) });
+  });
+
+  it('continues to report a normal file upload as successful', async () => {
+    setup();
+    const form = new FormData();
+    form.set('title', 'worksheet');
+    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ success: 'File uploaded.' });
+  });
+
+  it('preserves the object and gives retry guidance when an insert error has no row', async () => {
+    const { calls } = setup({ insertError: new TypeError('fetch failed'), objectPath: null });
+    const form = new FormData();
+    form.set('title', 'worksheet');
+    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/could not be confirmed/i) });
+    expect(calls).toEqual([]);
   });
 });
