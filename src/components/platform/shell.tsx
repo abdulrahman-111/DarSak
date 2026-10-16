@@ -35,6 +35,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/student`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/student/classes`, label: ar ? 'مجموعاتي' : 'My classes' },
     { href: `/${locale}/student/saved`, label: ar ? 'المجموعات المحفوظة' : 'Saved groups' },
+    { href: `/${locale}/student/profile`, label: ar ? 'ملف التعلم' : 'Learning profile' },
     { href: `/${locale}/timetable`, label: ar ? 'الجدول الأسبوعي' : 'Weekly timetable' },
     { href: `/${locale}/student/materials`, label: ar ? 'المواد' : 'Materials' },
     { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Discover' },

@@ -42,6 +42,10 @@ describe('student dashboard loader query contract', () => {
         const builder = {
           select(fields: string, options?: unknown) { query.fields = fields; query.selectOptions = options; return builder; },
           eq(column: string, value: unknown) { query.filters.push(['eq', column, value]); return builder; },
+          maybeSingle: async () => ({ data: {
+            age_range: null, education_year: '', interests: [], learning_goal: '', school_name: '',
+            onboarding_required: false, onboarding_completed_at: null, updated_at: '2026-10-01T00:00:00.000Z',
+          }, error: null }),
           gt(column: string, value: unknown) { query.filters.push(['gt', column, value]); return builder; },
           neq(column: string, value: unknown) { query.filters.push(['neq', column, value]); return builder; },
           order() { return builder; },
@@ -65,11 +69,12 @@ describe('student dashboard loader query contract', () => {
         return builder;
       },
     };
-    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', role: 'student', status: 'active' } });
+    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', full_name: 'Test Student', role: 'student', status: 'active' } });
 
     const result = await studentDashboard('en', now);
 
     expect(result.error).toBe(false);
+    expect(result.learningProfile).toMatchObject({ onboarding_required: false, onboarding_completed_at: null });
     expect(result.acceptedCount).toBe(14);
     expect(result.pendingCount).toBe(3);
     expect(result.upcomingCount).toBe(8);
@@ -81,6 +86,26 @@ describe('student dashboard loader query contract', () => {
       selectOptions: { count: 'exact' },
     });
     expect(queries.find(query => query.table === 'lessons')?.fields).toContain('groups!inner(id,name,enrollments!inner(id))');
+  });
+
+  it('routes a new student with required setup to the profile page before loading dashboard data', async () => {
+    const profile = {
+      age_range: null, education_year: '', interests: [], learning_goal: '', school_name: '',
+      onboarding_required: true, onboarding_completed_at: null, updated_at: '2026-10-01T00:00:00.000Z',
+    };
+    const db = {
+      from() {
+        const builder = {
+          select: () => builder,
+          eq: () => builder,
+          maybeSingle: async () => ({ data: profile, error: null }),
+        };
+        return builder;
+      },
+    };
+    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'new-student' }, profile: { id: 'new-student', full_name: 'New Student', role: 'student', status: 'active' } });
+
+    await expect(studentDashboard('en')).rejects.toThrow('redirect:/en/student/profile');
   });
 
   it('limits recurring timetable slots to this student’s accepted groups through the RLS-visible join', async () => {
