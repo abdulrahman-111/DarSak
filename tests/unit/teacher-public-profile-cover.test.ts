@@ -109,4 +109,20 @@ describe('public teacher profile cover projection', () => {
     expect(db.from).not.toHaveBeenCalledWith('education_nodes');
     expect(db.from).not.toHaveBeenCalledWith('teacher_profiles');
   });
+
+  it('falls back to available specialization labels for both locales', async () => {
+    setup(null, [
+      { offering_id: 'arabic-only', subject_name_ar: 'رياضيات', subject_name_en: '', context_ar: 'المرحلة الثانوية', context_en: '' },
+      { offering_id: 'english-only', subject_name_ar: '', subject_name_en: 'Science', context_ar: '', context_en: 'Grade 8' },
+    ]);
+
+    const english = await publicTeacherDetail('en', teacherId);
+    const arabic = await publicTeacherDetail('ar', teacherId);
+
+    expect(english.visitor?.specializations).toEqual([
+      { id: 'arabic-only', subject: 'رياضيات', context: 'المرحلة الثانوية' },
+      { id: 'english-only', subject: 'Science', context: 'Grade 8' },
+    ]);
+    expect(arabic.visitor?.specializations).toEqual(english.visitor?.specializations);
+  });
 });

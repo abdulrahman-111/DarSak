@@ -55,7 +55,7 @@ describe('teacher group draft action', () => {
 
   it('creates through one atomic RPC and never directly writes the group or pair', async () => {
     const { rpc, writes } = setup();
-    const result = await saveGroupDraft('en', null, form(fields));
+    const result = await saveGroupDraft('en', 'draft', null, form(fields));
 
     expect(rpc).toHaveBeenCalledTimes(2);
     expect(rpc).toHaveBeenCalledWith('save_teacher_group_draft', {
@@ -68,7 +68,7 @@ describe('teacher group draft action', () => {
 
   it('passes the loaded microsecond timestamp string unchanged when editing', async () => {
     const { rpc, writes } = setup();
-    const result = await saveGroupDraft('en', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
+    const result = await saveGroupDraft('en', 'draft', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
 
     expect(rpc).toHaveBeenCalledWith('save_teacher_group_draft', expect.objectContaining({ p_group_id: groupId, p_expected_updated_at: exactTimestamp }));
     expect(writes).toEqual([]);
@@ -77,13 +77,25 @@ describe('teacher group draft action', () => {
 
   it('returns localized stale-save and archived-choice feedback without losing form state', async () => {
     const stale = setup({ rpcError: { code: '40001', message: 'draft changed' } });
-    const staleResult = await saveGroupDraft('ar', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
-    expect(staleResult?.error).toMatch(/تغيرت هذه المسودة/);
+    const staleResult = await saveGroupDraft('ar', 'draft', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
+    expect(staleResult?.error).toMatch(/تغيرت هذه المجموعة/);
     expect(stale.writes).toEqual([]);
 
     const archived = setup({ rpcError: { code: 'P0001', message: 'active category required' } });
-    const archivedResult = await saveGroupDraft('en', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
+    const archivedResult = await saveGroupDraft('en', 'draft', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
     expect(archivedResult?.error).toMatch(/selection or draft is no longer available/i);
     expect(archived.writes).toEqual([]);
+  });
+
+  it('uses the existing atomic RPC and invalidates public and student views for published edits', async () => {
+    const { rpc, writes } = setup();
+    const result = await saveGroupDraft('ar', 'published-edit', null, form({ ...fields, group_id: groupId, expected_updated_at: exactTimestamp }));
+
+    expect(rpc).toHaveBeenCalledWith('save_teacher_group_draft', expect.objectContaining({ p_group_id: groupId, p_expected_updated_at: exactTimestamp }));
+    expect(result?.success).toMatch(/تم حفظ تفاصيل المجموعة/);
+    expect(revalidatePathMock).toHaveBeenCalledWith(`/ar/groups/${groupId}`);
+    expect(revalidatePathMock).toHaveBeenCalledWith('/ar/teachers');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/ar/student/classes');
+    expect(writes).toEqual([]);
   });
 });

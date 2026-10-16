@@ -14,7 +14,7 @@ import { WeeklyScheduleEditor } from '@/features/teacher/setup-forms';
 import { AnnouncementForm } from '@/features/groups/announcement-form';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
 
-export default async function TeacherGroupDetail({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ page?: string; roster_page?: string }> }) {
+export default async function TeacherGroupDetail({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ page?: string; roster_page?: string; detailsSaved?: string }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
@@ -68,7 +68,8 @@ export default async function TeacherGroupDetail({ params, searchParams }: { par
 
   return <>
     <Link href={`/${locale}/teacher/groups`} className="mb-4 inline-flex font-bold text-teal underline">← {copy.back}</Link>
-    <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={currentGroup.name} description={currentGroup.description} action={<div className="grid justify-items-end gap-3"><div className="flex flex-wrap items-center gap-3"><Status value={currentGroup.status} locale={locale} />{currentGroup.status !== 'archived' && <Link href={`/${locale}/teacher/lessons?new=1&groupId=${id}`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{ar ? 'إضافة حصة' : 'Add lesson'}</Link>}</div><GroupManagementControls locale={locale} groupId={id} status={currentGroup.status} /></div>} />
+    <ScreenTitle eyebrow={ar ? 'تفاصيل المجموعة' : 'Group details'} title={currentGroup.name} description={currentGroup.description} action={<div className="grid justify-items-end gap-3"><div className="flex flex-wrap items-center gap-3"><Status value={currentGroup.status} locale={locale} />{currentGroup.status === 'published' && <Link href={`/${locale}/teacher/groups/${id}/edit`} className="rounded-xl border border-line px-4 py-3 font-bold text-teal">{ar ? 'تعديل التفاصيل' : 'Edit details'}</Link>}{currentGroup.status !== 'archived' && <Link href={`/${locale}/teacher/lessons?new=1&groupId=${id}`} className="rounded-xl bg-orange px-4 py-3 font-bold text-white">{ar ? 'إضافة حصة' : 'Add lesson'}</Link>}</div><GroupManagementControls locale={locale} groupId={id} status={currentGroup.status} /></div>} />
+    {query.detailsSaved === '1' && <Panel className="mb-6"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حفظ تفاصيل المجموعة.' : 'Group details saved.'}</p></Panel>}
     {currentGroup.status === 'archived' && <Panel className="mb-6"><p className="text-sm font-semibold text-muted">{copy.archived}</p></Panel>}
     <div className="grid gap-6 xl:grid-cols-2">
       <Panel><h2 className="text-xl font-black text-teal">{ar ? 'إعلان المجموعة' : 'Group announcement'}</h2><p className="mt-1 text-sm text-muted">{ar ? 'انشر رسالة للطلاب المقبولين. يمكنهم قراءتها في صفحات المجموعة والحصص.' : 'Post a message for accepted students. They can read it on the group and lesson pages.'}</p>{currentGroup.status === 'archived' && <p className="mt-2 text-sm font-semibold text-muted">{ar ? 'المجموعة مؤرشفة؛ يمكنك مراجعة الإعلان المحفوظ فقط.' : 'This group is archived; you can review its saved announcement only.'}</p>}<AnnouncementForm locale={locale} groupId={id} announcement={announcement} readOnly={currentGroup.status === 'archived'} /></Panel>
