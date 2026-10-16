@@ -23,6 +23,7 @@ describe('transactional email boundaries',()=>{
 
   it('escapes payload text and rejects invalid trusted route identifiers',()=>{
     const mail=renderEmail('teacher_review_requested',job.payload,'https://dars.example');
+    expect(mail?.html).toContain('Open DarSak');
     expect(mail?.html).toContain('&lt;script&gt;');
     expect(mail?.html).not.toContain('<script>');
     expect(mail?.text).toContain('https://dars.example/en/admin/teachers/'+id);

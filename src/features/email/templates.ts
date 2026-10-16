@@ -52,6 +52,6 @@ export function renderEmail(kind: EmailKind, payload: Record<string, unknown>, o
   } else return null;
   const urlEn = link(origin, `/en${path}`), urlAr = link(origin, `/ar${path}`);
   const text = `${titleEn}\n${detailEn}\n${urlEn}\n\n${titleAr}\n${detailAr}\n${urlAr}`.slice(0, 5000);
-  const html = `<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>${escapeHtml(titleEn)}</h2><p>${escapeHtml(detailEn).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(urlEn)}">Open Dars</a></p><h2 lang="ar" dir="rtl">${escapeHtml(titleAr)}</h2><p lang="ar" dir="rtl">${escapeHtml(detailAr).replace(/\n/g, '<br>')}</p><p dir="rtl"><a href="${escapeHtml(urlAr)}">فتح درس</a></p></div>`;
+  const html = `<div style="font-family:Arial,sans-serif;line-height:1.7"><h2>${escapeHtml(titleEn)}</h2><p>${escapeHtml(detailEn).replace(/\n/g, '<br>')}</p><p><a href="${escapeHtml(urlEn)}">Open DarSak</a></p><h2 lang="ar" dir="rtl">${escapeHtml(titleAr)}</h2><p lang="ar" dir="rtl">${escapeHtml(detailAr).replace(/\n/g, '<br>')}</p><p dir="rtl"><a href="${escapeHtml(urlAr)}">فتح درسك</a></p></div>`;
   return { subject: `${titleEn} / ${titleAr}`.slice(0, 180), text, html };
 }

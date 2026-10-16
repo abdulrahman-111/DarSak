@@ -85,7 +85,7 @@ function utcStamp(value: string): string {
 
 export function formatCalendarIcs(rows: CalendarLesson[], exportedAt: Date): string {
   const stamp = utcStamp(exportedAt.toISOString());
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dars//Lesson Calendar//EN', 'CALSCALE:GREGORIAN'];
+  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DarSak//Lesson Calendar//EN', 'CALSCALE:GREGORIAN'];
   for (const lesson of rows) {
     lines.push(
       'BEGIN:VEVENT',

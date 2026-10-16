@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none">
+  <!-- Duotone Lens Fill -->
+  <circle cx="11" cy="11" r="7.5" fill="#0F766E" fill-opacity="0.14"/>
+  <!-- Search Lens -->
+  <circle cx="11" cy="11" r="7.5" stroke="currentColor" stroke-width="1.75"/>
+  <path d="M16.5 16.5L20.5 20.5" stroke="currentColor" stroke-width="1.75" stroke-linecap="round"/>
+  <!-- Mini Group Avatar Inside Lens -->
+  <circle cx="11" cy="9.25" r="2" stroke="#0F766E" stroke-width="1.5"/>
+  <path d="M7.75 14.25C8.35 12.9 9.55 12.25 11 12.25C12.45 12.25 13.65 12.9 14.25 14.25" stroke="#0F766E" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

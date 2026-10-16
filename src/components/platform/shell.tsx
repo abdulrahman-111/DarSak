@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ActiveLink } from '@/components/active-link';
 import type { PlatformRole } from './access';
 
@@ -59,9 +60,9 @@ export function PlatformShell({ locale, role, name, unreadCount=null, children }
   const roleName = role === 'teacher' ? (ar ? 'معلم' : 'Teacher') : role === 'admin' ? (ar ? 'مسؤول' : 'Administrator') : (ar ? 'طالب' : 'Student');
   return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
     <aside className="min-w-0 rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:p-4">
-      <Link href={`/${locale}/${role}`} className="hidden items-center gap-3 px-3 py-3 lg:flex">
-        <span className="grid size-10 place-items-center rounded-xl bg-cream font-black text-teal">د</span>
-        <span><strong className="block text-lg">{ar ? 'درس' : 'Dars'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
+      <Link href={`/${locale}/${role}`} aria-label={ar ? 'درسك' : 'DarSak'} className="hidden items-center gap-3 px-3 py-3 lg:flex">
+        <Image src="/brand/darsak/favicon.svg" alt={ar ? 'درسك' : 'DarSak'} width={40} height={40} className="size-10 rounded-xl" />
+        <span><strong className="block text-lg">{ar ? 'درسك' : 'DarSak'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
       </Link>
       <details className="group lg:hidden">
         <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden">

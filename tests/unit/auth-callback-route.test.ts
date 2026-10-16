@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { createClientMock, isConfiguredMock, rpcMock, afterMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn(), afterMock: vi.fn() }));
+const { createClientMock, isConfiguredMock, rpcMock, afterMock, getUserMock, profileQueryMock, onboardingDestinationMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn(), afterMock: vi.fn(), getUserMock: vi.fn(), profileQueryMock: vi.fn(), onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback) }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock, isConfigured: isConfiguredMock }));
+vi.mock('@/features/auth/google-onboarding', () => ({ googleOnboardingDestination: onboardingDestinationMock }));
 vi.mock('server-only',()=>({}));
 vi.mock('next/server',async importOriginal=>({...await importOriginal<typeof import('next/server')>(),after:afterMock}));
 
@@ -19,12 +20,16 @@ describe('auth callback route', () => {
     afterMock.mockReset();
     exchangeCodeForSession.mockReset().mockResolvedValue({ error: null });
     verifyOtp.mockReset().mockResolvedValue({ error: null });
+    getUserMock.mockReset().mockResolvedValue({ data: { user: { id: 'email-user', identities: [{ provider: 'email' }] } }, error: null });
+    onboardingDestinationMock.mockReset().mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
+    profileQueryMock.mockReset().mockResolvedValue({ data: null, error: null });
     rpcMock.mockReset().mockResolvedValue({ data: 'teacher', error: null });
     isConfiguredMock.mockReturnValue(true);
-    createClientMock.mockResolvedValue({ auth: { exchangeCodeForSession, verifyOtp }, rpc: rpcMock });
+    createClientMock.mockResolvedValue({ auth: { exchangeCodeForSession, verifyOtp, getUser: getUserMock }, rpc: rpcMock, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: profileQueryMock }) }) }) });
   });
 
   it('exchanges a PKCE code and redirects to next', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'email-user', identities: [{ provider: 'email' }] } }, error: null });
     const target = location(await call('code=abc&next=/ar/reset-password'));
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc');
     expect(target.origin).toBe('https://dars.example');
@@ -32,21 +37,43 @@ describe('auth callback route', () => {
     expect(rpcMock).not.toHaveBeenCalled();
   });
 
+  it('does not run role completion for a generic email code carrying a Google role parameter', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'email-user', identities: [{ provider: 'email' }] } }, error: null });
+    const target = location(await call('code=abc&next=/en/dashboard&google_role=teacher'));
+    expect(rpcMock).not.toHaveBeenCalled();
+    expect(target.pathname).toBe('/en/login');
+    expect(target.searchParams.get('error')).toBe('setup');
+  });
+
+  it.each(['', '&google_role=teacher'])('keeps Google-linked PKCE recovery on reset-password without onboarding calls%s', async roleParam => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-linked-user', identities: [{ provider: 'google' }] } }, error: null });
+    profileQueryMock.mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
+    const target = location(await call(`code=abc&next=/en/reset-password${roleParam}`));
+    expect(target.pathname).toBe('/en/reset-password');
+    expect(rpcMock).not.toHaveBeenCalled();
+    expect(profileQueryMock).not.toHaveBeenCalled();
+    expect(onboardingDestinationMock).not.toHaveBeenCalled();
+  });
+
   it('completes only a valid Google signup role after a successful code exchange', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } }, error: null });
     const target = location(await call('code=abc&next=/en/dashboard&google_role=teacher'));
     expect(exchangeCodeForSession).toHaveBeenCalledWith('abc');
     expect(rpcMock).toHaveBeenCalledWith('complete_google_signup', { p_role: 'teacher' });
     expect(target.pathname).toBe('/en/dashboard');
+    expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'google-user', 'teacher', 'en', '/en/dashboard');
     expect(afterMock).toHaveBeenCalledOnce();
   });
 
   it('does not schedule a teacher review request when Google completion returns an existing student role', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } }, error: null });
     rpcMock.mockResolvedValue({ data: 'student', error: null });
     await call('code=abc&next=/en/dashboard&google_role=teacher');
     expect(afterMock).not.toHaveBeenCalled();
   });
 
   it('reports Google signup completion failures separately from invalid links', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } }, error: null });
     rpcMock.mockResolvedValue({ data: null, error: { message: 'completion failed' } });
     const target = location(await call('code=abc&next=/en/dashboard&google_role=student'));
     expect(target.pathname).toBe('/en/login');
@@ -55,6 +82,7 @@ describe('auth callback route', () => {
   });
 
   it('preserves only the allowlisted role for a safe setup retry', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } }, error: null });
     rpcMock.mockResolvedValue({ data: null, error: { message: 'completion failed' } });
     const target = location(await call('code=abc&next=/en/dashboard&google_role=teacher'));
     expect(target.pathname).toBe('/en/login');
@@ -68,6 +96,50 @@ describe('auth callback route', () => {
   it('does not invoke Google completion for email or ordinary provider callbacks', async () => {
     await call('token_hash=h&type=recovery&next=/en/reset-password&google_role=teacher');
     expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('sends a new roleless Google identity to the explicit role choice page without completing it', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'new-google', identities: [{ provider: 'google' }] } }, error: null });
+    const target = location(await call('code=abc&next=/en/dashboard'));
+    expect(profileQueryMock).toHaveBeenCalledOnce();
+    expect(target.pathname).toBe('/en/choose-role');
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it.each(['student', 'teacher', 'admin'])('does not ask an established %s Google profile to select a role', async role => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'existing-google', identities: [{ provider: 'google' }] } }, error: null });
+    profileQueryMock.mockResolvedValue({ data: { role, status: 'active' }, error: null });
+    const target = location(await call('code=abc&next=/en/dashboard'));
+    expect(target.pathname).toBe('/en/dashboard');
+    expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('uses the Google onboarding destination for an existing student profile', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'existing-student', identities: [{ provider: 'google' }] } }, error: null });
+    profileQueryMock.mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
+    onboardingDestinationMock.mockResolvedValue('/en/student/profile');
+    const target = location(await call('code=abc&next=/en/dashboard'));
+    expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'existing-student', 'student', 'en', '/en/dashboard');
+    expect(target.pathname).toBe('/en/student/profile');
+  });
+
+  it('explains an existing student role when teacher signup is requested', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } }, error: null });
+    rpcMock.mockResolvedValue({ data: 'student', error: null });
+    const target = location(await call('code=abc&next=/en/dashboard&google_role=teacher'));
+    expect(target.pathname).toBe('/en/login');
+    expect(target.searchParams.get('error')).toBe('role-mismatch');
+    expect(target.searchParams.get('actual')).toBe('student');
+    expect(target.searchParams.get('requested')).toBe('teacher');
+  });
+
+  it.each(['teacher', 'student', 'admin'])('preserves an existing %s role returned by signup completion', async role => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } }, error: null });
+    rpcMock.mockResolvedValue({ data: role, error: null });
+    const target = location(await call('code=abc&next=/en/dashboard&google_role=teacher'));
+    expect(rpcMock).toHaveBeenCalledWith('complete_google_signup', { p_role: 'teacher' });
+    expect(target.pathname).toBe(role === 'teacher' ? '/en/dashboard' : '/en/login');
+    if (role !== 'teacher') expect(target.searchParams.get('actual')).toBe(role);
   });
 
   it('verifies a token hash for custom email templates', async () => {

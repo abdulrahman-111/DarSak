@@ -10,12 +10,15 @@ export default async function Login({ params, searchParams }: {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const { locale } = await params;
-  const { next, error, google_role: googleRole } = await searchParams;
+  const { next, error, google_role: googleRole, actual } = await searchParams;
   const labels = await getDictionary(locale);
   const copy = authCopy[locale];
   const returnPath = safeLoginReturnPath(locale, next);
   const linkFailed = error === 'link';
   const setupFailed = error === 'setup';
+  const roleMismatch = error === 'role-mismatch';
+  const actualRole = actual === 'student' || actual === 'teacher' || actual === 'admin' ? actual : null;
+  const actualRoleLabel = actualRole === 'student' ? copy.studentRole : actualRole === 'teacher' ? copy.teacherRole : actualRole === 'admin' ? copy.adminRole : '';
   const googleRetryRole = setupFailed && (googleRole === 'student' || googleRole === 'teacher') ? googleRole : null;
 
   return (
@@ -28,6 +31,13 @@ export default async function Login({ params, searchParams }: {
             <p className="mt-4 max-w-lg leading-7 text-[#4d473f]">{copy.loginBody}</p>
             {linkFailed && <p role="alert" className="mt-6 rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{copy.linkInvalid}</p>}
             {setupFailed && <p role="alert" className="mt-6 rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{copy.googleSetupFailed}</p>}
+            {roleMismatch && <div role="status" className="mt-6 rounded-xl bg-[#f6f0e4] p-4 text-sm leading-6 text-[#4d473f]">
+              <p>{copy.googleRoleMismatch.replace('{role}', actualRoleLabel)}</p>
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 font-bold text-teal underline">
+                {actualRole && <Link href={`/${locale}/${actualRole}`}>{copy.existingAccount}</Link>}
+                <Link href={`/${locale}/reports`}>{copy.reportProblem}</Link>
+              </div>
+            </div>}
             <div className="mt-8"><AuthForm locale={locale} mode="login" labels={labels} returnPath={returnPath} googleRetryRole={googleRetryRole}/></div>
             <p className="mt-6 text-center text-sm text-muted">{copy.needAccount} <Link className="font-bold text-orange" href={`/${locale}/register`}>{labels.register}</Link></p>
             <p className="mt-3 text-center text-sm"><Link className="font-bold text-teal" href={`/${locale}/teachers`}>{copy.explore}</Link></p>

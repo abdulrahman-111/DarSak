@@ -8,10 +8,12 @@ import { publicVisitorContacts } from '@/features/teacher/profile-details-domain
 import { UnsavedProfileProtection } from '@/features/teacher/unsaved-profile-protection';
 import Link from 'next/link';
 
-export default async function TeacherProfilePage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: raw } = await params;
+export default async function TeacherProfilePage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
+  const onboarding = query.onboarding === '1';
+  const onboardingError = query.onboarding_error === 'load';
   const data = await teacherProfile(locale);
   return <>
     <ScreenTitle
@@ -19,6 +21,8 @@ export default async function TeacherProfilePage({ params }: { params: Promise<{
       title={ar ? 'الملف الشخصي' : 'Profile'}
       description={ar ? 'عرّف الطلاب بخبرتك واختر بيانات التواصل التي تريد مشاركتها.' : 'Introduce students to your experience and choose which contact details to share.'}
     />
+    {onboarding && <Panel className="mb-5"><p className="text-xs font-bold uppercase tracking-wide text-orange">{ar ? 'إعداد حساب المعلم' : 'Teacher account setup'}</p><ol className="mt-2 grid gap-2 text-sm leading-6 text-ink sm:grid-cols-2"><li><strong>{ar ? 'الخطوة ١: الملف العام.' : 'Step 1: Public profile.'}</strong> {ar ? 'أضف الصورة والعنوان والنبذة والمواد واللغات والخبرة والمؤهلات والمنهجية.' : 'Add your photo, headline, bio, subjects, languages, experience, qualifications, and approach.'}</li><li><strong>{ar ? 'الخطوة ٢: طلب الاعتماد.' : 'Step 2: Teacher application.'}</strong> {ar ? 'بعد حفظ الملف، أضف رقم التواصل الإداري والسنوات والسيرة الذاتية والإقرار.' : 'After saving your profile, add the administrator phone, teaching years, CV, and attestation.'} <Link className="font-bold text-teal underline" href={`/${locale}/teacher/application`}>{ar ? 'فتح الطلب' : 'Open application'}</Link></li></ol></Panel>}
+    {onboardingError && <Panel className="mb-5"><p role="alert" className="text-sm text-red-800">{ar ? 'تعذر التحقق من خطوات إعداد الحساب. أكمل بيانات الملف ثم حدّث الصفحة أو افتح طلب الاعتماد.' : 'Could not check your account setup steps. Complete your profile, then refresh or open the application page.'}</p></Panel>}
     {data.error || !data.values ? <Panel><p role="alert" className="text-sm text-red-800">{data.error ?? (ar ? 'تعذر تحميل الملف الشخصي.' : 'Could not load your profile.')}</p></Panel> : <Panel><UnsavedProfileProtection locale={locale}>
       <TeacherAvatarEditor locale={locale} avatarUrl={data.avatarUrl} hasAvatar={data.hasAvatar} fullName={data.values.full_name}/>
       <TeacherCoverEditor locale={locale} coverUrl={data.coverUrl} hasCover={!!data.coverUrl}/>

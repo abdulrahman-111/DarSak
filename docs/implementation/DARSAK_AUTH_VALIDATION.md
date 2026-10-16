@@ -1,0 +1,19 @@
+# DarSak branding and Google onboarding
+
+The website uses the supplied DarSak/درسك English/Arabic header lockups, favicon and matching feature icons. Authentication brand copy, public pages, workspace branding, notification sender labels and calendar product name are updated. Existing domains, Google client IDs and database identifiers are preserved.
+
+Google OAuth can create accounts from the ordinary login page. Previously that roleless path silently chose student. New Google identities now choose student or teacher explicitly; teacher-selected signup retains its explicit choice. Existing account roles are preserved and mismatches receive an explanation and links to the existing account/support. Incomplete Google student accounts open learning profile setup, including old optional profiles; new/unsubmitted teacher accounts open public profile setup or the private application as needed. Completed/submitted/approved accounts continue normally, and grandfathered approved teachers are not sent for reapproval. Email confirmation/password recovery callbacks retain their destination.
+
+## Confirmation email investigation and limitations
+
+Read-only production Auth logs in the available 24-hour window show four signup and two resend requests returning HTTP 200. This proves requests were accepted, not that messages reached an inbox. Aggregate account state includes confirmed and unconfirmed email accounts and confirmation-send timestamps; it does not establish the current SMTP provider configuration. Available connector tools do not expose Auth SMTP configuration. Vercel's application-notification Gmail/service-role environment settings are absent; those are separate from Supabase Auth's confirmation/reset mail settings.
+
+The application previously swallowed unexpected resend/reset provider errors and displayed a sent message. It now surfaces a safe generic delivery failure while keeping account-dependent responses neutral. Check-email guidance covers spam, the latest link, original-browser PKCE requirements and signing in to an already confirmed account. Google-verified accounts normally do not need a separate email confirmation.
+
+For dependable production delivery, configure custom SMTP in Supabase Auth with a verified sender (for example Resend, Postmark or SES), correct site/redirect URLs, SPF/DKIM/DMARC and rate limits. Supabase's default mail service is restricted and explicitly unsuitable for production. A token-hash email template can improve cross-device confirmation; switching to OTP alone does not solve SMTP delivery. No SMTP credentials, templates, Google consent-screen branding or provider configuration were changed in this phase, and no real confirmation emails were sent during validation.
+
+References: https://supabase.com/docs/guides/auth/auth-smtp and https://supabase.com/docs/guides/auth/server-side/nextjs
+
+Validation results are recorded in the pull request. Browser OAuth tests use disposable local pending-Google identities; actual external Google account interaction and production inbox delivery are not claimed.
+
+Validation: broad unit run passed 422 tests in 65 files; after the recovery guard, all 27 callback regression tests passed. Full lint, explicit TypeScript check, final webpack production build, 40 SQL suites and 173 local API assertions passed. Independent GPT-6.1 Sol approved code and eight actual Chromium checks: public English/Arabic branding at 390/768/1440px, loaded logos/favicon, no overflow, local pending-Google teacher choice opening profile/application guidance and local pending-Google student choice opening the required learning form. Fixture setup/timing corrections were limited to the harness; exact local fixtures were cleaned. Actual Google provider interaction and production SMTP delivery remain unverified.

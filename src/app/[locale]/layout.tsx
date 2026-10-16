@@ -6,7 +6,7 @@ import { Header } from '@/components/header';
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale: raw } = await params;
   const t = await getDictionary(ensureLocale(raw));
-  return { title: t.brand, description: t.tagline };
+  return { title: t.brand, description: t.tagline, icons: { icon: '/brand/darsak/favicon.svg' } };
 }
 
 export default async function LocaleLayout({ children, params }: { children: React.ReactNode; params: Promise<{ locale: string }> }) {

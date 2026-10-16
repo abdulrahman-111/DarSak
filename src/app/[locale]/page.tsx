@@ -1,6 +1,7 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { redirect } from 'next/navigation';
-import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, CheckCircle2, ClipboardCheck, Search, UserRound } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
 import { publicGroups } from '@/features/platform/data';
 import { getRequestViewer } from '@/features/platform/request-viewer';
@@ -24,7 +25,14 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
   const groupResult = configured ? await publicGroups() : null;
   const groups = groupResult?.data ?? [];
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
-  const featureIcons = [Search, CalendarDays, BookOpen, UserRound, CalendarDays, ClipboardCheck];
+  const featureIcons = [
+    '/brand/darsak/find-a-group-that-fits-you.svg',
+    '/brand/darsak/organize-classes.svg',
+    '/brand/darsak/prepare-for-class.svg',
+    '/brand/darsak/showcase-teaching-style.svg',
+    '/brand/darsak/plan-groups-easily.svg',
+    '/brand/darsak/manage-each-group.svg',
+  ];
 
   return (
     <div className="bg-[#f6f0e4]">
@@ -71,9 +79,9 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <h3 className="text-xl font-bold text-teal">{groupTitle}</h3>
             <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {c.featureCards.slice(groupIndex * 3, groupIndex * 3 + 3).map(([title, body], index) => {
-                const Icon = featureIcons[groupIndex * 3 + index];
+                const icon = featureIcons[groupIndex * 3 + index];
                 return <article key={title} className="min-w-0 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5 sm:p-6">
-                  <span aria-hidden="true" className="grid size-11 place-items-center rounded-xl bg-[#d5ebe6] text-teal"><Icon size={21}/></span>
+                  <span aria-hidden="true" className="grid size-11 place-items-center rounded-xl bg-[#d5ebe6]"><Image src={icon} alt="" width={24} height={24}/></span>
                   <h4 className="mt-4 text-lg font-bold leading-snug text-ink">{title}</h4>
                   <p className="mt-2 break-words text-sm leading-6 text-[#4d473f]">{body}</p>
                 </article>;

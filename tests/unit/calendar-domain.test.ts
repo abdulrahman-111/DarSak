@@ -25,7 +25,7 @@ describe('calendar date domain', () => {
 describe('calendar ICS', () => {
   it('uses stable IDs, UTC times, cancellation status, and escapes unsafe text', () => {
     const ics = formatCalendarIcs([lesson], new Date('2026-03-01T12:30:00.123Z'));
-    expect(ics).toContain('PRODID:-//Dars//Lesson Calendar//EN\r\n');
+    expect(ics).toContain('PRODID:-//DarSak//Lesson Calendar//EN\r\n');
     expect(ics).toContain('UID:a1b2c3@dars\r\n');
     expect(ics).toContain('DTSTAMP:20260301T123000Z\r\n');
     expect(ics).toContain('DTSTART:20260320T080000Z\r\n');
