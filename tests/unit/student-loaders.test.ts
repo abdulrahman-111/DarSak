@@ -7,7 +7,7 @@ vi.mock('@/lib/supabase/server', () => ({ isConfigured: mocks.isConfigured }));
 vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.getRequestViewer }));
 vi.mock('@/features/platform/data', () => ({ catalogue: vi.fn(), publicGroupDetail: vi.fn(), publicGroups: vi.fn(), publicTeachers: vi.fn(), teacherById: vi.fn() }));
 
-import { studentDashboard, studentTimetable } from '@/features/student/data';
+import { studentClasses, studentDashboard, studentTimetable } from '@/features/student/data';
 
 describe('student dashboard loader query contract', () => {
   beforeEach(() => mocks.getRequestViewer.mockReset());
@@ -116,5 +116,34 @@ describe('student dashboard loader query contract', () => {
     expect(lessons?.fields).toContain('groups!inner(id,enrollments!inner(id))');
     expect(lessons?.filters).toContainEqual(['eq', 'group.enrollments.student_id', 'student-id']);
     expect(lessons?.filters).toContainEqual(['eq', 'group.enrollments.status', 'accepted']);
+  });
+});
+
+describe('student classes loader RPC contract', () => {
+  beforeEach(() => mocks.getRequestViewer.mockReset());
+
+  it('uses bounded own-enrollment pages, keeps group labels, and clamps to the last page', async () => {
+    const calls: Array<{ name: string; args: unknown }> = [];
+    const db = { rpc: vi.fn(async (name: string, args: unknown) => {
+      calls.push({ name, args });
+      return { data: args && (args as {p_offset:number}).p_offset === 0
+        ? { rows: [{ id: 'e1', group_id: 'g1', status: 'pending', updated_at: '2026-01-01', group: { id: 'g1', name: 'Visible label', status: 'draft', location: null, can_view: false } }], total: 1 }
+        : { rows: [], total: 1 }, error: null };
+    }) };
+    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', role: 'student', status: 'active' } });
+
+    const result = await studentClasses('en', 999);
+
+    expect(calls).toEqual([
+      { name: 'student_enrollment_page', args: { p_offset: 19960, p_limit: 20 } },
+      { name: 'student_enrollment_page', args: { p_offset: 0, p_limit: 20 } },
+    ]);
+    expect(result).toMatchObject({ page: 1, pageCount: 1, total: 1, error: false, enrollments: [{ group: { name: 'Visible label', location: null } }] });
+  });
+
+  it('returns the page error contract when the RPC fails', async () => {
+    const db = { rpc: vi.fn(async () => ({ data: null, error: new Error('failed') })) };
+    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', role: 'student', status: 'active' } });
+    expect(await studentClasses('en', '2')).toMatchObject({ page: 2, pageCount: 1, total: 0, error: true, enrollments: [] });
   });
 });
