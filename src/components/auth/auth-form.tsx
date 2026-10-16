@@ -7,6 +7,7 @@ import { loginAction, signupAction } from '@/features/auth/actions';
 import { authCopy, type AuthLocale } from './copy';
 import { GoogleButton, googleEnabled } from './google-button';
 import { Turnstile } from './turnstile';
+import { TeacherSubscriptionNotice } from '@/features/teacher-access/subscription-notice';
 
 type Props = {
   locale: AuthLocale;
@@ -105,9 +106,12 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
       )}
 
       {mode === 'signup' && role === 'teacher' && (
-        <div className="flex gap-3 rounded-xl bg-[#e0eeec] p-4 text-sm leading-6 text-[#0e3b3c]" role="note">
-          <ShieldCheck className="mt-0.5 flex-none" size={19}/><span>{copy.approval}</span>
-        </div>
+        <>
+          <TeacherSubscriptionNotice locale={locale}/>
+          <div className="flex gap-3 rounded-xl bg-[#e0eeec] p-4 text-sm leading-6 text-[#0e3b3c]" role="note">
+            <ShieldCheck className="mt-0.5 flex-none" size={19}/><span>{copy.approval}</span>
+          </div>
+        </>
       )}
 
       <Turnstile locale={locale} resetSignal={state}/>
