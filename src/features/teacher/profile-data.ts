@@ -155,8 +155,8 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
   }>;
   const specializations = specializationRows.map(row => ({
     id: row.offering_id,
-    subject: locale === 'ar' ? row.subject_name_ar : row.subject_name_en,
-    context: locale === 'ar' ? row.context_ar : row.context_en,
+    subject: catalogueDisplayName({ name_ar: row.subject_name_ar, name_en: row.subject_name_en }, locale),
+    context: catalogueDisplayName({ name_ar: row.context_ar, name_en: row.context_en }, locale),
   }));
   const [avatar, coverUrl] = await Promise.all([
     teacher.avatar_path

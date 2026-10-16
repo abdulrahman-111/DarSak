@@ -14,13 +14,13 @@ import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalo
 
 const copy = (locale: Locale) => locale === 'ar' ? {
   name: 'اسم المجموعة', description: 'الوصف', subject: 'المادة', category: 'السنة / فئة الطلاب', capacity: 'السعة', location: 'المكان', addSubject: 'إضافة مادة', addCategory: 'إضافة سنة / فئة',
-  save: 'حفظ التفاصيل', saving: 'جارٍ الحفظ…',
+  save: 'حفظ التفاصيل', editSave: 'حفظ تفاصيل المجموعة', cancel: 'إلغاء', saving: 'جارٍ الحفظ…',
   nameRequired: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 120 حرفاً.', descriptionBounds: 'يجب ألا يتجاوز الوصف 2000 حرف.',
   locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وفئة دراسية نشطتين.',
   details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
 } : {
   name: 'Group name', description: 'Description', subject: 'Subject', category: 'Year / student category', capacity: 'Capacity', location: 'Location', addSubject: 'Add subject', addCategory: 'Add year / category',
-  save: 'Save details', saving: 'Saving…',
+  save: 'Save details', editSave: 'Save group details', cancel: 'Cancel', saving: 'Saving…',
   nameRequired: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 120 characters.', descriptionBounds: 'Description must be no longer than 2,000 characters.',
   locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose an active subject and year or student category.',
   details: 'Details', schedule: 'Schedule', review: 'Review', reviewPending: 'Review your group setup here before publishing.',
@@ -32,9 +32,10 @@ type Props = {
   groupId?: string;
   catalogue: SetupCatalogue;
   copyScheduleFrom?: string;
+  editPublished?: boolean;
 };
 
-export function GroupDetailsForm({ locale, values, groupId, catalogue, copyScheduleFrom }: Props) {
+export function GroupDetailsForm({ locale, values, groupId, catalogue, copyScheduleFrom, editPublished = false }: Props) {
   const t = copy(locale);
   const router = useRouter();
   const [formValues, setFormValues] = useState<GroupDetailsFormValues>({
@@ -50,14 +51,16 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   const [nodes, setNodes] = useState(catalogue.nodes);
   const [addSubject, setAddSubject] = useState(false);
   const [addCategory, setAddCategory] = useState(false);
-  const [state, action, pending] = useActionState<GroupDraftActionState, FormData>(saveGroupDraft.bind(null, locale), null);
+  const [state, action, pending] = useActionState<GroupDraftActionState, FormData>(saveGroupDraft.bind(null, locale, editPublished ? 'published-edit' : 'draft'), null);
 
   useEffect(() => {
-    if (state?.id) {
+    if (state?.id && editPublished) {
+      router.replace(`/${locale}/teacher/groups/${state.id}?detailsSaved=1`);
+    } else if (state?.id) {
       const source = copyScheduleFrom ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}` : '';
       router.push(`/${locale}/teacher/groups/${state.id}/setup?step=schedule${source}`);
     }
-  }, [copyScheduleFrom, locale, router, state?.id]);
+  }, [copyScheduleFrom, editPublished, locale, router, state?.id]);
 
   const fieldError = (field: string) => state?.fieldErrors?.[field];
   const fieldMessage = (field: string) => {
@@ -111,12 +114,12 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     {groupId && <input type="hidden" name="expected_updated_at" value={formValues.updated_at ?? ''} />}
     <div>
       <label htmlFor="group-name" className="block text-sm font-bold">{t.name}</label>
-      <input id="group-name" name="name" value={formValues.name} onChange={event => setFormValues(current => ({ ...current, name: event.target.value }))} required minLength={2} maxLength={120} {...invalid('name')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+      <input id="group-name" name="name" dir="auto" value={formValues.name} onChange={event => setFormValues(current => ({ ...current, name: event.target.value }))} required minLength={2} maxLength={120} {...invalid('name')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
       {fieldError('name') && <p id="group-name-error" className="mt-1 text-sm text-red-700">{fieldMessage('name')}</p>}
     </div>
     <div>
       <label htmlFor="group-description" className="block text-sm font-bold">{t.description}</label>
-      <textarea id="group-description" name="description" value={formValues.description} onChange={event => setFormValues(current => ({ ...current, description: event.target.value }))} maxLength={2000} rows={4} {...invalid('description')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+      <textarea id="group-description" name="description" dir="auto" value={formValues.description} onChange={event => setFormValues(current => ({ ...current, description: event.target.value }))} maxLength={2000} rows={4} {...invalid('description')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
       {fieldError('description') && <p id="group-description-error" className="mt-1 text-sm text-red-700">{fieldMessage('description')}</p>}
     </div>
     <div>
@@ -147,12 +150,13 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
       </div>
       <div>
         <label htmlFor="group-location" className="block text-sm font-bold">{t.location}</label>
-        <input id="group-location" name="location" value={formValues.location} onChange={event => setFormValues(current => ({ ...current, location: event.target.value }))} maxLength={200} {...invalid('location')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+        <input id="group-location" name="location" dir="auto" value={formValues.location} onChange={event => setFormValues(current => ({ ...current, location: event.target.value }))} maxLength={200} {...invalid('location')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
         {fieldError('location') && <p id="group-location-error" className="mt-1 text-sm text-red-700">{fieldMessage('location')}</p>}
       </div>
     </div>
     {state?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}
-    <button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : t.save}</button>
+    {state?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-teal">{state.success}</p>}
+    <div className="flex flex-wrap gap-3"><button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : editPublished ? t.editSave : t.save}</button>{editPublished && groupId && <Link href={`/${locale}/teacher/groups/${groupId}`} className="rounded-xl border border-line px-5 py-3 font-bold text-teal">{t.cancel}</Link>}</div>
   </form>
   {addSubject && <section className="rounded-2xl border border-line bg-cream p-4"><h3 className="mb-3 font-bold text-teal">{t.addSubject}</h3><CatalogueLabelEditor locale={locale} kind="subject" onSaved={onSubjectSaved} /></section>}
   {addCategory && <section className="rounded-2xl border border-line bg-cream p-4"><h3 className="mb-3 font-bold text-teal">{t.addCategory}</h3><CatalogueLabelEditor locale={locale} kind="category" onSaved={onCategorySaved} /></section>}

@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Locale } from '@/features/student/domain';
+import { catalogueDisplayName } from './catalogue-domain';
 
 const capacitySchema = z.preprocess(value => value === '' || value == null ? 10 : value, z.coerce.number().int().min(1).max(500));
 const optionalSlotId = z.preprocess(value => value === '' || value == null ? undefined : value, z.string().uuid().optional());
@@ -51,7 +52,7 @@ export function setupCatalogueChoices(
   offerings: SetupCatalogueOffering[],
 ): SetupCatalogueChoice[] {
   const ar = locale === 'ar';
-  const name = (item: { name_ar: string; name_en: string }) => ar ? item.name_ar : item.name_en;
+  const name = (item: { name_ar: string; name_en: string }) => catalogueDisplayName(item, locale);
   const contextFor = (nodeId: string) => {
     const labels: string[] = [];
     const seen = new Set<string>();

@@ -12,7 +12,7 @@ export type ScheduleSlotActionState = { error?: string; success?: string; fieldE
 
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
 
-export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionState, form: FormData): Promise<GroupDraftActionState> {
+export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-edit', _state: GroupDraftActionState, form: FormData): Promise<GroupDraftActionState> {
   const parsed = groupDetailsSchema.safeParse({
     name: form.get('name'),
     description: form.get('description') ?? '',
@@ -32,6 +32,9 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
     error: message(locale, 'This group could not be saved. Refresh the page and try again.', 'تعذر حفظ هذه المجموعة. حدّث الصفحة وحاول مرة أخرى.'),
   };
   const expectedUpdatedAt = form.get('expected_updated_at');
+  if (mode === 'published-edit' && (!id || typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)) {
+    return { error: message(locale, 'This group is missing its save version. Refresh the page and try again.', 'بيانات إصدار المجموعة غير متاحة. حدّث الصفحة وحاول مرة أخرى.') };
+  }
   if ((id && (typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)) || (!id && expectedUpdatedAt !== null && expectedUpdatedAt !== '')) {
     return { error: message(locale, 'This draft is missing its save version. Refresh the page and try again.', 'بيانات إصدار المسودة غير متاحة. حدّث الصفحة وحاول مرة أخرى.') };
   }
@@ -58,12 +61,17 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
   if (error) {
     const raw = error.message.toLowerCase();
     if (error.code === '40001' || raw.includes('changed') || raw.includes('concurrent')) return {
-      error: message(locale, 'This draft changed in another tab. Refresh it, review the latest details, and try again.', 'تغيرت هذه المسودة في علامة تبويب أخرى. حدّث الصفحة وراجع أحدث التفاصيل ثم حاول مرة أخرى.'),
+      error: message(locale, 'This group changed in another tab. Refresh it, review the latest details, and try again.', 'تغيرت هذه المجموعة في علامة تبويب أخرى. حدّث الصفحة وراجع أحدث التفاصيل ثم حاول مرة أخرى.'),
     };
-    if (raw.includes('archiv') || raw.includes('subject') || raw.includes('category') || raw.includes('offering') || raw.includes('catalogue') || raw.includes('not a draft') || raw.includes('not found') || raw.includes('owner')) return {
-      error: message(locale, 'This selection or draft is no longer available. Choose active catalogue items, refresh, and try again.', 'لم يعد هذا الاختيار أو هذه المسودة متاحاً. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.'),
+    if (raw.includes('capacity cannot be below')) return { error: message(locale, 'Capacity cannot be lower than the number of accepted students.', 'لا يمكن أن تقل السعة عن عدد الطلاب المسجلين.') };
+    if (raw.includes('archiv') || raw.includes('subject') || raw.includes('category') || raw.includes('offering') || raw.includes('catalogue') || raw.includes('not a draft') || raw.includes('editable group') || raw.includes('not found') || raw.includes('owner')) return {
+      error: mode === 'published-edit'
+        ? message(locale, 'This group or selection is no longer available. Choose active catalogue items, refresh, and try again.', 'لم تعد المجموعة أو عناصر الاختيار متاحة. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.')
+        : message(locale, 'This selection or draft is no longer available. Choose active catalogue items, refresh, and try again.', 'لم يعد هذا الاختيار أو هذه المسودة متاحاً. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.'),
     };
-    return { error: message(locale, id ? 'Your draft could not be saved. Your changes are still in the form; please refresh and try again.' : 'Your group could not be saved. Your changes are still in the form; please try again.', id ? 'تعذر حفظ المسودة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.' : 'تعذر حفظ المجموعة. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
+    return { error: mode === 'published-edit'
+      ? message(locale, 'Your group details could not be saved. Your changes are still in the form; please refresh and try again.', 'تعذر حفظ تفاصيل المجموعة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.')
+      : message(locale, id ? 'Your draft could not be saved. Your changes are still in the form; please refresh and try again.' : 'Your group could not be saved. Your changes are still in the form; please try again.', id ? 'تعذر حفظ المسودة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.' : 'تعذر حفظ المجموعة. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
   }
   if (!savedId) return { error: message(locale, 'Your group could not be saved. Please try again.', 'تعذر حفظ المجموعة. حاول مرة أخرى.') };
 
@@ -74,8 +82,14 @@ export async function saveGroupDraft(locale: Locale, _state: GroupDraftActionSta
     revalidatePath(`/${currentLocale}/teacher`);
     revalidatePath(`/${currentLocale}/teacher/groups/${savedId}`);
     revalidatePath(`/${currentLocale}/teacher/groups/${savedId}/setup`);
+    revalidatePath(`/${currentLocale}/teacher/groups/${savedId}/edit`);
   }
-  return { id: savedId, updated_at: savedDraft?.updated_at, success: message(locale, 'Draft saved.', 'تم حفظ المسودة.') };
+  for (const currentLocale of ['en', 'ar'] as const) {
+    revalidatePath(`/${currentLocale}/groups/${savedId}`);
+    revalidatePath(`/${currentLocale}/teachers`);
+    revalidatePath(`/${currentLocale}/student/classes`);
+  }
+  return { id: savedId, updated_at: savedDraft?.updated_at, success: mode === 'published-edit' ? message(locale, 'Group details saved.', 'تم حفظ تفاصيل المجموعة.') : message(locale, 'Draft saved.', 'تم حفظ المسودة.') };
 }
 
 function scheduleError(locale: Locale, rawError: string): string {

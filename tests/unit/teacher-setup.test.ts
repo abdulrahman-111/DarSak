@@ -64,6 +64,27 @@ describe('teacher group setup details', () => {
     ]);
     expect(setupCatalogueChoices('ar', nodes, subjects, offerings)[0].label).toBe('الرياضيات · المرحلة الثانوية › الصف العاشر');
   });
+
+  it('falls back to the available language for Arabic-only and English-only catalogue rows', () => {
+    const nodes = [
+      { id: 'ar', owner_teacher_id: null, archived_at: null, kind: 'grade', parent_id: null, name_ar: 'الصف الأول', name_en: '' },
+      { id: 'en', owner_teacher_id: null, archived_at: null, kind: 'grade', parent_id: null, name_ar: '', name_en: 'Grade Two' },
+    ];
+    const subjects = [
+      { id: 'ar-subject', owner_teacher_id: null, archived_at: null, name_ar: 'اللغة العربية', name_en: '' },
+      { id: 'en-subject', owner_teacher_id: null, archived_at: null, name_ar: '', name_en: 'Science' },
+    ];
+    const offerings = [
+      { id: 'arabic-only', owner_teacher_id: null, archived_at: null, node_id: 'ar', subject_id: 'ar-subject' },
+      { id: 'english-only', owner_teacher_id: null, archived_at: null, node_id: 'en', subject_id: 'en-subject' },
+    ];
+
+    for (const locale of ['ar', 'en'] as const) {
+      expect(setupCatalogueChoices(locale, nodes, subjects, offerings).map(choice => choice.label)).toEqual(expect.arrayContaining([
+        'اللغة العربية · الصف الأول', 'Science · Grade Two',
+      ]));
+    }
+  });
 });
 
 describe('teacher weekly schedule slots', () => {

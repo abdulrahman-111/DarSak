@@ -5,6 +5,7 @@ import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
 import { StudentPagination } from '@/features/student/pagination';
+import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
 
 export default async function TeacherGroups({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ deleted?: string; page?: string }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
@@ -42,7 +43,7 @@ export default async function TeacherGroups({ params, searchParams }: { params: 
             <Link href={href} className="block rounded-xl hover:outline-none focus-visible:ring-2 focus-visible:ring-orange">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-sm font-bold text-orange">{subject?.[ar ? 'name_ar' : 'name_en'] || '—'}</p>
+                  <p className="text-sm font-bold text-orange">{subject ? catalogueDisplayName({ name_ar: subject.name_ar ?? '', name_en: subject.name_en ?? '' }, locale) || '—' : '—'}</p>
                   <h2 className="mt-1 text-xl font-black text-teal">{group.name}</h2>
                 </div>
                 <Status value={group.status} locale={locale} />
