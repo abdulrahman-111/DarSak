@@ -1,6 +1,6 @@
 # Teacher subscription notice and problem reports
 
-Teachers see the same English/Arabic notice in signup and their workspace: the first month is completely free; monthly and semester plans will follow; prices, semester length and payment instructions will be announced before paid activation. This phase does not enable billing or change teaching-access rules.
+Teachers see the same English/Arabic notice in signup and their workspace: the free launch runs through 14 November 2026 (inclusive); monthly and semester plans will follow; prices, semester length and payment instructions will be announced before paid activation. This phase does not enable billing or change teaching-access rules.
 
 Active students, teachers awaiting approval, teachers with paused teaching access, and administrators can submit a private problem report. Guests receive a sign-in prompt. The form collects subject, expected/actual behavior and an optional affected page, stripping URL query strings and fragments. Users can follow their own reports; administrators can filter open/resolved reports, see reporter context and update status/internal notes.
 
