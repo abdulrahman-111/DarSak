@@ -53,8 +53,8 @@ const sectionTitles = {
 } as const;
 
 const visitorLabels = {
-  en: { groups: 'Groups', findTutor: 'View group details', noGroups: 'No groups available for enrollment.', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. Dars does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
-  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', noGroups: 'لا توجد مجموعات متاحة للتسجيل.', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق Dars من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
+  en: { groups: 'Groups', findTutor: 'View group details', noGroups: 'No groups available for enrollment.', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. DarSak does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
+  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', noGroups: 'لا توجد مجموعات متاحة للتسجيل.', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق درسك من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
 } as const;
 
 function entryYears(entry: { start_year: number | null; end_year: number | null; current: boolean }, locale: 'en' | 'ar') {

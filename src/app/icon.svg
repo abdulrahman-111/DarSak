@@ -1,4 +1,18 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" fill="none">
-  <rect width="36" height="36" rx="11" fill="#0e4a4b"/>
-  <path d="M18 10v17m0-14c-1.8-2-4.1-3-7-3H8v15h3c2.9 0 5.2 1 7 3m0-15c1.8-2 4.1-3 7-3h3v15h-3c-2.9 0-5.2 1-7 3" stroke="#f6f0e4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" fill="none">
+  <!-- Deep Cypress Squircle Canvas -->
+  <rect width="64" height="64" rx="16" fill="#12352E"/>
+
+  <!-- Subtle Inner Border -->
+  <rect x="2" y="2" width="60" height="60" rx="14" stroke="#34D399" stroke-opacity="0.18" stroke-width="1.5"/>
+
+  <!-- Outer Geometric 'D' / Arabic 'د' Arch -->
+  <path d="M18 15H32C41.9411 15 50 23.0589 50 33C50 42.9411 41.9411 51 32 51H18" stroke="#FAF8F5" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 3 Modular Schedule Bars ("Your Classes") -->
+  <rect x="16" y="23" width="17" height="5.5" rx="2.75" fill="#34D399"/>
+  <rect x="16" y="31.25" width="23" height="5.5" rx="2.75" fill="#FAF8F5"/>
+  <rect x="16" y="39.5" width="13" height="5.5" rx="2.75" fill="#34D399" fill-opacity="0.65"/>
+
+  <!-- Student Focus Dot (Amber) -->
+  <circle cx="35.5" cy="42.25" r="3" fill="#FBBF24"/>
 </svg>

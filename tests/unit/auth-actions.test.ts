@@ -1,11 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock, afterMock } = vi.hoisted(() => ({
+const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getVerifiedUserMock: vi.fn(),
   isConfiguredMock: vi.fn(),
   redirectMock: vi.fn((url: string) => { throw new Error(`NEXT_REDIRECT:${url}`); }),
   afterMock: vi.fn(),
+  onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -16,9 +17,10 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 vi.mock('server-only',()=>({}));
 vi.mock('next/server',()=>({after:afterMock}));
+vi.mock('@/features/auth/google-onboarding', () => ({ googleOnboardingDestination: onboardingDestinationMock }));
 
 import {
-  forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction,
+  chooseGoogleRoleAction, forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction,
 } from '@/features/auth/actions';
 
 function form(values: Record<string, string>) {
@@ -38,6 +40,7 @@ describe('auth actions', () => {
     getVerifiedUserMock.mockReset();
     redirectMock.mockClear();
     afterMock.mockReset();
+    onboardingDestinationMock.mockReset().mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
     isConfiguredMock.mockReturnValue(true);
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://dars.example');
   });
@@ -154,6 +157,13 @@ describe('auth actions', () => {
       expect(result?.email).toBe('bad@example.com');
     });
 
+    it('reports unexpected provider errors without claiming the reset email was sent', async () => {
+      createClientMock.mockResolvedValue({ auth: { resetPasswordForEmail: async () => ({ data: {}, error: { code: 'smtp_failed' } }) } });
+      const result = await run();
+      expect(result?.error).toMatch(/could not confirm.*sent/i);
+      expect(result?.notice).toBeUndefined();
+    });
+
     it('redirects the link through the callback to the locale reset page', async () => {
       const reset = vi.fn(async () => ({ data: {}, error: null }));
       createClientMock.mockResolvedValue({ auth: { resetPasswordForEmail: reset } });
@@ -216,6 +226,13 @@ describe('auth actions', () => {
       createClientMock.mockResolvedValue({ auth: { resend: async () => ({ data: {}, error: { code: 'over_email_send_rate_limit' } }) } });
       expect((await resendConfirmationAction('en', null, form({ email: 'sara@example.com' })))?.error).toMatch(/Too many attempts/);
     });
+
+    it('keeps identity-dependent errors neutral and reports unexpected delivery failures', async () => {
+      createClientMock.mockResolvedValue({ auth: { resend: async () => ({ data: {}, error: { code: 'user_not_found' } }) } });
+      expect((await resendConfirmationAction('en', null, form({ email: 'sara@example.com' })))?.notice).toMatch(/If an account is waiting/);
+      createClientMock.mockResolvedValue({ auth: { resend: async () => ({ data: {}, error: { code: 'smtp_failed' } }) } });
+      expect((await resendConfirmationAction('en', null, form({ email: 'sara@example.com' })))?.error).toMatch(/could not confirm.*sent/i);
+    });
   });
 
   describe('googleSignInAction', () => {
@@ -226,14 +243,14 @@ describe('auth actions', () => {
       expect(createClientMock).not.toHaveBeenCalled();
     });
 
-    it('starts OAuth with a sanitized next and redirects to the provider', async () => {
+    it('starts OAuth without assigning a role when no role was selected', async () => {
       vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
       const signInWithOAuth = vi.fn(async () => ({ data: { url: 'https://accounts.google.com/o/oauth2' }, error: null }));
       createClientMock.mockResolvedValue({ auth: { signInWithOAuth } });
       expect(await redirectTarget(() => googleSignInAction('en', null, form({ next: '//evil.com' })))).toBe('https://accounts.google.com/o/oauth2');
       expect(signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
-        options: { redirectTo: 'https://dars.example/api/auth/callback?next=/en/dashboard&google_role=student' },
+        options: { redirectTo: 'https://dars.example/api/auth/callback?next=/en/dashboard' },
       });
     });
 
@@ -253,6 +270,41 @@ describe('auth actions', () => {
       const result = await googleSignInAction('en', null, form({ google_role: 'admin' }));
       expect(result?.error).toBeTruthy();
       expect(createClientMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('chooseGoogleRoleAction', () => {
+    const profileQuery = vi.fn();
+    const rpc = vi.fn();
+    beforeEach(() => { profileQuery.mockReset(); rpc.mockReset(); });
+    const client = (user: unknown) => ({
+      auth: { getUser: async () => ({ data: { user }, error: null }) },
+      from: () => ({ select: () => ({ eq: () => ({ maybeSingle: profileQuery }) }) }),
+      rpc,
+    });
+
+    it('requires an authenticated Google identity and a valid student or teacher role', async () => {
+      createClientMock.mockResolvedValue(client({ id: 'u1', identities: [{ provider: 'password' }] }));
+      expect(await redirectTarget(() => chooseGoogleRoleAction('en', form({ google_role: 'teacher' })))).toBe('/en/login');
+      createClientMock.mockResolvedValue(client({ id: 'u1', identities: [{ provider: 'google' }] }));
+      expect(await redirectTarget(() => chooseGoogleRoleAction('en', form({ google_role: 'admin' })))).toBe('/en/login?error=setup');
+      expect(rpc).not.toHaveBeenCalled();
+    });
+
+    it('completes only a new profile with an allowlisted role', async () => {
+      profileQuery.mockResolvedValue({ data: null, error: null });
+      rpc.mockReset().mockResolvedValue({ data: 'teacher', error: null });
+      createClientMock.mockResolvedValue(client({ id: 'u1', identities: [{ provider: 'google' }] }));
+      expect(await redirectTarget(() => chooseGoogleRoleAction('en', form({ google_role: 'teacher' })))).toBe('/en/teacher');
+      expect(rpc).toHaveBeenCalledWith('complete_google_signup', { p_role: 'teacher' });
+      expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'u1', 'teacher', 'en', '/en/teacher');
+    });
+
+    it('does not complete an existing student profile from the teacher choice page', async () => {
+      profileQuery.mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
+      createClientMock.mockResolvedValue(client({ id: 'u1', identities: [{ provider: 'google' }] }));
+      expect(await redirectTarget(() => chooseGoogleRoleAction('en', form({ google_role: 'teacher' })))).toBe('/en/student');
+      expect(rpc).not.toHaveBeenCalled();
     });
   });
 });

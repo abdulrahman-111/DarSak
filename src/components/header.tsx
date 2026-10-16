@@ -1,7 +1,8 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { ActiveLink } from './active-link';
 import { Suspense } from 'react';
-import { BookOpen, Globe2, Search } from 'lucide-react';
+import { Globe2, Search } from 'lucide-react';
 import { logoutAction } from '@/features/auth/actions';
 import { currentUser } from '@/features/platform/data';
 import { isConfigured } from '@/lib/supabase/server';
@@ -26,11 +27,8 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
   return (
     <header className="sticky top-0 z-30 border-b border-[#e3d9c8] bg-[#f6f0e4]/95 backdrop-blur-lg">
       <div className="container flex min-h-16 flex-wrap items-center gap-4 py-3 md:gap-5">
-        <Link href={homeHref} className="flex items-center gap-2.5 text-xl font-black text-teal" aria-label={t.home}>
-          <span className="grid size-9 place-items-center rounded-[.7rem] bg-teal text-lg font-black text-cream">
-            <BookOpen size={18}/>
-          </span>
-          {t.brand}
+        <Link href={homeHref} className="flex min-w-0 items-center" aria-label={`${t.brand} · ${t.home}`}>
+          <Image src={locale === 'ar' ? '/brand/darsak/the-header-logo-arabic.svg' : '/brand/darsak/english-header-lockup.svg'} alt={t.brand} width={180} height={44} priority className="h-11 w-auto max-w-[min(45vw,180px)] object-contain" />
         </Link>
 
         <nav className="hidden items-center gap-6 text-sm font-bold text-[#4d473f] md:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>

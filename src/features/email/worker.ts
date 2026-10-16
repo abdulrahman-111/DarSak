@@ -111,7 +111,7 @@ async function sendProduction(job: EmailJob, message: { subject: string; text: s
   const timer = setTimeout(() => transport.close(), SEND_DEADLINE_MS);
   try {
     await transport.sendMail({
-      from: `Dars <${SMTP_USER}>`, to: job.recipient_email,
+      from: `DarSak <${SMTP_USER}>`, to: job.recipient_email,
       subject: message.subject, text: message.text, html: message.html,
       messageId: `<${job.id}@dars>`,
     });

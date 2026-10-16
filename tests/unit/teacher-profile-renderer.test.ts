@@ -116,7 +116,7 @@ describe('shared teacher visitor projection', () => {
     expect(markup).toContain(aboutFallback);
     expect(markup).toContain('المدينة:');
     expect(markup).toContain('لغات التدريس:');
-    expect(markup).toContain('قدّم المعلم هذه المعلومات، ولا تتحقق Dars من المؤهلات.');
+    expect(markup).toContain('قدّم المعلم هذه المعلومات، ولا تتحقق درسك من المؤهلات.');
   });
 
   it('shows the unverified qualification note only when qualifications are visible', () => {
@@ -140,8 +140,8 @@ describe('shared teacher visitor projection', () => {
       return renderToStaticMarkup(createElement(TeacherProfile, { view, locale: 'en', backLabel: 'Back' }));
     };
 
-    expect(render(visible)).toContain('Dars does not verify qualifications.');
-    expect(render(hidden)).not.toContain('Dars does not verify qualifications.');
+    expect(render(visible)).toContain('DarSak does not verify qualifications.');
+    expect(render(hidden)).not.toContain('DarSak does not verify qualifications.');
   });
 
   it('shows a localized unavailable-enrollment state when public group projections are empty',()=>{

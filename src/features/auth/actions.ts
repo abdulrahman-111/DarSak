@@ -9,6 +9,7 @@ import { isLocale, type Locale } from '@/i18n/config';
 import { authErrorMessage } from './errors';
 import { loginRedirectPath, safeAuthNext } from './return-path';
 import { authCopy } from '@/components/auth/copy';
+import { googleOnboardingDestination } from './google-onboarding';
 
 /** Non-secret fields echoed back on error so the reset form can repopulate them. Passwords are never included. */
 export type AuthState = {
@@ -56,6 +57,7 @@ function callbackUrl(path: string) {
 const NEUTRAL_ERRORS = new Set(['over_email_send_rate_limit', 'over_request_rate_limit', 'captcha_failed']);
 // Safe to show: says nothing about whether an account exists.
 const SURFACED_EMAIL_ERRORS = new Set([...NEUTRAL_ERRORS, 'email_address_invalid']);
+const IDENTITY_DEPENDENT_EMAIL_ERRORS = new Set(['user_not_found', 'email_not_confirmed', 'user_already_exists', 'email_exists']);
 
 export async function loginAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
   const unavailable = configurationError(locale);
@@ -100,15 +102,40 @@ export async function googleSignInAction(locale: string, _previous: unknown, for
   if (unavailable) return { error: unavailable };
   if (process.env.NEXT_PUBLIC_AUTH_GOOGLE_ENABLED !== 'true') return { error: authErrorMessage(locale, undefined, 'login') };
   const requestedRole = formData.get('google_role');
-  const googleRole = requestedRole === null ? 'student' : requestedRole;
-  if (googleRole !== 'student' && googleRole !== 'teacher') {
+  if (requestedRole !== null && requestedRole !== 'student' && requestedRole !== 'teacher') {
     return { error: authCopy[locale as Locale].googleRoleInvalid };
   }
   const next = safeAuthNext(formData.get('next'), locale as Locale);
   const db = await createClient();
-  const { data, error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${callbackUrl(next)}&google_role=${googleRole}` } });
+  const redirectTo = callbackUrl(next);
+  const { data, error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: requestedRole ? `${redirectTo}&google_role=${requestedRole}` : redirectTo } });
   if (error || !data.url) return { error: authErrorMessage(locale, error?.code, 'login') };
   redirect(data.url);
+}
+export async function chooseGoogleRoleAction(locale: string, formData: FormData): Promise<never> {
+  if (!isLocale(locale)) redirect('/en/login');
+  const requestedRole = formData.get('google_role');
+  if (requestedRole !== 'student' && requestedRole !== 'teacher') redirect(`/${locale}/login?error=setup`);
+  const db = await createClient();
+  const { data: authData, error: authError } = await db.auth.getUser();
+  const user = authData.user;
+  if (authError || !user || !user.identities?.some(identity => identity.provider === 'google')) redirect(`/${locale}/login`);
+  const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
+  if (profileError) redirect(`/${locale}/login?error=setup`);
+  if (profile) {
+    if (profile.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
+      const target = await googleOnboardingDestination(db, user.id, profile.role, locale, loginRedirectPath(locale, null, profile));
+      redirect(target);
+    }
+    redirect(loginRedirectPath(locale, null, profile));
+  }
+  const { data: completedRole, error: completionError } = await db.rpc('complete_google_signup', { p_role: requestedRole });
+  if (completionError || !['student', 'teacher', 'admin'].includes(completedRole)) redirect(`/${locale}/login?error=setup&google_role=${requestedRole}`);
+  if (completedRole === 'teacher') after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
+  if (completedRole !== requestedRole) redirect(`/${locale}/login?error=role-mismatch&requested=${requestedRole}&actual=${completedRole}`);
+  if (completedRole !== 'student' && completedRole !== 'teacher') redirect(`/${locale}/login?error=setup&google_role=${requestedRole}`);
+  const target = await googleOnboardingDestination(db, user.id, completedRole, locale, `/${locale}/${completedRole}`);
+  redirect(target);
 }
 export async function forgotPasswordAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
   const unavailable = configurationError(locale);
@@ -121,8 +148,9 @@ export async function forgotPasswordAction(locale: string, _previous: unknown, f
     ...captchaOptions(formData),
   });
   if (error?.code && SURFACED_EMAIL_ERRORS.has(error.code)) return { error: authErrorMessage(locale, error.code, 'reset'), ...emailEcho(formData) };
+  if (error && !IDENTITY_DEPENDENT_EMAIL_ERRORS.has(error.code ?? '')) return { error: authCopy[locale as Locale].emailDeliveryFailure, ...emailEcho(formData) };
   // Always neutral so the response never reveals whether an account exists.
-  return { notice: locale === 'ar' ? 'إذا كان هناك حساب بهذا البريد، فقد أرسلنا إليه رابطًا لإعادة تعيين كلمة المرور.' : 'If an account exists for this email, we sent a link to reset the password.' };
+  return { notice: locale === 'ar' ? 'إذا كان هناك حساب بهذا البريد، فقد قُبل طلب رابط إعادة التعيين. تحقق من بريدك، بما في ذلك مجلد الرسائل غير المرغوب فيها.' : 'If an account exists for this email, the reset-link request was accepted. Check your inbox, including spam.' };
 }
 export async function resetPasswordAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
   const unavailable = configurationError(locale);
@@ -152,7 +180,8 @@ export async function resendConfirmationAction(locale: string, _previous: unknow
     options: { emailRedirectTo: callbackUrl(`/${locale}/dashboard`), ...captchaOptions(formData) },
   });
   if (error?.code && SURFACED_EMAIL_ERRORS.has(error.code)) return { error: authErrorMessage(locale, error.code, 'signup'), ...emailEcho(formData) };
-  return { notice: locale === 'ar' ? 'إذا كان هناك حساب بهذا البريد بانتظار التأكيد، فقد أرسلنا إليه رسالة جديدة.' : 'If an account is waiting for confirmation, we sent a new email to this address.' };
+  if (error && !IDENTITY_DEPENDENT_EMAIL_ERRORS.has(error.code ?? '')) return { error: authCopy[locale as Locale].emailDeliveryFailure, ...emailEcho(formData) };
+  return { notice: locale === 'ar' ? 'إذا كان هناك حساب بهذا البريد بانتظار التأكيد، فقد قُبل طلب رسالة جديدة.' : 'If an account is waiting for confirmation, the request for a new email was accepted.' };
 }
 export async function logoutAction() {
   if (isConfigured()) {

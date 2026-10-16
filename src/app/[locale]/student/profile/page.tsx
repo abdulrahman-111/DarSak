@@ -4,10 +4,11 @@ import { EmptyState, Panel, ScreenTitle } from '@/components/platform/ui';
 import { studentLearningProfile } from '@/features/student/data';
 import { StudentProfileForm } from '@/features/student/student-profile-form';
 
-export default async function StudentProfilePage({ params }: { params: Promise<{ locale: string }> }) {
-  const { locale: raw } = await params;
+export default async function StudentProfilePage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
+  const onboardingError = query.onboarding_error === 'load';
   const me = await requireViewer(locale, 'student');
   const { profile } = await studentLearningProfile({ db: me.db, id: me.id, fullName: me.fullName });
   const copy = ar ? {
@@ -19,6 +20,7 @@ export default async function StudentProfilePage({ params }: { params: Promise<{
   };
   return <>
     <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description}/>
+    {onboardingError && <Panel className="mx-auto mb-5 max-w-2xl"><p role="alert" className="text-sm text-red-800">{ar ? 'تعذر التحقق من اكتمال إعداد حسابك. حدّث الصفحة بعد إكمال ملف التعلم.' : 'Could not check whether account setup is complete. Refresh after completing your learning profile.'}</p></Panel>}
     <Panel className="mx-auto max-w-2xl">
       {profile ? <StudentProfileForm locale={locale} updatedAt={profile.updated_at} initial={{
         full_name: profile.full_name,
