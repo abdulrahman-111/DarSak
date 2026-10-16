@@ -10,6 +10,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
   if (role === 'teacher') return [
     { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/teacher/profile`, label: ar ? 'الملف الشخصي' : 'Profile' },
+    { href: `/${locale}/teacher/application`, label: ar ? 'طلب اعتماد المعلم' : 'Teacher application' },
     { href: `/${locale}/teacher/catalogue`, label: ar ? 'المواد والفئات' : 'Subjects & categories' },
     { href: `/${locale}/teacher/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },

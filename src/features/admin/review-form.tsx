@@ -11,9 +11,10 @@ const copy=(locale:string)=>locale==='ar'?{
  confirmingApprove:'Approve this teacher request?',confirmingDecline:'Decline this request with the reason shown?',working:'Saving decision…',
  approved:'Approved',declined:'Declined',stale:'Refresh this page before making another decision.'};
 
-export function ReviewDecisionForm({locale,teacherId,requestId}:{locale:string;teacherId:string;requestId:string}){
+export function ReviewDecisionForm({locale,teacherId,requestId,submittedReady}:{locale:string;teacherId:string;requestId:string;submittedReady:boolean}){
  const t=copy(locale);const [reason,setReason]=useState('');const [reasonError,setReasonError]=useState(false);
  const [state,action,pending]=useActionState(decideTeacherReview.bind(null,locale),null);
+ if(!submittedReady)return null;
  return <form action={action} onSubmit={event=>{
   const submitter=(event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement|null;
   const decision=submitter?.value;
