@@ -1,25 +1,22 @@
-'use client';
-
-import { useActionState } from 'react';
+import Link from 'next/link';
 import { Panel, Status, cairoDate } from '@/components/platform/ui';
 import type { Locale } from '@/features/student/domain';
 import type { TeacherReviewStatus } from './review-data';
 import { reviewStatusCopy } from './review-data';
-import { requestTeacherReview } from './review-actions';
+import type { TeacherApplicationStatus } from './application-domain';
 
-export function TeacherReviewPanel({locale,status,error}:{locale:Locale;status:TeacherReviewStatus|null;error:string|null}){
+export function TeacherReviewPanel({locale,status,error,applicationStatus=null}:{locale:Locale;status:TeacherReviewStatus|null;error:string|null;applicationStatus?:TeacherApplicationStatus|null}){
  const ar=locale==='ar';const fallback=ar?'تعذر تحميل حالة مراجعة المعلم. حدّث الصفحة لإعادة المحاولة.':'Could not load teacher review status. Refresh to try again.';
- const [state,action,pending]=useActionState(requestTeacherReview.bind(null,locale),null);
  if(error||!status)return <Panel className="mb-6"><p role="alert" className="text-sm text-red-800">{fallback}</p></Panel>;
  const {copy}=reviewStatusCopy(locale,status);
- const title=status.status==='pending'?copy.pendingTitle:status.status==='approved'?copy.approvedTitle:copy.declinedTitle;
- const body=status.status==='pending'?copy.pendingBody:status.status==='approved'?copy.approvedBody:copy.declinedBody;
- if(status.status==='approved')return <details className="mb-2 min-w-0 rounded-xl border border-line bg-white px-4 py-2 text-sm"><summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"><span className="font-bold text-teal">{title}</span><Status value={status.status} locale={locale}/><span className="font-bold text-teal underline">{ar?'سجل المراجعة':'Review history'}</span></summary><dl className="mt-3 grid gap-3 border-t border-line pt-3 sm:grid-cols-2"><div><dt className="text-muted">{copy.requested}</dt><dd className="font-semibold">{cairoDate(status.requested_at,locale)}</dd></div><div><dt className="text-muted">{copy.reviewed}</dt><dd className="font-semibold">{status.reviewed_at?cairoDate(status.reviewed_at,locale):'—'}</dd></div></dl></details>;
- return <Panel className="mb-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black text-teal">{title}</h2><Status value={status.status} locale={locale}/></div>
+ const displayStatus=applicationStatus==='submitted'?'pending':applicationStatus==='approved'?'approved':applicationStatus==='draft'?'draft':applicationStatus==='changes_requested'||applicationStatus==='declined'?'declined':status.status;
+ const title=applicationStatus==='changes_requested'?(ar?'التعديلات مطلوبة في طلب المعلم':'Changes are requested on your application'):applicationStatus==='draft'?(ar?'أكمل طلب اعتماد المعلم':'Complete your teacher application'):displayStatus==='pending'?copy.pendingTitle:displayStatus==='approved'?copy.approvedTitle:copy.declinedTitle;
+ const body=applicationStatus==='changes_requested'?(ar?'راجع ملاحظات الإدارة وأكمل الطلب من صفحة التقديم.':'Review administrator feedback and update your application on the application page.'):applicationStatus==='draft'?(ar?'أكمل الملف العام ثم أرسل الطلب من صفحة التقديم.':'Complete the public profile, then submit from the application page.'):displayStatus==='pending'?copy.pendingBody:displayStatus==='approved'?copy.approvedBody:displayStatus==='draft'?(ar?'يمكنك متابعة إعداد الطلب وحفظ المسودة من صفحة التقديم.':'Continue preparing your application and save a draft on the application page.'):copy.declinedBody;
+ if(displayStatus==='approved')return <details className="mb-2 min-w-0 rounded-xl border border-line bg-white px-4 py-2 text-sm"><summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"><span className="font-bold text-teal">{title}</span><Status value={displayStatus} locale={locale}/><span className="font-bold text-teal underline">{ar?'سجل المراجعة':'Review history'}</span></summary><dl className="mt-3 grid gap-3 border-t border-line pt-3 sm:grid-cols-2"><div><dt className="text-muted">{copy.requested}</dt><dd className="font-semibold">{cairoDate(status.requested_at,locale)}</dd></div><div><dt className="text-muted">{copy.reviewed}</dt><dd className="font-semibold">{status.reviewed_at?cairoDate(status.reviewed_at,locale):'—'}</dd></div></dl><p className="mt-3 text-sm text-muted">{ar?'يمكنك تحسين ملفك العام اختيارياً.':'You can optionally complete more public profile details.'} <Link href={`/${locale}/teacher/profile`} className="font-bold text-teal underline">{ar?'فتح الملف الشخصي':'Open profile'}</Link></p></details>;
+ return <Panel className="mb-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="text-lg font-black text-teal">{title}</h2>{applicationStatus==='changes_requested'?<span className="rounded-full bg-orange/10 px-3 py-1 text-xs font-bold text-orange">{ar?'تعديلات مطلوبة':'Changes requested'}</span>:<Status value={displayStatus} locale={locale}/>}</div>
   <p className="mt-2 text-sm leading-6 text-muted">{body}</p>
-  {status.status==='declined'&&status.decline_reason&&<div className="mt-4 rounded-xl bg-red-50 p-4"><h3 className="text-sm font-bold text-red-900">{copy.reason}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-red-900">{status.decline_reason}</p></div>}
+  {displayStatus==='declined'&&status.decline_reason&&applicationStatus!=='changes_requested'&&applicationStatus!=='declined'&&<div className="mt-4 rounded-xl bg-red-50 p-4"><h3 className="text-sm font-bold text-red-900">{copy.reason}</h3><p className="mt-1 whitespace-pre-wrap text-sm text-red-900">{status.decline_reason}</p></div>}
   <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-muted">{copy.requested}</dt><dd className="font-semibold">{cairoDate(status.requested_at,locale)}</dd></div><div><dt className="text-muted">{copy.reviewed}</dt><dd className="font-semibold">{status.reviewed_at?cairoDate(status.reviewed_at,locale):'—'}</dd></div></dl>
-  {status.status==='declined'&&<form action={action} className="mt-4"><button disabled={pending} className="rounded-xl bg-orange px-5 py-3 font-bold text-white disabled:opacity-50">{pending?copy.working:copy.resubmit}</button></form>}
-  {(state?.error||state?.success)&&<p role={state.error?'alert':'status'} className={`mt-3 rounded-xl p-3 text-sm ${state.error?'bg-red-50 text-red-800':'bg-teal/10 text-teal'}`}>{state.error||state.success}</p>}
+  {(applicationStatus==='draft'||applicationStatus==='changes_requested'||applicationStatus==='declined'||(displayStatus==='declined'&&!applicationStatus))&&<Link href={`/${locale}/teacher/application`} className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-orange px-5 py-3 font-bold text-white">{ar?'متابعة طلب الاعتماد':'Continue application'}</Link>}
  </Panel>;
 }

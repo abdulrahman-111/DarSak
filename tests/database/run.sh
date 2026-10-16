@@ -27,6 +27,7 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_catalogu
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/published_group_details_edit.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/public_teacher_specialization_labels.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_reviews.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_applications.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_management_controls.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_enrollment_page.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_dashboard_summary.sql

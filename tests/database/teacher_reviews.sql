@@ -33,6 +33,21 @@ set local session_replication_role = replica;
 update public.profiles set role='admin' where id='7b000000-0000-4000-8000-000000000003';
 update public.teacher_profiles set approved=true where id='7b000000-0000-4000-8000-000000000002';
 set local session_replication_role = origin;
+-- This file preserves the legacy review workflow. The owner remains pending,
+-- while the other teacher represents a previously approved account. The
+-- separate teacher_applications.sql suite covers new-app submission guards.
+update public.teacher_applications
+set legacy_approved=true,
+    status=case teacher_id
+      when '7b000000-0000-4000-8000-000000000002'::uuid then 'approved'
+      else 'draft'
+    end
+where teacher_id in ('7b000000-0000-4000-8000-000000000001','7b000000-0000-4000-8000-000000000002');
+do $$ begin
+  if (select count(*) from public.teacher_applications where teacher_id in ('7b000000-0000-4000-8000-000000000001','7b000000-0000-4000-8000-000000000002') and legacy_approved)<>2 then
+    raise exception 'legacy review application fixtures were not initialized';
+  end if;
+end $$;
 delete from public.teacher_review_events where teacher_id in ('7b000000-0000-4000-8000-000000000001','7b000000-0000-4000-8000-000000000002');
 insert into public.teacher_review_state(teacher_id,status,request_id,requested_at)
 values
@@ -50,6 +65,11 @@ begin
     raise exception 'new teacher did not atomically create one pending request event';
   end if;
 end $$;
+-- This compatibility assertion exercises the legacy admin_update_user path.
+-- The new-application suite separately verifies that an unmarked new draft
+-- cannot be approved through either canonical or raw compatibility writes.
+update public.teacher_applications set legacy_approved=true,status='draft'
+where teacher_id='7b000000-0000-4000-8000-000000000004';
 
 set local role anon;
 set local request.jwt.claim.sub='';

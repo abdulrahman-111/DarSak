@@ -49,6 +49,21 @@ async function signup(role) {
   users.push(data.user.id);
   return {id:data.user.id,token:data.access_token};
 }
+// These API fixtures exercise the pre-application teacher review and access
+// paths. Mark only the four named test accounts as grandfathered; application
+// submission and new-teacher approval guards are covered by separate tests.
+function localDockerSQL(sql) {
+  execFileSync('docker',['exec','supabase_db_private-teachers','psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-c',sql],{stdio:'ignore'});
+}
+function seedLegacyTeacherApplications(fixtures) {
+  const exactFixtures = fixtures.map(({id, status}) => {
+    assert.match(id, /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, 'Legacy fixture UUID must be exact');
+    assert(['draft', 'approved'].includes(status), 'Legacy fixture status must be explicit');
+    return `('${id}'::uuid,'${status}'::text)`;
+  }).join(',');
+  const sql = `do $$ declare v_count integer; begin with fixture(teacher_id,application_status) as (values ${exactFixtures}) update public.teacher_applications a set legacy_approved=true,status=fixture.application_status from fixture where a.teacher_id=fixture.teacher_id; get diagnostics v_count=row_count; if v_count<>${fixtures.length} then raise exception 'legacy application fixture count mismatch'; end if; end $$;`;
+  localDockerSQL(sql);
+}
 try {
   const teacher = await signup('teacher');
   const otherTeacher = await signup('teacher');
@@ -58,6 +73,12 @@ try {
   const student = await signup('student');
   const student2 = await signup('student');
   const spoof = await signup('admin');
+  seedLegacyTeacherApplications([
+    {id:teacher.id,status:'approved'},
+    {id:otherTeacher.id,status:'approved'},
+    {id:reviewTeacher.id,status:'draft'},
+    {id:legacyReviewTeacher.id,status:'draft'},
+  ]);
   const spoofProfile = await success(`/rest/v1/profiles?id=eq.${spoof.id}`, {token:spoof.token});
   check(spoofProfile[0]?.role !== 'admin', 'signup metadata cannot grant administrator');
   const escalate = await request(`/rest/v1/profiles?id=eq.${student.id}`, {token:student.token,method:'PATCH',body:{role:'admin'}});
