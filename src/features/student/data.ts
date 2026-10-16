@@ -10,7 +10,7 @@ export type Named={id:string;name_ar:string;name_en:string;parent_id?:string|nul
 export type Teacher={id:string;full_name:string;headline:string;bio:string};
 export type Group={id:string;teacher_id:string;name:string;description:string;capacity:number;status:string;location:string;available_seats?:number;accepted_count?:number;next_lesson_at?:string|null;offering:{id:string;subject:Named;node:Named}|null};
 export type Slot={id:string;group_id:string;weekday:number;start_time:string;end_time:string;timezone:string};
-export type Enrollment={id:string;group_id:string;status:string;group:Group|null};
+export type Enrollment={id:string;group_id:string;status:string;updated_at:string;group:{id:string;name:string;status:string;location:string|null;can_view:boolean}|null};
 export type Lesson={id:string;group_id:string;title:string;starts_at:string;ends_at:string;status:string;notes?:string|null;group?:{name?:string}|{name?:string}[]|null};
 export type Material={id:string;lesson_id:string;kind:string;title:string;url:string|null;content:string|null;storage_path:string|null};
 const groupFields='id,teacher_id,name,description,capacity,status,location,offering:offerings(id,subject:subjects(id,name_ar,name_en),node:education_nodes(id,name_ar,name_en))';
@@ -75,8 +75,17 @@ export async function studentDashboard(locale:Locale,now=new Date()){
 }
 export async function studentClasses(locale:Locale,pageInput:unknown=1){
  const me=await student(locale);
- const result=await pagedRows(pageInput,(from,to)=>me.db.from('enrollments').select(`id,group_id,status,updated_at,group:groups(${groupFields})`,{count:'exact'}).eq('student_id',me.id).order('updated_at',{ascending:false}).order('id',{ascending:false}).range(from,to));
- return {enrollments:result.rows as unknown as Enrollment[],page:result.page,total:result.total,pageCount:result.pageCount,error:result.error};
+ const requestedPage=normalizeStudentPage(pageInput);
+ const fetch=async(page:number)=>{
+  const {data,error}=await me.db.rpc('student_enrollment_page',{p_offset:(page-1)*STUDENT_PAGE_SIZE,p_limit:STUDENT_PAGE_SIZE});
+  if(error||!data)return {rows:[] as Enrollment[],total:0,error:true};
+  const result=data as {rows?:Enrollment[];total?:number};
+  if(!Array.isArray(result.rows)||!Number.isInteger(result.total)||result.total!<0)return {rows:[] as Enrollment[],total:0,error:true};
+  return {rows:result.rows,total:result.total!,error:false};
+ };
+ let page=requestedPage,result=await fetch(page),pageCount=studentPageCount(result.total);
+ if(!result.error&&page>pageCount){page=pageCount;result=await fetch(page);}
+ return {enrollments:result.rows,page,total:result.total,pageCount,error:result.error};
 }
 export async function studentLessons(locale:Locale,pageInput:unknown=1){
  const me=await student(locale);
