@@ -55,6 +55,9 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
               value="teacher"
             />
           </div>
+          <p className="mt-3 rounded-xl bg-[#f6f0e4] px-4 py-3 text-sm leading-6 text-[#4d473f]" role="note">
+            {role === 'student' ? copy.studentNext : copy.teacherNext}
+          </p>
         </fieldset>
       )}
 

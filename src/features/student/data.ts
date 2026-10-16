@@ -6,6 +6,7 @@ import { idSchema,type Locale } from './domain';
 import { catalogue, publicGroupDetail, publicGroups, publicTeachers } from '@/features/platform/data';
 import { normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from './pagination-domain';
+import { parseStudentLearningProfileRow } from './student-profile-domain';
 export type Named={id:string;name_ar:string;name_en:string;parent_id?:string|null};
 export type Teacher={id:string;full_name:string;headline:string;bio:string};
 export type Group={id:string;teacher_id:string;name:string;description:string;capacity:number;status:string;location:string;available_seats?:number;accepted_count?:number;next_lesson_at?:string|null;offering:{id:string;subject:Named;node:Named}|null};
@@ -13,8 +14,16 @@ export type Slot={id:string;group_id:string;weekday:number;start_time:string;end
 export type Enrollment={id:string;group_id:string;status:string;updated_at:string;group:{id:string;name:string;status:string;location:string|null;can_view:boolean}|null};
 export type Lesson={id:string;group_id:string;title:string;starts_at:string;ends_at:string;status:string;notes?:string|null;group?:{name?:string}|{name?:string}[]|null};
 export type Material={id:string;lesson_id:string;kind:string;title:string;url:string|null;content:string|null;storage_path:string|null};
+export async function studentLearningProfile(viewer: { db: Awaited<ReturnType<typeof createClient>>; id: string; fullName?: string }) {
+ const [studentResult,profileResult]=await Promise.all([
+  viewer.db.from('student_profiles').select('age_range,education_year,interests,learning_goal,school_name,onboarding_required,onboarding_completed_at,updated_at').eq('id',viewer.id).maybeSingle(),
+  viewer.fullName?Promise.resolve({data:{full_name:viewer.fullName},error:null}):viewer.db.from('profiles').select('full_name').eq('id',viewer.id).maybeSingle(),
+ ]);
+ const profile=parseStudentLearningProfileRow(studentResult.error||profileResult.error||!studentResult.data||!profileResult.data?null:{...studentResult.data,full_name:profileResult.data.full_name});
+ return { profile, error: profile ? null : 'unavailable' };
+}
 const groupFields='id,teacher_id,name,description,capacity,status,location,offering:offerings(id,subject:subjects(id,name_ar,name_en),node:education_nodes(id,name_ar,name_en))';
-export async function viewer(){if(!isConfigured())return null;const {db,user,profile}=await getRequestViewer();return user&&profile?{db,id:user.id,role:profile.role as string,status:profile.status as string}:null}
+export async function viewer(){if(!isConfigured())return null;const {db,user,profile}=await getRequestViewer();return user&&profile?{db,id:user.id,fullName:profile.full_name,role:profile.role as string,status:profile.status as string}:null}
 export async function student(locale:Locale){const me=await viewer();if(!me)redirect(`/${locale}/login`);if(me.role!=='student'||me.status!=='active')redirect(`/${locale}/dashboard`);return me}
 export async function discovery(filters:{subject?:string;education?:string;teacher?:string;page?:number}={}){
  const [groups,catalogueResult,teacherResult]=await Promise.all([
@@ -65,13 +74,16 @@ async function pagedRows<T>(input:unknown,fetch:(from:number,to:number)=>Promise
 }
 export async function studentDashboard(locale:Locale,now=new Date()){
  const me=await student(locale),timestamp=now.toISOString();
+ const learning=await studentLearningProfile(me);
+ if(learning.profile?.onboarding_required&&!learning.profile.onboarding_completed_at)redirect(`/${locale}/student/profile`);
+ if(!learning.profile)return {acceptedCount:0,pendingCount:0,upcomingCount:0,lessons:[] as Lesson[],learningProfile:null,error:true};
  const [accepted,pending,upcoming]=await Promise.all([
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','accepted'),
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','pending'),
   me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,enrollments!inner(id))',{count:'exact'}).eq('status','scheduled').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').gt('ends_at',timestamp).order('starts_at').order('id').limit(5),
  ]);
  const error=!!(accepted.error||pending.error||upcoming.error||accepted.count==null||pending.count==null||upcoming.count==null);
- return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,upcomingCount:upcoming.count??0,lessons:(upcoming.data||[]) as Lesson[],error};
+ return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,upcomingCount:upcoming.count??0,lessons:(upcoming.data||[]) as Lesson[],learningProfile:learning.profile,error};
 }
 export async function studentClasses(locale:Locale,pageInput:unknown=1){
  const me=await student(locale);
