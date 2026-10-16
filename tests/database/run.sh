@@ -46,3 +46,4 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/user_notificatio
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_engine.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_enforcement.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/email_outbox.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/problem_reports.sql

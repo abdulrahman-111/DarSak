@@ -1,0 +1,11 @@
+# Teacher subscription notice and problem reports
+
+Teachers see the same English/Arabic notice in signup and their workspace: the first month is completely free; monthly and semester plans will follow; prices, semester length and payment instructions will be announced before paid activation. This phase does not enable billing or change teaching-access rules.
+
+Active students, teachers awaiting approval, teachers with paused teaching access, and administrators can submit a private problem report. Guests receive a sign-in prompt. The form collects subject, expected/actual behavior and an optional affected page, stripping URL query strings and fragments. Users can follow their own reports; administrators can filter open/resolved reports, see reporter context and update status/internal notes.
+
+Raw table permissions previously exposed internal notes to reporters. The migration replaces table-wide SELECT with safe column grants, restricts submission to an active-owner RPC, and returns private notes only through an active-admin RPC. It preserves existing admin status/note updates and dashboard counts. Submissions are limited per account to five per hour, with retry deduplication; lists are bounded and ordered deterministically.
+
+Validation results are recorded in the associated PR. Production HTTP/browser verification is limited by the workspace network policy; local built-site browser flows and exact Vercel deployment metadata are checked separately. No production test reports or users are created.
+
+Final validation: 397 unit tests across 64 files, 40 SQL suites, 173 real API assertions, lint, explicit TypeScript check and webpack production build passed. The initial build exposed search-parameter inference/null-narrowing errors in the two report pages; these were fixed before the final passing build. Independent GPT-6.1 Sol approved the code and seven actual Chromium acceptance checks on English desktop/Arabic 390px mobile. Coverage includes guest sign-in, teacher signup/workspace notice, student submission with URL secrets removed, admin reporter/path review and private note resolution, student status without note, raw REST column denial for every authenticated role and foreign-report denial, pending-teacher reporting and admin self-reporting. All local fixture reports/users were cleaned.

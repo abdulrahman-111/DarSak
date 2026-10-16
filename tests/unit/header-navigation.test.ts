@@ -10,9 +10,9 @@ describe('global Reports navigation', () => {
     expect(globalReportsHref('ar', 'admin')).toBe('/ar/admin/reports');
   });
 
-  it('does not expose a reports link to other or inactive roles', () => {
-    expect(globalReportsHref('en', 'student')).toBeNull();
-    expect(globalReportsHref('ar', 'teacher')).toBeNull();
+  it('links students and teachers to problem reporting while guests get no link', () => {
+    expect(globalReportsHref('en', 'student')).toBe('/en/reports');
+    expect(globalReportsHref('ar', 'teacher')).toBe('/ar/reports');
     expect(globalReportsHref('en', null)).toBeNull();
   });
 });

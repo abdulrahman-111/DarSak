@@ -7,6 +7,7 @@ type NavItem = { href: string; label: string };
 function navigation(locale: string, role: PlatformRole): NavItem[] {
   const ar = locale === 'ar';
   const notifications={href:`/${locale}/notifications`,label:ar?'الإشعارات':'Notifications'};
+  const reportProblem={href:`/${locale}/reports`,label:ar?'الإبلاغ عن مشكلة':'Report a problem'};
   if (role === 'teacher') return [
     { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/teacher/profile`, label: ar ? 'الملف الشخصي' : 'Profile' },
@@ -17,6 +18,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
     { href: `/${locale}/teacher/lessons`, label: ar ? 'الحصص' : 'Lessons' },
     { href: `/${locale}/teacher/access`, label: ar ? 'صلاحية التدريس' : 'Teaching access' },
+    reportProblem,
     notifications,
   ];
   if (role === 'admin') return [
@@ -29,6 +31,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },
     { href: `/${locale}/admin/settings`, label: ar ? 'الإعدادات' : 'Settings' },
+    reportProblem,
     notifications,
   ];
   return [
@@ -39,6 +42,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/timetable`, label: ar ? 'الجدول الأسبوعي' : 'Weekly timetable' },
     { href: `/${locale}/student/materials`, label: ar ? 'المواد' : 'Materials' },
     { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Discover' },
+    reportProblem,
     notifications,
   ];
 }

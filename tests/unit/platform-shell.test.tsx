@@ -35,4 +35,17 @@ describe('role navigation shell', () => {
     expect(html).toContain('4 إشعارات غير مقروءة');
     expect(html).toContain('aria-hidden="true" class="shrink-0 rounded-full bg-orange');
   });
+
+  it('adds a localized problem-report link for students, teachers, and administrators', () => {
+    for (const role of ['student', 'teacher', 'admin'] as const) {
+      const html = renderToStaticMarkup(<PlatformShell locale="en" role={role} name="User"><main>Page</main></PlatformShell>);
+      expect(html).toContain('href="/en/reports"');
+      expect(html).toContain('Report a problem');
+    }
+    const admin = renderToStaticMarkup(<PlatformShell locale="ar" role="admin" name="مسؤول"><main>Page</main></PlatformShell>);
+    expect(admin).toContain('href="/ar/reports"');
+    expect(admin).toContain('الإبلاغ عن مشكلة');
+    expect(admin).toContain('href="/ar/admin/reports"');
+    expect(admin).toContain('البلاغات');
+  });
 });
