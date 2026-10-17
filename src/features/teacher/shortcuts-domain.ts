@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { Locale } from '@/features/student/domain';
+import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export const duplicateGroupSchema = z.object({ source_group_id: z.string().uuid() });
 
@@ -21,6 +22,8 @@ export function duplicateSetupPath(locale: Locale, sourceGroupId: string, draftG
 export function shortcutMutationMessage(locale: Locale, rawError: string): string {
   const error = rawError.toLowerCase();
   const ar = locale === 'ar';
+  const quotaMessage = quotaErrorMessage(locale, rawError);
+  if (quotaMessage) return quotaMessage;
   if(error==='teacher teaching access expired')return ar?'انتهت صلاحية التدريس. جدّد الوصول من صفحة صلاحية التدريس.':'Teaching access has expired. Renew access from the teaching access page.';
   if (error.includes('conflict') || error.includes('overlap') || error.includes('schedule')) {
     return ar

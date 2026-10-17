@@ -24,6 +24,8 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
   const homeHref = activeRole ? dashboardHref : `/${locale}`;
   const reportsHref = globalReportsHref(locale, activeRole);
   const showDiscovery = shouldShowDiscoveryNavigation(activeRole);
+  const showPricing = !me;
+  const pricingLabel = locale === 'ar' ? 'الأسعار' : 'Pricing';
   const reportsLabel = activeRole === 'admin' ? (locale === 'ar' ? 'البلاغات' : 'Reports') : locale === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report a problem';
 
   return (
@@ -36,6 +38,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
         <nav className="hidden items-center gap-6 text-sm font-bold text-[#4d473f] md:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
           {showDiscovery && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}>{t.discover}</ActiveLink>}
           {!me && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
+          {showPricing && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/pricing`}>{pricingLabel}</ActiveLink>}
           {activeRole && <ActiveLink exact className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
           {me && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
@@ -63,6 +66,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
         <nav className="flex w-full flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#e3d9c8] pt-3 text-sm font-bold text-[#4d473f] md:hidden" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
           {showDiscovery && <ActiveLink className="inline-flex items-center gap-1.5 py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}><Search size={16}/>{t.discover}</ActiveLink>}
           {!me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
+          {showPricing && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/pricing`}>{pricingLabel}</ActiveLink>}
           {activeRole && <ActiveLink exact className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
           {me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}

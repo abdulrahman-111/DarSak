@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
 import { publishRangeFieldErrors, publishRangeSchema } from './publish-domain';
+import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export type TeacherPublishActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
 
@@ -13,6 +14,8 @@ const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar
 
 function mutationError(locale: Locale, raw: string): string {
   const value = raw.toLowerCase();
+  const quotaMessage = quotaErrorMessage(locale, raw);
+  if (quotaMessage) return quotaMessage;
   if (value.includes('conflict') || value.includes('overlap')) return message(locale,
     'Publishing was blocked by a lesson conflict. Review the schedule and preview, then try again.',
     'تعذر النشر بسبب تعارض في الحصص. راجع الجدول والمعاينة ثم حاول مرة أخرى.');

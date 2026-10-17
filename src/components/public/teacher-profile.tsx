@@ -53,8 +53,8 @@ const sectionTitles = {
 } as const;
 
 const visitorLabels = {
-  en: { groups: 'Groups', findTutor: 'View group details', noGroups: 'No groups available for enrollment.', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. DarSak does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
-  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', noGroups: 'لا توجد مجموعات متاحة للتسجيل.', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق درسك من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
+  en: { groups: 'Groups', findTutor: 'View group details', noGroups: 'No groups available for enrollment.', subjects: 'Subjects and contexts', noSubjects: 'No specializations have been added yet.', contact: 'Contact this teacher', call: 'Call', whatsapp: 'Message on WhatsApp', email: 'Email', city: 'City', languages: 'Teaching languages', qualificationsDisclosure: 'Provided by the teacher. DarSak does not verify qualifications.', mode: { online: 'Online', in_person: 'In person', both: 'Online and in person' } },
+  ar: { groups: 'المجموعات', findTutor: 'عرض تفاصيل المجموعة', noGroups: 'لا توجد مجموعات متاحة للتسجيل.', subjects: 'المواد والسياقات', noSubjects: 'لم يضف المعلم تخصصات بعد.', contact: 'تواصل مع المعلم', call: 'اتصال', whatsapp: 'راسل عبر واتساب', email: 'بريد إلكتروني', city: 'المدينة', languages: 'لغات التدريس', qualificationsDisclosure: 'قدّم المعلم هذه المعلومات، ولا تتحقق درسك من المؤهلات.', mode: { online: 'عن بُعد', in_person: 'حضوري', both: 'عن بُعد وحضوري' } },
 } as const;
 
 function entryYears(entry: { start_year: number | null; end_year: number | null; current: boolean }, locale: 'en' | 'ar') {
@@ -131,7 +131,7 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
           <h2 className={`text-xl font-black ${theme.accent}`}>{labels.contact}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             {contactLinks.phone && <a href={contactLinks.phone} dir="ltr" className={`rounded-xl border px-4 py-2.5 font-bold ${theme.border} ${theme.accent}`}>{labels.call}</a>}
-            {contactLinks.whatsapp && <a href={contactLinks.whatsapp} target="_blank" rel="noopener noreferrer" dir="ltr" className={`rounded-xl border px-4 py-2.5 font-bold ${theme.border} ${theme.accent}`}>WhatsApp</a>}
+            {contactLinks.whatsapp && <a href={contactLinks.whatsapp} target="_blank" rel="noopener noreferrer" dir="ltr" className={`rounded-xl border px-4 py-2.5 font-bold ${theme.border} ${theme.accent}`}>{labels.whatsapp}</a>}
             {contactLinks.email && <a href={contactLinks.email} dir="ltr" className={`rounded-xl border px-4 py-2.5 font-bold ${theme.border} ${theme.accent}`}>{labels.email}</a>}
           </div>
         </section>}

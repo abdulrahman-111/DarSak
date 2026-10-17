@@ -33,7 +33,8 @@ export function parseTeacherAccessStatus(value: unknown): TeacherAccessStatus | 
     || !nullableInstant(v.starts_at) || !nullableInstant(v.expires_at) || !nullableInstant(v.renewal_opens_at)
     || !nullableInstant(v.fee_effective_at) || !nullableUuid(v.pending_request_id)
     || !nullableString(v.announcement_en) || !nullableString(v.announcement_ar)) return null;
-  if (v.has_access && (!instant(v.starts_at) || !instant(v.expires_at))) return null;
+  // Open-ended access is valid for the launch free phase; a paid access grant must still have a start.
+  if (v.has_access && !instant(v.starts_at)) return null;
   return {has_access:v.has_access,starts_at:v.starts_at,expires_at:v.expires_at,renewal_opens_at:v.renewal_opens_at,can_renew:v.can_renew,fees_enabled:v.fees_enabled,fee_effective_at:v.fee_effective_at,announcement_en:v.announcement_en,announcement_ar:v.announcement_ar,pending_request_id:v.pending_request_id};
 }
 export type RenewalResult = { outcome: 'renewed'|'requested'|'pending'|'too_early'; access: TeacherAccessStatus; request_id: string|null };

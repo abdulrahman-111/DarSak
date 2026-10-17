@@ -9,6 +9,8 @@ import { idSchema } from '@/features/student/domain';
 import { teacherReviewListSchema } from '@/features/admin/domain';
 import { richProfileSchema, localizedProfileText } from '@/features/teacher/profile-details-domain';
 import { isTeacherApplicationMissing, parseTeacherApplicationReadResponse } from '@/features/teacher/application-domain';
+import { AdminTeacherPlanPanel } from '@/features/subscriptions/panels';
+import { parseTeacherPlanStatus } from '@/features/subscriptions/domain';
 
 type ReviewStatus={teacher_id:string;status:'pending'|'approved'|'declined';request_id:string|null;requested_at:string;reviewed_at:string|null;decline_reason:string|null;events:Array<{id:string;kind:string;reason:string|null;created_at:string}>};
 function readStatus(value:unknown):ReviewStatus|null{
@@ -24,12 +26,13 @@ export default async function AdminTeacherReviewDetail({params,searchParams}:{pa
  const preserved=listFilters.success?listFilters.data:{query:'',status:'pending' as const,offset:0,limit:30};
  const backParams=new URLSearchParams();if(preserved.query)backParams.set('q',preserved.query);backParams.set('status',preserved.status);if(preserved.offset>0)backParams.set('page',String(Math.floor(preserved.offset/30)+1));
  const backHref=`/${locale}/admin/teachers?${backParams}`;
- const [profile,teacher,reviewResult,specializations,applicationResult]=await Promise.all([
+ const [profile,teacher,reviewResult,specializations,applicationResult,planResult]=await Promise.all([
   me.db.from('profiles').select('id,full_name,status').eq('id',id).maybeSingle(),
   me.db.from('teacher_profiles').select('headline,bio,approved').eq('id',id).maybeSingle(),
   me.db.rpc('teacher_review_status',{p_teacher_id:id}),
   me.db.from('teacher_specializations').select('offering_id').eq('teacher_id',id),
   me.db.rpc('read_teacher_application',{p_teacher_id:id}),
+  me.db.rpc('admin_teacher_plan_status',{p_teacher_id:id}),
  ]);
  if(profile.error||teacher.error){
   const copy=ar
@@ -39,6 +42,7 @@ export default async function AdminTeacherReviewDetail({params,searchParams}:{pa
  }
  if(!profile.data||!teacher.data)notFound();
  const applicationPayload=applicationResult.data;
+ const planStatus=planResult.error?null:parseTeacherPlanStatus(planResult.data);
  const parsedApplication=applicationResult.error?{application:null,missing:[]} : parseTeacherApplicationReadResponse(applicationPayload);
  const rawMissing=applicationPayload&&typeof applicationPayload==='object'&&!Array.isArray(applicationPayload)
   ?(applicationPayload as {missing?:unknown}).missing:undefined;
@@ -82,7 +86,7 @@ export default async function AdminTeacherReviewDetail({params,searchParams}:{pa
     </div></Panel>
     <Panel><h2 className="text-xl font-black text-teal">{text.missing}</h2><ul className="mt-3 list-inside list-disc space-y-1 text-sm text-muted">{!teacher.data.headline&&<li>{text.missingHeadline}</li>}{labels.length===0&&<li>{text.missingSpecialization}</li>}{!details?.success&&<li>{text.missingDetails}</li>}</ul></Panel>
    </div>
-   <aside className="grid content-start gap-5"><Panel><h2 className="mb-4 text-xl font-black text-teal">{text.decision}</h2>{review?.status==='pending'&&review.request_id?<ReviewDecisionForm locale={locale} teacherId={id} requestId={review.request_id} submittedReady={!applicationReadFailed&&submittedApplicationReady(applicationData.application,applicationData.missing)}/>:<p className="text-sm text-muted">{text.retry}</p>}</Panel>
+   <aside className="grid content-start gap-5"><AdminTeacherPlanPanel locale={locale} teacherId={id} status={planStatus} error={!!planResult.error||!planStatus}/><Panel><h2 className="mb-4 text-xl font-black text-teal">{text.decision}</h2>{review?.status==='pending'&&review.request_id?<ReviewDecisionForm locale={locale} teacherId={id} requestId={review.request_id} submittedReady={!applicationReadFailed&&submittedApplicationReady(applicationData.application,applicationData.missing)}/>:<p className="text-sm text-muted">{text.retry}</p>}</Panel>
     <Panel><h2 className="text-xl font-black text-teal">{text.history}</h2>{review?.events.length?<ol className="mt-4 grid gap-4">{review.events.map(event=><li key={event.id} className="border-s-2 border-line ps-3"><div className="flex flex-wrap justify-between gap-2"><Status value={event.kind} locale={locale}/><time className="text-xs text-muted">{cairoDate(event.created_at,locale)}</time></div>{event.reason&&<p className="mt-2 whitespace-pre-wrap text-sm">{event.reason}</p>}</li>)}</ol>:<p className="mt-3 text-sm text-muted">{text.noHistory}</p>}</Panel></aside>
   </div>
  </>;

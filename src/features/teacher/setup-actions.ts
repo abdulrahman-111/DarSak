@@ -6,6 +6,7 @@ import type { Locale } from '@/features/student/domain';
 import { groupDetailsFieldErrors, groupDetailsSchema, groupScheduleSlotFieldErrors, groupScheduleSlotSchema } from './setup-domain';
 import { idSchema } from '@/features/student/domain';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
+import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export type GroupDraftActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; id?: string; updated_at?: string } | null;
 export type ScheduleSlotActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
@@ -60,6 +61,8 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
   });
   if (error) {
     const raw = error.message.toLowerCase();
+    const quotaMessage = quotaErrorMessage(locale, error.message);
+    if (quotaMessage) return { error: quotaMessage };
     if (error.code === '40001' || raw.includes('changed') || raw.includes('concurrent')) return {
       error: message(locale, 'This group changed in another tab. Refresh it, review the latest details, and try again.', 'تغيرت هذه المجموعة في علامة تبويب أخرى. حدّث الصفحة وراجع أحدث التفاصيل ثم حاول مرة أخرى.'),
     };
@@ -94,6 +97,8 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
 
 function scheduleError(locale: Locale, rawError: string): string {
   const error = rawError.toLowerCase();
+  const quotaMessage = quotaErrorMessage(locale, rawError);
+  if (quotaMessage) return quotaMessage;
   if(error==='teacher teaching access expired')return teachingGuardMessage(locale,'expired');
   if (error.includes('overlap') && (error.includes('lesson') || error.includes('schedule'))) {
     return message(locale,
