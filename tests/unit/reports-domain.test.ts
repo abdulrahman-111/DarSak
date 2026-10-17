@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeReportPagePath, parseAdminReportPage } from '@/features/reports/domain';
+import { normalizeReportPagePath, reportProgress, parseAdminReportPage } from '@/features/reports/domain';
 
 describe('problem report page paths', () => {
   it('keeps only the pathname from pasted URLs', () => {
@@ -26,3 +26,6 @@ describe('admin problem report RPC response', () => {
     expect(parseAdminReportPage({ total: -1, rows: [] })).toBeNull();
   });
 });
+
+
+it('explains report progress without changing stored status',()=>{expect(reportProgress('open',null,'en')).toBe('Received');expect(reportProgress('open','2026-10-17','en')).toBe('Under review');expect(reportProgress('resolved',null,'ar')).toBe('تم الحل');});
