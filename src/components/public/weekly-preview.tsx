@@ -1,4 +1,4 @@
-import { Check } from 'lucide-react';
+import Image from 'next/image';
 import { publicCopy, type PublicLocale } from './copy';
 
 const blocks = [
@@ -18,7 +18,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
     : { chemistry: 'Chemistry 4:00', maths: 'Maths 6:00', physics: 'Physics 5:00' };
 
   return (
-    <div className="relative pb-10" aria-label={c.thisWeek}>
+    <div className="landing-preview relative pb-10" aria-label={c.thisWeek}>
       <div className="rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-4 shadow-[0_30px_60px_-40px_rgba(14,74,75,.5)] sm:p-6">
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <div>
@@ -46,7 +46,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
         </div>
       </div>
       <div className="absolute bottom-0 start-2 flex max-w-[19rem] items-center gap-3 rounded-2xl bg-teal px-4 py-3 text-cream shadow-[0_20px_40px_-20px_rgba(14,74,75,.8)] sm:-start-3">
-        <span className="grid size-8 flex-none place-items-center rounded-full bg-[#8fd1b5] text-teal"><Check size={17} strokeWidth={3}/></span>
+        <span className="grid size-8 flex-none place-items-center rounded-full bg-[#8fd1b5] text-teal"><Image aria-hidden="true" src="/brand/darsak/accepted-request-toast.svg" alt="" width={24} height={24}/></span>
         <div className="text-sm leading-snug"><strong>{c.accepted}</strong><p className="text-[#cfe3de]">{c.acceptedDetail}</p></div>
       </div>
     </div>

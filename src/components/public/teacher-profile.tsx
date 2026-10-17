@@ -124,7 +124,7 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
 
         <section className={`mt-8 border-t pt-7 ${theme.border}`}>
           <h2 className={`text-xl font-black ${theme.accent}`}>{labels.groups}</h2>
-          {view.groups.length ? <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2">{view.groups.map(group => <div key={group.id} className="min-w-0"><GroupCard group={group} locale={locale} t={{ groups: labels.groups, findTutor: labels.findTutor }} /></div>)}</div> : <p className="mt-3 text-muted">{labels.noGroups}</p>}
+          {view.groups.length ? <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2">{view.groups.map(group => <div key={group.id} className="min-w-0"><GroupCard group={group} locale={locale} t={{ groups: labels.groups, findTutor: labels.findTutor }} modeLabel={details?.teaching_mode === 'online' ? labels.mode.online : undefined} /></div>)}</div> : <p className="mt-3 text-muted">{labels.noGroups}</p>}
         </section>
 
         {hasContact && <section className={`mt-8 border-t pt-7 ${theme.border}`}>

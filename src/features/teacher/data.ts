@@ -227,11 +227,13 @@ export async function teacherStudents(locale: Locale, requestedPage: unknown = 1
 
 export async function teacherLessons(locale: Locale, requestedPage: unknown = 1) {
   const me = await teacherViewer(locale);
-  const groupsResult = await calendarGroups(me);
+  const [groupsResult, lessons] = await Promise.all([
+    calendarGroups(me),
+    calendarLessonRows(me, requestedPage),
+  ]);
   if (groupsResult.error) return { me, groups: [], lessons: [], total: 0, page: 1, pageCount: 1, error: groupsResult.error };
   const groups = groupsResult.rows;
   if (!groups.length) return { me, groups, lessons: [], total: 0, page: 1, pageCount: 1, error: null };
-  const lessons = await calendarLessonRows(me, requestedPage);
   return { me, groups, lessons: lessons.rows, total: lessons.total, page: lessons.page, pageCount: lessons.pageCount, error: lessons.error };
 }
 

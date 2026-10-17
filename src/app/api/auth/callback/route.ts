@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
 import { after } from 'next/server';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { flushEmailOutbox } from '@/features/email/worker';
@@ -6,6 +7,8 @@ import { createClient, isConfigured } from '@/lib/supabase/server';
 import { defaultLocale, isLocale, type Locale } from '@/i18n/config';
 import { safeAuthNext } from '@/features/auth/return-path';
 import { googleOnboardingDestination } from '@/features/auth/google-onboarding';
+import { callDeletionEdge } from '@/features/account/edge';
+import { googleReauthHint } from '@/features/account/google-hint';
 
 const OTP_TYPES: readonly EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 export const maxDuration = 40;
@@ -30,6 +33,26 @@ export async function GET(request: NextRequest) {
   let setupError = false;
   if (code) {
     ({ error } = await db.auth.exchangeCodeForSession(code));
+    const deletionIntent = params.get('delete_intent');
+    if (deletionIntent && destination !== `/${locale}/reset-password`) {
+      const jar = await cookies();
+      const cookieIntent = jar.get('dars-delete-intent')?.value;
+      const nonce = jar.get('dars-delete-nonce')?.value;
+      const cookieOwner = jar.get('dars-delete-owner')?.value;
+      const fail = () => {
+        jar.delete('dars-delete-intent'); jar.delete('dars-delete-nonce'); jar.delete('dars-delete-owner'); jar.delete('dars-delete-google-ready');
+        const response = NextResponse.redirect(new URL(`/${locale}/account?error=reauth`, request.nextUrl.origin));
+        response.headers.set('Cache-Control', 'private, no-store'); return response;
+      };
+      if (error || !cookieIntent || cookieIntent !== deletionIntent || !nonce || !cookieOwner) return fail();
+      const [{ data: identity, error: identityError }, { data: session }] = await Promise.all([db.auth.getUser(), db.auth.getSession()]);
+      if (identityError || !identity.user || identity.user.id !== cookieOwner || !identity.user.identities?.some(identity => identity.provider === 'google') || !session.session || session.session.user.id !== identity.user.id) return fail();
+      const proof = await callDeletionEdge(session.session.access_token, { operation: 'complete_google_reauth', intent_id: deletionIntent, nonce });
+      if (proof.error || !proof.data) return fail();
+      const response = NextResponse.redirect(new URL(`/${locale}/account`, request.nextUrl.origin));
+      response.cookies.set('dars-delete-google-ready', googleReauthHint(deletionIntent, cookieOwner), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 300 });
+      response.headers.set('Cache-Control', 'private, no-store'); return response;
+    }
     if (!error && destination !== `/${locale}/reset-password`) {
       const googleRole = params.get('google_role');
       if (params.has('google_role') && googleRole !== 'student' && googleRole !== 'teacher') setupError = true;
