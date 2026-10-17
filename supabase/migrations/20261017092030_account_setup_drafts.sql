@@ -66,7 +66,12 @@ begin
     raise exception 'active teacher or student required' using errcode='42501';
   end if;
   v_role:=v_profile.role::text;
-  if v_role='teacher' then perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_uid::text,0)); end if;
+  if v_role='teacher' then
+    perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_uid::text,0));
+  else
+    -- Student completion and profile edits lock the student row before the base profile.
+    perform 1 from public.student_profiles where id=v_uid for update;
+  end if;
   select * into v_profile from public.profiles where id=v_uid for update;
   if not found or v_profile.status<>'active' or v_profile.role::text<>v_role then
     raise exception 'account role changed during setup initialization' using errcode='42501';
