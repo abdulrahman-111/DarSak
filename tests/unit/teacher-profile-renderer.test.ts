@@ -12,7 +12,7 @@ const enrolledContacts: PublicTeacherVisitorContacts = {
 };
 
 describe('shared teacher visitor projection', () => {
-  it('preview includes only explicitly public contacts and visible profile sections', () => {
+  it('owner preview never includes contacts and visible profile sections', () => {
     const details = visiblePublicTeacherProfile({
       ...emptyRichProfile(),
       about: { ar: 'خاص', en: 'Hidden text' },
@@ -51,7 +51,7 @@ describe('shared teacher visitor projection', () => {
     expect(view.contacts).toEqual(enrolledContacts);
   });
 
-  it('owner preview includes only contact values explicitly filtered as public', () => {
+  it('owner preview hides contacts even when legacy data says public', () => {
     const publicContacts = publicVisitorContacts('public', enrolledContacts);
     const publicView = buildTeacherVisitorView({
       teacher,
@@ -74,7 +74,8 @@ describe('shared teacher visitor projection', () => {
       coverUrl: null,
     });
 
-    expect(publicView.contacts).toEqual(enrolledContacts);
+    expect(publicView.contacts).toBeNull();
+    expect(JSON.stringify(publicView)).not.toContain('+201234567890');
     expect(privateView.contacts).toBeNull();
     expect(JSON.stringify(privateView)).not.toContain('+201234567890');
   });

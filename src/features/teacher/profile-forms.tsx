@@ -15,8 +15,7 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   save: 'حفظ الملف الشخصي', saving: 'جارٍ الحفظ…', fullName: 'الاسم الكامل', headline: 'العنوان المهني',
   specializations: 'المواد والتخصصات', chooseSubjects: 'اختر المواد والسياقات التي تدرّسها.', emptyCatalogue: 'لا توجد تخصصات متاحة بعد. يمكنك حفظ بقية بياناتك الآن.',
   chooseSubject: 'المادة', chooseCategory: 'السنة / فئة الطلاب', addSpecialization: 'إضافة التخصص', adding: 'جارٍ الإضافة…', remove: 'إزالة', retained: 'تخصص محفوظ يحتوي على مادة أو فئة مؤرشفة.', archived: 'مؤرشف', addSubject: 'إضافة مادة', addCategory: 'إضافة سنة أو فئة',
-  phone: 'رقم الهاتف', whatsapp: 'رقم واتساب', email: 'بريد التواصل', e164: 'اكتب الرقم بالصيغة الدولية مع رمز الدولة، مثل +201234567890.', whatsappHint: 'أدخل رقم واتساب الذي تريد استقبال رسائل الطلاب عليه. اختر «عام» أدناه ليتمكن الزوار من مراسلتك؛ وإلا فسيظهر للطلاب المقبولين فقط.',
-  visibility: 'من يمكنه رؤية بيانات التواصل؟', enrolled: 'طلاب المجموعات المقبولون فقط (الافتراضي)', public: 'عام بعد اعتماد الحساب', visibilityHint: 'لا تُنشر بياناتك تلقائيًا. اختر «عام» صراحةً ليتمكن زوار ملفك من التواصل معك. لا يؤثر هذا الاختيار في بريد تسجيل الدخول.',
+  phone: 'رقم الهاتف', whatsapp: 'رقم واتساب', email: 'بريد التواصل', e164: 'اكتب الرقم بالصيغة الدولية مع رمز الدولة، مثل +201234567890.', whatsappHint: 'تظهر بيانات التواصل للطلاب النشطين بعد قبول تسجيلهم في إحدى مجموعاتك فقط. لا تظهر للزوار أو للطلبات المعلّقة أو المرفوضة أو الملغاة أو المحذوفة.',
   required: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 100 حرف.', headlineBounds: 'يجب ألا يتجاوز العنوان 160 حرفاً.',
   phoneError: 'أدخل رقماً دولياً صحيحاً بصيغة E.164 أو اتركه فارغاً.', emailError: 'أدخل بريداً صحيحاً لا يتجاوز 254 حرفاً أو اتركه فارغاً.',
   selectionError: 'تحقق من اختيار التخصصات.',
@@ -24,8 +23,7 @@ const copy = (locale: Locale) => locale === 'ar' ? {
 } : {
   save: 'Save profile', saving: 'Saving…', fullName: 'Full name', headline: 'Professional headline',
   specializations: 'Subjects and specializations', chooseSubjects: 'Choose the subjects and academic contexts you teach.', emptyCatalogue: 'No specializations are available yet. You can save the rest of your profile.',
-  phone: 'Phone number', whatsapp: 'WhatsApp number', email: 'Contact email', e164: 'Enter the number with its country code, such as +201234567890.', whatsappHint: 'Enter the WhatsApp number where you want students to reach you. Choose “Public” below to let profile visitors message you; otherwise, only accepted students can see it.',
-  visibility: 'Who can see your contact details?', enrolled: 'Accepted students in my groups (default)', public: 'Public after account approval', visibilityHint: 'Your contact details are not published automatically. Choose “Public” to let visitors to your profile contact you. This does not change your sign-in email.',
+  phone: 'Phone number', whatsapp: 'WhatsApp number', email: 'Contact email', e164: 'Enter the number with its country code, such as +201234567890.', whatsappHint: 'Active students can see your contact details only after you accept their enrollment in one of your groups. Visitors and pending, rejected, cancelled, or removed enrollments cannot see them.',
   required: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 100 characters.', headlineBounds: 'Headline must be no longer than 160 characters.',
   phoneError: 'Enter a valid international E.164 number or leave this blank.', emailError: 'Enter a valid email up to 254 characters or leave this blank.',
   selectionError: 'Check your specialization selection.',
@@ -194,16 +192,11 @@ export function TeacherProfileForm({ locale, values, nodes, subjects, offerings,
       <h2 id="profile-contact-heading" className="text-lg font-black text-teal">{ar ? 'بيانات التواصل' : 'Contact details'}</h2>
       <div className="grid gap-5 md:grid-cols-2">
         {contactInput('phone_number', t.phone, t.e164)}
-        {contactInput('whatsapp_number', t.whatsapp, t.whatsappHint)}
+        {contactInput('whatsapp_number', t.whatsapp)}
         {contactInput('contact_email', t.email)}
       </div>
       <div>
-        <label htmlFor="profile-visibility" className="block text-sm font-bold">{t.visibility}</label>
-        <select id="profile-visibility" name="visibility" value={formValues.visibility} onChange={event => setFormValues(current => ({ ...current, visibility: event.target.value as ProfileFormValues['visibility'] }))} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
-          <option value="enrolled">{t.enrolled}</option>
-          <option value="public">{t.public}</option>
-        </select>
-        <p className="mt-1 text-xs text-muted">{t.visibilityHint}</p>
+        <p className="rounded-xl border border-line bg-cream/60 p-3 text-sm text-muted">{t.whatsappHint}</p>
       </div>
     </section>
 

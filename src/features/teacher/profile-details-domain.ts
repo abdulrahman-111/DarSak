@@ -203,17 +203,12 @@ export function visiblePublicTeacherProfile(input: RichProfileInput): PublicTeac
   };
 }
 
-/** Contacts enter the visitor view only when the independent setting is explicitly public. */
+/** Owner previews never receive teacher contact values. */
 export function publicVisitorContacts(
-  visibility: string | null | undefined,
-  contacts: PublicTeacherVisitorContacts | null | undefined,
+  _visibility: string | null | undefined,
+  _contacts: PublicTeacherVisitorContacts | null | undefined,
 ): PublicTeacherVisitorContacts | null {
-  if (visibility !== 'public' || !contacts) return null;
-  return {
-    phone_number: contacts.phone_number,
-    whatsapp_number: contacts.whatsapp_number,
-    contact_email: contacts.contact_email,
-  };
+  return null;
 }
 
 /** Return only enabled, non-empty descriptive values in the teacher's chosen order. */

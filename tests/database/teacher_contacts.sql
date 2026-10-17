@@ -82,6 +82,38 @@ begin
 end $$;
 reset role;
 
+update public.enrollments set status='rejected' where student_id='10000000-0000-4000-8000-000000000002';
+set local role authenticated;
+set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000002';
+do $$ begin
+  if exists(select 1 from public.teacher_contacts) then raise exception 'rejected enrollment retained contact access'; end if;
+end $$;
+reset role;
+update public.enrollments set status='cancelled' where student_id='10000000-0000-4000-8000-000000000002';
+set local role authenticated;
+set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000002';
+do $$ begin
+  if exists(select 1 from public.teacher_contacts) then raise exception 'cancelled enrollment retained contact access'; end if;
+end $$;
+reset role;
+update public.enrollments set status='removed' where student_id='10000000-0000-4000-8000-000000000002';
+set local role authenticated;
+set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000002';
+do $$ begin
+  if exists(select 1 from public.teacher_contacts) then raise exception 'removed enrollment retained contact access'; end if;
+end $$;
+reset role;
+update public.enrollments set status='accepted' where student_id='10000000-0000-4000-8000-000000000002';
+
+update public.enrollments set status='pending' where student_id='10000000-0000-4000-8000-000000000002';
+set local role authenticated;
+set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000002';
+do $$ begin
+  if exists(select 1 from public.teacher_contacts) then raise exception 'pending enrollment retained contact access'; end if;
+end $$;
+reset role;
+update public.enrollments set status='accepted' where student_id='10000000-0000-4000-8000-000000000002';
+
 set local role authenticated;
 set local request.jwt.claim.sub = '10000000-0000-4000-8000-000000000003';
 do $$
@@ -104,12 +136,17 @@ reset role;
 
 update public.teacher_contacts set visibility='public'
 where teacher_id='10000000-0000-4000-8000-000000000001';
+do $$ begin
+  if (select visibility <> 'enrolled' from public.teacher_contacts where teacher_id='10000000-0000-4000-8000-000000000001') then
+    raise exception 'legacy public visibility was not normalized on write';
+  end if;
+end $$;
 set local role anon;
 set local request.jwt.claim.sub = '';
 do $$
 begin
-  if (select count(*) from public.teacher_contacts) <> 1 then
-    raise exception 'explicit public opt-in did not permit anonymous read';
+  if (select count(*) from public.teacher_contacts) <> 0 then
+    raise exception 'legacy public visibility exposed contacts to anonymous viewer';
   end if;
 end $$;
 reset role;
