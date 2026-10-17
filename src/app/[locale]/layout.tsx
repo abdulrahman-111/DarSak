@@ -17,10 +17,11 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   return (
     <html lang={locale} dir={getDirection(locale)}>
       <body>
+        <a className="skip-link" href="#main-content">{locale === 'ar' ? 'انتقل إلى المحتوى الرئيسي' : 'Skip to main content'}</a>
         <Header locale={locale} t={t} />
-        <main>{children}</main>
+        <main id="main-content" tabIndex={-1}>{children}</main>
         <footer className="mt-20 border-t border-line py-8">
-          <div className="container flex justify-between text-sm text-muted">
+          <div className="container flex flex-wrap items-start justify-between gap-x-6 gap-y-2 text-sm text-muted">
             <span>{t.brand} · {t.tagline}</span>
             <span>© 2026</span>
           </div>

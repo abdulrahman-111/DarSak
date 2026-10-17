@@ -47,7 +47,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-teal">
             <Image aria-hidden="true" src="/brand/darsak/hero-badge-icon.svg" alt="" width={20} height={20} className="size-5"/>{c.eyebrow}
           </p>
-          <h1 className="mt-6 max-w-3xl text-5xl font-black leading-[1.02] tracking-[-.04em] text-teal md:text-6xl lg:text-7xl">{c.heroTitle}</h1>
+          <h1 className={`mt-6 max-w-3xl text-5xl font-black ${locale === 'ar' ? 'leading-[1.18]' : 'leading-[1.02]'} tracking-[-.04em] text-teal md:text-6xl lg:text-7xl`}>{c.heroTitle}</h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#4d473f]">{c.heroBody}</p>
           <div className="mt-8 flex flex-wrap gap-3">
             <Link href={`/${locale}/teachers`} className="inline-flex min-h-12 items-center gap-2 rounded-[.9rem] bg-orange px-6 font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#c4561a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2">
@@ -148,6 +148,16 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
           <div className="grid content-center gap-4 sm:grid-cols-2">
             {c.teacherFeatures.map(feature => <div key={feature} className="flex items-center gap-3 border-t border-[#3d6f6f] py-4 font-bold"><CheckCircle2 className="text-[#8fd1b5]" size={20}/>{feature}</div>)}
           </div>
+        </div>
+      </section>
+
+      <section className="container py-16 md:py-20" aria-labelledby="faq-title">
+        <h2 id="faq-title" className="text-3xl font-black tracking-tight text-teal">{c.faqTitle}</h2>
+        <div className="mt-6 divide-y divide-[#e3d9c8] rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] px-5 sm:px-7">
+          {c.faq.map(([question, answer]) => <details key={question} className="group py-5">
+            <summary className="cursor-pointer text-base font-bold text-teal marker:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{question}</summary>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#4d473f]">{answer}</p>
+          </details>)}
         </div>
       </section>
     </div>

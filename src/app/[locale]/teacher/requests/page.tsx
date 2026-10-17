@@ -13,8 +13,8 @@ export default async function TeacherRequests({params,searchParams}:{params:Prom
   await requireTeachingAccess(locale);
   const data=await teacherRequests(locale,query.page,query.q,query.group_id);
   const copy=ar
-    ?{eyebrow:'طلبات الطلاب',title:'طلبات الانضمام',description:'راجع كل طلب، ثم اقبل الطالب أو ارفضه. تطبق السعة داخل قاعدة البيانات.',failed:'تعذر تحميل طلبات الطلاب. حاول مرة أخرى.',retry:'إعادة المحاولة',empty:'لا توجد طلبات تنتظر المراجعة.',previous:'السابق',next:'التالي',page:'الصفحة'}
-    :{eyebrow:'Student requests',title:'Enrollment requests',description:'Review each request, then accept or decline it. Capacity is enforced in the database.',failed:'Could not load student requests. Try again.',retry:'Try again',empty:'No requests are waiting for review.',previous:'Previous',next:'Next',page:'Page'};
+    ?{eyebrow:'طلبات الطلاب',title:'طلبات الانضمام',description:'راجع الطلبات واقبل الطلاب عند توفر أماكن في المجموعة.',failed:'تعذر تحميل طلبات الطلاب. حاول مرة أخرى.',retry:'إعادة المحاولة',empty:'لا توجد طلبات تنتظر المراجعة.',previous:'السابق',next:'التالي',page:'الصفحة'}
+    :{eyebrow:'Student requests',title:'Enrollment requests',description:'Review requests and offer places while seats are available.',failed:'Could not load student requests. Try again.',retry:'Try again',empty:'No requests are waiting for review.',previous:'Previous',next:'Next',page:'Page'};
   return <>
     <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description}/>
     {data.error

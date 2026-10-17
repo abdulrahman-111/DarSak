@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ActiveLink } from '@/components/active-link';
+import { ActiveLink, MobileNavigationSummary } from '@/components/active-link';
 import type { PlatformRole } from './access';
 
 type NavItem = { href: string; label: string };
@@ -24,7 +24,6 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
     { href: `/${locale}/admin`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/admin/users`, label: ar ? 'المستخدمون' : 'People' },
     { href: `/${locale}/admin/teachers`, label: ar ? 'طلبات المعلمين' : 'Teacher requests' },
-    { href: `/${locale}/admin/access`, label: ar ? 'خطط المعلمين' : 'Teacher plans' },
     { href: `/${locale}/admin/email`, label: ar ? 'حالة البريد' : 'Email delivery' },
     { href: `/${locale}/admin/education`, label: ar ? 'الدليل التعليمي' : 'Education' },
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
@@ -55,8 +54,7 @@ function itemLabel(item: NavItem, unreadCount: number|null, locale:string) {
 export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {
   const ar = locale === 'ar';
   const items = platformNavigation(locale, role);
-  const accountMenu = ar ? 'قائمة الحساب' : 'Account menu';
-  const roleName = role === 'teacher' ? (ar ? 'معلم' : 'Teacher') : role === 'admin' ? (ar ? 'مسؤول' : 'Administrator') : (ar ? 'طالب' : 'Student');
+  const roleName = role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher workspace') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student workspace');
   return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
     <aside className="min-w-0 rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:p-4">
       <Link href={`/${locale}/${role}`} aria-label={ar ? 'درسك' : 'DarSak'} className="hidden items-center gap-3 px-3 py-3 lg:flex">
@@ -64,18 +62,15 @@ export function PlatformShell({ locale, role, name, unreadCount=null, children }
         <span><strong className="block text-lg">{ar ? 'درسك' : 'DarSak'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
       </Link>
       <details className="group lg:hidden">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden">
-          <span className="min-w-0"><span className="block truncate text-xs font-semibold text-cream/70">{roleName} · {accountMenu}</span><span className="block truncate font-bold">{name}</span></span>
-          <span aria-hidden="true" className="shrink-0 text-sm text-cream/80 group-open:rotate-180">⌄</span>
-          {unreadCount!==null&&unreadCount>0&&<span aria-hidden="true" className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}
-          {unreadCount!==null&&unreadCount>0&&<span className="sr-only">{ar?`${unreadCount} إشعارات غير مقروءة`:`${unreadCount} unread notifications`}</span>}
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden">
+          <MobileNavigationSummary items={items} role={role} roleLabel={roleName} name={name} locale={locale} unreadCount={unreadCount}/>
         </summary>
-        <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
-          {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
+        <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? `تنقل ${role === 'admin' ? 'الإدارة' : role === 'teacher' ? 'المعلم' : 'الطالب'}` : `${role === 'admin' ? 'Administration' : role === 'teacher' ? 'Teacher' : 'Student'} navigation`}>
+          {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
         </nav>
       </details>
-      <nav className="mt-5 hidden gap-2 pb-2 lg:grid" aria-label={ar ? 'تنقل الحساب' : 'Account navigation'}>
-        {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="min-w-0 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
+      <nav className="mt-5 hidden gap-2 pb-2 lg:grid" aria-label={ar ? `تنقل ${role === 'admin' ? 'الإدارة' : role === 'teacher' ? 'المعلم' : 'الطالب'}` : `${role === 'admin' ? 'Administration' : role === 'teacher' ? 'Teacher' : 'Student'} navigation`}>
+        {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
       </nav>
       <div className="mt-5 hidden rounded-2xl bg-black/10 px-3 py-3 text-sm lg:block"><span className="block truncate font-bold">{name}</span><span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span></div>
     </aside>

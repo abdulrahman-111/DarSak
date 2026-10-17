@@ -1,10 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-vi.mock('@/components/active-link', () => ({
-  ActiveLink: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) =>
-    createElement('a', { href, className }, children),
-}));
+vi.mock('next/navigation', () => ({ usePathname: () => '/en/student/saved' }));
+vi.mock('@/components/active-link', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/components/active-link')>();
+  return {
+    ...actual,
+    ActiveLink: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) =>
+      createElement('a', { href, className }, children),
+  };
+});
 import { SAVED_GROUP_PAGE_SIZE, savedGroupOffset } from '@/features/student/saved-domain';
 import { PlatformShell } from '@/components/platform/shell';
 
