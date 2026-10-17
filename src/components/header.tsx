@@ -35,6 +35,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}>{t.discover}</ActiveLink>
           {!me && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
           {activeRole && <ActiveLink exact className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
+          {me && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="transition hover:text-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
         </nav>
 
@@ -61,6 +62,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           <ActiveLink className="inline-flex items-center gap-1.5 py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}><Search size={16}/>{t.discover}</ActiveLink>
           {!me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
           {activeRole && <ActiveLink exact className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
+          {me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
           {!me && <ActiveLink className="py-1 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/login`}>{t.login}</ActiveLink>}
         </nav>

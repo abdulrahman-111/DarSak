@@ -38,6 +38,7 @@
   "exclude": [
     "node_modules",
     ".next",
-    ".next-stale-20261001"
+    ".next-stale-20261001",
+    "supabase/functions"
   ]
 }

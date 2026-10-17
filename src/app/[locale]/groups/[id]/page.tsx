@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, BookOpen, CalendarDays, MapPin, UserRound, Users } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
@@ -36,15 +37,17 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
   const data = detail.group;
 
   const me = requestViewer.user ? { user: requestViewer.user, profile: requestViewer.profile } : null;
-  const announcement = activeViewer ? await groupAnnouncement(requestViewer.db, id) : null;
-  const enrollment = me?.profile?.role === 'student' ? await enrollmentForGroup(id) : null;
+  const [announcement, enrollment, saved] = await Promise.all([
+    activeViewer ? groupAnnouncement(requestViewer.db, id) : Promise.resolve(null),
+    me?.profile?.role === 'student' ? enrollmentForGroup(id) : Promise.resolve(null),
+    activeViewer && me?.profile?.role === 'student' ? savedGroupStatus(id) : Promise.resolve(false),
+  ]);
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject ? catalogueDisplayName(data.offering.subject, locale) || t.groups : t.groups;
   const nextLesson = data.next_lesson_at
     ? new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', { dateStyle: 'full', timeStyle: 'short', timeZone: 'Africa/Cairo' }).format(new Date(data.next_lesson_at))
     : null;
   const isStudent = me?.profile?.role === 'student' && me.profile.status === 'active';
-  const saved = isStudent ? await savedGroupStatus(id) : false;
   const canEnroll = detail.publiclyEligible && canRequest(enrollment?.status) && data.available_seats !== 0;
 
   return (
@@ -63,7 +66,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             {activeViewer && <AnnouncementView locale={locale} announcement={announcement} className="mt-6" />}
 
             <div className="mt-6 rounded-xl bg-[#f6f0e4] p-4" aria-label={c.nextLesson}>
-              <p className="flex items-center gap-2 text-sm font-bold text-teal"><CalendarDays size={17}/>{c.nextLesson}</p>
+              <p className="flex items-center gap-2 text-sm font-bold text-teal"><Image aria-hidden="true" src="/brand/darsak/next-session-time.svg" alt="" width={16} height={16}/>{c.nextLesson}</p>
               <p className="mt-2 text-sm text-muted">{nextLesson || c.noNextLesson}</p>
             </div>
 
@@ -86,6 +89,10 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
                   <dt className="flex items-center gap-2 text-sm text-muted"><Users size={16}/>{c.capacity}</dt>
                   <dd className="mt-2 font-bold text-ink">{data.capacity}</dd>
                 </div>
+                {data.offering?.node && <div className="rounded-xl bg-[#f6f0e4] p-4">
+                  <dt className="flex items-center gap-2 text-sm text-muted"><Image aria-hidden="true" src="/brand/darsak/academic-stage.svg" alt="" width={16} height={16}/>{c.context}</dt>
+                  <dd className="mt-2 font-bold text-ink">{catalogueDisplayName(data.offering.node, locale)}</dd>
+                </div>}
               </dl>
             </div>
 
@@ -100,6 +107,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
           <aside className="h-fit rounded-[1.4rem] bg-teal p-6 text-cream lg:sticky lg:top-24">
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
+            {data.available_seats !== undefined && <p className="mt-4 flex items-center gap-2 text-sm font-bold text-cream"><span className="grid size-6 place-items-center rounded-full bg-[#8fd1b5]"><Image aria-hidden="true" src="/brand/darsak/available-seats.svg" alt="" width={16} height={16}/></span>{c.availableSeats}: {data.available_seats}</p>}
             <div className="mt-6 [&_button]:w-full [&_button]:bg-orange [&_button]:text-white">
               {isStudent && detail.publiclyEligible && <SavedGroupForm locale={locale} groupId={id} saved={saved}/>}
               {isStudent && enrollment?.status === 'pending' ? (

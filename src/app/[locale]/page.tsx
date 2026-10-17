@@ -33,13 +33,19 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
     '/brand/darsak/plan-groups-easily.svg',
     '/brand/darsak/manage-each-group.svg',
   ];
+  const subjectIcons = [
+    '/brand/darsak/academic-subjects.svg',
+    '/brand/darsak/languages.svg',
+    '/brand/darsak/programming.svg',
+    '/brand/darsak/custom-categories.svg',
+  ];
 
   return (
     <div className="bg-[#f6f0e4]">
       <section className="container grid gap-12 py-14 md:grid-cols-[1.05fr_.95fr] md:items-center md:py-20 lg:gap-16">
-        <div>
+        <div className="landing-intro">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-teal">
-            <span className="size-2 rounded-full bg-orange"/>{c.eyebrow}
+            <Image aria-hidden="true" src="/brand/darsak/hero-badge-icon.svg" alt="" width={20} height={20} className="size-5"/>{c.eyebrow}
           </p>
           <h1 className="mt-6 max-w-3xl text-5xl font-black leading-[1.02] tracking-[-.04em] text-teal md:text-6xl lg:text-7xl">{c.heroTitle}</h1>
           <p className="mt-6 max-w-xl text-lg leading-8 text-[#4d473f]">{c.heroBody}</p>
@@ -65,7 +71,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
 
       <div role="group" aria-label={c.highlights} className="border-y border-[#e3d9c8] bg-[#fffdf8] py-3.5">
         <div className="container flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm font-bold text-teal sm:justify-between sm:text-base">
-          {c.subjectRange.map((item, index) => <span key={item} className="flex items-center gap-7">{item}{index < c.subjectRange.length - 1 && <span aria-hidden="true" className="size-1.5 rounded-full bg-orange"/>}</span>)}
+          {c.subjectRange.map((item, index) => <span key={item} className="flex items-center gap-7"><span className="inline-flex items-center gap-2"><Image aria-hidden="true" src={subjectIcons[index]} alt="" width={20} height={20}/>{item}</span>{index < c.subjectRange.length - 1 && <span aria-hidden="true" className="size-1.5 rounded-full bg-orange"/>}</span>)}
         </div>
       </div>
 
@@ -80,7 +86,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {c.featureCards.slice(groupIndex * 3, groupIndex * 3 + 3).map(([title, body], index) => {
                 const icon = featureIcons[groupIndex * 3 + index];
-                return <article key={title} className="min-w-0 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5 sm:p-6">
+                return <article key={title} className="landing-feature-card min-w-0 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5 sm:p-6">
                   <span aria-hidden="true" className="grid size-11 place-items-center rounded-xl bg-[#d5ebe6]"><Image src={icon} alt="" width={24} height={24}/></span>
                   <h4 className="mt-4 text-lg font-bold leading-snug text-ink">{title}</h4>
                   <p className="mt-2 break-words text-sm leading-6 text-[#4d473f]">{body}</p>
