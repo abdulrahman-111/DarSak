@@ -64,7 +64,7 @@ export function VerifySignupCodeForm({ locale, emailLabel, email }: { locale: Au
   const feedbackId = useId();
   return <form action={formAction} className="space-y-5" aria-describedby={state ? feedbackId : undefined}>
     {email ? <input type="hidden" name="email" value={email}/> : <label className="block text-sm font-bold text-ink">{emailLabel}<input className={inputClass} name="email" type="email" dir="ltr" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={state?.email}/></label>}
-    <label className="block text-sm font-bold text-ink">{copy.codeLabel}<input className={inputClass} name="token" type="text" dir="ltr" required minLength={6} maxLength={6} pattern="[0-9]{6}" inputMode="numeric" autoComplete="one-time-code"/></label>
+    <label className="block text-sm font-bold text-ink">{copy.codeLabel}<input className={inputClass} name="token" type="text" dir="ltr" required minLength={6} maxLength={10} pattern="[0-9]{6,10}" inputMode="numeric" autoComplete="one-time-code"/></label>
     <Feedback state={state} id={feedbackId}/>
     <button className={submitClass} disabled={pending} type="submit">{pending ? copy.verifyingCode : copy.verifyCode}</button>
   </form>;

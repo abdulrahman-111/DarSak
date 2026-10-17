@@ -83,8 +83,14 @@ export async function signupAction(locale: string, _previous: unknown, formData:
   const parsed = signupSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) return { error: locale === 'ar' ? 'تحقق من الاسم والبريد الإلكتروني وكلمة المرور (٨ أحرف على الأقل).' : 'Check your name, email and password (at least 8 characters).', ...signupEcho(formData) };
   const db = await createClient();
+  const email = parsed.data.email.trim();
+  const { data: emailRegistered, error: availabilityError } = await db.rpc('signup_email_is_registered', { p_email: email });
+  if (availabilityError || typeof emailRegistered !== 'boolean') {
+    return { error: authErrorMessage(locale, undefined, 'signup'), ...signupEcho(formData) };
+  }
+  if (emailRegistered) return { error: authErrorMessage(locale, 'user_already_exists', 'signup'), ...signupEcho(formData) };
   const { data, error } = await db.auth.signUp({
-    email: parsed.data.email, password: parsed.data.password,
+    email, password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName, requested_role: parsed.data.role },
       emailRedirectTo: callbackUrl(`/${locale}/dashboard`),
@@ -92,6 +98,10 @@ export async function signupAction(locale: string, _previous: unknown, formData:
     },
   });
   if (error) return { error: authErrorMessage(locale, error.code, 'signup'), ...signupEcho(formData) };
+  // Supabase can return an obfuscated existing account with no identity and no error.
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    return { error: authErrorMessage(locale, 'user_already_exists', 'signup'), ...signupEcho(formData) };
+  }
   if (parsed.data.role === 'teacher' && data.user) after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
   // Email confirmation is on: no session until the link is opened.
   if (!data.session) redirect(`/${locale}/check-email?email=${encodeURIComponent(parsed.data.email)}`);
@@ -188,8 +198,8 @@ export async function verifySignupCodeAction(locale: string, _previous: unknown,
   const unavailable = configurationError(locale);
   if (unavailable) return { error: unavailable };
   const parsed = forgotPasswordSchema.safeParse(Object.fromEntries(formData));
-  const token = textField(formData, 'token', 6);
-  if (!parsed.success || !token || !/^\d{6}$/.test(token)) {
+  const token = textField(formData, 'token', 10);
+  if (!parsed.success || !token || !/^\d{6,10}$/.test(token)) {
     return { error: authCopy[locale as Locale].codeInvalid, ...emailEcho(formData) };
   }
   const db = await createClient();

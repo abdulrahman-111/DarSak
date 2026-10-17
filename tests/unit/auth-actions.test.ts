@@ -1,12 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock } = vi.hoisted(() => ({
+const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock, signupAvailabilityMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getVerifiedUserMock: vi.fn(),
   isConfiguredMock: vi.fn(),
   redirectMock: vi.fn((url: string) => { throw new Error(`NEXT_REDIRECT:${url}`); }),
   afterMock: vi.fn(),
   onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback),
+  signupAvailabilityMock: vi.fn(async (): Promise<{ data: boolean | null; error: { message: string } | null }> => ({ data: false, error: null })),
 }));
 
 vi.mock('@/lib/supabase/server', () => ({
@@ -28,6 +29,7 @@ function form(values: Record<string, string>) {
   Object.entries(values).forEach(([key, value]) => data.set(key, value));
   return data;
 }
+function signupClient(auth: Record<string, unknown>) { return { auth, rpc: signupAvailabilityMock }; }
 const signup = { fullName: 'Sara Ali', email: 'sara@example.com', password: 'password123', role: 'student' };
 const redirectTarget = async (run: () => Promise<unknown>) => {
   try { await run(); } catch (error) { return (error as Error).message.replace('NEXT_REDIRECT:', ''); }
@@ -40,6 +42,7 @@ describe('auth actions', () => {
     getVerifiedUserMock.mockReset();
     redirectMock.mockClear();
     afterMock.mockReset();
+    signupAvailabilityMock.mockReset().mockResolvedValue({ data: false, error: null });
     onboardingDestinationMock.mockReset().mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
     isConfiguredMock.mockReturnValue(true);
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://dars.example');
@@ -79,7 +82,7 @@ describe('auth actions', () => {
   describe('signupAction', () => {
     it('sends emailRedirectTo and the captcha token, then redirects to check-email without a session', async () => {
       const signUp = vi.fn(async () => ({ data: { session: null }, error: null }));
-      createClientMock.mockResolvedValue({ auth: { signUp } });
+      createClientMock.mockResolvedValue(signupClient({ signUp }));
       const target = await redirectTarget(() => signupAction('en', null, form({ ...signup, 'cf-turnstile-response': 'tok' })));
       expect(target).toBe('/en/check-email?email=sara%40example.com');
       expect(signUp).toHaveBeenCalledWith({
@@ -91,29 +94,61 @@ describe('auth actions', () => {
           captchaToken: 'tok',
         },
       });
+      expect(signupAvailabilityMock.mock.invocationCallOrder[0]).toBeLessThan(signUp.mock.invocationCallOrder[0]);
+      expect(signupAvailabilityMock).toHaveBeenCalledWith('signup_email_is_registered', { p_email: signup.email });
+    });
+
+    it.each(['unconfirmed email', 'confirmed email', 'Google identity'])('blocks an existing %s before calling Supabase signup', async () => {
+      const signUp = vi.fn();
+      signupAvailabilityMock.mockResolvedValue({ data: true, error: null });
+      createClientMock.mockResolvedValue(signupClient({ signUp }));
+      const result = await signupAction('en', null, form(signup));
+      expect(result?.error).toBe('This email is already registered. Sign in or reset your password.');
+      expect(signUp).not.toHaveBeenCalled();
+    });
+
+    it('fails closed with a generic retry message when email availability cannot be checked', async () => {
+      const signUp = vi.fn();
+      signupAvailabilityMock.mockResolvedValue({ data: null, error: { message: 'lookup failed' } });
+      createClientMock.mockResolvedValue(signupClient({ signUp }));
+      expect((await signupAction('en', null, form(signup)))?.error).toBe('Unable to create an account. Please try again.');
+      expect(signUp).not.toHaveBeenCalled();
+    });
+
+    it('handles the unique-email race errors as an existing account', async () => {
+      const signUp = vi.fn(async () => ({ data: {}, error: { code: 'email_exists' } }));
+      createClientMock.mockResolvedValue(signupClient({ signUp }));
+      expect((await signupAction('ar', null, form(signup)))?.error).toBe('هذا البريد الإلكتروني مسجّل بالفعل. سجّل الدخول أو أعد تعيين كلمة المرور.');
+    });
+
+    it('handles Supabase fake existing-user responses with an empty identities list', async () => {
+      const signUp = vi.fn(async () => ({ data: { user: { identities: [] }, session: null }, error: null }));
+      createClientMock.mockResolvedValue(signupClient({ signUp }));
+      expect((await signupAction('en', null, form({ ...signup, role: 'teacher' })))?.error).toMatch(/already registered/);
+      expect(afterMock).not.toHaveBeenCalled();
     });
 
     it('goes to the dashboard when a session is returned', async () => {
-      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: { session: {} }, error: null }) } });
+      createClientMock.mockResolvedValue(signupClient({ signUp: async () => ({ data: { session: {} }, error: null }) }));
       expect(await redirectTarget(() => signupAction('ar', null, form(signup)))).toBe('/ar/dashboard');
     });
 
     it('schedules a bounded outbox flush after teacher signup succeeds', async () => {
       afterMock.mockReset();
-      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: { session: null, user: { id: 'teacher-id' } }, error: null }) } });
+      createClientMock.mockResolvedValue(signupClient({ signUp: async () => ({ data: { session: null, user: { id: 'teacher-id' } }, error: null }) }));
       expect(await redirectTarget(() => signupAction('en', null, form({ ...signup, role: 'teacher' })))).toBe('/en/check-email?email=sara%40example.com');
       expect(afterMock).toHaveBeenCalledOnce();
     });
 
     it('maps already-registered and weak-password errors', async () => {
-      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: {}, error: { code: 'user_already_exists' } }) } });
+      createClientMock.mockResolvedValue(signupClient({ signUp: async () => ({ data: {}, error: { code: 'user_already_exists' } }) }));
       expect((await signupAction('en', null, form(signup)))?.error).toMatch(/already registered/);
-      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: {}, error: { code: 'weak_password' } }) } });
+      createClientMock.mockResolvedValue(signupClient({ signUp: async () => ({ data: {}, error: { code: 'weak_password' } }) }));
       expect((await signupAction('en', null, form(signup)))?.error).toMatch(/too weak/);
     });
 
     it('echoes email, name and role (never the password) on error', async () => {
-      createClientMock.mockResolvedValue({ auth: { signUp: async () => ({ data: {}, error: { code: 'email_address_invalid' } }) } });
+      createClientMock.mockResolvedValue(signupClient({ signUp: async () => ({ data: {}, error: { code: 'email_address_invalid' } }) }));
       const result = await signupAction('en', null, form({ ...signup, role: 'teacher' }));
       expect(result).toEqual({
         error: "This email address can't be used. Please use a different email.",
@@ -181,14 +216,14 @@ describe('auth actions', () => {
   });
 
   describe('verifySignupCodeAction', () => {
-    it('verifies only a six-digit email OTP and routes by the verified profile role', async () => {
+    it.each(['123456', '12345678', '1234567890'])('verifies a supported %s-length signup OTP without truncating it', async token => {
       const verifyOtp = vi.fn(async () => ({ data: { session: {}, user: { id: 'student-id' } }, error: null }));
       const maybeSingle = vi.fn(async () => ({ data: { role: 'student', status: 'active' }, error: null }));
       const eq = vi.fn(() => ({ maybeSingle }));
       const select = vi.fn(() => ({ eq }));
       createClientMock.mockResolvedValue({ auth: { verifyOtp }, from: vi.fn(() => ({ select })) });
-      expect(await redirectTarget(() => verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token: '123456' })))).toBe('/en/student');
-      expect(verifyOtp).toHaveBeenCalledWith({ email: 'sara@example.com', token: '123456', type: 'signup' });
+      expect(await redirectTarget(() => verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token })))).toBe('/en/student');
+      expect(verifyOtp).toHaveBeenCalledWith({ email: 'sara@example.com', token, type: 'signup' });
     });
 
     it('returns the same neutral error for invalid or expired codes and never echoes the code', async () => {
@@ -199,8 +234,8 @@ describe('auth actions', () => {
       expect(JSON.stringify(result)).not.toContain('123456');
     });
 
-    it('rejects malformed codes without contacting Supabase', async () => {
-      const result = await verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token: 'not-a-code' }));
+    it.each(['12345', '12345678901', '12345x'])('rejects unsupported OTP %s without contacting Supabase', async token => {
+      const result = await verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token }));
       expect(result?.error).toMatch(/could not be verified/);
       expect(createClientMock).not.toHaveBeenCalled();
     });

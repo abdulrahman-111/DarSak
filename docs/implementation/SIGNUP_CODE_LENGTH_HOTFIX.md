@@ -1,0 +1,9 @@
+# Signup code length and existing-account checks
+
+Signup verification accepts 6–10 numeric digits, including the project's eight-digit emails, without truncating the token. English/Arabic instructions and the local confirmation template no longer assume six digits. The signup-specific OTP type, authenticated-session requirement, and provider throttles remain intact.
+
+Before requesting signup, the server checks a narrowly granted boolean RPC for an existing Auth email. Confirmed, unconfirmed, and Google accounts are included; email matching ignores case and surrounding whitespace. An existing address gets the localized sign-in/reset guidance without a signup request. Lookup failures stop signup safely. Provider duplicate errors and obfuscated empty-identity responses remain fallback checks for races. This intentionally exposes only registration availability; it exposes no role, provider, confirmation state, or raw Auth rows.
+
+Validation: 457 unit tests across 72 files, ESLint, typecheck, and webpack production build passed. SQL regression tests passed for boolean-only output, matching existing/unconfirmed/Google-labelled fixture rows, missing email, and narrow anonymous privileges. Browser checks passed in English/Arabic at 390px and 1440px: eight digits remain intact and valid, no horizontal overflow, and an existing account is rejected on the signup page without sending an email. The independent reviewer hit the session usage limit; the controller reviewed the final source and SQL directly.
+
+SMTP configuration and email quotas were not changed. Supabase's default sender normally allows 2 Auth emails per hour for the project; custom SMTP initially defaults to 30 per hour and is adjustable. Current project-specific SMTP/rate-limit settings are not exposed by the connected tools, so these are provider defaults rather than a verified project quota.
