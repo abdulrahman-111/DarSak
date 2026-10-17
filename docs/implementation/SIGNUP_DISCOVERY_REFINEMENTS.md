@@ -13,11 +13,13 @@ Students retain full discovery filters and paging. Guests see a fixed preview of
 - Full unit suite: 488 tests across 78 files passed.
 - Focused database scripts: teacher_applications.sql, account_setup_drafts.sql and teacher_catalogue.sql passed, including no-CV completion, valid/invalid Drive URLs, private reads and legacy snapshots/download authorization.
 - Existing real local API suite: 173 assertions passed.
-- ESLint and typecheck passed. Webpack production build passed before the final canonical-ID validator adjustment; final release build pending.
+- ESLint and typecheck passed. Final webpack production build passed after the canonical-ID validator adjustment.
 - GPT-6.1 Sol reviewed application/privacy, discovery, password/recovery and wizard fixes. Desktop and Arabic mobile browser navigation checked for guests, students, teachers and admins; local preview data is empty, so populated preview limits are verified by bounded-query unit tests.
-- Root real browser checks reject a wrong current password, accept a correct password change, and reject ordinary sessions on the recovery route. Final genuine recovery and custom-subject setup checks are pending.
+- Root real browser checks reject a wrong current password, accept a correct password change, and reject ordinary sessions on the recovery route. Genuine local recovery callback/reset/proof consumption also passed without sending email. The complete teacher browser flow created a custom subject and combination, submitted a private Drive CV link, verified the owner-readable frozen snapshot with approval still false, and passed Arabic mobile overflow checks. Temporary browser users and uploads were removed.
 - Early integration failures included obsolete upload tests, a synchronous helper exported from a server-action module, a stale admin navigation label, and strict UUID validation rejecting seeded categories. These were corrected. Initial recovery assumptions were tested against local GoTrue: AMR is otp, and current_password can be ignored without a provider flag. The implementation uses explicit password verification and signed recovery proof instead.
 - No production test accounts, test emails, or destructive production tests were used. New CV migration applied in production; nullable column, RLS, denied anonymous read/save, authenticated save and optional-CV criterion verified by metadata queries.
+
+Security advisors continue to flag intentionally callable SECURITY DEFINER APIs and private deny-all tables; the new application save RPC is authenticated-only and validates active teacher ownership. Hosted [leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) remains disabled and was not changed by this release.
 
 ## Hosting follow-up
 
