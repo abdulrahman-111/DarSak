@@ -11,7 +11,7 @@ const date = (value: unknown) => {
 
 /** Pure, bounded bilingual templates. Payload values are always plain text. */
 export function renderEmail(kind: EmailKind, payload: Record<string, unknown>, origin: string): EmailMessage | null {
-  let titleEn = '', titleAr = '', detailEn = '', detailAr = '', path = '/teacher/profile';
+  let titleEn = '', titleAr = '', detailEn = '', detailAr = '', path = '/account/application';
   if (kind === 'teacher_review_requested' || kind === 'teacher_review_approved' || kind === 'teacher_review_declined') {
     const teacherId = safeText(payload.teacher_id, 36);
     if (!uuid.test(teacherId)) return null;
@@ -41,14 +41,14 @@ export function renderEmail(kind: EmailKind, payload: Record<string, unknown>, o
     titleEn = 'Teaching access renewed'; titleAr = 'تم تجديد صلاحية التدريس';
     detailEn = `Your teaching access period runs from ${starts} to ${expires} (Cairo time).`;
     detailAr = `تم تحديث فترة صلاحية التدريس من ${starts} إلى ${expires} بتوقيت القاهرة.`;
-    path = '/teacher/access';
+    path = '/account/teaching-access';
   } else if (kind === 'teacher_fee_announcement') {
     const effective = date(payload.effective_at), en = safeText(payload.announcement_en, 1000), ar = safeText(payload.announcement_ar, 1000);
     if (!effective || !en || !ar) return null;
     titleEn = 'Teaching access policy notice'; titleAr = 'إشعار بشأن سياسة صلاحية التدريس';
     detailEn = `${en}\nEffective ${effective} (Cairo time).`;
     detailAr = `${ar}\nيسري اعتباراً من ${effective} بتوقيت القاهرة.`;
-    path = '/teacher/access';
+    path = '/account/teaching-access';
   } else return null;
   const urlEn = link(origin, `/en${path}`), urlAr = link(origin, `/ar${path}`);
   const text = `${titleEn}\n${detailEn}\n${urlEn}\n\n${titleAr}\n${detailAr}\n${urlAr}`.slice(0, 5000);

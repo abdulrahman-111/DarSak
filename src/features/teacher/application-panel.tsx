@@ -18,7 +18,7 @@ export function TeacherApplicationPanel({ locale, data }: { locale: Locale; data
   if (app.status === 'approved') return <Panel>
     <h2 className="text-lg font-black text-teal">{ar ? 'تم اعتماد طلبك' : 'Your application is approved'}</h2>
     <p className="mt-2 text-sm leading-6 text-muted">{app.legacy_approved ? (ar ? 'يظل اعتمادك الحالي وصلاحية التدريس ساريين. يمكنك مواصلة تحديث ملفك العام؛ لا يلزم تقديم طلب أو سيرة ذاتية جديدة.' : 'Your existing approval and teaching access remain active. You can continue updating your public profile; no new application or CV is required.') : (ar ? 'يمكنك متابعة التدريس. تفاصيل طلبك محفوظة للمراجعة.' : 'You can continue teaching. Your application details are retained for review.')}</p>
-    {app.legacy_approved && <p className="mt-3 rounded-xl bg-teal/10 p-3 text-sm text-ink">{ar ? 'تحديث تفاصيل الملف العام اختياري.' : 'Updating public profile details is optional.'} <Link className="font-bold text-teal underline" href={`/${locale}/teacher/profile`}>{ar ? 'متابعة الملف الشخصي' : 'Continue to your public profile'}</Link></p>}
+    {app.legacy_approved && <p className="mt-3 rounded-xl bg-teal/10 p-3 text-sm text-ink">{ar ? 'تحديث تفاصيل الملف العام اختياري.' : 'Updating public profile details is optional.'} <Link className="font-bold text-teal underline" href={`/${locale}/account/profile`}>{ar ? 'متابعة الملف الشخصي' : 'Continue to your public profile'}</Link></p>}
     {app.cv_path && <CvLink locale={locale} url={data.cvUrl}/>}
   </Panel>;
   return <div className="grid gap-5">

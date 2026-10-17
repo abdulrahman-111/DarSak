@@ -20,6 +20,6 @@ export async function renewTeacherAccess(locale:Locale,_state:AccessActionState,
   parsed.outcome==='requested'?(parsed.access.has_access?msg(locale,'Your request is awaiting review. Your current access remains active.','طلبك بانتظار المراجعة. وتظل صلاحيتك الحالية فعالة.'):msg(locale,'Your renewal request is awaiting review. Teaching remains paused until access is approved.','طلب التجديد بانتظار المراجعة. يظل التدريس متوقفاً حتى اعتماد الصلاحية.')):
   parsed.outcome==='pending'?msg(locale,'A renewal request is already awaiting review.','طلب التجديد بانتظار المراجعة بالفعل.'):
   msg(locale,'Renewal opens seven Cairo calendar days before expiry.','يفتح التجديد قبل انتهاء الصلاحية بسبعة أيام حسب توقيت القاهرة.');
- for(const l of ['en','ar']){revalidatePath(`/${l}/teacher/access`);revalidatePath(`/${l}/teacher`,'layout');}
+ for(const l of ['en','ar']){revalidatePath(`/${l}/account/teaching-access`);revalidatePath(`/${l}/teacher`,'layout');}
  return {success};
 }

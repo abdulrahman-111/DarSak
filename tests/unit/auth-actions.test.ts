@@ -18,7 +18,7 @@ vi.mock('@/lib/supabase/server', () => ({
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
 vi.mock('server-only',()=>({}));
 vi.mock('next/server',()=>({after:afterMock}));
-vi.mock('@/features/auth/google-onboarding', () => ({ googleOnboardingDestination: onboardingDestinationMock }));
+vi.mock('@/features/setup/destination', () => ({ resolveSetupDestination: onboardingDestinationMock }));
 
 import {
   chooseGoogleRoleAction, forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction, verifySignupCodeAction,
@@ -70,6 +70,18 @@ describe('auth actions', () => {
       expect(signIn).toHaveBeenLastCalledWith({ email: 'a@b.co', password: 'x', options: { captchaToken: 'tok' } });
       await loginAction('en', null, form({ email: 'a@b.co', password: 'x' }));
       expect(signIn).toHaveBeenLastCalledWith({ email: 'a@b.co', password: 'x', options: {} });
+    });
+
+    it('sends active student sign-ins through the shared setup resolver while preserving safe return paths', async () => {
+      const maybeSingle = vi.fn(async () => ({ data: { role: 'student', status: 'active' }, error: null }));
+      const eq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq }));
+      const db = { auth: { signInWithPassword: async () => ({ data: { user: { id: 'u1' } }, error: null }) }, from: () => ({ select }) };
+      createClientMock.mockResolvedValue(db);
+      onboardingDestinationMock.mockResolvedValue('/en/account/setup?returnTo=%2Fen%2Fclasses%2F00000000-0000-4000-8000-000000000000');
+      expect(await redirectTarget(() => loginAction('en', null, form({ email: 'a@b.co', password: 'password123', next: '/en/classes/00000000-0000-4000-8000-000000000000' }))))
+        .toBe('/en/account/setup?returnTo=%2Fen%2Fclasses%2F00000000-0000-4000-8000-000000000000');
+      expect(onboardingDestinationMock).toHaveBeenCalledWith(db, 'u1', 'student', 'en', '/en/classes/00000000-0000-4000-8000-000000000000');
     });
 
     it('rejects unknown locales before touching Supabase', async () => {
@@ -131,6 +143,17 @@ describe('auth actions', () => {
     it('goes to the dashboard when a session is returned', async () => {
       createClientMock.mockResolvedValue(signupClient({ signUp: async () => ({ data: { session: {} }, error: null }) }));
       expect(await redirectTarget(() => signupAction('ar', null, form(signup)))).toBe('/ar/dashboard');
+    });
+
+    it('routes immediate-session signups through setup when confirmation is disabled', async () => {
+      const maybeSingle = vi.fn(async () => ({ data: { role: 'teacher', status: 'active' }, error: null }));
+      const eq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq }));
+      const db = { auth: { signUp: async () => ({ data: { session: {}, user: { id: 'u1' } }, error: null }) }, from: () => ({ select }), rpc: vi.fn(async () => ({ data: false, error: null })) };
+      createClientMock.mockResolvedValue(db);
+      onboardingDestinationMock.mockResolvedValue('/en/account/setup?returnTo=%2Fen%2Fteacher');
+      expect(await redirectTarget(() => signupAction('en', null, form(signup)))).toBe('/en/account/setup?returnTo=%2Fen%2Fteacher');
+      expect(onboardingDestinationMock).toHaveBeenCalledWith(db, 'u1', 'teacher', 'en', '/en/teacher');
     });
 
     it('schedules a bounded outbox flush after teacher signup succeeds', async () => {
@@ -224,6 +247,7 @@ describe('auth actions', () => {
       createClientMock.mockResolvedValue({ auth: { verifyOtp }, from: vi.fn(() => ({ select })) });
       expect(await redirectTarget(() => verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token })))).toBe('/en/student');
       expect(verifyOtp).toHaveBeenCalledWith({ email: 'sara@example.com', token, type: 'signup' });
+      expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'student-id', 'student', 'en', '/en/student');
     });
 
     it('returns the same neutral error for invalid or expired codes and never echoes the code', async () => {

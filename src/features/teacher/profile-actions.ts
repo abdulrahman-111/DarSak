@@ -65,7 +65,7 @@ export async function addTeacherSpecialization(locale: Locale, _state: TeacherSp
 
 function revalidateTeacherProfilePaths(locale: Locale, teacherId: string) {
   for (const currentLocale of ['en', 'ar'] as const) {
-    revalidatePath(`/${currentLocale}/teacher/profile`);
+    revalidatePath(`/${currentLocale}/account/profile`);
     revalidatePath(`/${currentLocale}/teacher`);
     revalidatePath(`/${currentLocale}/teachers`);
     revalidatePath(`/${currentLocale}/teachers/${teacherId}`);
@@ -186,7 +186,7 @@ export async function saveTeacherProfile(locale: Locale, _state: TeacherProfileA
   if (error) return { error: message(locale, 'Your profile could not be saved. Your changes are still in the form; please try again.', 'تعذر حفظ الملف الشخصي. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
 
   for (const currentLocale of ['en', 'ar'] as const) {
-    revalidatePath(`/${currentLocale}/teacher/profile`);
+    revalidatePath(`/${currentLocale}/account/profile`);
     revalidatePath(`/${currentLocale}/teacher`);
     revalidatePath(`/${currentLocale}/teachers`);
   }

@@ -105,7 +105,7 @@ describe('student dashboard loader query contract', () => {
     };
     mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'new-student' }, profile: { id: 'new-student', full_name: 'New Student', role: 'student', status: 'active' } });
 
-    await expect(studentDashboard('en')).rejects.toThrow('redirect:/en/student/profile');
+    await expect(studentDashboard('en')).rejects.toThrow('redirect:/en/account/setup');
   });
 
   it('limits recurring timetable slots to this student’s accepted groups through the RLS-visible join', async () => {

@@ -6,7 +6,7 @@ import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient, isConfigured } from '@/lib/supabase/server';
 import { defaultLocale, isLocale, type Locale } from '@/i18n/config';
 import { safeAuthNext } from '@/features/auth/return-path';
-import { googleOnboardingDestination } from '@/features/auth/google-onboarding';
+import { resolveSetupDestination } from '@/features/setup/destination';
 import { callDeletionEdge } from '@/features/account/edge';
 import { googleReauthHint } from '@/features/account/google-hint';
 
@@ -31,6 +31,13 @@ export async function GET(request: NextRequest) {
 
   let error: unknown = new Error('Missing auth parameters');
   let setupError = false;
+  let profileReadFailure = false;
+  const setupTargetForUser = async (userId: string): Promise<string | null> => {
+    const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', userId).maybeSingle();
+    if (profileError) { profileReadFailure = true; return null; }
+    if (profile?.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher')) return null;
+    return resolveSetupDestination(db, userId, profile.role, locale, destination);
+  };
   if (code) {
     ({ error } = await db.auth.exchangeCodeForSession(code));
     const deletionIntent = params.get('delete_intent');
@@ -41,7 +48,7 @@ export async function GET(request: NextRequest) {
       const cookieOwner = jar.get('dars-delete-owner')?.value;
       const fail = () => {
         jar.delete('dars-delete-intent'); jar.delete('dars-delete-nonce'); jar.delete('dars-delete-owner'); jar.delete('dars-delete-google-ready');
-        const response = NextResponse.redirect(new URL(`/${locale}/account?error=reauth`, request.nextUrl.origin));
+        const response = NextResponse.redirect(new URL(`/${locale}/account/delete?error=reauth`, request.nextUrl.origin));
         response.headers.set('Cache-Control', 'private, no-store'); return response;
       };
       if (error || !cookieIntent || cookieIntent !== deletionIntent || !nonce || !cookieOwner) return fail();
@@ -49,7 +56,7 @@ export async function GET(request: NextRequest) {
       if (identityError || !identity.user || identity.user.id !== cookieOwner || !identity.user.identities?.some(identity => identity.provider === 'google') || !session.session || session.session.user.id !== identity.user.id) return fail();
       const proof = await callDeletionEdge(session.session.access_token, { operation: 'complete_google_reauth', intent_id: deletionIntent, nonce });
       if (proof.error || !proof.data) return fail();
-      const response = NextResponse.redirect(new URL(`/${locale}/account`, request.nextUrl.origin));
+      const response = NextResponse.redirect(new URL(`/${locale}/account/delete`, request.nextUrl.origin));
       response.cookies.set('dars-delete-google-ready', googleReauthHint(deletionIntent, cookieOwner), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 300 });
       response.headers.set('Cache-Control', 'private, no-store'); return response;
     }
@@ -73,7 +80,7 @@ export async function GET(request: NextRequest) {
             return response;
           }
           if (!setupError && (completedRole === 'student' || completedRole === 'teacher')) {
-            const target = await googleOnboardingDestination(db, verified.user.id, completedRole, locale, destination);
+            const target = await resolveSetupDestination(db, verified.user.id, completedRole, locale, destination);
             const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
@@ -84,13 +91,13 @@ export async function GET(request: NextRequest) {
         const user = authData.user;
         if (!authError && user?.identities?.some(identity => identity.provider === 'google')) {
           const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
-          if (profileError) setupError = true;
+          if (profileError) profileReadFailure = true;
           else if (!profile) {
             const response = NextResponse.redirect(new URL(`/${locale}/choose-role`, request.nextUrl.origin));
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
           } else if (profile.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
-            const target = await googleOnboardingDestination(db, user.id, profile.role, locale, destination);
+            const target = await resolveSetupDestination(db, user.id, profile.role, locale, destination);
             const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
@@ -98,15 +105,46 @@ export async function GET(request: NextRequest) {
         }
       }
     }
+    // Older email confirmation callbacks still authenticate users successfully.
+    // Route active student/teacher accounts through the same setup resolver;
+    // password recovery and deletion reauthentication have already exited above.
+    if (!error && !setupError && params.get('type') !== 'recovery' && destination !== `/${locale}/reset-password` && !params.has('delete_intent')) {
+      const { data: authData, error: authError } = await db.auth.getUser();
+      const user = authData.user;
+      if (!authError && user) {
+        const target = await setupTargetForUser(user.id);
+        if (target) {
+          const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
+          response.headers.set('Cache-Control', 'private, no-store');
+          return response;
+        }
+      }
+    }
   }
   else if (tokenHash && type && OTP_TYPES.includes(type)) ({ error } = await db.auth.verifyOtp({ type, token_hash: tokenHash }));
+
+  // The legacy confirmation template may deliver token_hash URLs instead of PKCE codes.
+  // Signup/email confirmations use the same setup resolver as the code path.
+  if (!error && tokenHash && (type === 'signup' || type === 'email') && destination !== `/${locale}/reset-password` && !params.has('delete_intent')) {
+    const { data: authData, error: authError } = await db.auth.getUser();
+    const user = authData.user;
+    if (!authError && user) {
+      const target = await setupTargetForUser(user.id);
+      if (target) {
+        const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
+        response.headers.set('Cache-Control', 'private, no-store');
+        return response;
+      }
+    }
+  }
 
   const setupFailure = new URL(`/${locale}/login?error=setup`, request.nextUrl.origin);
   if (setupError) {
     const googleRole = params.get('google_role');
     if (googleRole === 'student' || googleRole === 'teacher') setupFailure.searchParams.set('google_role', googleRole);
   }
-  const response = NextResponse.redirect(error ? failure : setupError ? setupFailure : new URL(destination, request.nextUrl.origin));
+  const profileFailure = new URL(`/${locale}/account/setup?load=error`, request.nextUrl.origin);
+  const response = NextResponse.redirect(error ? failure : profileReadFailure ? profileFailure : setupError ? setupFailure : new URL(destination, request.nextUrl.origin));
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }

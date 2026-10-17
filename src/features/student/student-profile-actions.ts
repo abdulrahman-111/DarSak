@@ -54,7 +54,7 @@ export async function saveStudentLearningProfile(locale: Locale, _previous: Stud
 
   for (const language of ['en', 'ar'] as const) {
     revalidatePath(`/${language}/student`);
-    revalidatePath(`/${language}/student/profile`);
+    revalidatePath(`/${language}/account/learning-profile`);
   }
   redirect(`/${locale}/student`);
 }

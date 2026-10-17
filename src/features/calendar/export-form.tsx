@@ -60,6 +60,6 @@ export function CalendarExportForm({ locale, initialFrom, initialUntil }: { loca
       <label className="min-w-0 text-sm font-bold">{copy.until}<input type="date" required disabled={loading} value={until} onChange={event => setUntil(event.target.value)} className="mt-2 block w-full min-w-0 rounded-xl border border-line bg-cream p-3 disabled:opacity-60" /></label>
       <button type="submit" disabled={loading} className="rounded-xl bg-teal px-4 py-3 font-bold text-white disabled:opacity-60">{loading ? copy.loading : copy.submit}</button>
     </form>
-    {message && <p role={message === copy.success ? 'status' : 'alert'} className="mt-3 break-words text-sm text-muted">{message}{accessDenied&&<> <a className="font-bold text-teal underline" href={`/${locale}/teacher/access`}>{ar?'فتح صفحة الصلاحية':'Open access page'}</a></>}</p>}
+    {message && <p role={message === copy.success ? 'status' : 'alert'} className="mt-3 break-words text-sm text-muted">{message}{accessDenied&&<> <a className="font-bold text-teal underline" href={`/${locale}/account/teaching-access`}>{ar?'فتح صفحة الصلاحية':'Open access page'}</a></>}</p>}
   </details>;
 }

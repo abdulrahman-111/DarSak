@@ -77,7 +77,7 @@ describe('student learning profile save action', () => {
       p_school_name: '', p_expected_updated_at: timestamp,
     });
     expect(selects).toEqual(['student_profiles:updated_at']);
-    expect(revalidatePathMock).toHaveBeenCalledWith('/en/student/profile');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/en/account/learning-profile');
     expect(revalidatePathMock).toHaveBeenCalledWith('/ar/student');
   });
 

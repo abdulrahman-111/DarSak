@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 const { createClientMock, isConfiguredMock, cookiesMock, edgeMock, afterMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), cookiesMock: vi.fn(), edgeMock: vi.fn(), afterMock: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock, isConfigured: isConfiguredMock }));
 vi.mock('@/features/account/edge', () => ({ callDeletionEdge: edgeMock }));
-vi.mock('@/features/auth/google-onboarding', () => ({ googleOnboardingDestination: vi.fn(async (_db: unknown, _id: string, _role: string, _locale: string, fallback: string) => fallback) }));
+vi.mock('@/features/setup/destination', () => ({ resolveSetupDestination: vi.fn(async (_db: unknown, _id: string, _role: string, _locale: string, fallback: string) => fallback) }));
 vi.mock('@/features/email/worker', () => ({ flushEmailOutbox: vi.fn() }));
 vi.mock('next/headers', () => ({ cookies: cookiesMock }));
 vi.mock('server-only', () => ({}));
@@ -28,22 +28,22 @@ describe('Google deletion intent on the auth callback', () => {
     afterMock.mockReset(); cookieDelete.mockReset();
   });
   it('submits the post-exchange token and owner-bound nonce, then returns for explicit confirmation', async () => {
-    const response = await GET(new NextRequest('https://dars.example/api/auth/callback?code=pkce&delete_intent=intent-1&next=/en/account'));
+    const response = await GET(new NextRequest('https://dars.example/api/auth/callback?code=pkce&delete_intent=intent-1&next=/en/account/delete'));
     expect(edgeMock).toHaveBeenCalledWith('fresh-oauth-token', { operation: 'complete_google_reauth', intent_id: 'intent-1', nonce: 'one-use-nonce' });
-    expect(new URL(response.headers.get('location')!).pathname).toBe('/en/account');
+    expect(new URL(response.headers.get('location')!).pathname).toBe('/en/account/delete');
     expect(response.cookies.get('dars-delete-google-ready')?.value).toBe('intent-1:same-user');
   });
   it('does not complete an intent on an ordinary Google callback', async () => {
-    await GET(new NextRequest('https://dars.example/api/auth/callback?code=pkce&next=/en/account'));
+    await GET(new NextRequest('https://dars.example/api/auth/callback?code=pkce&next=/en/account/delete'));
     expect(edgeMock).not.toHaveBeenCalled();
   });
   it('does not treat a query marker without a PKCE code as proof', async () => {
-    await GET(new NextRequest('https://dars.example/api/auth/callback?delete_intent=intent-1&next=/en/account'));
+    await GET(new NextRequest('https://dars.example/api/auth/callback?delete_intent=intent-1&next=/en/account/delete'));
     expect(edgeMock).not.toHaveBeenCalled();
   });
   it('rejects a callback identity that differs from the original owner', async () => {
     getUser.mockResolvedValueOnce({ data: { user: { id: 'different-user', identities: [{ provider: 'google' }] } }, error: null });
-    await GET(new NextRequest('https://dars.example/api/auth/callback?code=pkce&delete_intent=intent-1&next=/en/account'));
+    await GET(new NextRequest('https://dars.example/api/auth/callback?code=pkce&delete_intent=intent-1&next=/en/account/delete'));
     expect(edgeMock).not.toHaveBeenCalled();
   });
   it('keeps password recovery on the normal reset route despite deletion query parameters', async () => {

@@ -9,7 +9,7 @@ import { isLocale, type Locale } from '@/i18n/config';
 import { authErrorMessage } from './errors';
 import { loginRedirectPath, safeAuthNext } from './return-path';
 import { authCopy } from '@/components/auth/copy';
-import { googleOnboardingDestination } from './google-onboarding';
+import { resolveSetupDestination } from '@/features/setup/destination';
 
 /** Non-secret fields echoed back on error so the reset form can repopulate them. Passwords are never included. */
 export type AuthState = {
@@ -74,7 +74,12 @@ export async function loginAction(locale: string, _previous: unknown, formData: 
       ...(unconfirmed && { resendHref: `/${locale}/check-email?email=${encodeURIComponent(parsed.data.email)}` }),
     };
   }
-  const { data: profile } = await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle();
+  const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle();
+  if (profileError) redirect(`/${locale}/account/setup?load=error`);
+  if (profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
+    const fallback = loginRedirectPath(locale as Locale, formData.get('next'), profile);
+    redirect(await resolveSetupDestination(db, data.user.id, profile.role, locale as Locale, fallback));
+  }
   redirect(loginRedirectPath(locale as Locale, formData.get('next'), profile));
 }
 export async function signupAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
@@ -103,8 +108,17 @@ export async function signupAction(locale: string, _previous: unknown, formData:
     return { error: authErrorMessage(locale, 'user_already_exists', 'signup'), ...signupEcho(formData) };
   }
   if (parsed.data.role === 'teacher' && data.user) after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
-  // Email confirmation is on: no session until the link is opened.
+  // Email confirmation is on: no session until the signup code is verified.
   if (!data.session) redirect(`/${locale}/check-email?email=${encodeURIComponent(parsed.data.email)}`);
+  const { data: profile, error: profileError } = data.user
+    ? await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle()
+    : { data: null, error: null };
+  if (profileError) redirect(`/${locale}/account/setup?load=error`);
+  if (data.user && !profile) redirect(`/${locale}/account/setup?load=error`);
+  if (data.user && profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
+    const fallback = loginRedirectPath(locale as Locale, null, profile);
+    redirect(await resolveSetupDestination(db, data.user.id, profile.role, locale as Locale, fallback));
+  }
   redirect(`/${locale}/dashboard`);
 }
 export async function googleSignInAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
@@ -134,7 +148,7 @@ export async function chooseGoogleRoleAction(locale: string, formData: FormData)
   if (profileError) redirect(`/${locale}/login?error=setup`);
   if (profile) {
     if (profile.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
-      const target = await googleOnboardingDestination(db, user.id, profile.role, locale, loginRedirectPath(locale, null, profile));
+      const target = await resolveSetupDestination(db, user.id, profile.role, locale, loginRedirectPath(locale, null, profile));
       redirect(target);
     }
     redirect(loginRedirectPath(locale, null, profile));
@@ -144,7 +158,7 @@ export async function chooseGoogleRoleAction(locale: string, formData: FormData)
   if (completedRole === 'teacher') after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
   if (completedRole !== requestedRole) redirect(`/${locale}/login?error=role-mismatch&requested=${requestedRole}&actual=${completedRole}`);
   if (completedRole !== 'student' && completedRole !== 'teacher') redirect(`/${locale}/login?error=setup&google_role=${requestedRole}`);
-  const target = await googleOnboardingDestination(db, user.id, completedRole, locale, `/${locale}/${completedRole}`);
+  const target = await resolveSetupDestination(db, user.id, completedRole, locale, `/${locale}/${completedRole}`);
   redirect(target);
 }
 export async function forgotPasswordAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
@@ -207,7 +221,13 @@ export async function verifySignupCodeAction(locale: string, _previous: unknown,
   // Keep invalid, expired, and mismatched codes indistinguishable.
   if (error?.code && SURFACED_EMAIL_ERRORS.has(error.code)) return { error: authErrorMessage(locale, error.code, 'signup'), ...emailEcho(formData) };
   if (error || !data.session || !data.user) return { error: authCopy[locale as Locale].codeInvalid, ...emailEcho(formData) };
-  const { data: profile } = await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle();
+  const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle();
+  if (profileError) redirect(`/${locale}/account/setup?load=error`);
+  if (!profile) redirect(`/${locale}/account/setup?load=error`);
+  if (profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
+    const fallback = loginRedirectPath(locale as Locale, null, profile);
+    redirect(await resolveSetupDestination(db, data.user.id, profile.role, locale as Locale, fallback));
+  }
   redirect(loginRedirectPath(locale as Locale, null, profile));
 }
 export async function logoutAction() {

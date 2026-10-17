@@ -30,6 +30,13 @@ describe('transactional email boundaries',()=>{
     expect(renderEmail('enrollment_requested',{group_id:'javascript:alert(1)'},'https://dars.example')).toBeNull();
   });
 
+  it('routes teacher review decisions to the Account application page',()=>{
+    const approved=renderEmail('teacher_review_approved',{teacher_id:id},'https://dars.example');
+    const declined=renderEmail('teacher_review_declined',{teacher_id:id},'https://dars.example');
+    expect(approved?.text).toContain('https://dars.example/en/account/application');
+    expect(declined?.text).toContain('https://dars.example/ar/account/application');
+  });
+
   it('classifies only to a safe retry code and keeps errors out of output',()=>{
     expect(classifyEmailError({responseCode:451,message:'private server response'})).toEqual({outcome:'retry',code:'smtp_transient'});
     expect(classifyEmailError({responseCode:550,message:'private server response'})).toEqual({outcome:'failed',code:'smtp_permanent'});

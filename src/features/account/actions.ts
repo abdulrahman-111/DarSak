@@ -30,16 +30,16 @@ export async function startGoogleDeletion(locale: string): Promise<never> {
   const jar = await cookies();
   jar.delete(COOKIE_INTENT); jar.delete(COOKIE_NONCE); jar.delete(COOKIE_OWNER); jar.delete(COOKIE_GOOGLE_READY);
   const result = await callDeletionEdge<{ intent_id: string; nonce: string; expires_at: string }>(session.token, { operation: 'start_google_reauth' });
-  if (!result.data || !result.data.intent_id || !result.data.nonce || !result.data.expires_at) redirect(`/${locale}/account?error=unavailable`);
+  if (!result.data || !result.data.intent_id || !result.data.nonce || !result.data.expires_at) redirect(`/${locale}/account/delete?error=unavailable`);
   const options = cookieOptions(result.data.expires_at);
   jar.set(COOKIE_INTENT, result.data.intent_id, options);
   jar.set(COOKIE_NONCE, result.data.nonce, options);
   jar.set(COOKIE_OWNER, session.user.id, options);
   const callback = new URL('/api/auth/callback', process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000');
-  callback.searchParams.set('next', `/${locale}/account`);
+  callback.searchParams.set('next', `/${locale}/account/delete`);
   callback.searchParams.set('delete_intent', result.data.intent_id);
   const { data, error } = await session.db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: callback.toString(), queryParams: { prompt: 'select_account' } } });
-  if (error || !data.url) { jar.delete(COOKIE_INTENT); jar.delete(COOKIE_NONCE); jar.delete(COOKIE_OWNER); jar.delete(COOKIE_GOOGLE_READY); redirect(`/${locale}/account?error=unavailable`); }
+  if (error || !data.url) { jar.delete(COOKIE_INTENT); jar.delete(COOKIE_NONCE); jar.delete(COOKIE_OWNER); jar.delete(COOKIE_GOOGLE_READY); redirect(`/${locale}/account/delete?error=unavailable`); }
   redirect(data.url);
 }
 

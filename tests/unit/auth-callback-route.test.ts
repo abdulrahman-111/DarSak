@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server';
 
 const { createClientMock, isConfiguredMock, rpcMock, afterMock, getUserMock, profileQueryMock, onboardingDestinationMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn(), afterMock: vi.fn(), getUserMock: vi.fn(), profileQueryMock: vi.fn(), onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback) }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock, isConfigured: isConfiguredMock }));
-vi.mock('@/features/auth/google-onboarding', () => ({ googleOnboardingDestination: onboardingDestinationMock }));
+vi.mock('@/features/setup/destination', () => ({ resolveSetupDestination: onboardingDestinationMock }));
 vi.mock('server-only',()=>({}));
 vi.mock('next/server',async importOriginal=>({...await importOriginal<typeof import('next/server')>(),after:afterMock}));
 
@@ -117,10 +117,45 @@ describe('auth callback route', () => {
   it('uses the Google onboarding destination for an existing student profile', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'existing-student', identities: [{ provider: 'google' }] } }, error: null });
     profileQueryMock.mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
-    onboardingDestinationMock.mockResolvedValue('/en/student/profile');
+    onboardingDestinationMock.mockResolvedValue('/en/account/setup?returnTo=%2Fen%2Fdashboard');
     const target = location(await call('code=abc&next=/en/dashboard'));
     expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'existing-student', 'student', 'en', '/en/dashboard');
-    expect(target.pathname).toBe('/en/student/profile');
+    expect(target.pathname).toBe('/en/account/setup');
+  });
+
+  it('routes a legacy confirmed email callback through setup for an active teacher', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'confirmed-teacher', identities: [{ provider: 'email' }] } }, error: null });
+    profileQueryMock.mockResolvedValue({ data: { role: 'teacher', status: 'active' }, error: null });
+    onboardingDestinationMock.mockResolvedValue('/en/account/setup?returnTo=%2Fen%2Fteacher');
+    const target = location(await call('code=abc&next=/en/teacher'));
+    expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'confirmed-teacher', 'teacher', 'en', '/en/teacher');
+    expect(target.pathname).toBe('/en/account/setup');
+  });
+
+  it('sends authenticated confirmation users to the recoverable setup error page when profile lookup fails', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'confirmed-student', identities: [{ provider: 'email' }] } }, error: null });
+    profileQueryMock.mockResolvedValue({ data: null, error: { message: 'profile read failed' } });
+    const target = location(await call('code=abc&next=/en/dashboard'));
+    expect(target.pathname).toBe('/en/account/setup');
+    expect(target.searchParams.get('load')).toBe('error');
+    expect(onboardingDestinationMock).not.toHaveBeenCalled();
+  });
+
+  it('routes legacy signup token_hash confirmations through setup', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'confirmed-student', identities: [{ provider: 'email' }] } }, error: null });
+    profileQueryMock.mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
+    onboardingDestinationMock.mockResolvedValue('/en/account/setup?returnTo=%2Fen%2Fstudent');
+    const target = location(await call('token_hash=h&type=signup&next=/en/student'));
+    expect(verifyOtp).toHaveBeenCalledWith({ type: 'signup', token_hash: 'h' });
+    expect(onboardingDestinationMock).toHaveBeenCalledWith(expect.anything(), 'confirmed-student', 'student', 'en', '/en/student');
+    expect(target.pathname).toBe('/en/account/setup');
+  });
+
+  it('keeps recovery token callbacks on the reset destination without setup routing', async () => {
+    getUserMock.mockResolvedValue({ data: { user: { id: 'recovering-student', identities: [{ provider: 'email' }] } }, error: null });
+    const target = location(await call('token_hash=h&type=recovery&next=/en/reset-password'));
+    expect(target.pathname).toBe('/en/reset-password');
+    expect(onboardingDestinationMock).not.toHaveBeenCalled();
   });
 
   it('explains an existing student role when teacher signup is requested', async () => {

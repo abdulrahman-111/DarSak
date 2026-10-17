@@ -21,7 +21,7 @@ async function activeTeacher() {
 
 function revalidateTeacherProfilePaths(locale: Locale, teacherId: string) {
   for (const currentLocale of ['en', 'ar'] as const) {
-    revalidatePath(`/${currentLocale}/teacher/profile`);
+    revalidatePath(`/${currentLocale}/account/profile`);
     revalidatePath(`/${currentLocale}/teacher`);
     revalidatePath(`/${currentLocale}/teachers`);
     revalidatePath(`/${currentLocale}/teachers/${teacherId}`);

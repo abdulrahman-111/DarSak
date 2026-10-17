@@ -30,8 +30,8 @@ export function notificationHref(role: PlatformRole, kind: string, payload: Reco
   }
   if (role==='teacher' && kind==='enrollment_requested') { const value=id(payload,'group_id'); return value?`/${locale}/teacher/requests?group_id=${value}`:`/${locale}/teacher/requests`; }
   if (role==='admin' && kind==='teacher_review_requested') { const value=id(payload,'teacher_id'); return value?`/${locale}/admin/teachers/${value}`:`/${locale}/admin/teachers`; }
-  if (role==='teacher' && kind==='teacher_review_decision') return `/${locale}/teacher/profile`;
-  if (role==='teacher' && kind==='teacher_fee_announcement') return `/${locale}/teacher/access`;
+  if (role==='teacher' && kind==='teacher_review_decision') return `/${locale}/account/application`;
+  if (role==='teacher' && kind==='teacher_fee_announcement') return `/${locale}/account/teaching-access`;
   return null;
 }
 

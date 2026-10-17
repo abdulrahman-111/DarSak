@@ -44,7 +44,7 @@ function revalidateCatalogue() {
     revalidatePath(`/${currentLocale}/teacher/catalogue`);
     revalidatePath(`/${currentLocale}/teacher/groups`);
     revalidatePath(`/${currentLocale}/teacher/groups/new`);
-    revalidatePath(`/${currentLocale}/teacher/profile`);
+    revalidatePath(`/${currentLocale}/account/profile`);
     revalidatePath(`/${currentLocale}/teacher`);
     revalidatePath(`/${currentLocale}/teachers`);
     revalidatePath(`/${currentLocale}/groups`);

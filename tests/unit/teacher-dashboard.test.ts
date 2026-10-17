@@ -57,6 +57,8 @@ describe('teacher dashboard date and setup domain', () => {
       upcomingLessonCount: 0,
     });
     expect(tasks.map(task => task.id)).toEqual(['profile', 'approval', 'draft', 'schedule', 'lessons']);
+    expect(tasks.find(task => task.id === 'profile')?.href).toBe('/account/profile');
+    expect(tasks.find(task => task.id === 'approval')?.href).toBe('/account/application');
     expect(tasks.find(task => task.id === 'draft')?.href).toContain('/groups/draft-id/setup?step=details');
     expect(tasks.find(task => task.id === 'schedule')?.href).toContain('/groups/published-id');
     expect(tasks.find(task => task.id === 'lessons')?.href).toBe('/teacher/lessons?new=1');
