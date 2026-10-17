@@ -12,13 +12,12 @@ export function TeacherApplicationForm({ locale, application, canSubmit }: { loc
   const [years, setYears] = useState(application.teaching_years === null ? '' : String(application.teaching_years));
   const [phone, setPhone] = useState(application.admin_phone);
   const [attested, setAttested] = useState(application.attested);
-  const [newCvSelected, setNewCvSelected] = useState(false);
+  const [cvUrl, setCvUrl] = useState(application.cv_url ?? '');
   const [links, setLinks] = useState([0, 1, 2].map(index => application.supporting_links[index] ?? ''));
   const input = 'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
   const fieldError = (name: string) => state?.fieldErrors?.[name] ? <p className="mt-1 text-sm text-red-800">{ar ? 'يرجى التحقق من هذه القيمة.' : 'Please check this value.'}</p> : null;
-  return <form action={action} encType="multipart/form-data" className="grid gap-5">
+  return <form action={action} className="grid gap-5">
     <input type="hidden" name="expected_updated_at" value={state?.updatedAt ?? application.updated_at}/>
-    {state?.pendingCvPath && <input type="hidden" name="pending_cv_path" value={state.pendingCvPath}/>}
     <fieldset disabled={pending || ['submitted', 'approved'].includes(application.status)} className="grid gap-5 disabled:opacity-75">
       <div>
         <label htmlFor="teaching-years" className="block font-bold text-ink">{ar ? 'سنوات الخبرة في التدريس' : 'Years of teaching experience'}</label>
@@ -33,12 +32,10 @@ export function TeacherApplicationForm({ locale, application, canSubmit }: { loc
         {fieldError('admin_phone')}
       </div>
       <div>
-        <label htmlFor="cv" className="block font-bold text-ink">{ar ? 'السيرة الذاتية (PDF)' : 'CV (PDF)'}</label>
-        <p className="mt-1 text-sm text-muted">{ar ? 'مطلوب للإرسال: ملف PDF حتى 5 ميبيبايت. لا ترفع مستندات إضافية.' : 'Required for submission: a PDF up to 5 MiB. Additional certificate files are not needed.'}</p>
-        <input id="cv" name="cv" type="file" accept="application/pdf,.pdf" onChange={event => setNewCvSelected(event.currentTarget.files?.length === 1)} className="mt-2 block w-full text-sm file:me-3 file:min-h-11 file:rounded-xl file:border-0 file:bg-teal file:px-4 file:font-bold file:text-white" aria-invalid={!!state?.fieldErrors?.cv}/>
-        {application.cv_path && <p className="mt-2 text-sm">{ar ? 'يوجد ملف محفوظ.' : 'A CV is saved.'}</p>}
-        {state?.pendingCvPath && <p role="status" className="mt-2 text-sm text-teal">{ar ? 'تم رفع الملف بأمان. أعد حفظ المسودة دون إعادة رفعه.' : 'The CV was uploaded securely. Retry saving without uploading it again.'}</p>}
-        {fieldError('cv')}
+        <label htmlFor="cv-url" className="block font-bold text-ink">{ar ? 'رابط السيرة الذاتية على Google Drive (اختياري)' : 'Google Drive CV link (optional)'}</label>
+        <p className="mt-1 text-sm text-muted">{ar ? 'شارك الرابط بصلاحية العرض حتى تتمكن الإدارة من مراجعته. يمكنك تركه فارغاً.' : 'Set the link access to viewer so administrators can review it. You may leave this blank.'}</p>
+        <input id="cv-url" name="cv_url" type="url" maxLength={500} value={cvUrl} onChange={event => setCvUrl(event.currentTarget.value)} placeholder="https://drive.google.com/file/d/..." className={input} aria-invalid={!!state?.fieldErrors?.cv_url}/>
+        {fieldError('cv_url')}
       </div>
       <fieldset>
         <legend className="font-bold text-ink">{ar ? 'روابط داعمة (اختياري، حتى 3)' : 'Supporting links (optional, up to 3)'}</legend>
@@ -56,6 +53,6 @@ export function TeacherApplicationForm({ locale, application, canSubmit }: { loc
     </fieldset>
     {state?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}
     {state?.success && <p role="status" className="rounded-xl bg-teal/10 p-3 text-sm text-teal">{state.success}</p>}
-    {(() => { const digits = phone.replace(/\D/g, ''); const appFieldsComplete = years !== '' && Number.isInteger(Number(years)) && Number(years) >= 0 && Number(years) <= 60 && /^[\d\s()+-]{7,30}$/.test(phone) && digits.length >= 7 && attested && (!!application.cv_path || newCvSelected); return <><div className="flex flex-wrap gap-3"><button name="intent" value="draft" formNoValidate disabled={pending || ['submitted', 'approved'].includes(application.status)} className="min-h-12 rounded-xl border border-teal px-5 py-3 font-bold text-teal disabled:opacity-50">{pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ المسودة' : 'Save draft')}</button><button name="intent" value="submit" disabled={pending || !appFieldsComplete || !canSubmit || ['submitted', 'approved'].includes(application.status)} title={!canSubmit ? (ar ? 'أكمل قائمة الملف العام أولاً' : 'Complete the profile checklist first') : undefined} className="min-h-12 rounded-xl bg-orange px-5 py-3 font-bold text-white disabled:opacity-50">{ar ? 'إرسال للمراجعة' : 'Submit for review'}</button></div>{(!canSubmit || !appFieldsComplete) && <p className="text-sm text-muted">{ar ? 'يتاح الإرسال بعد اكتمال عناصر الطلب والملف العام.' : 'Submission becomes available when application fields and public profile checklist are complete.'}</p>}</>; })()}
+    {(() => { const digits = phone.replace(/\D/g, ''); const appFieldsComplete = years !== '' && Number.isInteger(Number(years)) && Number(years) >= 0 && Number(years) <= 60 && /^[\d\s()+-]{7,30}$/.test(phone) && digits.length >= 7 && attested; return <><div className="flex flex-wrap gap-3"><button name="intent" value="draft" formNoValidate disabled={pending || ['submitted', 'approved'].includes(application.status)} className="min-h-12 rounded-xl border border-teal px-5 py-3 font-bold text-teal disabled:opacity-50">{pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ المسودة' : 'Save draft')}</button><button name="intent" value="submit" disabled={pending || !appFieldsComplete || !canSubmit || ['submitted', 'approved'].includes(application.status)} title={!canSubmit ? (ar ? 'أكمل قائمة الملف العام أولاً' : 'Complete the profile checklist first') : undefined} className="min-h-12 rounded-xl bg-orange px-5 py-3 font-bold text-white disabled:opacity-50">{ar ? 'إرسال للمراجعة' : 'Submit for review'}</button></div>{(!canSubmit || !appFieldsComplete) && <p className="text-sm text-muted">{ar ? 'يتاح الإرسال بعد اكتمال عناصر الطلب والملف العام.' : 'Submission becomes available when application fields and public profile checklist are complete.'}</p>}</>; })()}
   </form>;
 }

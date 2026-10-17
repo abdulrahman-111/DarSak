@@ -11,6 +11,11 @@ export async function publicTeacherChoices(search: string, selectedTeacherId: st
  const {data,error}=await db.rpc('public_teacher_choices',{p_search:search.trim().slice(0,80)||null,p_selected:selectedTeacherId});
  return {data:(data??[]) as PublicTeacherChoice[],error};
 }
+export async function publicTeacherSample(limit = 3) {
+ const db=await createClient();
+ const {data,error}=await db.rpc('public_teacher_choices',{p_search:null,p_selected:null}).limit(limit);
+ return {data:(data??[]) as PublicTeacherChoice[],error};
+}
 function mapDiscoverGroup(group: DiscoverGroupRow): Group {
  return {
   id:group.id,teacher_id:group.teacher_id,offering_id:group.offering_id,name:group.name,
@@ -21,9 +26,9 @@ function mapDiscoverGroup(group: DiscoverGroupRow): Group {
   offering:{id:group.offering_id,subject:{name_ar:group.subject_name_ar,name_en:group.subject_name_en},node:{name_ar:group.node_name_ar,name_en:group.node_name_en}},
  };
 }
-export async function publicGroups(filters:DiscoveryFilters=normalizeDiscoveryFilters({})):Promise<{data:Group[];error:PostgrestError|null}>{
+export async function publicGroups(filters:DiscoveryFilters=normalizeDiscoveryFilters({}), limit = discoveryRpcArgs(filters).p_limit):Promise<{data:Group[];error:PostgrestError|null}>{
  const db=await createClient();
- const {data,error}=await db.rpc('discover_groups',discoveryRpcArgs(filters));
+ const {data,error}=await db.rpc('discover_groups',{...discoveryRpcArgs(filters),p_limit:limit});
  const groups=((data??[]) as DiscoverGroupRow[]).map(mapDiscoverGroup);
  return {data:groups,error};
 }

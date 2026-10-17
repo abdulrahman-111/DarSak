@@ -20,22 +20,22 @@ const details = {
 const application = {
   teacher_id: id, status: 'submitted' as const, teaching_years: 8, admin_phone: '+20123456789', cv_path: `${id}/cv.pdf`,
   supporting_links: ['https://example.com/portfolio'], attested: true,
-  snapshot: { full_name: 'Ada Teacher', headline: 'Math educator', specializations: [{ id: 'math', label_en: 'Math · Primary', label_ar: 'رياضيات · ابتدائي' }], profile_details: details, teaching_years: 8, admin_phone: '+20123456789', supporting_links: ['https://example.com/portfolio'], cv_path: `${id}/cv.pdf`, attested: true },
+  snapshot: { full_name: 'Ada Teacher', headline: 'Math educator', specializations: [{ id: 'math', label_en: 'Math · Primary', label_ar: 'رياضيات · ابتدائي' }], profile_details: details, teaching_years: 8, admin_phone: '+20123456789', supporting_links: ['https://example.com/portfolio'], cv_path: `${id}/cv.pdf`, cv_url: 'https://drive.google.com/file/d/new-cv/view', attested: true },
   feedback: 'Please review the attached CV.', submitted_at: '2026-10-01', reviewed_at: '2026-10-02', reviewed_by: id, updated_at: '2026-10-02', legacy_approved: false,
 };
 
 describe('admin submitted teacher application panel', () => {
   it('renders the frozen snapshot, private fields, feedback, and application actions', () => {
     const html = renderToStaticMarkup(<TeacherApplicationPanel locale="en" application={application} missing={[]} requestId="22222222-2222-4222-8222-222222222222"/>);
-    for (const value of ['Frozen submitted application snapshot', 'Ada Teacher', 'Math · Primary', 'BEd', '2010 – 2014', 'Tutor', '2015 – Present', 'A patient approach', 'English', '+20123456789', '8', 'https://example.com/portfolio', 'Please review the attached CV.', 'Private CV action', 'Request changes action']) expect(html).toContain(value);
+    for (const value of ['Frozen submitted application snapshot', 'Ada Teacher', 'Math · Primary', 'BEd', '2010 – 2014', 'Tutor', '2015 – Present', 'A patient approach', 'English', '+20123456789', '8', 'https://example.com/portfolio', 'https://drive.google.com/file/d/new-cv/view', 'Google Drive CV link', 'Please review the attached CV.', 'Private CV action', 'Request changes action']) expect(html).toContain(value);
     expect(html).not.toContain('teacher-applications');
     expect(html).not.toContain('signedUrl');
   });
 
   it('keeps draft applications visibly unsubmitted and offers no approval or CV controls', () => {
-    const html = renderToStaticMarkup(<TeacherApplicationPanel locale="en" application={{ ...application, status: 'draft', snapshot: null, submitted_at: null }} missing={['cv', 'attestation']} requestId="22222222-2222-4222-8222-222222222222"/>);
+    const html = renderToStaticMarkup(<TeacherApplicationPanel locale="en" application={{ ...application, status: 'draft', snapshot: null, submitted_at: null }} missing={['attestation']} requestId="22222222-2222-4222-8222-222222222222"/>);
     expect(html).toContain('Unsubmitted draft');
-    expect(html).toContain('CV PDF');
+    expect(html).not.toContain('Private CV action');
     expect(html).not.toContain('Private CV action');
     expect(html).not.toContain('Request changes action');
   });

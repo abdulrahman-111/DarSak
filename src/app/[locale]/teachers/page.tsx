@@ -1,9 +1,11 @@
 import Link from 'next/link';
 import { Search, SlidersHorizontal } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
-import { catalogue, publicGroups, publicTeacherChoices } from '@/features/platform/data';
-import { discoverySearchParams, normalizeDiscoveryFilters, DISCOVERY_PAGE_SIZE } from '@/features/platform/discovery-domain';
+import { catalogue, currentUser, publicGroups, publicTeacherChoices, publicTeacherSample } from '@/features/platform/data';
+import { discoverySearchParams, normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
+import { discoveryFiltersForRole, discoveryGroupsForRole, type DiscoveryRole } from '@/features/platform/discovery-access';
 import { GroupCard, SetupCard } from '@/components/ui';
+import { redirect } from 'next/navigation';
 import { isConfigured } from '@/lib/supabase/server';
 import { publicCopy } from '@/components/public/copy';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
@@ -29,21 +31,27 @@ export default async function Teachers({
 }) {
   const { locale } = await params;
   const query = await searchParams;
-  const filters = normalizeDiscoveryFilters(query);
-  const teacherSearch = (Array.isArray(query.teacher_search) ? query.teacher_search[0] : query.teacher_search ?? '').trim().slice(0, 80);
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
 
   if (!isConfigured()) return <div className="container py-16"><SetupCard t={t}/></div>;
 
+  const me = await currentUser();
+  const profile = me?.profile;
+  const role: DiscoveryRole = profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher' || profile.role === 'admin') ? profile.role : null;
+  if (role === 'teacher' || role === 'admin') redirect(`/${locale}/${role}`);
+  const fullDiscovery = role === 'student';
+  const filters = discoveryFiltersForRole(role, query);
+  const teacherSearch = fullDiscovery ? (Array.isArray(query.teacher_search) ? query.teacher_search[0] : query.teacher_search ?? '').trim().slice(0, 80) : '';
+
   const [result, catalogueResult, teacherResult] = await Promise.all([
-    publicGroups(filters),
-    catalogue(),
-    publicTeacherChoices(teacherSearch, filters.teacherId),
+    publicGroups(filters, fullDiscovery ? undefined : 3),
+    fullDiscovery ? catalogue() : Promise.resolve({ subjects: [], nodes: [], error: null }),
+    fullDiscovery ? publicTeacherChoices(teacherSearch, filters.teacherId) : publicTeacherSample(3),
   ]);
   const error = !!(result.error || catalogueResult.error || teacherResult.error);
-  const groups = result.data.slice(0, DISCOVERY_PAGE_SIZE);
-  const more = result.data.length > DISCOVERY_PAGE_SIZE;
+  const groups = discoveryGroupsForRole(role, result.data);
+  const more = fullDiscovery && result.data.length > groups.length;
   const subjects = catalogueResult.subjects as Array<{ id: string; name_ar: string; name_en: string }>;
   const nodes = catalogueResult.nodes as Array<{ id: string; name_ar: string; name_en: string }>;
   const teachers = teacherResult.data;
@@ -63,10 +71,10 @@ export default async function Teachers({
             <h1 className="mt-2 max-w-3xl text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{c.browseTitle}</h1>
             <p className="mt-3 max-w-2xl leading-7 text-[#4d473f]">{c.browseBody}</p>
           </div>
-          {!error && <p className="font-bold text-muted" aria-live="polite">{c.results(groups.length)}</p>}
+          {!error && fullDiscovery && <p className="font-bold text-muted" aria-live="polite">{c.results(groups.length)}</p>}
         </div>
 
-        <form key={discoverySearchParams(filters).toString()} className="mb-7 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-3" action={`/${locale}/teachers`} method="get">
+        {fullDiscovery ? <form key={discoverySearchParams(filters).toString()} className="mb-7 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-3" action={`/${locale}/teachers`} method="get">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <label className="flex h-12 min-w-0 items-center gap-3 rounded-xl bg-[#f6f0e4] px-4 sm:col-span-2 lg:col-span-1">
               <Search size={18} className="shrink-0 text-muted"/>
@@ -120,24 +128,28 @@ export default async function Teachers({
             <button className="h-12 rounded-xl bg-teal px-5 font-bold text-white transition hover:bg-[#0e4a4b]" type="submit">{c.filter}</button>
             {hasActiveFilters && <Link className="px-1 text-sm font-bold text-orange" href={`/${locale}/teachers`}>{c.clear}</Link>}
           </div>
-        </form>
+        </form> : <div className="mb-7 flex flex-wrap items-center justify-between gap-4 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5">
+          <p className="max-w-2xl leading-7 text-[#4d473f]">{locale === 'ar' ? 'تعرّف على عينة صغيرة من المجموعات والمدرسين. سجّل كطالب لاستكشاف جميع المدرسين والمجموعات.' : 'Preview a small sample of groups and teachers. Register as a student to explore all teachers and groups.'}</p>
+          <Link className="inline-flex min-h-11 items-center rounded-xl bg-orange px-5 font-bold text-white hover:bg-[#c4561a]" href={`/${locale}/register?role=student`}>{locale === 'ar' ? 'سجّل كطالب' : 'Register as a student'}</Link>
+        </div>}
 
         {error ? (
           <div className="rounded-xl bg-red-50 p-4 text-red-700"><p role="alert">{t.error}</p><a href={retryHref} className="mt-3 inline-flex font-bold underline">{c.retry}</a></div>
-        ) : groups.length ? (
+        ) : groups.length || (!fullDiscovery && teachers.length) ? (
           <>
+            {!fullDiscovery && <section className="mb-6" aria-labelledby="featured-teachers-heading"><h2 id="featured-teachers-heading" className="mb-3 text-xl font-bold text-teal">{locale === 'ar' ? 'مدرسون مميزون' : 'Featured teachers'}</h2><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{teachers.map(teacher => <Link key={teacher.id} href={`/${locale}/teachers/${teacher.id}`} className="rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5 font-bold text-teal hover:border-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{teacher.full_name}</Link>)}</div></section>}
             <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">{groups.map(group => <GroupCard key={group.id} group={group} locale={locale} t={t}/>)}</div>
-            <nav className="mt-8 flex items-center justify-between" aria-label={c.pagination}>
+            {fullDiscovery && <nav className="mt-8 flex items-center justify-between" aria-label={c.pagination}>
               {filters.page > 1 ? <Link rel="prev" className="rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1, teacherSearch)}>{c.previous}</Link> : <span/>}
               <span className="text-sm font-bold text-muted">{c.pageLabel(filters.page)}</span>
               {more ? <Link rel="next" className="rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page + 1, teacherSearch)}>{c.next}</Link> : <span/>}
-            </nav>
+            </nav>}
           </>
         ) : (
           <div className="rounded-[1.15rem] border-2 border-dashed border-[#d8ccb8] bg-[#fffdf8] px-6 py-14 text-center">
             <h2 className="text-xl font-bold text-teal">{c.noResults}</h2>
-            <p className="mt-2 text-muted">{c.noResultsBody}</p>
-            {filters.page > 1 ? <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1, teacherSearch)}>{c.previous}</Link> : <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={`/${locale}/teachers`}>{c.clear}</Link>}
+            <p className="mt-2 text-muted">{fullDiscovery ? c.noResultsBody : locale === 'ar' ? 'لا تتوفر معاينة الآن. سجّل كطالب لاستكشاف المدرسين والمجموعات.' : 'No preview is available right now. Register as a student to explore teachers and groups.'}</p>
+            {fullDiscovery && (filters.page > 1 ? <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={urlFor(locale, filters, filters.page - 1, teacherSearch)}>{c.previous}</Link> : <Link className="mt-5 inline-flex rounded-xl border-2 border-teal px-4 py-2.5 font-bold text-teal" href={`/${locale}/teachers`}>{c.clear}</Link>)}
           </div>
         )}
       </section>

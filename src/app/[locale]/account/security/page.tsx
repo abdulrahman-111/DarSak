@@ -21,9 +21,9 @@ export default async function AccountSecurityPage({ params }: { params: Promise<
         <div><dt className="text-sm text-muted">{ar ? 'البريد الإلكتروني' : 'Email address'}</dt><dd className="mt-1 break-all font-bold" dir="auto">{viewer.email ?? (ar ? 'غير متاح' : 'Unavailable')}</dd></div>
         <div><dt className="text-sm text-muted">{ar ? 'طرق تسجيل الدخول' : 'Sign-in methods'}</dt><dd className="mt-1 font-bold">{viewer.signInMethods.length ? viewer.signInMethods.map(method => method === 'google' ? 'Google' : method === 'email' ? (ar ? 'البريد الإلكتروني' : 'Email') : method).join(', ') : (ar ? 'غير متاحة' : 'Unavailable')}</dd></div>
       </dl>
-      <h2 className="text-xl font-black text-teal">{copy.resetTitle}</h2>
-      <p className="mt-3 text-sm leading-6 text-muted">{copy.resetBody}</p>
-      <div className="mt-6"><ResetPasswordForm locale={locale}/></div>
+      <h2 className="text-xl font-black text-teal">{ar ? 'تغيير كلمة المرور' : 'Change your password'}</h2>
+      <p className="mt-3 text-sm leading-6 text-muted">{ar ? 'أدخل كلمة مرورك الحالية للتحقق من هويتك، ثم اختر كلمة مرور جديدة.' : 'Enter your current password to verify your identity, then choose a new password.'}</p>
+      <div className="mt-6"><ResetPasswordForm locale={locale} requireCurrentPassword/></div>
     </section>
   </>
   </AccountPageFrame>;

@@ -8,7 +8,7 @@ export type TeacherSetupDraftPayload = {
   details: RichProfileInput;
   background: { teaching_years: number | null };
   offerings: { offering_ids: string[] };
-  verification: { admin_phone: string; cv_path: string | null; supporting_links: string[]; attested: boolean };
+  verification: { admin_phone: string; cv_path: string | null; cv_url: string | null; supporting_links: string[]; attested: boolean };
 };
 
 export type StudentSetupDraftPayload = {
@@ -39,7 +39,7 @@ export type TeacherStagePayload =
   | { full_name?: string; headline?: string; languages?: string[] }
   | { about?: RichProfileInput['about']; approach?: RichProfileInput['approach']; qualifications?: RichProfileInput['qualifications']; experience?: RichProfileInput['experience']; teaching_years?: number | null }
   | { offering_ids?: string[] }
-  | { admin_phone?: string; cv_path?: string | null; supporting_links?: string[]; attested?: boolean };
+  | { admin_phone?: string; cv_path?: string | null; cv_url?: string | null; supporting_links?: string[]; attested?: boolean };
 
 export type StudentStagePayload =
   | { full_name?: string; age_range?: StudentAgeRange | null; school_name?: string }

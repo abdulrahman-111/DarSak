@@ -110,7 +110,7 @@ begin
 end $$;
 reset role;
 
--- A separate complete teacher flow exercises the atomic success path and frozen review snapshot.
+-- A separate complete teacher flow exercises atomic submission with no CV path or URL.
 set local role authenticated;
 set local request.jwt.claim.sub='a7100000-0000-4000-8000-000000000004';
 do $$
@@ -123,14 +123,14 @@ begin
   v_saved:=public.save_account_setup_stage(2::smallint,
     '{"about":{"ar":"هذه نبذة تعريفية طويلة ومفصلة عن خبرة المعلم وطريقته في مساعدة الطلاب على التعلم بثقة ووضوح.","en":"This is a detailed teacher biography with enough information about their work and the way they help learners build confidence."},"approach":{"ar":"أبدأ بفهم أهداف الطالب ثم أبني دروسا عملية واضحة وأراجع التقدم باستمرار.","en":"I begin by understanding each learner’s goals, then build clear practical lessons and review progress regularly."},"qualifications":[{"id":"qualification-1","title":{"ar":"شهادة تعليم","en":"Teaching certificate"},"organization":{"ar":"جامعة القاهرة","en":"Cairo University"},"description":{"ar":"","en":""},"start_year":null,"end_year":2020,"current":false}],"experience":[{"id":"experience-1","title":{"ar":"مدرس لغة","en":"Language tutor"},"organization":{"ar":"عمل مستقل","en":"Independent work"},"description":{"ar":"دروس فردية ومشروعات تعليمية","en":"One-to-one lessons and independent learning projects"},"start_year":2019,"end_year":null,"current":true}],"teaching_years":3}'::jsonb,1,'en',null);
   v_saved:=public.save_account_setup_stage(3::smallint,jsonb_build_object('offering_ids',jsonb_build_array(v_offering)),2,'en',null);
-  insert into storage.objects(bucket_id,name,owner_id,metadata) values
-    ('teacher-applications','a7100000-0000-4000-8000-000000000004/dddddddd-dddd-4ddd-8ddd-dddddddddddd.pdf','a7100000-0000-4000-8000-000000000004','{"mimetype":"application/pdf","size":100}');
-  v_saved:=public.save_account_setup_stage(4::smallint,'{"admin_phone":"+1234567890","cv_path":"a7100000-0000-4000-8000-000000000004/dddddddd-dddd-4ddd-8ddd-dddddddddddd.pdf","supporting_links":[],"attested":true}'::jsonb,3,'en',null);
+  v_saved:=public.save_account_setup_stage(4::smallint,'{"admin_phone":"+1234567890","supporting_links":[],"attested":true}'::jsonb,3,'en',null);
   v_version:=(v_saved->>'version')::bigint;
   v_result:=public.complete_teacher_account_setup(v_version,'en',null);
   if v_result->>'destination' is distinct from '/en/teacher'
     or v_result#>>'{application,application,status}' is distinct from 'submitted'
     or v_result#>>'{application,application,snapshot,full_name}' is distinct from 'Complete setup teacher'
+    or v_result#>>'{application,application,snapshot,cv_path}' is not null
+    or v_result#>>'{application,application,snapshot,cv_url}' is not null
     or exists(select 1 from public.account_setup_drafts where user_id=auth.uid()) then
     raise exception 'teacher finalization did not atomically submit snapshot and remove draft';
   end if;

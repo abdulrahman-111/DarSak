@@ -9,7 +9,6 @@ vi.mock('next/navigation', () => ({ redirect }));
 import { completeSetup, saveSetupStage } from '@/features/setup/actions';
 
 const userId = '11111111-1111-4111-8111-111111111111';
-const cvPath = `${userId}/22222222-2222-4222-8222-222222222222.pdf`;
 
 function draft(role: 'teacher'|'student' = 'teacher', stage = 1, version = 0) {
   return { role, stage, version, return_to: `/${role==='teacher'?'en':'en'}/${role}`, updated_at: '2026-10-17T00:00:00.000Z', payload: {}, baseline: {} };
@@ -63,29 +62,14 @@ describe('account setup actions', () => {
     expect(rpc).toHaveBeenNthCalledWith(2, 'save_account_setup_stage', expect.objectContaining({ p_stage: 2, p_expected_version: 8, p_payload: {} }));
   });
 
-  it('rejects an invalid PDF signature before upload or draft mutation', async () => {
-    const rpc = vi.fn(); const upload = vi.fn(); setup({ rpc, upload });
-    const result = await saveSetupStage('en', null, form({ stage: 4, payload: { cv_path: null }, file: new File(['not a PDF'], 'cv.pdf', { type: 'application/pdf' }) }));
-    expect(result).toEqual({ error: 'upload', field: 'cv' });
-    expect(upload).not.toHaveBeenCalled(); expect(rpc).not.toHaveBeenCalled();
-  });
-
-  it('returns the uploaded owner path after a failed save so the browser can retry without reuploading', async () => {
-    const rpc = vi.fn().mockResolvedValue({ data: null, error: { code: 'XX000', message: 'write failed' } });
-    const upload = vi.fn(async () => ({ error: null })); setup({ rpc, upload });
-    const result = await saveSetupStage('en', null, form({ stage: 4, payload: { cv_path: null }, file: new File(['%PDF-1.7'], 'cv.pdf', { type: 'application/pdf' }) }));
-    expect(result).toMatchObject({ error: 'save', pendingCvPath: expect.stringMatching(new RegExp(`^${userId}/[0-9a-f-]{36}\\.pdf$`, 'i')) });
-    expect(upload).toHaveBeenCalledOnce();
-    expect(rpc).toHaveBeenCalledWith('save_account_setup_stage', expect.objectContaining({ p_stage: 4, p_payload: expect.objectContaining({ cv_path: result?.pendingCvPath }) }));
-  });
-
-  it('saves an already uploaded pending CV path without uploading a second file', async () => {
+  it('saves an optional Drive CV URL without uploading files', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: draft('teacher', 4, 12), error: null });
     const upload = vi.fn(); setup({ rpc, upload });
-    const result = await saveSetupStage('en', null, form({ stage: 4, version: 11, payload: { cv_path: cvPath } }));
+    const cvUrl = 'https://drive.google.com/file/d/example/view';
+    const result = await saveSetupStage('en', null, form({ stage: 4, version: 11, payload: { cv_url: cvUrl } }));
     expect(result).toMatchObject({ draft: { stage: 4, version: 12 } });
     expect(upload).not.toHaveBeenCalled();
-    expect(rpc).toHaveBeenCalledWith('save_account_setup_stage', expect.objectContaining({ p_payload: { cv_path: cvPath } }));
+    expect(rpc).toHaveBeenCalledWith('save_account_setup_stage', expect.objectContaining({ p_payload: { cv_url: cvUrl } }));
   });
 
   it('returns Save and exit to Account overview while keeping the draft RPC return path intact', async () => {

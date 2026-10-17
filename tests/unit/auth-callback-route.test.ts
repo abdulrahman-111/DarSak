@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-const { createClientMock, isConfiguredMock, rpcMock, afterMock, getUserMock, profileQueryMock, onboardingDestinationMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn(), afterMock: vi.fn(), getUserMock: vi.fn(), profileQueryMock: vi.fn(), onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback) }));
+const { createClientMock, isConfiguredMock, rpcMock, afterMock, getUserMock, getClaimsMock, profileQueryMock, onboardingDestinationMock, recoveryCookieSetMock, recoveryCookieDeleteMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), isConfiguredMock: vi.fn(), rpcMock: vi.fn(), afterMock: vi.fn(), getUserMock: vi.fn(), getClaimsMock: vi.fn(), profileQueryMock: vi.fn(), onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback), recoveryCookieSetMock: vi.fn(), recoveryCookieDeleteMock: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock, isConfigured: isConfiguredMock }));
 vi.mock('@/features/setup/destination', () => ({ resolveSetupDestination: onboardingDestinationMock }));
 vi.mock('server-only',()=>({}));
+vi.mock('next/headers', () => ({ cookies: async () => ({ set: recoveryCookieSetMock, delete: recoveryCookieDeleteMock }) }));
 vi.mock('next/server',async importOriginal=>({...await importOriginal<typeof import('next/server')>(),after:afterMock}));
 
 import { GET } from '@/app/api/auth/callback/route';
@@ -17,16 +18,21 @@ describe('auth callback route', () => {
   const verifyOtp = vi.fn();
 
   beforeEach(() => {
+    vi.stubEnv('AUTH_RECOVERY_SECRET', 'a sufficiently long test-only recovery secret');
     afterMock.mockReset();
     exchangeCodeForSession.mockReset().mockResolvedValue({ error: null });
     verifyOtp.mockReset().mockResolvedValue({ error: null });
+    getClaimsMock.mockReset().mockResolvedValue({ data: { claims: { sub: 'email-user', session_id: 'session-1', amr: [{ method: 'password' }] } }, error: null });
+    recoveryCookieSetMock.mockReset();
+    recoveryCookieDeleteMock.mockReset();
     getUserMock.mockReset().mockResolvedValue({ data: { user: { id: 'email-user', identities: [{ provider: 'email' }] } }, error: null });
     onboardingDestinationMock.mockReset().mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
     profileQueryMock.mockReset().mockResolvedValue({ data: null, error: null });
     rpcMock.mockReset().mockResolvedValue({ data: 'teacher', error: null });
     isConfiguredMock.mockReturnValue(true);
-    createClientMock.mockResolvedValue({ auth: { exchangeCodeForSession, verifyOtp, getUser: getUserMock }, rpc: rpcMock, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: profileQueryMock }) }) }) });
+    createClientMock.mockResolvedValue({ auth: { exchangeCodeForSession, verifyOtp, getUser: getUserMock, getClaims: getClaimsMock }, rpc: rpcMock, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: profileQueryMock }) }) }) });
   });
+  afterEach(() => vi.unstubAllEnvs());
 
   it('exchanges a PKCE code and redirects to next', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'email-user', identities: [{ provider: 'email' }] } }, error: null });
@@ -35,6 +41,13 @@ describe('auth callback route', () => {
     expect(target.origin).toBe('https://dars.example');
     expect(target.pathname).toBe('/ar/reset-password');
     expect(rpcMock).not.toHaveBeenCalled();
+    expect(recoveryCookieSetMock).not.toHaveBeenCalled();
+  });
+
+  it('does not issue recovery proof from an untrusted recovery query on a normal PKCE exchange', async () => {
+    const target = location(await call('code=ordinary&next=/en/reset-password&type=recovery'));
+    expect(target.pathname).toBe('/en/reset-password');
+    expect(recoveryCookieSetMock).not.toHaveBeenCalled();
   });
 
   it('does not run role completion for a generic email code carrying a Google role parameter', async () => {
@@ -47,12 +60,15 @@ describe('auth callback route', () => {
 
   it.each(['', '&google_role=teacher'])('keeps Google-linked PKCE recovery on reset-password without onboarding calls%s', async roleParam => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'google-linked-user', identities: [{ provider: 'google' }] } }, error: null });
+    getClaimsMock.mockResolvedValue({ data: { claims: { sub: 'google-linked-user', session_id: 'google-session', amr: [{ method: 'otp' }] } }, error: null });
+    exchangeCodeForSession.mockResolvedValue({ data: { redirectType: 'recovery' }, error: null });
     profileQueryMock.mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
     const target = location(await call(`code=abc&next=/en/reset-password${roleParam}`));
     expect(target.pathname).toBe('/en/reset-password');
     expect(rpcMock).not.toHaveBeenCalled();
     expect(profileQueryMock).not.toHaveBeenCalled();
     expect(onboardingDestinationMock).not.toHaveBeenCalled();
+    expect(recoveryCookieSetMock).toHaveBeenCalledWith('dars-password-recovery', expect.stringMatching(/\./), expect.objectContaining({ httpOnly: true, maxAge: 900 }));
   });
 
   it('completes only a valid Google signup role after a successful code exchange', async () => {
@@ -153,8 +169,12 @@ describe('auth callback route', () => {
 
   it('keeps recovery token callbacks on the reset destination without setup routing', async () => {
     getUserMock.mockResolvedValue({ data: { user: { id: 'recovering-student', identities: [{ provider: 'email' }] } }, error: null });
+    getClaimsMock.mockResolvedValue({ data: { claims: { sub: 'recovering-student', session_id: 'recovery-session', amr: [{ method: 'otp' }] } }, error: null });
     const target = location(await call('token_hash=h&type=recovery&next=/en/reset-password'));
     expect(target.pathname).toBe('/en/reset-password');
+    expect(verifyOtp).toHaveBeenCalled();
+    expect(getClaimsMock).toHaveBeenCalled();
+    expect(recoveryCookieSetMock).toHaveBeenCalledWith('dars-password-recovery', expect.stringMatching(/\./), expect.objectContaining({ httpOnly: true, maxAge: 900 }));
     expect(onboardingDestinationMock).not.toHaveBeenCalled();
   });
 

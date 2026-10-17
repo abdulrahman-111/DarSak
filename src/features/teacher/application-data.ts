@@ -21,7 +21,7 @@ export function applicationMissingLabel(locale: Locale, code: string): string {
     bio: ['Public biography (at least 80 characters)', 'النبذة العامة (80 حرفاً على الأقل)'], specializations: ['At least one subject and level', 'مادة ومرحلة واحدة على الأقل'],
     languages: ['At least one language', 'لغة واحدة على الأقل'], experience: ['A complete experience entry', 'خبرة مكتملة واحدة'],
     qualifications: ['A complete qualification entry', 'مؤهل مكتمل واحد'], approach: ['Teaching approach (at least 40 characters)', 'منهجية التدريس (40 حرفاً على الأقل)'],
-    teaching_years: ['Years of teaching (0 is allowed)', 'سنوات التدريس (يمكن اختيار 0)'], admin_phone: ['Administrator contact phone', 'هاتف التواصل مع الإدارة'], cv: ['PDF CV', 'السيرة الذاتية بصيغة PDF'], attestation: ['Truth attestation', 'الإقرار بصحة المعلومات'],
+    teaching_years: ['Years of teaching (0 is allowed)', 'سنوات التدريس (يمكن اختيار 0)'], admin_phone: ['Administrator contact phone', 'هاتف التواصل مع الإدارة'], attestation: ['Truth attestation', 'الإقرار بصحة المعلومات'],
   };
   const [enText, arText] = labels[code] ?? [code, code];
   return ar ? arText : enText;

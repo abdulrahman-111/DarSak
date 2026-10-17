@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { rpc, storageUpload, createClient } = vi.hoisted(() => ({ rpc: vi.fn(), storageUpload: vi.fn(), createClient: vi.fn() }));
+const { rpc, createClient } = vi.hoisted(() => ({ rpc: vi.fn(), createClient: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: () => createClient() }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
@@ -9,7 +9,7 @@ import { saveTeacherApplication } from '@/features/teacher/application-actions';
 const teacherId = '10000000-0000-4000-8000-000000000001';
 const timestamp = '2026-10-16T12:00:00.000Z';
 function application(updatedAt = timestamp) {
-  return { teacher_id: teacherId, status: 'draft', teaching_years: null, admin_phone: '', cv_path: null, supporting_links: [], attested: false, snapshot: null, feedback: null, submitted_at: null, reviewed_at: null, reviewed_by: null, updated_at: updatedAt, legacy_approved: false };
+  return { teacher_id: teacherId, status: 'draft', teaching_years: null, admin_phone: '', cv_path: null, cv_url: null, supporting_links: [], attested: false, snapshot: null, feedback: null, submitted_at: null, reviewed_at: null, reviewed_by: null, updated_at: updatedAt, legacy_approved: false };
 }
 function form(intent = 'draft') {
   const data = new FormData();
@@ -25,15 +25,14 @@ function form(intent = 'draft') {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  storageUpload.mockResolvedValue({ error: null });
   rpc.mockImplementation(async (name: string) => name === 'read_teacher_application'
-    ? { data: { application: application(), missing: ['teaching_years', 'admin_phone', 'cv', 'attestation'] }, error: null }
+    ? { data: { application: application(), missing: ['teaching_years', 'admin_phone', 'attestation'] }, error: null }
     : { data: { application: application('2026-10-16T12:01:00.000Z'), missing: [] }, error: null });
   createClient.mockResolvedValue({
     auth: { getUser: async () => ({ data: { user: { id: teacherId } }, error: null }) },
     from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }) }) }) }),
     rpc,
-    storage: { from: () => ({ upload: storageUpload }) },
+    storage: { from: () => ({}) },
   });
 });
 
@@ -68,13 +67,12 @@ describe('saveTeacherApplication', () => {
     expect(rpc).not.toHaveBeenCalled();
   });
 
-  it('rejects a PDF filename whose contents lack the PDF signature', async () => {
+  it('accepts submission without a CV link and never uploads files', async () => {
     const data = form();
-    data.set('cv', new File(['not a PDF'], 'cv.pdf', { type: 'application/pdf' }));
+    data.set('teaching_years', '2'); data.set('admin_phone', '1234567'); data.set('attested', 'on'); data.set('intent', 'submit');
     const result = await saveTeacherApplication('en', null, data);
-    expect(result?.fieldErrors).toEqual({ cv: 'invalid' });
-    expect(storageUpload).not.toHaveBeenCalled();
-    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(result?.success).toBe('Your application was submitted for review.');
+    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_url: null }));
   });
 
   it('maps a stale compare-and-set save to a clear message and never submits', async () => {
@@ -91,26 +89,29 @@ describe('saveTeacherApplication', () => {
     expect(rpc).not.toHaveBeenCalledWith('submit_teacher_application', expect.anything());
   });
 
-  it('keeps an uploaded CV path after an uncertain metadata failure so retry does not upload a duplicate', async () => {
+  it('rejects non-Drive CV links and accepts a valid Drive link', async () => {
+    const invalid = form(); invalid.set('cv_url', 'https://drive.google.com.evil.test/file/d/abc');
+    expect((await saveTeacherApplication('en', null, invalid))?.fieldErrors).toEqual({ cv_url: 'invalid' });
+    const valid = form(); valid.set('cv_url', 'https://drive.google.com/file/d/abc/view');
+    const result = await saveTeacherApplication('en', null, valid);
+    expect(result?.success).toBe('Draft saved.');
+    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_url: 'https://drive.google.com/file/d/abc/view' }));
+  });
+
+  it('preserves legacy CV metadata when saving without a new link', async () => {
     let saveCalls = 0;
     rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => {
       if (name === 'read_teacher_application') return { data: { application: application(), missing: [] }, error: null };
       saveCalls += 1;
       if (saveCalls === 1) return { data: null, error: { code: 'XX000', message: 'internal write issue' } };
-      return { data: { application: { ...application('2026-10-16T12:01:00.000Z'), cv_path: args?.p_cv_path }, missing: [] }, error: null };
+      return { data: { application: { ...application('2026-10-16T12:01:00.000Z'), cv_path: args?.p_cv_path as string }, missing: [] }, error: null };
     });
-    const first = form();
-    first.set('cv', new File(['%PDF-1.4'], 'cv.pdf', { type: 'application/pdf' }));
-    const failed = await saveTeacherApplication('en', null, first);
-    expect(failed?.pendingCvPath).toMatch(new RegExp(`^${teacherId}/[0-9a-f-]{36}\\.pdf$`, 'i'));
-    expect(failed?.error).toContain('kept securely');
-    expect(storageUpload).toHaveBeenCalledTimes(1);
-
-    const retry = form();
-    retry.set('pending_cv_path', failed?.pendingCvPath ?? '');
-    const saved = await saveTeacherApplication('en', failed, retry);
+    const legacy = `${teacherId}/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf`;
+    rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => name === 'read_teacher_application'
+      ? { data: { application: { ...application(), cv_path: legacy }, missing: [] }, error: null }
+      : { data: { application: { ...application('2026-10-16T12:01:00.000Z'), cv_path: args?.p_cv_path as string, cv_url: null }, missing: [] }, error: null });
+    const saved = await saveTeacherApplication('en', null, form());
     expect(saved?.success).toBe('Draft saved.');
-    expect(rpc).toHaveBeenLastCalledWith('save_teacher_application', expect.objectContaining({ p_cv_path: failed?.pendingCvPath }));
-    expect(storageUpload).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_path: legacy, p_cv_url: null }));
   });
 });

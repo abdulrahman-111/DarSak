@@ -12,6 +12,11 @@ after deploying. Everything below is free.
 | `NEXT_PUBLIC_SITE_URL` | Public origin used to build email and OAuth redirect links (for example `http://localhost:3000`). Falls back to `http://localhost:3000` when unset or invalid. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | Turnstile site key. Leave empty to hide the captcha widget. |
 | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` | Set to `true` to show the "Continue with Google" button. |
+| `AUTH_RECOVERY_SECRET` | Server-only key used to sign short-lived password-recovery proofs. Set a random value of at least 32 bytes, separate for each deployment environment. |
+
+Generate a key with `openssl rand -base64 32`. Add it to local `.env.local` and the
+deployment's server-only environment variables. Password recovery fails closed when this
+key is unset or too short; never use a `NEXT_PUBLIC_` variable for it.
 
 ## 1. URL configuration
 

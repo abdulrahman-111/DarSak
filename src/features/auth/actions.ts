@@ -2,7 +2,7 @@
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 import { flushEmailOutbox } from '@/features/email/worker';
-import { createClient, getVerifiedUser, isConfigured } from '@/lib/supabase/server';
+import { createClient, getVerifiedRecoveryUser, getVerifiedUser, isConfigured } from '@/lib/supabase/server';
 import { siteUrl } from '@/lib/supabase/config';
 import { forgotPasswordSchema, loginSchema, resetPasswordSchema, signupSchema } from '@/lib/domain';
 import { isLocale, type Locale } from '@/i18n/config';
@@ -10,6 +10,9 @@ import { authErrorMessage } from './errors';
 import { loginRedirectPath, safeAuthNext } from './return-path';
 import { authCopy } from '@/components/auth/copy';
 import { resolveSetupDestination } from '@/features/setup/destination';
+import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { getSupabaseConfig } from '@/lib/supabase/config';
+import { PASSWORD_RECOVERY_COOKIE } from './recovery-proof';
 
 /** Non-secret fields echoed back on error so the reset form can repopulate them. Passwords are never included. */
 export type AuthState = {
@@ -179,7 +182,7 @@ export async function forgotPasswordAction(locale: string, _previous: unknown, f
 export async function resetPasswordAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
   const unavailable = configurationError(locale);
   if (unavailable) return { error: unavailable };
-  const user = await getVerifiedUser();
+  const user = await getVerifiedRecoveryUser();
   if (!user) redirect(`/${locale}/forgot-password`);
   const parsed = resetPasswordSchema.safeParse(Object.fromEntries(formData));
   if (!parsed.success) {
@@ -190,6 +193,43 @@ export async function resetPasswordAction(locale: string, _previous: unknown, fo
   }
   const db = await createClient();
   const { error } = await db.auth.updateUser({ password: parsed.data.password });
+  if (error) return { error: authErrorMessage(locale, error.code, 'update') };
+  const { cookies } = await import('next/headers');
+  (await cookies()).delete(PASSWORD_RECOVERY_COOKIE);
+  redirect(`/${locale}/dashboard`);
+}
+/** Change password from account security. Reauthentication uses a separate, non-persistent client. */
+export async function changePasswordAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
+  const unavailable = configurationError(locale);
+  if (unavailable) return { error: unavailable };
+  const user = await getVerifiedUser();
+  if (!user) redirect(`/${locale}/login`);
+  const currentPassword = formData.get('currentPassword');
+  if (typeof currentPassword !== 'string' || currentPassword.length < 1 || currentPassword.length > 72) {
+    return { error: authCopy[locale as Locale].currentPasswordRequired };
+  }
+  const parsed = resetPasswordSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    const mismatch = parsed.error.issues.some(issue => issue.path[0] === 'confirmPassword');
+    return { error: mismatch
+      ? (locale === 'ar' ? 'كلمتا المرور غير متطابقتين.' : 'The passwords do not match.')
+      : (locale === 'ar' ? 'يجب أن تتراوح كلمة المرور بين ٨ و٧٢ حرفًا.' : 'Use a password of 8 to 72 characters.') };
+  }
+  const config = getSupabaseConfig();
+  if (!config || !user.email) return { error: authCopy[locale as Locale].passwordVerificationFailed };
+  const verifier = createSupabaseClient(config.url, config.key, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
+  let verified = false;
+  try {
+    const { data, error } = await verifier.auth.signInWithPassword({ email: user.email, password: currentPassword });
+    verified = !error && data.user?.id === user.id;
+  } catch {
+    verified = false;
+  } finally {
+    try { await verifier.auth.signOut({ scope: 'local' }); } catch { /* The isolated client is never the request session. */ }
+  }
+  if (!verified) return { error: authCopy[locale as Locale].currentPasswordIncorrect };
+  const db = await createClient();
+  const { error } = await db.auth.updateUser({ password: parsed.data.password, current_password: currentPassword });
   if (error) return { error: authErrorMessage(locale, error.code, 'update') };
   redirect(`/${locale}/dashboard`);
 }
