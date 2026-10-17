@@ -109,7 +109,7 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   };
 
   return <div className="grid gap-5">
-  <form action={action} onReset={event => event.preventDefault()} className="grid gap-5">
+  <form action={action} data-confirm-unsaved-navigation onReset={event => event.preventDefault()} className="grid gap-5">
     {groupId && <input type="hidden" name="group_id" value={groupId} />}
     {groupId && <input type="hidden" name="expected_updated_at" value={formValues.updated_at ?? ''} />}
     <div>

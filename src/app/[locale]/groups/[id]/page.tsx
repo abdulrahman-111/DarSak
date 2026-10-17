@@ -1,3 +1,5 @@
+import { groupLearningDetails } from '@/features/teacher/group-learning-data';
+import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -42,6 +44,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
     me?.profile?.role === 'student' ? enrollmentForGroup(id) : Promise.resolve(null),
     activeViewer && me?.profile?.role === 'student' ? savedGroupStatus(id) : Promise.resolve(false),
   ]);
+  const learning=await groupLearningDetails(requestViewer.db,id);
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject ? catalogueDisplayName(data.offering.subject, locale) || t.groups : t.groups;
   const nextLesson = data.next_lesson_at
@@ -64,6 +67,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{data.name}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4d473f]">{data.description || c.detailIntro}</p>
             <p className="mt-4 rounded-xl border border-line p-4 text-sm text-muted">{enrollment?.status === 'accepted' ? <Link href={`/${locale}/teachers/${data.teacher_id}`} className="inline-flex min-h-11 items-center font-bold text-teal underline">{locale === 'ar' ? 'عرض بيانات التواصل مع المعلم' : 'View teacher contact details'}</Link> : locale === 'ar' ? 'تظهر بيانات التواصل مع المعلم بعد قبول طلب انضمامك إلى إحدى مجموعاته.' : 'Teacher contact details become available after your enrollment in one of their groups is accepted.'}</p>
+            {learning.error?<p role="alert" className="mt-4 text-sm text-red-800">{locale==='ar'?'تعذر تحميل تفاصيل التعلم. حدّث الصفحة وحاول مجددًا.':'Could not load learning details. Refresh and try again.'}</p>:<GroupLearningView locale={locale} details={learning.data}/>}
             {activeViewer && <AnnouncementView locale={locale} announcement={announcement} className="mt-6" />}
 
             <div className="mt-6 rounded-xl bg-[#f6f0e4] p-4" aria-label={c.nextLesson}>

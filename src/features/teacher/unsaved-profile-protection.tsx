@@ -11,7 +11,8 @@ const messages = {
 type ContextValue = { setDirty: (key: string, dirty: boolean) => void };
 const DirtyContext = createContext<ContextValue | null>(null);
 
-export function UnsavedProfileProtection({ locale, children }: { locale: Locale; children: ReactNode }) {
+export function UnsavedProfileProtection({ locale, children, kind = 'profile' }: { locale: Locale; children: ReactNode; kind?: 'profile'|'group' }) {
+  const text = kind === 'group' ? (locale === 'ar' ? { indicator: 'لديك تفاصيل تعلم غير محفوظة.', confirm: 'لديك تفاصيل تعلم غير محفوظة. هل تريد المغادرة وإهمالها؟' } : { indicator: 'You have unsaved learning details.', confirm: 'You have unsaved learning details. Leave and discard them?' }) : messages[locale];
   const [dirtySections, setDirtySections] = useState<Record<string, boolean>>({});
   const approvedNavigation = useRef(false);
   const setDirty = useCallback((key: string, dirty: boolean) => {
@@ -44,12 +45,12 @@ export function UnsavedProfileProtection({ locale, children }: { locale: Locale;
       try { destination = new URL(anchor.href, window.location.href); } catch { return; }
       if (destination.origin !== window.location.origin) return;
       if (destination.pathname === window.location.pathname && destination.search === window.location.search) return;
-      if (!window.confirm(messages[locale].confirm)) event.preventDefault();
+      if (!window.confirm(text.confirm)) event.preventDefault();
       else approveImmediateNavigation();
     };
     const confirmFormSubmit = (event: SubmitEvent) => {
       if (!dirty || event.defaultPrevented || !(event.target instanceof HTMLFormElement) || !event.target.hasAttribute('data-confirm-unsaved-navigation')) return;
-      if (!window.confirm(messages[locale].confirm)) {
+      if (!window.confirm(text.confirm)) {
         event.preventDefault();
         event.stopImmediatePropagation();
       } else {
@@ -64,10 +65,10 @@ export function UnsavedProfileProtection({ locale, children }: { locale: Locale;
       document.removeEventListener('click', confirmNavigation, true);
       document.removeEventListener('submit', confirmFormSubmit, true);
     };
-  }, [dirty, locale]);
+  }, [dirty, text.confirm]);
 
   return <DirtyContext.Provider value={context}>
-    {dirty && <p role="status" className="mb-4 rounded-xl border border-orange/30 bg-orange/10 p-3 text-sm font-bold text-ink" dir={locale === 'ar' ? 'rtl' : 'ltr'}>{messages[locale].indicator}</p>}
+    {dirty && <p role="status" className="mb-4 rounded-xl border border-orange/30 bg-orange/10 p-3 text-sm font-bold text-ink" dir={locale === 'ar' ? 'rtl' : 'ltr'}>{text.indicator}</p>}
     {children}
   </DirtyContext.Provider>;
 }

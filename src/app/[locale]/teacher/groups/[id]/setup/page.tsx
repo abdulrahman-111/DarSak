@@ -1,3 +1,7 @@
+import { UnsavedProfileProtection } from '@/features/teacher/unsaved-profile-protection';
+import { groupLearningDetails } from '@/features/teacher/group-learning-data';
+import { GroupLearningForm } from '@/features/teacher/group-learning-form';
+import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { Panel, ScreenTitle, Status } from '@/components/platform/ui';
@@ -28,7 +32,8 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
   const reviewResult=await data.me.db.rpc('teacher_review_status',{p_teacher_id:data.me.id});
   const reviewStatus=reviewResult.error?null:parseTeacherReviewStatus(reviewResult.data)?.status??null;
 
-  return <>
+  const learning=await groupLearningDetails(data.me.db,id);
+  return <UnsavedProfileProtection locale={locale} kind="group">
     <ScreenTitle eyebrow={ar ? 'مسودة مجموعة' : 'Group draft'} title={data.group.name} description={ar ? 'يمكنك العودة لإكمال إعداد مجموعتك في أي وقت.' : 'You can return to finish setting up your group at any time.'} action={<Status value={data.group.status} locale={locale} />} />
     <div className="mx-auto max-w-3xl">
       <GroupSetupSteps locale={locale} groupId={id} current={step} copyScheduleFrom={proposalSourceId} />
@@ -49,6 +54,7 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
               copyScheduleFrom={proposalSourceId}
             />}
       </Panel>
+      {learning.error ? <Panel><p role="alert">{ar?'تعذر تحميل تفاصيل التعلم. حدّث الصفحة.':'Could not load learning details. Refresh the page.'}</p></Panel> : step === 'details' ? <Panel className="mt-5"><h2 className="text-xl font-black text-teal">{ar?'تفاصيل التعلم':'Learning details'}</h2><GroupLearningForm locale={locale} groupId={id} details={learning.data}/></Panel> : step === 'review' ? <GroupLearningView locale={locale} details={learning.data}/> : null}
     </div>
-  </>;
+  </UnsavedProfileProtection>;
 }
