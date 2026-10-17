@@ -1,8 +1,8 @@
 'use client';
 
-import { useActionState, useId, useState } from 'react';
+import { useActionState, useEffect, useId, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { forgotPasswordAction, resendConfirmationAction, resetPasswordAction } from '@/features/auth/actions';
+import { forgotPasswordAction, resendConfirmationAction, resetPasswordAction, verifySignupCodeAction } from '@/features/auth/actions';
 import { inputClass } from './auth-form';
 import { authCopy, type AuthLocale } from './copy';
 import { Turnstile } from './turnstile';
@@ -25,15 +25,25 @@ function EmailForm({ locale, action, emailLabel, submit, pendingLabel, defaultEm
 }) {
   const [state, formAction, pending] = useActionState(action.bind(null, locale), null);
   const feedbackId = useId();
+  const [cooldown, setCooldown] = useState(0);
+  useEffect(() => {
+    if (!state?.notice || action !== resendConfirmationAction) return;
+    const timer = window.setTimeout(() => setCooldown(60), 0);
+    return () => window.clearTimeout(timer);
+  }, [state, action]);
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = window.setTimeout(() => setCooldown(value => Math.max(0, value - 1)), 1000);
+    return () => window.clearTimeout(timer);
+  }, [cooldown]);
   return (
     <form action={formAction} className="space-y-5" aria-describedby={state ? feedbackId : undefined}>
-      <label className="block text-sm font-bold text-ink">
-        {emailLabel}
-        <input className={inputClass} name="email" type="email" dir="ltr" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={state?.email ?? defaultEmail}/>
-      </label>
+      {defaultEmail
+        ? <input type="hidden" name="email" value={state?.email ?? defaultEmail}/>
+        : <label className="block text-sm font-bold text-ink">{emailLabel}<input className={inputClass} name="email" type="email" dir="ltr" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={state?.email}/></label>}
       <Turnstile locale={locale} resetSignal={state}/>
       <Feedback state={state} id={feedbackId}/>
-      <button className={submitClass} disabled={pending} type="submit">{pending ? pendingLabel : submit}</button>
+      <button className={submitClass} disabled={pending || cooldown > 0} type="submit">{pending ? pendingLabel : cooldown > 0 ? `${submit} (${cooldown})` : submit}</button>
     </form>
   );
 }
@@ -46,6 +56,18 @@ export function ForgotPasswordForm({ locale, emailLabel }: { locale: AuthLocale;
 export function ResendConfirmationForm({ locale, emailLabel, email }: { locale: AuthLocale; emailLabel: string; email?: string }) {
   const copy = authCopy[locale];
   return <EmailForm locale={locale} action={resendConfirmationAction} emailLabel={emailLabel} submit={copy.resend} pendingLabel={copy.resending} defaultEmail={email}/>;
+}
+
+export function VerifySignupCodeForm({ locale, emailLabel, email }: { locale: AuthLocale; emailLabel: string; email?: string }) {
+  const copy = authCopy[locale];
+  const [state, formAction, pending] = useActionState(verifySignupCodeAction.bind(null, locale), null);
+  const feedbackId = useId();
+  return <form action={formAction} className="space-y-5" aria-describedby={state ? feedbackId : undefined}>
+    {email ? <input type="hidden" name="email" value={email}/> : <label className="block text-sm font-bold text-ink">{emailLabel}<input className={inputClass} name="email" type="email" dir="ltr" required maxLength={254} autoComplete="email" inputMode="email" defaultValue={state?.email}/></label>}
+    <label className="block text-sm font-bold text-ink">{copy.codeLabel}<input className={inputClass} name="token" type="text" dir="ltr" required minLength={6} maxLength={6} pattern="[0-9]{6}" inputMode="numeric" autoComplete="one-time-code"/></label>
+    <Feedback state={state} id={feedbackId}/>
+    <button className={submitClass} disabled={pending} type="submit">{pending ? copy.verifyingCode : copy.verifyCode}</button>
+  </form>;
 }
 
 export function ResetPasswordForm({ locale }: { locale: AuthLocale }) {

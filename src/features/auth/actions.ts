@@ -183,6 +183,23 @@ export async function resendConfirmationAction(locale: string, _previous: unknow
   if (error && !IDENTITY_DEPENDENT_EMAIL_ERRORS.has(error.code ?? '')) return { error: authCopy[locale as Locale].emailDeliveryFailure, ...emailEcho(formData) };
   return { notice: locale === 'ar' ? 'إذا كان هناك حساب بهذا البريد بانتظار التأكيد، فقد قُبل طلب رسالة جديدة.' : 'If an account is waiting for confirmation, the request for a new email was accepted.' };
 }
+/** Verify a signup OTP specifically; the generic email type can also accept recovery codes. */
+export async function verifySignupCodeAction(locale: string, _previous: unknown, formData: FormData): Promise<AuthState> {
+  const unavailable = configurationError(locale);
+  if (unavailable) return { error: unavailable };
+  const parsed = forgotPasswordSchema.safeParse(Object.fromEntries(formData));
+  const token = textField(formData, 'token', 6);
+  if (!parsed.success || !token || !/^\d{6}$/.test(token)) {
+    return { error: authCopy[locale as Locale].codeInvalid, ...emailEcho(formData) };
+  }
+  const db = await createClient();
+  const { data, error } = await db.auth.verifyOtp({ email: parsed.data.email, token, type: 'signup' });
+  // Keep invalid, expired, and mismatched codes indistinguishable.
+  if (error?.code && SURFACED_EMAIL_ERRORS.has(error.code)) return { error: authErrorMessage(locale, error.code, 'signup'), ...emailEcho(formData) };
+  if (error || !data.session || !data.user) return { error: authCopy[locale as Locale].codeInvalid, ...emailEcho(formData) };
+  const { data: profile } = await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle();
+  redirect(loginRedirectPath(locale as Locale, null, profile));
+}
 export async function logoutAction() {
   if (isConfigured()) {
     const db = await createClient();
