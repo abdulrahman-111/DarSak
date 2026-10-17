@@ -20,7 +20,6 @@ export const TEACHER_APPLICATION_MISSING_CODES = [
   "approach",
   "teaching_years",
   "admin_phone",
-  "cv",
   "attestation",
 ] as const;
 
@@ -33,6 +32,7 @@ export type TeacherApplication = {
   teaching_years: number | null;
   admin_phone: string;
   cv_path: string | null;
+  cv_url?: string | null;
   supporting_links: string[];
   attested: boolean;
   snapshot: Record<string, unknown> | null;
@@ -48,6 +48,15 @@ export type TeacherApplicationReadResponse = {
   application: TeacherApplication | null;
   missing: TeacherApplicationMissing[];
 };
+
+export function isGoogleDriveCvUrl(value: string): boolean {
+  if (!value || value.length > 500 || /[\s\\]/.test(value)) return false;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && url.hostname.toLowerCase() === 'drive.google.com'
+      && !url.username && !url.password && !!url.pathname && !url.port;
+  } catch { return false; }
+}
 
 export function isTeacherApplicationStatus(
   value: unknown,
@@ -106,6 +115,7 @@ export function parseTeacherApplicationReadResponse(
         typeof row.teaching_years === "number" ? row.teaching_years : null,
       admin_phone: row.admin_phone,
       cv_path: typeof row.cv_path === "string" ? row.cv_path : null,
+      cv_url: typeof row.cv_url === "string" ? row.cv_url : null,
       supporting_links: row.supporting_links,
       attested: row.attested,
       snapshot:

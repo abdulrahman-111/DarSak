@@ -64,8 +64,15 @@ describe('teacher profile validation', () => {
   it('requires valid subject and category IDs for a new specialization pair', () => {
     const id = '22222222-2222-4222-8222-222222222222';
     expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: id }).success).toBe(true);
+    expect(teacherSpecializationPairSchema.safeParse({
+      subject_id: '00000000-0000-0000-0000-000000000001',
+      category_id: '00000000-0000-0000-0000-000000000013',
+    }).success).toBe(true);
     expect(teacherSpecializationPairSchema.safeParse({ subject_id: 'bad', category_id: id }).success).toBe(false);
     expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: null }).success).toBe(false);
+    for (const category_id of ['00000000-0000-0000-0000-000000000013/path', '00000000-0000-0000-0000-00000000001g', '00000000-0000-0000-0000-00000000001']) {
+      expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id }).success).toBe(false);
+    }
   });
 
   it('does not duplicate a specialization returned by pair creation', () => {

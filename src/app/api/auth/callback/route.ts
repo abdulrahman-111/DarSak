@@ -9,6 +9,7 @@ import { safeAuthNext } from '@/features/auth/return-path';
 import { resolveSetupDestination } from '@/features/setup/destination';
 import { callDeletionEdge } from '@/features/account/edge';
 import { googleReauthHint } from '@/features/account/google-hint';
+import { issueRecoveryProof, PASSWORD_RECOVERY_COOKIE, PASSWORD_RECOVERY_TTL_SECONDS } from '@/features/auth/recovery-proof';
 
 const OTP_TYPES: readonly EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
 export const maxDuration = 40;
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
   const db = await createClient();
 
   let error: unknown = new Error('Missing auth parameters');
+  let recoveryFlow = false;
   let setupError = false;
   let profileReadFailure = false;
   const setupTargetForUser = async (userId: string): Promise<string | null> => {
@@ -39,7 +41,9 @@ export async function GET(request: NextRequest) {
     return resolveSetupDestination(db, userId, profile.role, locale, destination);
   };
   if (code) {
-    ({ error } = await db.auth.exchangeCodeForSession(code));
+    const exchange = await db.auth.exchangeCodeForSession(code);
+    error = exchange.error;
+    recoveryFlow = !error && (exchange.data as typeof exchange.data & { redirectType?: string } | null)?.redirectType === 'recovery';
     const deletionIntent = params.get('delete_intent');
     if (deletionIntent && destination !== `/${locale}/reset-password`) {
       const jar = await cookies();
@@ -121,7 +125,26 @@ export async function GET(request: NextRequest) {
       }
     }
   }
-  else if (tokenHash && type && OTP_TYPES.includes(type)) ({ error } = await db.auth.verifyOtp({ type, token_hash: tokenHash }));
+  else if (tokenHash && type && OTP_TYPES.includes(type)) {
+    const verified = await db.auth.verifyOtp({ type, token_hash: tokenHash });
+    error = verified.error;
+    recoveryFlow = !error && type === 'recovery';
+  }
+
+  if (!error && recoveryFlow) {
+      const [{ data: { user }, error: userError }, { data: claimsData, error: claimsError }] = await Promise.all([
+        db.auth.getUser(), db.auth.getClaims(),
+      ]);
+      const claims = claimsData?.claims;
+      const sessionId = claims?.session_id;
+      const proof = recoveryFlow && !userError && !claimsError && user && claims?.sub === user.id && typeof sessionId === 'string'
+        ? issueRecoveryProof(user.id, sessionId)
+        : null;
+      const jar = await cookies();
+      if (proof) {
+        jar.set(PASSWORD_RECOVERY_COOKIE, proof, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: PASSWORD_RECOVERY_TTL_SECONDS });
+      } else jar.delete(PASSWORD_RECOVERY_COOKIE);
+  }
 
   // The legacy confirmation template may deliver token_hash URLs instead of PKCE codes.
   // Signup/email confirmations use the same setup resolver as the code path.

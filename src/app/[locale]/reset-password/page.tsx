@@ -2,12 +2,12 @@ import { redirect } from 'next/navigation';
 import { AuthAside } from '@/components/auth/auth-aside';
 import { authCopy } from '@/components/auth/copy';
 import { ResetPasswordForm } from '@/components/auth/password-forms';
-import { getVerifiedUser } from '@/lib/supabase/server';
+import { getVerifiedRecoveryUser } from '@/lib/supabase/server';
 
 export default async function ResetPassword({ params }: { params: Promise<{ locale: 'ar' | 'en' }> }) {
   const { locale } = await params;
-  // The emailed link signs the user in through /api/auth/callback; no session means no reset.
-  if (!(await getVerifiedUser())) redirect(`/${locale}/forgot-password`);
+  // The callback issues short-lived proof only for a verified recovery session.
+  if (!(await getVerifiedRecoveryUser())) redirect(`/${locale}/forgot-password`);
   const copy = authCopy[locale];
 
   return (

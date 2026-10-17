@@ -1,18 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, getVerifiedUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock, signupAvailabilityMock } = vi.hoisted(() => ({
+const { createClientMock, getVerifiedUserMock, getVerifiedRecoveryUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock, signupAvailabilityMock, recoveryCookieDeleteMock, isolatedClientMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getVerifiedUserMock: vi.fn(),
+  getVerifiedRecoveryUserMock: vi.fn(),
   isConfiguredMock: vi.fn(),
   redirectMock: vi.fn((url: string) => { throw new Error(`NEXT_REDIRECT:${url}`); }),
   afterMock: vi.fn(),
   onboardingDestinationMock: vi.fn(async (_db: unknown, _userId: string, _role: string, _locale: string, fallback: string) => fallback),
   signupAvailabilityMock: vi.fn(async (): Promise<{ data: boolean | null; error: { message: string } | null }> => ({ data: false, error: null })),
+  recoveryCookieDeleteMock: vi.fn(),
+  isolatedClientMock: vi.fn(),
 }));
+vi.mock('@supabase/supabase-js', () => ({ createClient: isolatedClientMock }));
+vi.mock('next/headers', () => ({ cookies: async () => ({ delete: recoveryCookieDeleteMock }) }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: createClientMock,
   getVerifiedUser: getVerifiedUserMock,
+  getVerifiedRecoveryUser: getVerifiedRecoveryUserMock,
   isConfigured: isConfiguredMock,
 }));
 vi.mock('next/navigation', () => ({ redirect: redirectMock }));
@@ -21,7 +27,7 @@ vi.mock('next/server',()=>({after:afterMock}));
 vi.mock('@/features/setup/destination', () => ({ resolveSetupDestination: onboardingDestinationMock }));
 
 import {
-  chooseGoogleRoleAction, forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction, verifySignupCodeAction,
+  changePasswordAction, chooseGoogleRoleAction, forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction, verifySignupCodeAction,
 } from '@/features/auth/actions';
 
 function form(values: Record<string, string>) {
@@ -40,12 +46,17 @@ describe('auth actions', () => {
   beforeEach(() => {
     createClientMock.mockReset();
     getVerifiedUserMock.mockReset();
+    getVerifiedRecoveryUserMock.mockReset();
+    isolatedClientMock.mockReset();
+    recoveryCookieDeleteMock.mockReset();
     redirectMock.mockClear();
     afterMock.mockReset();
     signupAvailabilityMock.mockReset().mockResolvedValue({ data: false, error: null });
     onboardingDestinationMock.mockReset().mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
     isConfiguredMock.mockReturnValue(true);
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://dars.example');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://db.example');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'public-key');
   });
   afterEach(() => vi.unstubAllEnvs());
 
@@ -279,13 +290,14 @@ describe('auth actions', () => {
     const passwords = (password: string, confirmPassword = password) => form({ password, confirmPassword });
 
     it('sends unverified users back to forgot-password', async () => {
-      getVerifiedUserMock.mockResolvedValue(null);
+      getVerifiedUserMock.mockResolvedValue({ id: 'ordinary-user' });
+      getVerifiedRecoveryUserMock.mockResolvedValue(null);
       expect(await redirectTarget(() => resetPasswordAction('en', null, passwords('password123')))).toBe('/en/forgot-password');
       expect(createClientMock).not.toHaveBeenCalled();
     });
 
     it('rejects mismatched confirmation and out-of-range passwords', async () => {
-      getVerifiedUserMock.mockResolvedValue({ id: 'u1' });
+      getVerifiedRecoveryUserMock.mockResolvedValue({ id: 'u1' });
       expect((await resetPasswordAction('en', null, passwords('password123', 'password124')))?.error).toMatch(/do not match/);
       expect((await resetPasswordAction('en', null, passwords('short')))?.error).toMatch(/8 to 72/);
       expect((await resetPasswordAction('en', null, passwords('x'.repeat(73))))?.error).toMatch(/8 to 72/);
@@ -293,13 +305,54 @@ describe('auth actions', () => {
     });
 
     it('maps same_password and redirects to the dashboard on success', async () => {
-      getVerifiedUserMock.mockResolvedValue({ id: 'u1' });
+      getVerifiedRecoveryUserMock.mockResolvedValue({ id: 'u1' });
       createClientMock.mockResolvedValue({ auth: { updateUser: async () => ({ data: {}, error: { code: 'same_password' } }) } });
       expect((await resetPasswordAction('en', null, passwords('password123')))?.error).toMatch(/different/);
       const updateUser = vi.fn(async () => ({ data: {}, error: null }));
       createClientMock.mockResolvedValue({ auth: { updateUser } });
       expect(await redirectTarget(() => resetPasswordAction('ar', null, passwords('password123')))).toBe('/ar/dashboard');
       expect(updateUser).toHaveBeenCalledWith({ password: 'password123' });
+      expect(recoveryCookieDeleteMock).toHaveBeenCalledWith('dars-password-recovery');
+    });
+  });
+
+  describe('changePasswordAction', () => {
+    const values = (currentPassword?: string) => form({ ...(currentPassword !== undefined ? { currentPassword } : {}), password: 'newpassword123', confirmPassword: 'newpassword123' });
+    it('requires a current password and does not create a client when it is missing', async () => {
+      getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
+      expect((await changePasswordAction('en', null, values()))?.error).toMatch(/Enter your current password/);
+      expect(createClientMock).not.toHaveBeenCalled();
+      expect(isolatedClientMock).not.toHaveBeenCalled();
+    });
+    it('rejects a wrong password before touching the original session', async () => {
+      getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
+      const signOut = vi.fn(async () => ({ error: null }));
+      const signInWithPassword = vi.fn(async () => ({ data: { user: null }, error: { code: 'invalid_credentials' } }));
+      isolatedClientMock.mockReturnValue({ auth: { signInWithPassword, signOut } });
+      expect((await changePasswordAction('en', null, values('wrong')))?.error).toMatch(/current password is incorrect/i);
+      expect(signInWithPassword).toHaveBeenCalledWith({ email: 'trusted@example.com', password: 'wrong' });
+      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      expect(createClientMock).not.toHaveBeenCalled();
+    });
+    it('rejects a successful provider response for a different identity', async () => {
+      getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
+      const signOut = vi.fn(async () => ({ error: null }));
+      isolatedClientMock.mockReturnValue({ auth: { signInWithPassword: vi.fn(async () => ({ data: { user: { id: 'u2' } }, error: null })), signOut } });
+      expect((await changePasswordAction('en', null, values('oldpassword')))?.error).toMatch(/current password is incorrect/i);
+      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      expect(createClientMock).not.toHaveBeenCalled();
+    });
+    it('updates only after successful verification and preserves recovery without current password', async () => {
+      getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
+      const signOut = vi.fn(async () => ({ error: null }));
+      isolatedClientMock.mockReturnValue({ auth: { signInWithPassword: vi.fn(async () => ({ data: { user: { id: 'u1' } }, error: null })), signOut } });
+      const updateUser = vi.fn(async () => ({ data: {}, error: null }));
+      createClientMock.mockResolvedValue({ auth: { updateUser } });
+      expect(await redirectTarget(() => changePasswordAction('en', null, values('oldpassword')))).toBe('/en/dashboard');
+      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      expect(updateUser).toHaveBeenCalledWith({ password: 'newpassword123', current_password: 'oldpassword' });
+      getVerifiedRecoveryUserMock.mockResolvedValue({ id: 'u1' });
+      expect(await redirectTarget(() => resetPasswordAction('en', null, form({ password: 'newpassword123', confirmPassword: 'newpassword123' })))).toBe('/en/dashboard');
     });
   });
 

@@ -63,8 +63,10 @@ export const teacherProfileSchema = z.object({
 });
 
 export const teacherSpecializationPairSchema = z.object({
-  subject_id: z.string().uuid(),
-  category_id: z.string().uuid(),
+  // PostgreSQL UUID columns accept any canonical 8-4-4-4-12 value, including
+  // legacy seeded IDs whose version/variant bits are not RFC 4122 values.
+  subject_id: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
+  category_id: z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i),
 });
 
 export function addUniqueOfferingId(ids: string[], id: string): string[] {

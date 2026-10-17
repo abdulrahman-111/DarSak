@@ -2,7 +2,7 @@
 
 import { useActionState, useEffect, useId, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { forgotPasswordAction, resendConfirmationAction, resetPasswordAction, verifySignupCodeAction } from '@/features/auth/actions';
+import { changePasswordAction, forgotPasswordAction, resendConfirmationAction, resetPasswordAction, verifySignupCodeAction } from '@/features/auth/actions';
 import { inputClass } from './auth-form';
 import { authCopy, type AuthLocale } from './copy';
 import { Turnstile } from './turnstile';
@@ -70,9 +70,10 @@ export function VerifySignupCodeForm({ locale, emailLabel, email }: { locale: Au
   </form>;
 }
 
-export function ResetPasswordForm({ locale }: { locale: AuthLocale }) {
+export function ResetPasswordForm({ locale, requireCurrentPassword = false }: { locale: AuthLocale; requireCurrentPassword?: boolean }) {
   const copy = authCopy[locale];
-  const [state, formAction, pending] = useActionState(resetPasswordAction.bind(null, locale), null);
+  const action = requireCurrentPassword ? changePasswordAction : resetPasswordAction;
+  const [state, formAction, pending] = useActionState(action.bind(null, locale), null);
   const [visible, setVisible] = useState(false);
   const hintId = useId();
   const feedbackId = useId();
@@ -95,6 +96,7 @@ export function ResetPasswordForm({ locale }: { locale: AuthLocale }) {
 
   return (
     <form action={formAction} className="space-y-5" aria-describedby={state ? feedbackId : undefined}>
+      {requireCurrentPassword && field('currentPassword', copy.currentPassword, 'current-password')}
       {field('password', copy.newPassword, 'new-password', hintId)}
       <p id={hintId} className="-mt-3 text-xs text-muted">{copy.passwordHint}</p>
       {field('confirmPassword', copy.confirmPassword, 'new-password')}

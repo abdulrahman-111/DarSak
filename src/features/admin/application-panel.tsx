@@ -8,13 +8,13 @@ const missingCopy = {
     full_name: 'Full name', photo: 'Profile photo', headline: 'Headline', bio: 'Biography',
     specializations: 'At least one subject and level', languages: 'At least one language',
     experience: 'Experience entry', qualifications: 'Qualification entry', approach: 'Teaching approach',
-    teaching_years: 'Years of experience', admin_phone: 'Private administrator phone', cv: 'CV PDF', attestation: 'Attestation',
+    teaching_years: 'Years of experience', admin_phone: 'Private administrator phone', attestation: 'Attestation',
   },
   ar: {
     full_name: 'الاسم الكامل', photo: 'الصورة الشخصية', headline: 'العنوان التعريفي', bio: 'النبذة',
     specializations: 'مادة ومستوى واحد على الأقل', languages: 'لغة واحدة على الأقل',
     experience: 'بيانات الخبرة', qualifications: 'بيانات المؤهل', approach: 'أسلوب التدريس',
-    teaching_years: 'سنوات الخبرة', admin_phone: 'هاتف المسؤول الخاص', cv: 'ملف السيرة الذاتية PDF', attestation: 'الإقرار',
+    teaching_years: 'سنوات الخبرة', admin_phone: 'هاتف المسؤول الخاص', attestation: 'الإقرار',
   },
 } satisfies Record<string, Record<TeacherApplicationMissing, string>>;
 
@@ -38,7 +38,6 @@ export function submittedApplicationReady(application: TeacherApplication | null
     && typeof snapshot.teaching_years === 'number'
     && typeof snapshot.admin_phone === 'string'
     && Array.isArray(snapshot.supporting_links)
-    && typeof snapshot.cv_path === 'string'
     && snapshot.attested === true;
 }
 
@@ -128,7 +127,9 @@ export function TeacherApplicationPanel({
         <div><h4 className="font-bold">{words.phone}</h4><p className="mt-1 text-sm" dir="ltr">{typeof privatePhone === 'string' ? privatePhone : '—'}</p></div>
         <div><h4 className="font-bold">{words.links}</h4>{supportingLinks.length ? <ul className="mt-1 grid gap-1 text-sm">{supportingLinks.map((item, index) => { const href = typeof item === 'string' && /^https:\/\//i.test(item) ? item : null; return <li key={`${item}-${index}`}>{href ? <a href={href} target="_blank" rel="noreferrer" className="break-all text-teal underline">{item}</a> : <span className="break-all">{String(item)}</span>}</li>; })}</ul> : <p className="mt-1 text-sm text-muted">—</p>}</div>
         <div><h4 className="font-bold">{words.attested}</h4><p className="mt-1 text-sm">{snapshot.attested === true ? (ar ? 'نعم' : 'Yes') : (ar ? 'لا' : 'No')}</p></div>
-        {typeof snapshot.cv_path === 'string' ? <ApplicationCvDownload locale={locale} teacherId={application.teacher_id}/> : <p className="text-sm text-muted">{words.noCv}</p>}
+        {typeof snapshot.cv_url === 'string' && <div><h4 className="font-bold">{ar ? 'رابط السيرة الذاتية على Google Drive' : 'Google Drive CV link'}</h4><a href={snapshot.cv_url} target="_blank" rel="noreferrer" className="mt-1 inline-block break-all text-teal underline">{snapshot.cv_url}</a></div>}
+        {typeof snapshot.cv_path === 'string' && <ApplicationCvDownload locale={locale} teacherId={application.teacher_id}/>}
+        {typeof snapshot.cv_path !== 'string' && typeof snapshot.cv_url !== 'string' && <p className="text-sm text-muted">{words.noCv}</p>}
       </div>
     </section>}
     {application.status === 'submitted' && ready && requestId && <div className="mt-5 border-t border-line pt-4"><RequestApplicationChangesForm locale={locale} teacherId={application.teacher_id} requestId={requestId}/></div>}

@@ -66,6 +66,10 @@ begin
     perform public.save_teacher_application(0,'+1 (202) 555-0101','7c000000-0000-4000-8000-000000000002/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf','{}',false,v_updated);
     raise exception 'foreign CV path attached';
   exception when sqlstate '22023' then null; end;
+  begin
+    perform public.save_teacher_application(0,'+1 (202) 555-0101',null,'https://drive.google.com.evil.invalid/file/d/a','{}',false,v_updated);
+    raise exception 'non-Google CV URL accepted';
+  exception when sqlstate '22023' then null; end;
 end $$;
 reset role;
 
@@ -215,10 +219,14 @@ do $$
 declare v_updated timestamptz; v_response jsonb;
 begin
   select updated_at into v_updated from public.teacher_applications where teacher_id=auth.uid();
-  v_response:=public.save_teacher_application(0,'+1 (202) 555-0101','7c000000-0000-4000-8000-000000000001/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf','{}',true,v_updated);
+  v_response:=public.save_teacher_application(0,'+1 (202) 555-0101',null,'https://drive.google.com/file/d/example/view','{}',true,v_updated);
   v_updated:=(v_response->'application'->>'updated_at')::timestamptz;
   v_response:=public.submit_teacher_application(v_updated);
-  if v_response->'application'->>'status'<>'submitted' then raise exception 'changes-requested application did not resubmit'; end if;
+  if v_response->'application'->>'status'<>'submitted'
+     or v_response->'application'->'snapshot'->>'cv_url'<>'https://drive.google.com/file/d/example/view'
+     or v_response->'application'->'snapshot'->>'cv_path' is not null then
+    raise exception 'changes-requested application did not resubmit with optional Drive CV link';
+  end if;
 end $$;
 reset role;
 

@@ -1,24 +1,23 @@
 'use server';
 
-import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
-import { parseTeacherApplicationReadResponse } from './application-domain';
+import { isGoogleDriveCvUrl, parseTeacherApplicationReadResponse } from './application-domain';
 
 export type ApplicationActionState = {
   error?: string;
   success?: string;
   updatedAt?: string;
-  pendingCvPath?: string;
   fieldErrors?: Record<string, string>;
-  values?: { teachingYears: string; adminPhone: string; links: string[]; attested: boolean };
+  values?: { teachingYears: string; adminPhone: string; links: string[]; cvUrl: string; attested: boolean };
 } | null;
 
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
 const valuesFrom = (form: FormData) => ({
   teachingYears: String(form.get('teaching_years') ?? ''),
   adminPhone: String(form.get('admin_phone') ?? ''),
+  cvUrl: String(form.get('cv_url') ?? '').trim(),
   links: [0, 1, 2].map(index => String(form.get(`supporting_link_${index}`) ?? '').trim()),
   attested: form.get('attested') === 'on',
 });
@@ -45,6 +44,7 @@ export async function saveTeacherApplication(locale: Locale, _state: Application
   if ((submitting && !values.adminPhone.trim()) || (values.adminPhone.trim() && (!/^[\d\s()+-]{7,30}$/.test(values.adminPhone) || phoneDigits.length < 7))) fieldErrors.admin_phone = 'invalid';
   if (submitting && years === null) fieldErrors.teaching_years = 'invalid';
   if (!linksValid(values.links)) fieldErrors.supporting_links = 'invalid';
+  if (values.cvUrl && !isGoogleDriveCvUrl(values.cvUrl)) fieldErrors.cv_url = 'invalid';
   if (Object.keys(fieldErrors).length) return { error: message(locale, 'Please check the highlighted fields.', 'يرجى مراجعة الحقول المحددة.'), fieldErrors, values };
 
   const { db, id, error: authError } = await identity(locale);
@@ -53,48 +53,26 @@ export async function saveTeacherApplication(locale: Locale, _state: Application
   const current = read.error ? null : parseTeacherApplicationReadResponse(read.data).application;
   if (!current) return { error: message(locale, 'Could not load your application. Refresh and try again.', 'تعذر تحميل طلبك. حدّث الصفحة وحاول مرة أخرى.'), values };
   if (!['draft', 'changes_requested', 'declined'].includes(current.status)) return { error: message(locale, 'This application is locked while it is under review.', 'هذا الطلب مقفل أثناء المراجعة.'), values };
-  const pendingPath = form.get('pending_cv_path');
-  const validPendingPath = typeof pendingPath === 'string' && pendingPath.startsWith(`${id}/`) && new RegExp(`^${id}/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\\.pdf$`, 'i').test(pendingPath) ? pendingPath : null;
   const expected = form.get('expected_updated_at');
-  if (typeof expected !== 'string' || expected !== current.updated_at) return { error: message(locale, 'Your application changed in another tab. Review the latest version, then save again.', 'تغير طلبك في علامة تبويب أخرى. راجع أحدث نسخة ثم أعد الحفظ.'), values, updatedAt: current.updated_at, pendingCvPath: validPendingPath ?? undefined };
-
-  let cvPath = validPendingPath ?? current.cv_path;
-  let preserveUploadedPath: string | undefined = validPendingPath ?? undefined;
-  const incoming = form.get('cv');
-  if (incoming !== null && typeof incoming !== 'string' && incoming.size > 0) {
-    if (incoming.size > 5 * 1024 * 1024 || !/\.pdf$/i.test(incoming.name) || incoming.type !== 'application/pdf') {
-      return { error: message(locale, 'Choose a PDF file no larger than 5 MiB.', 'اختر ملف PDF لا يتجاوز 5 ميبيبايت.'), fieldErrors: { cv: 'invalid' }, values };
-    }
-    const bytes = new Uint8Array(await incoming.slice(0, 5).arrayBuffer());
-    if (bytes[0] !== 0x25 || bytes[1] !== 0x50 || bytes[2] !== 0x44 || bytes[3] !== 0x46 || bytes[4] !== 0x2d) {
-      return { error: message(locale, 'The selected file is not a valid PDF.', 'الملف المحدد ليس ملف PDF صالحاً.'), fieldErrors: { cv: 'invalid' }, values };
-    }
-    cvPath = `${id}/${randomUUID()}.pdf`;
-    const uploaded = await db.storage.from('teacher-applications').upload(cvPath, incoming, { contentType: 'application/pdf', upsert: false });
-    if (uploaded.error) return { error: message(locale, 'The CV could not be uploaded. Your entries remain in the form; try again.', 'تعذر رفع السيرة الذاتية. ستبقى بياناتك في النموذج؛ حاول مرة أخرى.'), fieldErrors: { cv: 'upload' }, values };
-    preserveUploadedPath = cvPath;
-  } else if (incoming !== null && typeof incoming !== 'string') {
-    // A browser sends an empty File when no file was selected.
-  } else if (incoming != null) {
-    return { error: message(locale, 'Choose a PDF file no larger than 5 MiB.', 'اختر ملف PDF لا يتجاوز 5 ميبيبايت.'), fieldErrors: { cv: 'invalid' }, values };
-  }
+  if (typeof expected !== 'string' || expected !== current.updated_at) return { error: message(locale, 'Your application changed in another tab. Review the latest version, then save again.', 'تغير طلبك في علامة تبويب أخرى. راجع أحدث نسخة ثم أعد الحفظ.'), values, updatedAt: current.updated_at };
 
   const saved = await db.rpc('save_teacher_application', {
     p_teaching_years: years,
     p_admin_phone: values.adminPhone.trim(),
-    p_cv_path: cvPath,
+    p_cv_path: current.cv_path,
+    p_cv_url: values.cvUrl || null,
     p_supporting_links: values.links.filter(Boolean),
     p_attested: values.attested,
     p_expected_updated_at: current.updated_at,
   });
   if (saved.error) {
     const stale = saved.error.code === 'PT409';
-    return { error: stale ? message(locale, 'Your application changed while you were saving. Refresh, review the latest version, and try again.', 'تغير طلبك أثناء الحفظ. حدّث الصفحة وراجع أحدث نسخة ثم حاول مرة أخرى.') : preserveUploadedPath ? message(locale, 'Your draft could not be confirmed. The uploaded CV is kept securely; retry saving without uploading it again.', 'تعذر تأكيد حفظ المسودة. تم الاحتفاظ بالسيرة الذاتية المرفوعة بأمان؛ أعد الحفظ دون رفعها مرة أخرى.') : message(locale, 'Your draft could not be saved. Your entries remain in the form; try again.' , 'تعذر حفظ المسودة. ستبقى بياناتك في النموذج؛ حاول مرة أخرى.'), values, pendingCvPath: preserveUploadedPath };
+    return { error: stale ? message(locale, 'Your application changed while you were saving. Refresh, review the latest version, and try again.', 'تغير طلبك أثناء الحفظ. حدّث الصفحة وراجع أحدث نسخة ثم حاول مرة أخرى.') : message(locale, 'Your draft could not be saved. Your entries remain in the form; try again.' , 'تعذر حفظ المسودة. ستبقى بياناتك في النموذج؛ حاول مرة أخرى.'), values };
   }
   const savedResponse = parseTeacherApplicationReadResponse(saved.data);
   if (!savedResponse.application) {
     revalidate(locale, id);
-    return { error: message(locale, 'The save result could not be confirmed. Refresh before retrying; the uploaded CV has been kept securely.', 'تعذر التحقق من نتيجة الحفظ. حدّث الصفحة قبل المحاولة مجدداً؛ تم الاحتفاظ بالسيرة الذاتية بأمان.'), values, pendingCvPath: preserveUploadedPath };
+    return { error: message(locale, 'The save result could not be confirmed. Refresh before retrying.', 'تعذر التحقق من نتيجة الحفظ. حدّث الصفحة قبل المحاولة مجدداً.'), values };
   }
 
   if (submitting) {
