@@ -15,7 +15,7 @@ export type TeacherVisitorView = {
   coverUrl: string | null;
 };
 
-/** Shared safe view builder. Public-only contacts are the default for owner previews. */
+/** Only contacts returned by viewer-authorized RLS may enter the visitor view. */
 export function buildTeacherVisitorView(input: {
   teacher: TeacherVisitorView['teacher'];
   details: PublicTeacherProfileDetails | null;

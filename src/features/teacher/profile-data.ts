@@ -80,7 +80,7 @@ export async function teacherProfile(locale: Locale) {
     phone_number: contact?.phone_number ?? '',
     whatsapp_number: contact?.whatsapp_number ?? '',
     contact_email: contact?.contact_email ?? '',
-    visibility: contact?.visibility === 'public' ? 'public' : 'enrolled',
+    visibility: 'enrolled',
   };
   const [avatar, cover, details, groupsResult] = await Promise.all([
     me.teacher.avatar_path ? me.db.storage.from('teacher-avatars').createSignedUrl(me.teacher.avatar_path, 300) : null,

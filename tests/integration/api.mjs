@@ -330,10 +330,11 @@ try {
   check(!badProfile.ok && preservedProfile[0].full_name==='Teacher Contact Name' && preservedTeacherProfile[0].headline==='Algebra teacher' && preservedSpecializations.length===1 && preservedSpecializations[0].offering_id===offerings[0].id && preservedContact[0].contact_email==='contact@example.test','rejected save preserves existing profile, specialization, and contact data');
   await success('/rest/v1/rpc/save_teacher_profile',{token:teacher.token,method:'POST',body:{...contactArgs,p_phone_number:'',p_whatsapp_number:'+447911123456',p_visibility:'public'}});
   const publicContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
-  check(publicContact.length===1 && publicContact[0].phone_number===null && publicContact[0].whatsapp_number==='+447911123456','explicit public opt-in permits anonymous contact read and blank normalization');
+  const publicContactAsTeacher = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:teacher.token});
+  check(publicContact.length===0 && publicContactAsTeacher[0]?.visibility==='enrolled' && publicContactAsTeacher[0]?.phone_number===null && publicContactAsTeacher[0]?.whatsapp_number==='+447911123456','legacy public opt-in is normalized to enrolled-only and remains hidden from visitors');
   await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{approved:false}});
   const unapprovedContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`);
-  check(unapprovedContact.length===0,'public opt-in does not expose contacts for an unapproved teacher');
+  check(unapprovedContact.length===0,'unapproved teacher contact remains hidden from visitors');
   await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{approved:true}});
   await success(`/rest/v1/profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{status:'suspended'}});
   const suspendedOwnerContact = await success(`/rest/v1/teacher_contacts?teacher_id=eq.${teacher.id}&select=*`,{token:teacher.token});

@@ -63,6 +63,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
             <p className="mt-8 text-xs font-bold uppercase tracking-[.14em] text-orange">{c.detailEyebrow}</p>
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{data.name}</h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4d473f]">{data.description || c.detailIntro}</p>
+            <p className="mt-4 rounded-xl border border-line p-4 text-sm text-muted">{enrollment?.status === 'accepted' ? <Link href={`/${locale}/teachers/${data.teacher_id}`} className="inline-flex min-h-11 items-center font-bold text-teal underline">{locale === 'ar' ? 'عرض بيانات التواصل مع المعلم' : 'View teacher contact details'}</Link> : locale === 'ar' ? 'تظهر بيانات التواصل مع المعلم بعد قبول طلب انضمامك إلى إحدى مجموعاته.' : 'Teacher contact details become available after your enrollment in one of their groups is accepted.'}</p>
             {activeViewer && <AnnouncementView locale={locale} announcement={announcement} className="mt-6" />}
 
             <div className="mt-6 rounded-xl bg-[#f6f0e4] p-4" aria-label={c.nextLesson}>
