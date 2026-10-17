@@ -2,7 +2,7 @@ export type AuthErrorContext = 'login' | 'signup' | 'reset' | 'update';
 
 const en = {
   invalid_credentials: 'Unable to sign in. Check your credentials and try again.',
-  email_not_confirmed: 'Your email is not confirmed yet. Check your inbox for the confirmation link, or request a new one.',
+  email_not_confirmed: 'Your email is not verified yet. Check your inbox for the verification code, or request a new one.',
   user_already_exists: 'This email is already registered. Sign in or reset your password.',
   weak_password: 'This password is too weak. Use at least 8 characters that are hard to guess.',
   rate_limit: 'Too many attempts. Please wait a few minutes and try again.',
@@ -17,7 +17,7 @@ const en = {
 };
 const ar: typeof en = {
   invalid_credentials: 'تعذر تسجيل الدخول. تحقق من بياناتك وحاول مرة أخرى.',
-  email_not_confirmed: 'لم يتم تأكيد بريدك الإلكتروني بعد. افتح رسالة التأكيد في بريدك، أو اطلب رسالة جديدة.',
+  email_not_confirmed: 'لم يتم التحقق من بريدك الإلكتروني بعد. أدخل رمز التحقق من رسالتك، أو اطلب رمزًا جديدًا.',
   user_already_exists: 'هذا البريد الإلكتروني مسجّل بالفعل. سجّل الدخول أو أعد تعيين كلمة المرور.',
   weak_password: 'كلمة المرور ضعيفة. استخدم ٨ أحرف على الأقل يصعب تخمينها.',
   rate_limit: 'محاولات كثيرة. يرجى الانتظار بضع دقائق ثم المحاولة مرة أخرى.',

@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getDictionary } from '@/i18n/config';
 import { AuthAside } from '@/components/auth/auth-aside';
 import { authCopy } from '@/components/auth/copy';
-import { ResendConfirmationForm } from '@/components/auth/password-forms';
+import { ResendConfirmationForm, VerifySignupCodeForm } from '@/components/auth/password-forms';
 
 export default async function CheckEmail({ params, searchParams }: {
   params: Promise<{ locale: 'ar' | 'en' }>;
@@ -22,13 +22,11 @@ export default async function CheckEmail({ params, searchParams }: {
           <div className="w-full max-w-xl rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 sm:p-9">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{copy.checkEyebrow}</p>
             <h1 className="mt-3 text-4xl font-black tracking-[-.03em] text-teal md:text-5xl">{copy.checkTitle}</h1>
-            <p className="mt-4 max-w-lg leading-7 text-[#4d473f]">
-              {email
-                ? <>{copy.checkSentTo} <bdi dir="ltr" className="font-bold text-ink">{email}</bdi>. {copy.checkBodyTo}</>
-                : copy.checkBody}
-            </p>
+            <p className="mt-4 max-w-lg leading-7 text-[#4d473f]">{email ? <>{copy.checkSentTo} <bdi dir="ltr" className="font-bold text-ink">{email}</bdi>. {copy.checkBodyTo}</> : copy.checkBody}</p>
             <p className="mt-4 max-w-lg text-sm leading-6 text-muted">{copy.resendHint}</p>
-            <div className="mt-8"><ResendConfirmationForm locale={locale} emailLabel={labels.email} email={email}/></div>
+            <div className="mt-8"><VerifySignupCodeForm locale={locale} emailLabel={labels.email} email={email}/></div>
+            <div className="mt-5"><ResendConfirmationForm locale={locale} emailLabel={labels.email} email={email}/></div>
+            <p className="mt-4 text-center text-sm"><Link className="font-bold text-teal" href={`/${locale}/register`}>{copy.changeEmail}</Link></p>
             <p className="mt-6 text-center text-sm"><Link className="font-bold text-orange" href={`/${locale}/login`}>{copy.backToLogin}</Link></p>
           </div>
         </section>

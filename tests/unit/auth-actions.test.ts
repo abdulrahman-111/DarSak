@@ -20,7 +20,7 @@ vi.mock('next/server',()=>({after:afterMock}));
 vi.mock('@/features/auth/google-onboarding', () => ({ googleOnboardingDestination: onboardingDestinationMock }));
 
 import {
-  chooseGoogleRoleAction, forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction,
+  chooseGoogleRoleAction, forgotPasswordAction, googleSignInAction, loginAction, resendConfirmationAction, resetPasswordAction, signupAction, verifySignupCodeAction,
 } from '@/features/auth/actions';
 
 function form(values: Record<string, string>) {
@@ -177,6 +177,42 @@ describe('auth actions', () => {
     it('rejects malformed emails without calling Supabase', async () => {
       expect((await run('nope'))?.error).toBeTruthy();
       expect(createClientMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('verifySignupCodeAction', () => {
+    it('verifies only a six-digit email OTP and routes by the verified profile role', async () => {
+      const verifyOtp = vi.fn(async () => ({ data: { session: {}, user: { id: 'student-id' } }, error: null }));
+      const maybeSingle = vi.fn(async () => ({ data: { role: 'student', status: 'active' }, error: null }));
+      const eq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq }));
+      createClientMock.mockResolvedValue({ auth: { verifyOtp }, from: vi.fn(() => ({ select })) });
+      expect(await redirectTarget(() => verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token: '123456' })))).toBe('/en/student');
+      expect(verifyOtp).toHaveBeenCalledWith({ email: 'sara@example.com', token: '123456', type: 'signup' });
+    });
+
+    it('returns the same neutral error for invalid or expired codes and never echoes the code', async () => {
+      const verifyOtp = vi.fn(async () => ({ data: {}, error: { code: 'otp_expired' } }));
+      createClientMock.mockResolvedValue({ auth: { verifyOtp } });
+      const result = await verifySignupCodeAction('ar', null, form({ email: 'sara@example.com', token: '123456' }));
+      expect(result).toEqual({ error: 'تعذر التحقق من هذا الرمز. راجعه وحاول مرة أخرى، أو اطلب رمزًا جديدًا.', email: 'sara@example.com' });
+      expect(JSON.stringify(result)).not.toContain('123456');
+    });
+
+    it('rejects malformed codes without contacting Supabase', async () => {
+      const result = await verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token: 'not-a-code' }));
+      expect(result?.error).toMatch(/could not be verified/);
+      expect(createClientMock).not.toHaveBeenCalled();
+    });
+
+    it('surfaces rate limiting without treating the code as invalid', async () => {
+      createClientMock.mockResolvedValue({ auth: { verifyOtp: async () => ({ data: {}, error: { code: 'over_request_rate_limit' } }) } });
+      expect((await verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token: '123456' })))?.error).toMatch(/Too many attempts/);
+    });
+
+    it('does not route unless OTP verification returned a session', async () => {
+      createClientMock.mockResolvedValue({ auth: { verifyOtp: async () => ({ data: { user: { id: 'student-id' } }, error: null }) } });
+      expect((await verifySignupCodeAction('en', null, form({ email: 'sara@example.com', token: '123456' })))?.error).toMatch(/could not be verified/);
     });
   });
 
