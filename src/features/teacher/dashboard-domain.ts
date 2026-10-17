@@ -80,9 +80,9 @@ export function buildTeacherSetupTasks({
 }): TeacherSetupTask[] {
   const tasks: TeacherSetupTask[] = [];
   if (!teacher.headline?.trim() || !teacher.bio?.trim() || specializationCount === 0) {
-    tasks.push({ id: 'profile', href: '/teacher/profile' });
+    tasks.push({ id: 'profile', href: '/account/profile' });
   }
-  if (!teacher.approved) tasks.push({ id: 'approval', href: '/teacher/profile' });
+  if (!teacher.approved) tasks.push({ id: 'approval', href: '/account/application' });
   const draft = draftCandidate !== undefined ? draftCandidate : groups.find(group => group.status === 'draft');
   if (draft) tasks.push({ id: 'draft', href: `/teacher/groups/${draft.id}/setup?step=details`, groupName: draft.name });
   const groupWithoutSlots = missingScheduleCandidate !== undefined

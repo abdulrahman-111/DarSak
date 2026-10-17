@@ -126,7 +126,7 @@ export async function downloadTeacherApplicationCv(locale: Locale): Promise<{ ur
 
 function revalidate(locale: Locale, id: string) {
   for (const lang of ['en', 'ar'] as const) {
-    revalidatePath(`/${lang}/teacher/application`);
+    revalidatePath(`/${lang}/account/application`);
     revalidatePath(`/${lang}/teacher`);
     revalidatePath(`/${lang}/admin/teachers/${id}`);
   }

@@ -75,7 +75,7 @@ async function pagedRows<T>(input:unknown,fetch:(from:number,to:number)=>Promise
 export async function studentDashboard(locale:Locale,now=new Date()){
  const me=await student(locale),timestamp=now.toISOString();
  const learning=await studentLearningProfile(me);
- if(learning.profile?.onboarding_required&&!learning.profile.onboarding_completed_at)redirect(`/${locale}/student/profile`);
+ if(learning.profile?.onboarding_required&&!learning.profile.onboarding_completed_at)redirect(`/${locale}/account/setup`);
  if(!learning.profile)return {acceptedCount:0,pendingCount:0,upcomingCount:0,lessons:[] as Lesson[],learningProfile:null,error:true};
  const [accepted,pending,upcoming]=await Promise.all([
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','accepted'),

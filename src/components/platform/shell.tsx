@@ -5,20 +5,18 @@ import type { PlatformRole } from './access';
 
 type NavItem = { href: string; label: string };
 
-function navigation(locale: string, role: PlatformRole): NavItem[] {
+export function platformNavigation(locale: string, role: PlatformRole): NavItem[] {
   const ar = locale === 'ar';
   const notifications={href:`/${locale}/notifications`,label:ar?'الإشعارات':'Notifications'};
   const reportProblem={href:`/${locale}/reports`,label:ar?'الإبلاغ عن مشكلة':'Report a problem'};
   if (role === 'teacher') return [
     { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
-    { href: `/${locale}/teacher/profile`, label: ar ? 'الملف الشخصي' : 'Profile' },
-    { href: `/${locale}/teacher/application`, label: ar ? 'طلب اعتماد المعلم' : 'Teacher application' },
     { href: `/${locale}/teacher/catalogue`, label: ar ? 'المواد والفئات' : 'Subjects & categories' },
     { href: `/${locale}/teacher/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
     { href: `/${locale}/teacher/lessons`, label: ar ? 'الحصص' : 'Lessons' },
-    { href: `/${locale}/teacher/access`, label: ar ? 'صلاحية التدريس' : 'Teaching access' },
+    { href: `/${locale}/account`, label: ar ? 'الحساب' : 'Account' },
     reportProblem,
     notifications,
   ];
@@ -32,6 +30,7 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },
     { href: `/${locale}/admin/settings`, label: ar ? 'الإعدادات' : 'Settings' },
+    { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
     reportProblem,
     notifications,
   ];
@@ -39,10 +38,10 @@ function navigation(locale: string, role: PlatformRole): NavItem[] {
     { href: `/${locale}/student`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/student/classes`, label: ar ? 'مجموعاتي' : 'My classes' },
     { href: `/${locale}/student/saved`, label: ar ? 'المجموعات المحفوظة' : 'Saved groups' },
-    { href: `/${locale}/student/profile`, label: ar ? 'ملف التعلم' : 'Learning profile' },
     { href: `/${locale}/timetable`, label: ar ? 'الجدول الأسبوعي' : 'Weekly timetable' },
     { href: `/${locale}/student/materials`, label: ar ? 'المواد' : 'Materials' },
     { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Discover' },
+    { href: `/${locale}/account`, label: ar ? 'الحساب' : 'Account' },
     reportProblem,
     notifications,
   ];
@@ -55,7 +54,7 @@ function itemLabel(item: NavItem, unreadCount: number|null, locale:string) {
 
 export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {
   const ar = locale === 'ar';
-  const items = navigation(locale, role);
+  const items = platformNavigation(locale, role);
   const accountMenu = ar ? 'قائمة الحساب' : 'Account menu';
   const roleName = role === 'teacher' ? (ar ? 'معلم' : 'Teacher') : role === 'admin' ? (ar ? 'مسؤول' : 'Administrator') : (ar ? 'طالب' : 'Student');
   return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">

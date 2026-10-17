@@ -16,7 +16,8 @@ describe('notifications domain', () => {
     expect(notificationHref('admin', 'teacher_review_requested', { teacher_id: uuid }, 'ar')).toBe(`/ar/admin/teachers/${uuid}`);
     expect(notificationHref('teacher', 'enrollment_requested', { group_id: uuid }, 'en')).toBe(`/en/teacher/requests?group_id=${uuid}`);
     expect(notificationHref('student', 'lesson_rescheduled', { lesson_id: 'javascript:alert(1)' }, 'en')).toBeNull();
-    expect(notificationHref('teacher','teacher_fee_announcement',{},'ar')).toBe('/ar/teacher/access');
+    expect(notificationHref('teacher','teacher_review_decision',{},'ar')).toBe('/ar/account/application');
+    expect(notificationHref('teacher','teacher_fee_announcement',{},'ar')).toBe('/ar/account/teaching-access');
   });
 
   it('renders bounded plain text summaries from known kinds', () => {

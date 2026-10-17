@@ -26,7 +26,7 @@ function expectedVersion(value: FormDataEntryValue | null): number | null {
 
 function revalidateTeacherProfile(teacherId: string) {
   for (const locale of ['en', 'ar'] as const) {
-    revalidatePath(`/${locale}/teacher/profile`);
+    revalidatePath(`/${locale}/account/profile`);
     revalidatePath(`/${locale}/teacher`);
     revalidatePath(`/${locale}/teachers`);
     revalidatePath(`/${locale}/teachers/${teacherId}`);

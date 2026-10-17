@@ -11,6 +11,8 @@ export type PlatformViewer = {
   fullName: string;
   role: PlatformRole;
   status: 'active' | 'suspended';
+  email: string | null;
+  signInMethods: string[];
 };
 
 export async function requireViewer(locale: string, role?: PlatformRole): Promise<PlatformViewer> {
@@ -19,14 +21,18 @@ export async function requireViewer(locale: string, role?: PlatformRole): Promis
   if (!user) redirect(`/${locale}/login`);
   if (!profile || profile.status !== 'active') redirect(`/${locale}/login`);
   if (role && profile.role !== role) redirect(`/${locale}/dashboard`);
-  return { db, id: profile.id, fullName: profile.full_name, role: profile.role as PlatformRole, status: profile.status };
+  const signInMethods = [...new Set([
+    ...(user.identities ?? []).map(identity => identity.provider),
+    ...(typeof user.app_metadata?.provider === 'string' ? [user.app_metadata.provider] : []),
+  ].filter(provider => typeof provider === 'string' && provider.length > 0))];
+  return { db, id: profile.id, fullName: profile.full_name, role: profile.role as PlatformRole, status: profile.status, email: user.email ?? null, signInMethods };
 }
 
 export async function requireTeachingAccess(locale: string): Promise<PlatformViewer> {
   const me = await requireViewer(locale, 'teacher');
   const { status, error } = await readTeacherAccessStatus(me.db);
-  if (error) redirect(`/${locale}/teacher/access?error=unavailable`);
-  if (!status?.has_access) redirect(`/${locale}/teacher/access`);
+  if (error) redirect(`/${locale}/account/teaching-access?error=unavailable`);
+  if (!status?.has_access) redirect(`/${locale}/account/teaching-access`);
   return me;
 }
 

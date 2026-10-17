@@ -14,7 +14,7 @@ export async function decideTeacherAccess(locale:string,_state:State,form:FormDa
  const id=form.get('request_id'), decision=form.get('decision');if(typeof id!=='string'||!idSchema.safeParse(id).success||!['approve','decline'].includes(String(decision)))return {error:msg(locale,'Invalid access request. Refresh and try again.','طلب الصلاحية غير صالح. حدّث الصفحة وحاول مرة أخرى.')};
  const {error}=await db.rpc('decide_teacher_access_request',{p_request_id:id,p_approve:decision==='approve'});if(error){if(error.code==='PT409')return {error:msg(locale,'This request has already been reviewed. Refresh the page to see the saved decision.','تمت مراجعة هذا الطلب بالفعل. حدّث الصفحة لعرض القرار المحفوظ.')};return {error:msg(locale,'Could not save the review decision. Refresh and try again.','تعذر حفظ قرار المراجعة. حدّث الصفحة وحاول مرة أخرى.')}};
  if(decision==='approve')after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
- revalidatePath(`/${locale}/admin/access`);revalidatePath(`/${locale}/teacher/access`);return {success:msg(locale,'Decision saved.','تم حفظ القرار.')};
+ revalidatePath(`/${locale}/admin/access`);revalidatePath(`/${locale}/account/teaching-access`);return {success:msg(locale,'Decision saved.','تم حفظ القرار.')};
 }
 export async function saveTeacherFeePolicy(locale:string,_state:State,form:FormData):Promise<State>{
  if(locale!=='en'&&locale!=='ar')return {error:'Unsupported language.'};

@@ -5,7 +5,6 @@ import { EmptyState, Metric, Panel, QuickAction, RowLink, ScreenTitle, Status, c
 import { teacherOverview } from '@/features/teacher/data';
 import { requireViewer } from '@/components/platform/access';
 import { readTeacherAccessStatus } from '@/features/teacher-access/data';
-import { TeacherAccessPanel } from '@/features/teacher-access/panel';
 
 export default async function TeacherDashboard({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params;
@@ -13,13 +12,13 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
   const ar = locale === 'ar';
   const me=await requireViewer(locale,'teacher');
   const access=await readTeacherAccessStatus(me.db);
-  if(access.error||!access.status)return <><ScreenTitle eyebrow={ar?'مساحة المعلم':'Teacher workspace'} title={ar?'صلاحية التدريس':'Teaching access'} /><TeacherAccessPanel locale={locale} status={null} error/><Panel><p role="alert" className="text-sm text-red-800">{ar?'تعذر تحميل لوحة التدريس. حدّث الصفحة وحاول مرة أخرى.':'Could not load teaching access. Refresh and try again.'}</p></Panel></>;
-  if(!access.status.has_access)return <><ScreenTitle eyebrow={ar?'مساحة المعلم':'Teacher workspace'} title={ar?'صلاحية التدريس':'Teaching access'} description={ar?'يمكنك إدارة صلاحية التدريس ومواصلة استخدام حسابك وملفك والإشعارات.':'Manage teaching access and continue using your account, profile, and notifications.'}/><TeacherAccessPanel locale={locale} status={access.status} error={false}/><Panel><p className="text-sm text-muted">{ar?'تظل هذه الصفحات متاحة: الملف الشخصي، مراجعة الحساب، الإشعارات، وطلب التجديد.':'Your profile, account review, notifications, and renewal request remain available.'}</p></Panel></>;
+  if(access.error||!access.status)return <><ScreenTitle eyebrow={ar?'مساحة المعلم':'Teacher workspace'} title={ar?'صلاحية التدريس':'Teaching access'} /><Panel><p role="alert" className="text-sm text-red-800">{ar?'تعذر تحميل لوحة التدريس. حدّث الصفحة أو راجع إعدادات الوصول من حسابك.':'Could not load teaching access. Refresh or review access settings in your account.'}</p><Link href={`/${locale}/account/teaching-access`} className="mt-3 inline-flex font-bold text-teal underline">{ar?'إعدادات الوصول':'Access settings'}</Link></Panel></>;
+  if(!access.status.has_access)return <><ScreenTitle eyebrow={ar?'مساحة المعلم':'Teacher workspace'} title={ar?'صلاحية التدريس':'Teaching access'} description={ar?'يمكنك متابعة حسابك ومراجعة الطلبات والإشعارات أثناء توقف صلاحية التدريس.':'You can use your account and review your application and notifications while teaching access is paused.'}/><Panel><h2 className="font-black text-teal">{ar?'مراجعة إعدادات الحساب':'Review your account settings'}</h2><p className="mt-2 text-sm text-muted">{ar?'تابع حالة الاعتماد أو اطلب تجديد صلاحية التدريس من حسابك.':'Check approval status or request a teaching access renewal from your account.'}</p><Link href={`/${locale}/account`} className="mt-3 inline-flex font-bold text-teal underline">{ar?'فتح الحساب':'Open Account'}</Link></Panel></>;
   const data = await teacherOverview(locale);
   const copy = ar ? {
     welcome: 'مرحباً', intro: 'مجموعاتك وطلبات الطلاب وحصص اليوم والخطوات التالية في مكان واحد.',
     create: 'إنشاء مجموعة', addLesson: 'إضافة حصة', groups: 'المجموعات', requests: 'طلبات تنتظر الرد', today: 'حصص اليوم', upcoming: 'حصص قادمة',
-    groupsLink: 'إدارة المجموعات', lessonsLink: 'الحصص والمواد', profileLink: 'الملف الشخصي', catalogueLink: 'المواد والفئات', studentsLink: 'إدارة الطلاب',
+    groupsLink: 'إدارة المجموعات', lessonsLink: 'الحصص والمواد', catalogueLink: 'المواد والفئات', studentsLink: 'إدارة الطلاب',
     todayHeading: 'حصص اليوم', upcomingHeading: 'الحصص القادمة', requestsHeading: 'طلبات الانضمام', setupHeading: 'خطوات الإعداد',
     noToday: 'لا توجد حصص اليوم.', noUpcoming: 'لا توجد حصص قادمة.', noRequests: 'لا توجد طلبات تنتظر المراجعة.', noTasks: 'كل إعدادات التدريس مكتملة حالياً.',
     profile: 'أكمل ملفك العام', approval: 'حسابك بانتظار اعتماد الإدارة', draft: 'استأنف إعداد المسودة', schedule: 'أضف جدولاً أسبوعياً', lessons: 'أضف أول حصة قادمة',
@@ -27,13 +26,15 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
   } : {
     welcome: 'Welcome', intro: 'Your groups, student requests, today’s lessons, and next steps in one place.',
     create: 'Create group', addLesson: 'Add lesson', groups: 'Groups', requests: 'Pending requests', today: 'Today’s lessons', upcoming: 'Upcoming lessons',
-    groupsLink: 'Manage groups', lessonsLink: 'Lessons & materials', profileLink: 'Edit profile', catalogueLink: 'Subjects & categories', studentsLink: 'Manage students',
+    groupsLink: 'Manage groups', lessonsLink: 'Lessons & materials', catalogueLink: 'Subjects & categories', studentsLink: 'Manage students',
     todayHeading: 'Today', upcomingHeading: 'Upcoming lessons', requestsHeading: 'Enrollment requests', setupHeading: 'Setup tasks',
     noToday: 'No lessons today.', noUpcoming: 'No upcoming lessons.', noRequests: 'No requests are waiting for review.', noTasks: 'Your teaching setup is complete for now.',
     profile: 'Complete your public profile', approval: 'Your account is waiting for approval', draft: 'Resume group setup', schedule: 'Add a weekly schedule', lessons: 'Add your first upcoming lesson',
     failed: 'Could not load your teacher dashboard. Refresh and try again.',
   };
   const taskLabels = { profile: copy.profile, approval: copy.approval, draft: copy.draft, schedule: copy.schedule, lessons: copy.lessons };
+  const accountSetupNeeded = data.setupTasks.some(task => task.id === 'profile' || task.id === 'approval');
+  const workspaceTasks = data.setupTasks.filter(task => task.id !== 'profile' && task.id !== 'approval');
 
   return <>
     <ScreenTitle
@@ -68,7 +69,8 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
         </Panel>
         <Panel>
           <h2 className="mb-4 text-xl font-black text-teal">{copy.setupHeading}</h2>
-          {data.setupTasks.length ? <div className="grid gap-2">{data.setupTasks.map(task => <RowLink key={task.id} href={`/${locale}${task.href}`} title={taskLabels[task.id]} meta={task.groupName} />)}</div> : <EmptyState>{copy.noTasks}</EmptyState>}
+          {accountSetupNeeded && <p className="mb-3 text-sm leading-6 text-muted">{ar ? 'تحتاج بعض بيانات الحساب إلى متابعة. افتح حسابك لمراجعة الملف والطلب.' : 'Some account details need attention. Open your account to review your profile and application.'} <Link className="font-bold text-teal underline" href={`/${locale}/account`}>{ar ? 'فتح الحساب' : 'Open Account'}</Link></p>}
+          {workspaceTasks.length ? <div className="grid gap-2">{workspaceTasks.map(task => <RowLink key={task.id} href={`/${locale}${task.href}`} title={taskLabels[task.id]} meta={task.groupName} />)}</div> : !accountSetupNeeded && <EmptyState>{copy.noTasks}</EmptyState>}
         </Panel>
       </div>
     </>}
@@ -77,7 +79,6 @@ export default async function TeacherDashboard({ params }: { params: Promise<{ l
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
         <QuickAction href={`/${locale}/teacher/groups`}>{copy.groupsLink}</QuickAction>
         <QuickAction href={`/${locale}/teacher/lessons`}>{copy.lessonsLink}</QuickAction>
-        <QuickAction href={`/${locale}/teacher/profile`}>{copy.profileLink}</QuickAction>
         <QuickAction href={`/${locale}/teacher/catalogue`}>{copy.catalogueLink}</QuickAction>
         <QuickAction href={`/${locale}/teacher/students`}>{copy.studentsLink}</QuickAction>
       </div>
