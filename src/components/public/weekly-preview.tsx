@@ -24,6 +24,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-orange">{c.sampleTimetable}</p>
             <p className="mt-1 text-lg font-bold text-teal">{c.thisWeek}</p>
+            <p className="mt-1 text-xs text-muted">{c.sampleNote}</p>
           </div>
           <p className="text-xs text-muted">{c.cairo}</p>
         </div>
@@ -45,7 +46,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
           </div>
         </div>
       </div>
-      <div className="absolute bottom-0 start-2 flex max-w-[19rem] items-center gap-3 rounded-2xl bg-teal px-4 py-3 text-cream shadow-[0_20px_40px_-20px_rgba(14,74,75,.8)] sm:-start-3">
+      <div className="landing-feedback absolute bottom-0 start-2 flex max-w-[19rem] items-center gap-3 rounded-2xl bg-teal px-4 py-3 text-cream shadow-[0_20px_40px_-20px_rgba(14,74,75,.8)] sm:-start-3">
         <span className="grid size-8 flex-none place-items-center rounded-full bg-[#8fd1b5] text-teal"><Image aria-hidden="true" src="/brand/darsak/accepted-request-toast.svg" alt="" width={24} height={24}/></span>
         <div className="text-sm leading-snug"><strong>{c.accepted}</strong><p className="text-[#cfe3de]">{c.acceptedDetail}</p></div>
       </div>
