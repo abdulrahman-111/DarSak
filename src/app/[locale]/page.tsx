@@ -139,7 +139,10 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <p className="text-xs font-bold uppercase tracking-[.14em] text-[#f3a878]">{c.teacherEyebrow}</p>
             <h2 className="mt-4 max-w-2xl text-4xl font-black leading-tight tracking-tight md:text-5xl">{c.teacherTitle}</h2>
             <p className="mt-5 max-w-xl leading-7 text-[#cfe3de]">{c.teacherBody}</p>
-            <Link href={`/${locale}/register?role=teacher`} className="mt-7 inline-flex min-h-12 items-center rounded-[.9rem] bg-cream px-6 font-bold text-teal transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-teal">{c.teach}</Link>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link href={`/${locale}/register?role=teacher`} className="inline-flex min-h-12 items-center rounded-[.9rem] bg-cream px-6 font-bold text-teal transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-teal">{c.teach}</Link>
+              <Link href={`/${locale}/pricing`} className="inline-flex min-h-12 items-center rounded-[.9rem] border border-cream/70 px-5 font-bold text-cream transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{c.pricingLink}</Link>
+            </div>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.approvalNote}</p>
           </div>
           <div className="grid content-center gap-4 sm:grid-cols-2">

@@ -14,6 +14,8 @@ describe('monthly teacher access contracts',()=>{
  it('treats missing grants as denied and accepts current and expired periods without changing their start',()=>{
   expect(parseTeacherAccessStatus(status())?.has_access).toBe(false);
   expect(parseTeacherAccessStatus(status({has_access:true,starts_at:'2026-01-31T22:00:00Z',expires_at:'2026-02-28T22:00:00Z'}))?.starts_at).toBe('2026-01-31T22:00:00Z');
+  expect(parseTeacherAccessStatus(status({has_access:true,starts_at:'2026-01-31T22:00:00Z',expires_at:null}))?.expires_at).toBeNull();
+  expect(parseTeacherAccessStatus(status({has_access:true,starts_at:'2026-01-31T22:00:00Z',expires_at:'invalid'}))).toBeNull();
   expect(parseTeacherAccessStatus(status({has_access:false,starts_at:'2026-01-31T22:00:00Z',expires_at:'2026-02-28T22:00:00Z',can_renew:true}))).not.toBeNull();
  });
  it('rejects malformed status and does not treat a future fee policy as immediately effective',()=>{

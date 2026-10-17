@@ -9,6 +9,7 @@ import { idSchema, type Locale } from '@/features/student/domain';
 import { lessonStatusSchema, materialSchema, storageObjectPath } from './domain';
 import { storageRemovalConfirmed } from './profile-domain';
 import { checkTeachingAccess, teachingGuardMessage, teachingMutationMessage } from '@/features/teacher-access/guard';
+import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export type TeacherActionState = { error?: string; success?: string } | null;
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -95,6 +96,8 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
   if (uploaded.error) {
     logActionFailure('materials.storage.upload', startedAt, uploaded.error, 'STORAGE_ERROR');
     if('code' in uploaded.error&&uploaded.error.code==='42501'&&uploaded.error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,{code:'42501',message:uploaded.error.message},'')};
+    const quotaMessage = quotaErrorMessage(locale, uploaded.error.message);
+    if (quotaMessage) return { error: quotaMessage };
     return { error: message(locale, 'Upload failed.', 'فشل رفع الملف.') };
   }
   const inserted = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'file', title, storage_path: path, file_size: file.size, mime_type: file.type });
@@ -125,6 +128,10 @@ export async function uploadMaterial(locale: Locale, lessonId: string, _state: T
       return {error:teachingMutationMessage(locale,inserted.error,'')};
     }
     const cleaned = await removeMaterialObject(me.db, path);
+    const quotaMessage = quotaErrorMessage(locale, inserted.error.message);
+    if (quotaMessage) return { error: cleaned ? quotaMessage : message(locale,
+      'The file could not be saved and cleanup is incomplete. Retry or contact support.',
+      'تعذر حفظ الملف ولم يكتمل تنظيفه. أعد المحاولة أو تواصل مع الدعم.') };
     return { error: message(locale,
       cleaned ? 'Could not save the uploaded file.' : 'Could not save the file, and cleanup is incomplete. Retry or contact support.',
       cleaned ? 'تعذر حفظ الملف المرفوع.' : 'تعذر حفظ الملف ولم يكتمل تنظيفه. أعد المحاولة أو تواصل مع الدعم.' ) };
