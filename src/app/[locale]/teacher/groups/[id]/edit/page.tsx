@@ -1,3 +1,6 @@
+import { UnsavedProfileProtection } from '@/features/teacher/unsaved-profile-protection';
+import { groupLearningDetails } from '@/features/teacher/group-learning-data';
+import { GroupLearningForm } from '@/features/teacher/group-learning-form';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { idSchema } from '@/features/student/domain';
@@ -19,8 +22,10 @@ export default async function EditPublishedGroupPage({ params }: { params: Promi
   }
   if (data.group.status !== 'published') notFound();
 
-  return <>
+  const learning=await groupLearningDetails(data.me.db,id);
+  return <UnsavedProfileProtection locale={locale} kind="group">
     <ScreenTitle eyebrow={ar ? 'مجموعة منشورة' : 'Published group'} title={ar ? 'تعديل تفاصيل المجموعة' : 'Edit group details'} description={ar ? 'تُحفظ تغييرات التفاصيل مع بقاء المجموعة المنشورة والطلاب والحصص والجدول كما هي.' : 'Save detail changes while keeping the group published with its students, lessons, and schedule.'} />
     <div className="mx-auto max-w-3xl"><Panel><GroupDetailsForm locale={locale} values={data.values} groupId={id} catalogue={data.catalogue} editPublished /></Panel></div>
-  </>;
+    <Panel className="mx-auto mt-5 max-w-3xl">{learning.error?<p role="alert">{ar?'تعذر تحميل تفاصيل التعلم. حدّث الصفحة.':'Could not load learning details. Refresh the page.'}</p>:<><h2 className="text-xl font-black text-teal">{ar?'تفاصيل التعلم':'Learning details'}</h2><GroupLearningForm locale={locale} groupId={id} details={learning.data}/></>}</Panel>
+  </UnsavedProfileProtection>;
 }

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { Metadata } from 'next';
 import '../globals.css';
 import { ensureLocale, getDictionary, getDirection } from '@/i18n/config';
@@ -23,7 +24,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
         <footer className="mt-20 border-t border-line py-8">
           <div className="container flex flex-wrap items-start justify-between gap-x-6 gap-y-2 text-sm text-muted">
             <span>{t.brand} · {t.tagline}</span>
-            <span>© 2026</span>
+            <nav aria-label={locale==='ar'?'المساعدة والمعلومات':'Help and information'} className="flex flex-wrap gap-x-5 gap-y-2">{[['help',locale==='ar'?'المساعدة':'Help'],['privacy',locale==='ar'?'الخصوصية':'Privacy'],['terms',locale==='ar'?'إرشادات الاستخدام':'Terms']].map(([href,label])=><Link key={href} href={`/${locale}/${href}`} className="inline-flex min-h-11 items-center font-semibold underline">{label}</Link>)}</nav><span>© 2026</span>
           </div>
         </footer>
       </body>
