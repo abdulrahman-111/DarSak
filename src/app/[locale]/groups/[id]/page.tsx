@@ -1,5 +1,6 @@
 import { groupLearningDetails } from '@/features/teacher/group-learning-data';
 import { GroupLearningView } from '@/features/teacher/group-learning-view';
+import { GroupFeedbackSection } from '@/features/feedback/group-section';
 import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
@@ -26,10 +27,11 @@ const weekdays = {
   ar: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
 };
 
-export default async function GroupDetail({ params }: { params: Promise<{ locale: 'ar' | 'en'; id: string }> }) {
+export default async function GroupDetail({ params,searchParams }: { searchParams?:Promise<{feedback?:string}>;params: Promise<{ locale: 'ar' | 'en'; id: string }> }) {
   const { locale, id } = await params;
   if (!isConfigured()) notFound();
 
+  const query=await searchParams;const requestedOffset=Number(query?.feedback);const feedbackOffset=Number.isSafeInteger(requestedOffset)&&requestedOffset>=0?requestedOffset:0;
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
   const detail = await classDetail(id);
@@ -107,6 +109,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ locale
                 {detail.slots.length ? detail.slots.map(slot => <div key={slot.id} className="rounded-xl bg-[#f6f0e4] p-4"><p className="font-bold text-teal">{weekdays[locale][slot.weekday]}</p><p className="mt-1 text-sm text-muted">{slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)} · {locale === 'ar' ? 'توقيت القاهرة' : 'Cairo time'}</p></div>) : <p className="text-sm text-muted">{locale === 'ar' ? 'سيعلن المدرس المواعيد قريبًا.' : 'The teacher will publish the schedule soon.'}</p>}
               </div>
             </div>
+            <div id="feedback"><GroupFeedbackSection db={requestViewer.db} locale={locale} groupId={id} isStudent={isStudent} offset={feedbackOffset}/></div>
           </article>
 
           <aside className="h-fit rounded-[1.4rem] bg-teal p-6 text-cream lg:sticky lg:top-24">

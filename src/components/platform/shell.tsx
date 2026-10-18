@@ -12,6 +12,7 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
   if (role === 'teacher') return [
     { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
     { href: `/${locale}/teacher/catalogue`, label: ar ? 'المواد والفئات' : 'Subjects & categories' },
+    { href: `/${locale}/teacher/feedback`, label: ar ? 'آراء الطلاب' : 'Student feedback' },
     { href: `/${locale}/teacher/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
@@ -29,6 +30,7 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },
     { href: `/${locale}/admin/health`, label: ar ? 'حالة التشغيل' : 'Operational health' },
+    { href: `/${locale}/admin/feedback`, label: ar ? 'آراء الطلاب' : 'Student feedback' },
     { href: `/${locale}/admin/settings`, label: ar ? 'الإعدادات' : 'Settings' },
     { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
     reportProblem,
