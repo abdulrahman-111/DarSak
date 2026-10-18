@@ -82,7 +82,7 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
             <div className="mt-4"><CopyLessonForm locale={locale} sourceLessonId={id} groups={groups.data ?? []} /></div>}
         </Panel>}
       </div>
-      <Panel>
+      <Panel id="materials" className="scroll-mt-24">
         <div className="flex items-baseline justify-between gap-3">
           <h2 className="text-xl font-black text-teal">{copy.resources}</h2>
           <span className="text-sm text-muted">{(materials.data ?? []).length}</span>
@@ -102,7 +102,7 @@ export default async function TeacherLesson({ params, searchParams }: { params: 
           </div>}
         {!archived && <div className="mt-6 border-t border-line pt-5"><TeacherMaterialForms locale={locale} lessonId={id} /></div>}
       </Panel>
-      <Panel className="xl:col-span-2">
+      <Panel id="attendance" className="scroll-mt-24 xl:col-span-2">
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <div><h2 className="text-xl font-black text-teal">{copy.attendance}</h2><p className="mt-1 text-sm text-muted">{attendance ? `${attendance.total}` : ''}</p></div>
           <span className="text-sm text-muted">{attendance ? `${currentPage} / ${attendancePageCount}` : ''}</span>

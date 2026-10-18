@@ -26,7 +26,7 @@ describe('role navigation shell', () => {
     expect(html).toContain('<details class="group lg:hidden">');
     expect(html).toContain('<summary');
     expect(html).toContain('focus-visible:ring-2');
-    expect(html).toContain('Teacher workspace · Overview');
+    expect(html).toContain('Teacher workspace · Teaching home');
     expect(html).toContain('A Very Long Teacher Name');
     expect(html).toContain('class="mt-5 hidden gap-2 pb-2 lg:grid"');
     expect(html).toContain('aria-label="Teacher navigation"');

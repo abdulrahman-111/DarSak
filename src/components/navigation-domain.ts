@@ -7,3 +7,8 @@ export function hasStudentWorkspaceNavigation(pathname:string,locale:string):boo
  const path=pathname.replace(/\/$/,'');
  return [`/${locale}/student`,`/${locale}/timetable`,`/${locale}/notifications`,`/${locale}/reports`].some(base=>path===base||path.startsWith(`${base}/`));
 }
+
+export function hasTeacherWorkspaceNavigation(pathname:string,locale:string):boolean{
+ const path=pathname.replace(/\/$/,'');
+ return [`/${locale}/teacher`,`/${locale}/notifications`,`/${locale}/reports`].some(base=>path===base||path.startsWith(`${base}/`));
+}
