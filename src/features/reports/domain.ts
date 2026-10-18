@@ -20,7 +20,7 @@ export function normalizeReportPagePath(input: string): string {
 
 export const reportInputSchema = reportSchema;
 
-export type ReportHistoryRow = { id: string; subject: string; description: string; status: 'open'|'resolved'; page_path: string; created_at: string; updated_at: string };
+export type ReportHistoryRow = { id: string; subject: string; description: string; status: 'open'|'resolved'; page_path: string; created_at: string; updated_at: string; public_response?: string; reviewed_at?: string|null };
 export type AdminReportRow = ReportHistoryRow & { admin_note: string|null; reporter_id: string; reporter_name: string; reporter_role: string };
 
 export function parseAdminReportPage(value: unknown): { rows: AdminReportRow[]; total: number } | null {
@@ -35,4 +35,8 @@ export function parseAdminReportPage(value: unknown): { rows: AdminReportRow[]; 
     rows.push(r as unknown as AdminReportRow);
   }
   return { rows, total: Number(page.total) };
+}
+
+export function reportProgress(status: string,reviewedAt: string|null|undefined,locale:string):string {
+ return locale==='ar'?(status==='resolved'?'تم الحل':reviewedAt?'قيد المراجعة':'تم الاستلام'):(status==='resolved'?'Resolved':reviewedAt?'Under review':'Received');
 }

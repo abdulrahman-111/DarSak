@@ -12,8 +12,8 @@ begin
   if has_table_privilege('authenticated', 'public.reports', 'INSERT')
      or has_column_privilege('authenticated', 'public.reports', 'admin_note', 'SELECT')
      or has_column_privilege('authenticated', 'public.reports', 'reporter_id', 'INSERT')
-     or not has_column_privilege('authenticated', 'public.reports', 'status', 'UPDATE')
-     or not has_column_privilege('authenticated', 'public.reports', 'admin_note', 'UPDATE') then
+     or has_column_privilege('authenticated', 'public.reports', 'status', 'UPDATE')
+     or has_column_privilege('authenticated', 'public.reports', 'admin_note', 'UPDATE') then
     raise exception 'reports column grants expose private data or block admin updates';
   end if;
 end $$;
@@ -88,10 +88,15 @@ reset role;
 set local role authenticated;
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000003';
 do $$
-declare v_id uuid; v_page jsonb; v_empty_page jsonb;
+declare v_id uuid; v_page jsonb; v_empty_page jsonb; v_version timestamptz; v_next timestamptz;
 begin
   v_id := public.submit_problem_report('Admin issue','Admin reports are also accepted here.','/en/admin');
-  update public.reports set status='resolved', admin_note='Internal follow-up only.' where id=v_id returning id into v_id;
+  select updated_at into v_version from public.reports where id=v_id;
+  begin perform public.admin_update_problem_report(v_id,v_version,'resolved','',''); raise exception 'empty resolution accepted'; exception when invalid_parameter_value then null; end;
+  v_next:=public.admin_update_problem_report(v_id,v_version,'resolved','The issue is fixed.','Internal follow-up only.');
+  begin perform public.admin_update_problem_report(v_id,v_version,'open','',''); raise exception 'stale review accepted'; exception when serialization_failure then null; end;
+  if v_next<=v_version then raise exception 'review version did not advance'; end if;
+  begin update public.reports set status='open' where id=v_id; raise exception 'direct status update bypassed RPC'; exception when insufficient_privilege then null; end;
   if v_id is null then raise exception 'existing admin status/note update flow failed'; end if;
   v_page := public.admin_problem_report_page('resolved',0,20);
   if (v_page->>'total')::integer < 1
@@ -119,6 +124,7 @@ reset role;
 set local role authenticated;
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000005';
 do $$ begin
+  begin perform public.admin_update_problem_report(gen_random_uuid(),now(),'open','forged',''); raise exception 'nonadmin changed report'; exception when insufficient_privilege then null; end;
   begin perform public.admin_problem_report_page('all',0,20);
     raise exception 'non-admin account read admin reports';
   exception when insufficient_privilege then null; end;

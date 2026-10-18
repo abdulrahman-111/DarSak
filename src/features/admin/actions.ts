@@ -67,7 +67,11 @@ export async function adminAction(locale:string,operation:string,_state:AdminSta
  result=published;
  }else result=await db.from('groups').update({status}).eq('id',id).select('id').single();
  }else if(operation==='report'){
- z.uuid().parse(id);const status=z.enum(['open','resolved']).parse(value('status'));const admin_note=z.string().trim().max(3000).parse(value('admin_note'));result=await db.from('reports').update({status,admin_note}).eq('id',id).select('id').single();
+ z.uuid().parse(id);const status=z.enum(['open','resolved']).parse(value('status'));const admin_note=z.string().trim().max(3000).parse(value('admin_note'));const public_response=z.string().trim().max(3000).parse(value('public_response'));
+ if(status==='resolved'&&!public_response)return {error:l==='ar'?'أدخل ردًا واضحًا للمبلّغ قبل إغلاق البلاغ.':'Enter a response for the reporter before resolving the report.'};
+ const updated=await db.rpc('admin_update_problem_report',{p_id:id,p_expected_updated_at:value('expected_updated_at'),p_status:status,p_public_response:public_response,p_admin_note:admin_note});
+ if(updated.error)return {error:updated.error.code==='40001'?(l==='ar'?'تغير البلاغ. حدّث الصفحة قبل الحفظ.':'This report changed. Refresh before saving.'):t.error};result=updated;
+ for(const current of ['en','ar'])revalidatePath(`/${current}/reports`);
  }else if(operation==='setting'){
  const key=z.string().regex(/^[a-z][a-z0-9_]{1,79}$/).parse(value('key'));const parsed=safeSetting(value('value'));result=await db.from('platform_settings').upsert({key,value:parsed}).select('key').single();
  }else return {error:t.invalid};
