@@ -5,11 +5,14 @@ import { catalogueDisplayName } from './catalogue-domain';
 const capacitySchema = z.preprocess(value => value === '' || value == null ? 10 : value, z.coerce.number().int().min(1).max(500));
 const optionalSlotId = z.preprocess(value => value === '' || value == null ? undefined : value, z.string().uuid().optional());
 
+// PostgreSQL catalogue IDs include legacy seeded UUIDs without RFC version/variant bits.
+const catalogueId = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+
 export const groupDetailsSchema = z.object({
   name: z.string().trim().min(2).max(120),
   description: z.string().trim().max(2000).default(''),
-  subject_id: z.string().uuid(),
-  category_id: z.string().uuid(),
+  subject_id: catalogueId,
+  category_id: catalogueId,
   capacity: capacitySchema,
   location: z.string().trim().max(200).default(''),
 });
