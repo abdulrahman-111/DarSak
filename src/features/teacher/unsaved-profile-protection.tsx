@@ -12,7 +12,7 @@ type ContextValue = { setDirty: (key: string, dirty: boolean) => void };
 const DirtyContext = createContext<ContextValue | null>(null);
 
 export function UnsavedProfileProtection({ locale, children, kind = 'profile' }: { locale: Locale; children: ReactNode; kind?: 'profile'|'group' }) {
-  const text = kind === 'group' ? (locale === 'ar' ? { indicator: 'لديك تفاصيل تعلم غير محفوظة.', confirm: 'لديك تفاصيل تعلم غير محفوظة. هل تريد المغادرة وإهمالها؟' } : { indicator: 'You have unsaved learning details.', confirm: 'You have unsaved learning details. Leave and discard them?' }) : messages[locale];
+  const text = kind === 'group' ? (locale === 'ar' ? { indicator: 'لديك تغييرات غير محفوظة في المجموعة.', confirm: 'لديك تغييرات غير محفوظة في المجموعة. هل تريد المغادرة وإهمالها؟' } : { indicator: 'You have unsaved group changes.', confirm: 'You have unsaved group changes. Leave and discard them?' }) : messages[locale];
   const [dirtySections, setDirtySections] = useState<Record<string, boolean>>({});
   const approvedNavigation = useRef(false);
   const setDirty = useCallback((key: string, dirty: boolean) => {

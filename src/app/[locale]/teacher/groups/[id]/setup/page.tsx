@@ -1,6 +1,5 @@
 import { UnsavedProfileProtection } from '@/features/teacher/unsaved-profile-protection';
 import { groupLearningDetails } from '@/features/teacher/group-learning-data';
-import { GroupLearningForm } from '@/features/teacher/group-learning-form';
 import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
@@ -39,10 +38,10 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
       <GroupSetupSteps locale={locale} groupId={id} current={step} copyScheduleFrom={proposalSourceId} />
       <Panel>
         {step === 'details'
-          ? <GroupDetailsForm locale={locale} values={data.values} groupId={id} catalogue={data.catalogue} copyScheduleFrom={proposalSourceId} />
+          ? learning.error ? <p role="alert">{ar?'تعذر تحميل تفاصيل التعلم بأمان. حدّث الصفحة قبل التعديل.':'Learning details could not be loaded safely. Refresh before editing.'}</p> : <GroupDetailsForm locale={locale} values={data.values} groupId={id} catalogue={data.catalogue} copyScheduleFrom={proposalSourceId} learningDetails={learning.data} />
           : step === 'schedule'
             ? <WeeklyScheduleStepForm locale={locale} groupId={id} slots={data.slots} scheduleProposal={data.scheduleProposal} scheduleProposalError={data.scheduleProposalError} copyScheduleFrom={proposalSourceId} />
-            : <PublishReviewForm
+            : learning.error ? <p role="alert" className="text-sm text-red-800">{ar?'تعذر تحميل تفاصيل التعلم، لذا لا يمكن متابعة المراجعة بأمان. حدّث الصفحة.':'Learning details could not be loaded, so review cannot continue safely. Refresh the page.'}</p> : <><GroupLearningView locale={locale} details={learning.data}/><PublishReviewForm
               key={data.group.id}
               locale={locale}
               group={data.group}
@@ -52,9 +51,8 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
               approved={Boolean(data.me.teacher?.approved)}
               reviewStatus={reviewStatus}
               copyScheduleFrom={proposalSourceId}
-            />}
+            /></>}
       </Panel>
-      {learning.error ? <Panel><p role="alert">{ar?'تعذر تحميل تفاصيل التعلم. حدّث الصفحة.':'Could not load learning details. Refresh the page.'}</p></Panel> : step === 'details' ? <Panel className="mt-5"><h2 className="text-xl font-black text-teal">{ar?'تفاصيل التعلم':'Learning details'}</h2><GroupLearningForm locale={locale} groupId={id} details={learning.data}/></Panel> : step === 'review' ? <GroupLearningView locale={locale} details={learning.data}/> : null}
     </div>
   </UnsavedProfileProtection>;
 }

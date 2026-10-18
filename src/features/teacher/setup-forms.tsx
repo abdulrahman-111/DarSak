@@ -11,9 +11,13 @@ import { CatalogueLabelEditor } from './catalogue-forms';
 import { isTeacherCatalogueCategory } from './catalogue-domain';
 import type { SetupCatalogue } from './setup-data';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
+import { GroupLearningFields } from './group-learning-fields';
+import type { GroupLearningDetails } from './group-learning-domain';
+import { useUnsavedProfileSection } from './unsaved-profile-protection';
 
 const copy = (locale: Locale) => locale === 'ar' ? {
   name: 'اسم المجموعة', description: 'الوصف', subject: 'المادة', category: 'السنة / فئة الطلاب', capacity: 'السعة', location: 'المكان', addSubject: 'إضافة مادة', addCategory: 'إضافة سنة / فئة',
+  basics: 'أساسيات المجموعة', required: 'مطلوب', optional: 'اختياري', nameExample: 'مثال: أساسيات الجبر للصف الأول الثانوي', descriptionExample: 'مثال: مجموعة تفاعلية لحل المسائل والتدرب على الجبر خطوة بخطوة.', locationExample: 'مثال: عبر الإنترنت أو مدينة نصر', capacityHint: 'من 1 إلى 500 طالب',
   save: 'حفظ التفاصيل', editSave: 'حفظ تفاصيل المجموعة', cancel: 'إلغاء', saving: 'جارٍ الحفظ…',
   nameRequired: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 120 حرفاً.', descriptionBounds: 'يجب ألا يتجاوز الوصف 2000 حرف.',
   locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وفئة دراسية نشطتين.',
@@ -21,6 +25,7 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
 } : {
   name: 'Group name', description: 'Description', subject: 'Subject', category: 'Year / student category', capacity: 'Capacity', location: 'Location', addSubject: 'Add subject', addCategory: 'Add year / category',
+  basics: 'Group basics', required: 'Required', optional: 'Optional', nameExample: 'Example: Algebra foundations for Year 10', descriptionExample: 'Example: An interactive group to solve problems and practise algebra step by step.', locationExample: 'Example: Online or Nasr City', capacityHint: 'From 1 to 500 students',
   save: 'Save details', editSave: 'Save group details', cancel: 'Cancel', saving: 'Saving…',
   nameRequired: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 120 characters.', descriptionBounds: 'Description must be no longer than 2,000 characters.',
   locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose an active subject and year or student category.',
@@ -35,9 +40,11 @@ type Props = {
   catalogue: SetupCatalogue;
   copyScheduleFrom?: string;
   editPublished?: boolean;
+  learningDetails?: GroupLearningDetails | null;
+  learningError?: boolean;
 };
 
-export function GroupDetailsForm({ locale, values, groupId, catalogue, copyScheduleFrom, editPublished = false }: Props) {
+export function GroupDetailsForm({ locale, values, groupId, catalogue, copyScheduleFrom, editPublished = false, learningDetails = null, learningError = false }: Props) {
   const t = copy(locale);
   const router = useRouter();
   const [formValues, setFormValues] = useState<GroupDetailsFormValues>({
@@ -49,11 +56,14 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     location: values?.location ?? '',
     updated_at: values?.updated_at ?? null,
   });
+  const [initialLearningDetails] = useState(learningDetails);
   const [subjects, setSubjects] = useState(catalogue.subjects);
   const [nodes, setNodes] = useState(catalogue.nodes);
   const [addSubject, setAddSubject] = useState(false);
   const [addCategory, setAddCategory] = useState(false);
+  const [dirty, setDirty] = useState(false);
   const [state, action, pending] = useActionState<GroupDraftActionState, FormData>(saveGroupDraft.bind(null, locale, editPublished ? 'published-edit' : 'draft'), null);
+  useUnsavedProfileSection('group-details', dirty && !state?.id);
 
   useEffect(() => {
     if (state?.id && editPublished) {
@@ -95,14 +105,16 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     setFormValues(current => ({ ...current, subject_id: subject.id, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }));
     setAddSubject(false);
     document.getElementById('group-subject')?.focus();
-  }, [catalogue.retained, retainedCategoryIsArchived]);
+    setDirty(true);
+  }, [catalogue.retained?.category_id, retainedCategoryIsArchived, setAddSubject, setDirty]);
   const onCategorySaved = useCallback((row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
     const category = row as TeacherCatalogueCategory;
     setNodes(current => current.some(item => item.id === category.id) ? current.map(item => item.id === category.id ? category : item) : [...current, category]);
     setFormValues(current => ({ ...current, category_id: category.id, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }));
     setAddCategory(false);
     document.getElementById('group-category')?.focus();
-  }, [catalogue.retained, retainedSubjectIsArchived]);
+    setDirty(true);
+  }, [catalogue.retained?.subject_id, retainedSubjectIsArchived, setAddCategory, setDirty]);
   const retainedPairUnchanged = isRetainedCataloguePair(formValues, catalogue.retained);
   const subjectNeedsActiveChoice = !!catalogue.retained && retainedSubjectIsArchived && formValues.category_id !== catalogue.retained.category_id && !formValues.subject_id;
   const categoryNeedsActiveChoice = !!catalogue.retained && retainedCategoryIsArchived && formValues.subject_id !== catalogue.retained.subject_id && !formValues.category_id;
@@ -122,21 +134,26 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
 
   return <div className="grid gap-5">
   <p id="group-catalogue-help" className="rounded-xl bg-teal/5 p-4 text-sm leading-6 text-muted">{t.catalogueHelp}</p>
-  <form action={action} data-confirm-unsaved-navigation onReset={event => event.preventDefault()} className="grid gap-5">
+  <form action={action} onChange={() => setDirty(true)} onReset={event => event.preventDefault()} className="grid gap-5">
+    <fieldset disabled={pending} className="contents">
+    <legend className="sr-only">{locale === 'ar' ? 'تفاصيل المجموعة' : 'Group details'}</legend>
     {groupId && <input type="hidden" name="group_id" value={groupId} />}
     {groupId && <input type="hidden" name="expected_updated_at" value={formValues.updated_at ?? ''} />}
+    <input type="hidden" name="learning_details" value="1" />
+    <input type="hidden" name="expected_learning_updated_at" value={initialLearningDetails?.updated_at ?? ''} />
+    <section className="grid gap-4" aria-labelledby="group-basics-heading"><div><h2 id="group-basics-heading" className="text-xl font-black text-teal">{t.basics}</h2><p className="mt-1 text-sm text-muted">{locale === 'ar' ? 'الحقول المشار إليها بمطلوب يجب إكمالها.' : 'Complete the fields marked required.'}</p></div>
     <div>
-      <label htmlFor="group-name" className="block text-sm font-bold">{t.name}</label>
-      <input id="group-name" name="name" dir="auto" value={formValues.name} onChange={event => setFormValues(current => ({ ...current, name: event.target.value }))} required minLength={2} maxLength={120} {...invalid('name')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+      <label htmlFor="group-name" className="block text-sm font-bold">{t.name} <span className="font-normal text-muted">• {t.required}</span></label>
+      <input id="group-name" name="name" dir="auto" value={formValues.name} onChange={event => setFormValues(current => ({ ...current, name: event.target.value }))} required minLength={2} maxLength={120} placeholder={t.nameExample} {...invalid('name')} className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-cream p-3" />
       {fieldError('name') && <p id="group-name-error" className="mt-1 text-sm text-red-700">{fieldMessage('name')}</p>}
     </div>
     <div>
-      <label htmlFor="group-description" className="block text-sm font-bold">{t.description}</label>
-      <textarea id="group-description" name="description" dir="auto" value={formValues.description} onChange={event => setFormValues(current => ({ ...current, description: event.target.value }))} maxLength={2000} rows={4} {...invalid('description')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+      <label htmlFor="group-description" className="block text-sm font-bold">{t.description} <span className="font-normal text-muted">• {t.optional}</span></label>
+      <textarea id="group-description" name="description" dir="auto" value={formValues.description} onChange={event => setFormValues(current => ({ ...current, description: event.target.value }))} maxLength={2000} rows={4} placeholder={t.descriptionExample} {...invalid('description')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
       {fieldError('description') && <p id="group-description-error" className="mt-1 text-sm text-red-700">{fieldMessage('description')}</p>}
     </div>
     <div>
-      <label htmlFor="group-subject" className="block text-sm font-bold">{t.subject}</label>
+      <label htmlFor="group-subject" className="block text-sm font-bold">{t.subject} <span className="font-normal text-muted">• {t.required}</span></label>
       <select id="group-subject" name="subject_id" value={formValues.subject_id} onChange={event => { if (event.target.value === '__new__') { setAddSubject(true); setAddCategory(false); return; } setFormValues(current => ({ ...current, subject_id: event.target.value, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) })); }} required {...invalid('subject_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
         <option value="">{t.chooseSubject}</option>
         {activeSubjects.map(subject => <option key={subject.id} value={subject.id}>{subject.id === catalogue.retained?.subject_id && retainedSubjectArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}` : locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}</option>)}
@@ -147,7 +164,7 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
       <button type="button" aria-expanded={addSubject} aria-controls="group-add-subject" onClick={() => { setAddSubject(value => !value); setAddCategory(false); }} className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm font-bold text-teal">{t.addSubject}</button>
     </div>
     <div>
-      <label htmlFor="group-category" className="block text-sm font-bold">{t.category}</label>
+      <label htmlFor="group-category" className="block text-sm font-bold">{t.category} <span className="font-normal text-muted">• {t.required}</span></label>
       <select id="group-category" name="category_id" value={formValues.category_id} onChange={event => { if (event.target.value === '__new__') { setAddCategory(true); setAddSubject(false); return; } setFormValues(current => ({ ...current, category_id: event.target.value, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) })); }} required {...invalid('category_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
         <option value="">{t.chooseCategory}</option>
         {eligibleNodes.map(node => <option key={node.id} value={node.id}>{node.id === catalogue.retained?.category_id && retainedCategoryArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${contextLabel(node.id)}` : contextLabel(node.id)}</option>)}
@@ -159,32 +176,35 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     </div>
     <div className="grid gap-5 sm:grid-cols-2">
       <div>
-        <label htmlFor="group-capacity" className="block text-sm font-bold">{t.capacity}</label>
-        <input id="group-capacity" name="capacity" type="number" value={formValues.capacity} onChange={event => setFormValues(current => ({ ...current, capacity: Number(event.target.value) }))} min={1} max={500} {...invalid('capacity')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+        <label htmlFor="group-capacity" className="block text-sm font-bold">{t.capacity} <span className="font-normal text-muted">• {t.required}</span></label>
+        <input id="group-capacity" name="capacity" type="number" value={formValues.capacity} onChange={event => setFormValues(current => ({ ...current, capacity: Number(event.target.value) }))} required min={1} max={500} {...invalid('capacity')} className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-cream p-3" /><p className="mt-1 text-sm text-muted">{t.capacityHint}</p>
         {fieldError('capacity') && <p id="group-capacity-error" className="mt-1 text-sm text-red-700">{fieldMessage('capacity')}</p>}
       </div>
       <div>
-        <label htmlFor="group-location" className="block text-sm font-bold">{t.location}</label>
-        <input id="group-location" name="location" dir="auto" value={formValues.location} onChange={event => setFormValues(current => ({ ...current, location: event.target.value }))} maxLength={200} {...invalid('location')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3" />
+        <label htmlFor="group-location" className="block text-sm font-bold">{t.location} <span className="font-normal text-muted">• {t.optional}</span></label>
+        <input id="group-location" name="location" dir="auto" value={formValues.location} onChange={event => setFormValues(current => ({ ...current, location: event.target.value }))} maxLength={200} placeholder={t.locationExample} {...invalid('location')} className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-cream p-3" />
         {fieldError('location') && <p id="group-location-error" className="mt-1 text-sm text-red-700">{fieldMessage('location')}</p>}
       </div>
-    </div>
+    </div></section>
+    {!learningError && <GroupLearningFields locale={locale} details={initialLearningDetails} errors={state?.fieldErrors ?? {}} />}
     {state?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}
     {state?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-teal">{state.success}</p>}
-    <div className="flex flex-wrap gap-3"><button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : editPublished ? t.editSave : t.save}</button>{editPublished && groupId && <Link href={`/${locale}/teacher/groups/${groupId}`} className="rounded-xl border border-line px-5 py-3 font-bold text-teal">{t.cancel}</Link>}</div>
+    <div className="flex flex-wrap gap-3"><button type="submit" disabled={pending || learningError} aria-live="polite" className="min-h-11 w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : editPublished ? t.editSave : locale === 'ar' ? 'حفظ والمتابعة إلى الجدول' : 'Save and continue to schedule'}</button>{editPublished && groupId && <Link href={`/${locale}/teacher/groups/${groupId}`} className="min-h-11 rounded-xl border border-line px-5 py-3 font-bold text-teal">{t.cancel}</Link>}</div>
+    </fieldset>
   </form>
   {addSubject && <section id="group-add-subject" aria-labelledby="group-add-subject-heading" className="rounded-2xl border border-line bg-cream p-4"><h3 id="group-add-subject-heading" className="mb-3 font-bold text-teal">{t.addSubject}</h3><CatalogueLabelEditor locale={locale} kind="subject" onSaved={onSubjectSaved} /><button type="button" onClick={()=>{setAddSubject(false);document.getElementById('group-subject')?.focus();}} className="mt-3 min-h-11 font-bold text-teal underline">{t.backToGroup}</button></section>}
   {addCategory && <section id="group-add-category" aria-labelledby="group-add-category-heading" className="rounded-2xl border border-line bg-cream p-4"><h3 id="group-add-category-heading" className="mb-3 font-bold text-teal">{t.addCategory}</h3><CatalogueLabelEditor locale={locale} kind="category" onSaved={onCategorySaved} /><button type="button" onClick={()=>{setAddCategory(false);document.getElementById('group-category')?.focus();}} className="mt-3 min-h-11 font-bold text-teal underline">{t.backToGroup}</button></section>}
   </div>;
 }
 
-export function GroupSetupSteps({ locale, groupId, current, copyScheduleFrom }: { locale: Locale; groupId: string; current: SetupStep; copyScheduleFrom?: string }) {
+export function GroupSetupSteps({ locale, groupId, current, copyScheduleFrom }: { locale: Locale; groupId?: string; current: SetupStep; copyScheduleFrom?: string }) {
   const t = copy(locale);
   const steps: SetupStep[] = ['details', 'schedule', 'review'];
   return <nav aria-label={locale === 'ar' ? 'خطوات إعداد المجموعة' : 'Group setup steps'} className="mb-5 flex flex-wrap gap-2">
     {steps.map(step => {
       const source = copyScheduleFrom ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}` : '';
-      return <Link key={step} aria-current={current === step ? 'step' : undefined} href={`/${locale}/teacher/groups/${groupId}/setup?step=${step}${source}`} className={`rounded-full px-4 py-2 text-sm font-bold ${current === step ? 'bg-teal text-white' : 'border border-line bg-white text-teal'}`}>{t[step]}</Link>;
+      const className = `rounded-full px-4 py-2 text-sm font-bold ${current === step ? 'bg-teal text-white' : 'border border-line bg-white text-teal'}`;
+      return groupId ? <Link key={step} aria-current={current === step ? 'step' : undefined} href={`/${locale}/teacher/groups/${groupId}/setup?step=${step}${source}`} className={className}>{t[step]}</Link> : <span key={step} aria-current={current === step ? 'step' : undefined} className={className}>{t[step]}</span>;
     })}
   </nav>;
 }
