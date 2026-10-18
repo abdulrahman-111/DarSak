@@ -56,44 +56,14 @@ describe('teacher avatar compare-and-set actions', () => {
     revalidatePathMock.mockReset();
   });
 
-  it('compares an upload against the path read before upload', async () => {
-    const { rpcMock } = setup();
+  it('rejects avatar uploads before inspecting the form or calling Storage', async () => {
+    const { upload } = setup();
+    const form = { get: () => { throw new Error('form should not be inspected'); } } as unknown as FormData;
 
-    await uploadTeacherAvatar('en', null, imageForm());
+    const result = await uploadTeacherAvatar('en', null, form);
 
-    expect(rpcMock).toHaveBeenCalledWith('set_teacher_avatar_path', expect.objectContaining({ p_expected_path: oldPath }));
-  });
-
-  it('verifies an ambiguous successful upload before cleaning the previous file', async () => {
-    const { remove, rpcMock } = setup({ rpc: { data: null, error: new Error('network timeout') }, reads: [oldPath, uploadedPath] });
-
-    const result = await uploadTeacherAvatar('en', null, imageForm());
-
-    expect(result?.success).toMatch(/photo updated/i);
-    expect(rpcMock).toHaveBeenCalledOnce();
-    expect(remove).toHaveBeenCalledWith([oldPath]);
-    expect(remove).not.toHaveBeenCalledWith([uploadedPath]);
-  });
-
-  it('cleans only the losing upload when another upload won the CAS', async () => {
-    const { remove } = setup({ rpc: { data: false, error: null }, reads: [oldPath, newerPath] });
-
-    const result = await uploadTeacherAvatar('en', null, imageForm());
-
-    expect(result?.error).toMatch(/photo changed in another request/i);
-    expect(remove).toHaveBeenCalledOnce();
-    expect(remove).toHaveBeenCalledWith([uploadedPath]);
-    expect(remove).not.toHaveBeenCalledWith([oldPath]);
-    expect(remove).not.toHaveBeenCalledWith([newerPath]);
-  });
-
-  it('does not clean an upload when the RPC outcome cannot be verified', async () => {
-    const { remove } = setup({ rpc: { data: null, error: new Error('network timeout') }, reads: [oldPath, { path: null, error: new Error('read failed') }] });
-
-    const result = await uploadTeacherAvatar('en', null, imageForm());
-
-    expect(result?.error).toMatch(/could not be confirmed/i);
-    expect(remove).not.toHaveBeenCalled();
+    expect(result?.error).toMatch(/photo uploads are unavailable/i);
+    expect(upload).not.toHaveBeenCalled();
   });
 
   it('leaves a newer photo intact when a stale removal loses the CAS', async () => {

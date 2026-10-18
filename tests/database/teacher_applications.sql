@@ -117,8 +117,7 @@ begin
   if (select approved from public.teacher_profiles where id='7c000000-0000-4000-8000-000000000001') then raise exception 'rejected approval changed teacher'; end if;
 end $$;
 
--- Owner can add a private PDF object only beneath their UUID and attach it only
--- after it exists. A foreign owner cannot upload/read it.
+-- Legacy CV validation remains scoped to its owner; new binary uploads are blocked.
 set local role authenticated;
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 do $$
@@ -127,6 +126,14 @@ begin
   if public.can_upload_teacher_application_cv('7c000000-0000-4000-8000-000000000002/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf','{"mimetype":"application/pdf"}') then raise exception 'foreign CV upload authorized'; end if;
   if public.can_upload_teacher_application_cv('7c000000-0000-4000-8000-000000000001/bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb.pdf','{"mimetype":"text/plain"}') then raise exception 'non-PDF upload authorized'; end if;
 end $$;
+do $$ begin
+  begin
+    insert into storage.objects(bucket_id,name,owner_id,metadata) values ('teacher-applications','7c000000-0000-4000-8000-000000000001/blocked.pdf','7c000000-0000-4000-8000-000000000001','{"mimetype":"application/pdf","size":100}');
+    raise exception 'new CV upload accepted';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+-- Seed an existing CV through the trusted fixture role.
 insert into storage.objects(bucket_id,name,owner_id,metadata) values
  ('teacher-applications','7c000000-0000-4000-8000-000000000001/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf','7c000000-0000-4000-8000-000000000001','{"mimetype":"application/pdf","size":100}');
 reset role;

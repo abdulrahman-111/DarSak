@@ -24,11 +24,11 @@ function AttendanceRowForm({ locale, lessonId, row, readOnly }: { locale: Locale
     </div>
     <div className="flex flex-wrap items-center gap-2">
       <label className="sr-only" htmlFor={`attendance-${row.student_id}`}>{ar ? `حضور ${row.full_name}` : `Attendance for ${row.full_name}`}</label>
-      <select id={`attendance-${row.student_id}`} name="status" defaultValue={row.status ?? ''} disabled={readOnly || pending} className="rounded-xl border border-line bg-white px-3 py-2 text-sm">
+      <select id={`attendance-${row.student_id}`} name="status" defaultValue={row.status ?? ''} disabled={readOnly || pending} className="min-h-11 rounded-xl border border-line bg-white px-3 py-2 text-sm">
         <option value="">{ar ? 'مسح العلامة' : 'Clear mark'}</option>
         {(Object.keys(labels[locale]) as AttendanceStatus[]).map(status => <option key={status} value={status}>{labels[locale][status]}</option>)}
       </select>
-      <button disabled={readOnly || pending} className="rounded-xl bg-orange px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ' : 'Save')}</button>
+      <button disabled={readOnly || pending} className="min-h-11 rounded-xl bg-orange px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ' : 'Save')}</button>
     </div>
     {state?.error && <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.error}</p>}
     {state?.success && <p role="status" className="text-sm text-teal sm:col-span-2">{state.success}</p>}

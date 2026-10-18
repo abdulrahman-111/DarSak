@@ -5,13 +5,13 @@ import { ApplicationCvDownload, RequestApplicationChangesForm } from './applicat
 
 const missingCopy = {
   en: {
-    full_name: 'Full name', photo: 'Profile photo', headline: 'Headline', bio: 'Biography',
+    full_name: 'Full name', headline: 'Headline', bio: 'Biography',
     specializations: 'At least one subject and level', languages: 'At least one language',
     experience: 'Experience entry', qualifications: 'Qualification entry', approach: 'Teaching approach',
     teaching_years: 'Years of experience', admin_phone: 'Private administrator phone', attestation: 'Attestation',
   },
   ar: {
-    full_name: 'الاسم الكامل', photo: 'الصورة الشخصية', headline: 'العنوان التعريفي', bio: 'النبذة',
+    full_name: 'الاسم الكامل', headline: 'العنوان التعريفي', bio: 'النبذة',
     specializations: 'مادة ومستوى واحد على الأقل', languages: 'لغة واحدة على الأقل',
     experience: 'بيانات الخبرة', qualifications: 'بيانات المؤهل', approach: 'أسلوب التدريس',
     teaching_years: 'سنوات الخبرة', admin_phone: 'هاتف المسؤول الخاص', attestation: 'الإقرار',

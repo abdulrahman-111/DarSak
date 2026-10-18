@@ -24,11 +24,7 @@ export async function accountSetupData(locale: Locale, requestedReturn: unknown)
   }
   const draftResult = await db.rpc('get_or_create_account_setup_draft', { p_locale: locale, p_return_to: returnTo });
   const draft = draftResult.error ? null : parseSetupDraft(draftResult.data);
-  const avatarResult = role === 'teacher'
-    ? await db.from('teacher_profiles').select('avatar_path').eq('id', user.id).maybeSingle()
-    : { data: null, error: null };
-  const hasAvatar = !!avatarResult.data?.avatar_path;
-  if (role === 'student' || !draft) return { db, userId: user.id, role, draft, offerings: [], subjects: [], nodes: [], hasAvatar, error: !!draftResult.error || !draft || !!avatarResult.error };
+  if (role === 'student' || !draft) return { db, userId: user.id, role, draft, offerings: [], subjects: [], nodes: [], error: !!draftResult.error || !draft };
   const choices = await teacherCatalogueChoices(db, user.id);
   const nodes = choices.nodes;
   const offerings = choices.offerings.map(offering => {
@@ -55,7 +51,7 @@ export async function accountSetupData(locale: Locale, requestedReturn: unknown)
       subjectIds.length ? db.from('subjects').select('id,owner_teacher_id,name_ar,name_en').in('id', subjectIds) : Promise.resolve({data:[],error:null}),
       nodeIds.length ? db.from('education_nodes').select('id,owner_teacher_id,name_ar,name_en').in('id', nodeIds) : Promise.resolve({data:[],error:null}),
     ]);
-    if (savedResult.error || savedSubjects.error || savedNodes.error) return { db, userId: user.id, role, draft, offerings: [], subjects: choices.subjects, nodes: choices.nodes, hasAvatar, error: true };
+    if (savedResult.error || savedSubjects.error || savedNodes.error) return { db, userId: user.id, role, draft, offerings: [], subjects: choices.subjects, nodes: choices.nodes, error: true };
     for (const row of savedRows) {
       const subject = savedSubjects.data?.find(item => item.id === row.subject_id);
       const node = savedNodes.data?.find(item => item.id === row.node_id);
@@ -65,5 +61,5 @@ export async function accountSetupData(locale: Locale, requestedReturn: unknown)
       }
     }
   }
-  return { db, userId: user.id, role, draft, offerings, subjects: choices.subjects, nodes: choices.nodes, hasAvatar, error: !!choices.error.error || !!avatarResult.error };
+  return { db, userId: user.id, role, draft, offerings, subjects: choices.subjects, nodes: choices.nodes, error: !!choices.error.error };
 }

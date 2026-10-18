@@ -33,8 +33,9 @@ function setup(options: { objectPath?: string | null; removeData?: Array<{ name:
     const chain = { eq: (column: unknown, value: unknown) => { eqCalls.push([column, value]); return chain; }, single: async () => result, maybeSingle: async () => result };
     return chain;
   });
+  const upload = vi.fn(async () => ({ data: { path }, error: null }));
   const storage = {
-    upload: async () => ({ data: { path }, error: null }),
+    upload,
     remove: async () => { calls.push('storage'); return { data: options.removeData ?? [{ name: path }], error: options.removeError ?? null }; },
     list: async (_parent: string, query: { search: string }) => ({ data: options.listData !== undefined ? options.listData : (options.listContainsMatch ? [{ name: query.search }] : []), error: null }),
   };
@@ -49,7 +50,7 @@ function setup(options: { objectPath?: string | null; removeData?: Array<{ name:
     storage: { from: () => storage },
   };
   createClientMock.mockResolvedValue(db);
-  return { calls, eqCalls, select };
+  return { calls, eqCalls, select, upload };
 }
 
 describe('lesson material actions', () => {
@@ -63,6 +64,14 @@ describe('lesson material actions', () => {
     expect(await addMaterial('en', lessonId, null, form)).toMatchObject({ success: 'Material added.' });
     expect(select).toHaveBeenCalledWith('id,group:groups!inner(teacher_id)');
     expect(eqCalls).toContainEqual(['group.teacher_id', teacherId]);
+  });
+
+  it('rejects new standalone notes so launch resources stay link-only', async () => {
+    setup();
+    const form = new FormData();
+    form.set('kind', 'note'); form.set('title', 'Reminder'); form.set('content', 'Bring the worksheet.');
+
+    expect(await addMaterial('en', lessonId, null, form)).toMatchObject({ error: 'New lesson resources can only be links.' });
   });
 
   it('rejects a foreign lesson before inserting any material', async () => {
@@ -109,71 +118,11 @@ describe('lesson material actions', () => {
     expect(calls).toEqual(['storage']);
   });
 
-  it('preserves the object when an unknown insert failure cannot be read back', async () => {
-    const { calls } = setup({ insertError: new Error('insert failed'), readbackError: new Error('read failed'), removeData: [], listContainsMatch: true });
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
+  it('rejects binary uploads before reading the form or calling Storage', async () => {
+    const { upload } = setup();
+    const form = { get: () => { throw new Error('form should not be inspected'); } } as unknown as FormData;
 
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/could not be confirmed/i) });
-    expect(calls).toEqual([]);
-  });
-
-  it('keeps an uploaded object and reports success when insert response was lost after commit', async () => {
-    const { calls } = setup({ insertError: new TypeError('fetch failed'), metadataOnInsertError: true });
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
-
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ success: 'File uploaded.' });
-    expect(calls).toEqual([]);
-  });
-
-  it('preserves the object and explains an uncertain insert when readback fails', async () => {
-    const { calls } = setup({ insertError: new TypeError('fetch failed'), readbackError: new Error('read failed') });
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
-
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/could not be confirmed/i) });
-    expect(calls).toEqual([]);
-  });
-
-  it('cleans up after a definitive database rejection', async () => {
-    const { calls } = setup({ insertError: { code: '23514', message: 'constraint violation' }, removeData: [{ name: 'file.pdf' }] });
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
-
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: 'Could not save the uploaded file.' });
-    expect(calls).toEqual(['storage']);
-  });
-
-  it('reports incomplete cleanup after a definitive rejection when the orphan remains', async () => {
-    setup({ insertError: { code: '23514', message: 'constraint violation' }, removeData: [], listContainsMatch: true });
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
-
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/cleanup is incomplete/i) });
-  });
-
-  it('continues to report a normal file upload as successful', async () => {
-    setup();
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
-
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ success: 'File uploaded.' });
-  });
-
-  it('preserves the object and gives retry guidance when an insert error has no row', async () => {
-    const { calls } = setup({ insertError: new TypeError('fetch failed'), objectPath: null });
-    const form = new FormData();
-    form.set('title', 'worksheet');
-    form.set('file', new File(['%PDF-1.4'], 'file.pdf', { type: 'application/pdf' }));
-
-    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/could not be confirmed/i) });
-    expect(calls).toEqual([]);
+    expect(await uploadMaterial('en', lessonId, null, form)).toMatchObject({ error: expect.stringMatching(/uploads are unavailable.*link or lesson note/i) });
+    expect(upload).not.toHaveBeenCalled();
   });
 });

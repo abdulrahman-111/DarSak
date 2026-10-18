@@ -1,15 +1,12 @@
 'use server';
 
-import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { logActionFailure } from '@/lib/action-diagnostics';
-import { safeFile } from '@/lib/domain';
 import { idSchema, type Locale } from '@/features/student/domain';
-import { lessonStatusSchema, materialSchema, storageObjectPath } from './domain';
+import { lessonStatusSchema, materialSchema } from './domain';
 import { storageRemovalConfirmed } from './profile-domain';
 import { checkTeachingAccess, teachingGuardMessage, teachingMutationMessage } from '@/features/teacher-access/guard';
-import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export type TeacherActionState = { error?: string; success?: string } | null;
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -47,15 +44,12 @@ async function removeMaterialObject(db: Awaited<ReturnType<typeof createClient>>
   return !listed.error && Array.isArray(listed.data) && !listed.data.some(object => object.name === name);
 }
 
-function isDefinitiveMaterialInsertRejection(error: { code?: string } | null | undefined) {
-  return ['42501', '23503', '23505', '23514', '22P02', '22001'].includes(error?.code ?? '');
-}
-
 export async function addMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
   const startedAt = Date.now();
   if (!idSchema.safeParse(lessonId).success) return { error: message(locale, 'Invalid lesson.', 'الحصة غير صالحة.') };
   const parsed = materialSchema.safeParse(Object.fromEntries(form));
   if (!parsed.success) return { error: message(locale, 'Check the material details.', 'تحقق من بيانات المادة.') };
+  if (parsed.data.kind !== 'link') return { error: message(locale, 'New lesson resources can only be links.', 'يمكن إضافة روابط فقط كموارد جديدة للدرس.') };
   const me = await activeTeacher();
   if (!me) return { error: message(locale, 'Teacher access required.', 'يلزم حساب مدرس نشط.') };
   if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
@@ -63,9 +57,7 @@ export async function addMaterial(locale: Locale, lessonId: string, _state: Teac
   if (owned.error) logActionFailure('materials.ownership.lookup', startedAt, owned.error, 'DB_ERROR');
   else if (!owned.data) logActionFailure('materials.ownership.lookup', startedAt, undefined, 'NOT_FOUND');
   if (owned.error || !owned.data) return { error: message(locale, 'Lesson not found.', 'الحصة غير موجودة.') };
-  const { error } = parsed.data.kind === 'link'
-    ? await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'link', title: parsed.data.title, url: parsed.data.url })
-    : await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'note', title: parsed.data.title, content: parsed.data.content });
+  const { error } = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'link', title: parsed.data.title, url: parsed.data.url });
   if (error) {
     logActionFailure('materials.metadata.save', startedAt, error, 'DB_ERROR');
     if(error.code==='42501'&&error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,error,'')};
@@ -75,69 +67,8 @@ export async function addMaterial(locale: Locale, lessonId: string, _state: Teac
   return { success: message(locale, 'Material added.', 'تمت إضافة المادة.') };
 }
 
-export async function uploadMaterial(locale: Locale, lessonId: string, _state: TeacherActionState, form: FormData): Promise<TeacherActionState> {
-  const startedAt = Date.now();
-  const file = form.get('file');
-  const title = String(form.get('title') ?? '').trim();
-  if (!idSchema.safeParse(lessonId).success || !(file instanceof File) || !title || title.length > 180 || !safeFile(file)) {
-    return { error: message(locale, 'Choose a PDF or image up to 10 MB.', 'اختر ملف PDF أو صورة بحد أقصى ١٠ ميجابايت.') };
-  }
-  const me = await activeTeacher();
-  if (!me) return { error: message(locale, 'Teacher access required.', 'يلزم حساب مدرس نشط.') };
-  if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
-  const owned = await ownsLesson(me.db, me.id, lessonId);
-  if (owned.error) logActionFailure('materials.ownership.lookup', startedAt, owned.error, 'DB_ERROR');
-  else if (!owned.data) logActionFailure('materials.ownership.lookup', startedAt, undefined, 'NOT_FOUND');
-  if (owned.error || !owned.data) return { error: message(locale, 'Lesson not found.', 'الحصة غير موجودة.') };
-  let path: string;
-  try { path = storageObjectPath(me.id, lessonId, file.name, randomUUID()); }
-  catch { return { error: message(locale, 'Unsupported file type.', 'نوع الملف غير مدعوم.') }; }
-  const uploaded = await me.db.storage.from('lesson-materials').upload(path, file, { contentType: file.type, upsert: false });
-  if (uploaded.error) {
-    logActionFailure('materials.storage.upload', startedAt, uploaded.error, 'STORAGE_ERROR');
-    if('code' in uploaded.error&&uploaded.error.code==='42501'&&uploaded.error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,{code:'42501',message:uploaded.error.message},'')};
-    const quotaMessage = quotaErrorMessage(locale, uploaded.error.message);
-    if (quotaMessage) return { error: quotaMessage };
-    return { error: message(locale, 'Upload failed.', 'فشل رفع الملف.') };
-  }
-  const inserted = await me.db.from('lesson_materials').insert({ lesson_id: lessonId, uploaded_by: me.id, kind: 'file', title, storage_path: path, file_size: file.size, mime_type: file.type });
-  if (inserted.error) {
-    logActionFailure('materials.metadata.save', startedAt, inserted.error, 'DB_ERROR');
-    let verified: { data: { storage_path: string } | null; error: unknown };
-    try {
-      verified = await me.db.from('lesson_materials').select('storage_path').eq('lesson_id', lessonId).eq('uploaded_by', me.id).eq('storage_path', path).maybeSingle();
-    } catch {
-      verified = { data: null, error: new Error('readback failed') };
-    }
-    if (!verified.error && verified.data?.storage_path === path) {
-      revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
-      return { success: message(locale, 'File uploaded.', 'تم رفع الملف.') };
-    }
-    if (!verified.error && !verified.data && !isDefinitiveMaterialInsertRejection(inserted.error)) {
-      return { error: message(locale,
-        'The save result could not be confirmed. The file is preserved; check the lesson before trying again.',
-        'تعذر التحقق من نتيجة الحفظ. تم الاحتفاظ بالملف؛ تحقق من الحصة قبل المحاولة مرة أخرى.') };
-    }
-    if (!isDefinitiveMaterialInsertRejection(inserted.error)) {
-      return { error: message(locale,
-        'The save result could not be confirmed. The file is preserved; check the lesson before trying again.',
-        'تعذر التحقق من نتيجة الحفظ. تم الاحتفاظ بالملف؛ تحقق من الحصة قبل المحاولة مرة أخرى.') };
-    }
-    if(inserted.error.code==='42501'&&inserted.error.message==='teacher teaching access expired'){
-      await removeMaterialObject(me.db,path);
-      return {error:teachingMutationMessage(locale,inserted.error,'')};
-    }
-    const cleaned = await removeMaterialObject(me.db, path);
-    const quotaMessage = quotaErrorMessage(locale, inserted.error.message);
-    if (quotaMessage) return { error: cleaned ? quotaMessage : message(locale,
-      'The file could not be saved and cleanup is incomplete. Retry or contact support.',
-      'تعذر حفظ الملف ولم يكتمل تنظيفه. أعد المحاولة أو تواصل مع الدعم.') };
-    return { error: message(locale,
-      cleaned ? 'Could not save the uploaded file.' : 'Could not save the file, and cleanup is incomplete. Retry or contact support.',
-      cleaned ? 'تعذر حفظ الملف المرفوع.' : 'تعذر حفظ الملف ولم يكتمل تنظيفه. أعد المحاولة أو تواصل مع الدعم.' ) };
-  }
-  revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
-  return { success: message(locale, 'File uploaded.', 'تم رفع الملف.') };
+export async function uploadMaterial(locale: Locale, _lessonId: string, _state: TeacherActionState, _form: FormData): Promise<TeacherActionState> {
+  return { error: message(locale, 'File uploads are unavailable. Add a link or lesson note instead.', 'رفع الملفات غير متاح. أضف رابطاً أو ملاحظة للدرس بدلاً من ذلك.') };
 }
 
 export async function setLessonStatus(locale: Locale, lessonId: string, status: string) {

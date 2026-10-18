@@ -65,6 +65,7 @@ set local role authenticated;
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
+ if public.my_group_feedback(gid)->>'reason'<>'completed_lesson_required' then raise exception 'missing completed-lesson eligibility reason';end if;
  begin perform public.save_group_feedback(gid,5,'This lesson was useful and clear.',0);raise exception 'unattended student reviewed';exception when insufficient_privilege then null;end;
 end $$;
 reset role;
@@ -77,6 +78,7 @@ set local role authenticated;
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
+ if public.my_group_feedback(gid)->>'reason'<>'present_or_late_attendance_required' then raise exception 'missing attendance eligibility reason';end if;
  begin perform public.save_group_feedback(gid,5,'This lesson was useful and clear.',0);raise exception 'absent student reviewed';exception when insufficient_privilege then null;end;
 end $$;
 reset role;
@@ -86,6 +88,7 @@ set local role authenticated;
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;v bigint;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
+ if public.my_group_feedback(gid)->>'reason'<>'eligible' or (public.my_group_feedback(gid)->>'eligible')::boolean is not true then raise exception 'present or late attendance did not enable feedback';end if;
  v:=public.save_group_feedback(gid,5,'This lesson was useful and clear.',0);
  if v<>1 then raise exception 'first review version wrong';end if;
  begin perform public.save_group_feedback(gid,4,'This lesson was useful and clear.',0);raise exception 'stale review accepted';exception when serialization_failure then null;end;

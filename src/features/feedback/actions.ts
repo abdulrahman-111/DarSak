@@ -15,6 +15,6 @@ export async function feedbackAction(locale:string,kind:'save'|'withdraw'|'reply
  else if(kind==='reply')r=await db.rpc('teacher_reply_feedback',{p_id:id,p_reply:String(form.get('reply')??''),p_expected_version:version});
  else r=await db.rpc('moderate_group_feedback',{p_id:id,p_decision:String(form.get('decision')??''),p_note:String(form.get('admin_note')??''),p_expected_version:version});
  if(r.error)return{error:r.error.code==='40001'?(ar?'تغير التقييم. حدّث الصفحة للمراجعة قبل الحفظ.':'This feedback changed. Refresh and review before saving.'):(ar?'تعذر حفظ التقييم. تحقق من الصلاحية والحدود الموضحة.':'Could not save. Check your eligibility and the displayed limits.')};
- for(const l of ['en','ar']){revalidatePath(`/${l}/groups`,'layout');revalidatePath(`/${l}/admin/feedback`);revalidatePath(`/${l}/teacher/feedback`);}
+ for(const l of ['en','ar']){revalidatePath(`/${l}/groups`,'layout');revalidatePath(`/${l}/student/classes/[groupId]`,'page');revalidatePath(`/${l}/admin/feedback`);revalidatePath(`/${l}/teacher/feedback`);}
  return{success:ar?'تم الحفظ. تخضع التقييمات والردود للمراجعة قبل النشر.':'Saved. Feedback and replies are reviewed before publication.',version:Number(r.data)};
 }
