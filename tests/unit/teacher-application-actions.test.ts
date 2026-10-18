@@ -69,10 +69,21 @@ describe('saveTeacherApplication', () => {
 
   it('accepts submission without a CV link and never uploads files', async () => {
     const data = form();
-    data.set('teaching_years', '2'); data.set('admin_phone', '1234567'); data.set('attested', 'on'); data.set('intent', 'submit');
+    data.set('teaching_years', '2'); data.set('admin_phone', '1234567'); data.set('attested', 'on'); data.set('teacher_rules', 'on'); data.set('intent', 'submit');
     const result = await saveTeacherApplication('en', null, data);
     expect(result?.success).toBe('Your application was submitted for review.');
     expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_url: null }));
+    expect(rpc).toHaveBeenCalledWith('submit_teacher_application_with_rules', expect.objectContaining({ p_rules_version: '2026-10-18' }));
+    expect(rpc).not.toHaveBeenCalledWith('submit_teacher_application', expect.anything());
+  });
+
+  it('requires separate teacher rules acceptance before saving or submitting the application', async () => {
+    const data = form('submit');
+    data.set('teaching_years', '2'); data.set('admin_phone', '1234567'); data.set('attested', 'on');
+    const result = await saveTeacherApplication('en', null, data);
+    expect(result?.fieldErrors).toEqual({ teacher_rules: 'required' });
+    expect(result?.values).toMatchObject({ teachingYears: '2', adminPhone: '1234567', attested: true, teacherRulesAccepted: false });
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it('maps a stale compare-and-set save to a clear message and never submits', async () => {
@@ -83,6 +94,7 @@ describe('saveTeacherApplication', () => {
     data.set('teaching_years', '2');
     data.set('admin_phone', '1234567');
     data.set('attested', 'on');
+    data.set('teacher_rules', 'on');
     const result = await saveTeacherApplication('en', null, data);
     expect(result?.error).toContain('changed while you were saving');
     expect(result?.error).not.toContain('internal');

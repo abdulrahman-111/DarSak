@@ -8,6 +8,7 @@ import { authCopy, type AuthLocale } from './copy';
 import { GoogleButton, googleEnabled } from './google-button';
 import { Turnstile } from './turnstile';
 import { TeacherSubscriptionNotice } from '@/features/teacher-access/subscription-notice';
+import { TeacherRulesPanel } from '@/features/teacher/teacher-rules-panel';
 
 type Props = {
   locale: AuthLocale;
@@ -61,6 +62,8 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
           </p>
         </fieldset>
       )}
+
+      {mode === 'signup' && role === 'teacher' && <TeacherRulesPanel locale={locale}/>}
 
       {mode === 'signup' && (
         <label className="block text-sm font-bold text-ink">

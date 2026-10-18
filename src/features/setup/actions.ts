@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/i18n/config';
 import { parseSetupCompletion, parseSetupDraft, type SetupDraft } from './domain';
 import { safeSetupReturnPath } from './destination';
+import { TEACHER_RULES_VERSION } from '@/features/teacher/teacher-rules';
 
 export type SetupActionState = { error?: 'invalid'|'save'|'conflict'|'upload'|'complete'; draft?: SetupDraft; pendingCvPath?: string; field?: string } | null;
 
@@ -49,13 +50,19 @@ export async function saveSetupStage(locale: Locale, _state: SetupActionState, f
   return movedDraft ? { draft: movedDraft } : { error: moved.error?.code === 'PT409' ? 'conflict' : 'save', draft };
 }
 
-export async function completeSetup(locale: Locale, version: number, returnTo: string): Promise<{ error?: string; destination?: string }> {
+export async function completeSetup(locale: Locale, version: number, returnTo: string, teacherRulesAccepted = false): Promise<{ error?: string; destination?: string }> {
   const me = await activeIdentity(locale);
   if (!me) return { error: 'complete' };
+  if (me.role === 'teacher' && teacherRulesAccepted !== true) return { error: 'teacher-rules' };
   const safeReturn = safeSetupReturnPath(locale, me.role, returnTo) ?? `/${locale}/${me.role}`;
-  const result = await observeOperation('setup_complete',locale,()=>me.db.rpc(me.role === 'teacher' ? 'complete_teacher_account_setup' : 'complete_student_account_setup', {
-    p_expected_version: version, p_locale: locale, p_return_to: safeReturn,
-  }));
+  const result = await observeOperation('setup_complete',locale,()=>me.role === 'teacher'
+    ? me.db.rpc('complete_teacher_account_setup_with_rules', {
+      p_expected_version: version, p_locale: locale, p_return_to: safeReturn,
+      p_rules_version: TEACHER_RULES_VERSION,
+    })
+    : me.db.rpc('complete_student_account_setup', {
+      p_expected_version: version, p_locale: locale, p_return_to: safeReturn,
+    }));
   const completed = result.error ? null : parseSetupCompletion(result.data);
   if (!completed) return { error: result.error?.code === 'PT409' ? 'conflict' : 'complete' };
   for (const lang of ['en','ar'] as const) {

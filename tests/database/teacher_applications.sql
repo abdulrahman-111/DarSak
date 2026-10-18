@@ -149,7 +149,20 @@ begin
   select updated_at into v_updated from public.teacher_applications where teacher_id=auth.uid();
   v_response:=public.save_teacher_application(0,'+1 (202) 555-0101','7c000000-0000-4000-8000-000000000001/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf',array['https://example.invalid/cv-context'],true,v_updated);
   v_updated:=(v_response->'application'->>'updated_at')::timestamptz;
-  v_response:=public.submit_teacher_application(v_updated);
+  begin
+    perform public.submit_teacher_application(v_updated);
+    raise exception 'direct submission bypassed teacher rules';
+  exception when sqlstate '22023' then null; end;
+  begin
+    perform public.submit_teacher_application_with_rules(v_updated,'old-version');
+    raise exception 'stale teacher rules version accepted';
+  exception when sqlstate '22023' then null; end;
+  v_response:=public.submit_teacher_application_with_rules(v_updated,'2026-10-18');
+  if v_response#>>'{application,snapshot,teacher_rules_version}' is distinct from '2026-10-18'
+    or (v_response#>>'{application,snapshot,teacher_rules_accepted_at}')::timestamptz is distinct from
+      (select accepted_at from public.teacher_rules_acceptances where teacher_id=auth.uid() and policy_version='2026-10-18')
+  then raise exception 'rules acceptance evidence missing from submitted snapshot'; end if;
+
   if v_response->'application'->>'status'<>'submitted' or v_response->'application'->'snapshot'->>'full_name'<>'Application owner'
      or jsonb_array_length(v_response->'application'->'snapshot'->'specializations')<>1
      or v_response->'application'->'snapshot'->'profile_details'->'experience'->0->>'id'<>'experience-1' then
@@ -221,7 +234,7 @@ begin
   select updated_at into v_updated from public.teacher_applications where teacher_id=auth.uid();
   v_response:=public.save_teacher_application(0,'+1 (202) 555-0101',null,'https://drive.google.com/file/d/example/view','{}',true,v_updated);
   v_updated:=(v_response->'application'->>'updated_at')::timestamptz;
-  v_response:=public.submit_teacher_application(v_updated);
+  v_response:=public.submit_teacher_application_with_rules(v_updated,'2026-10-18');
   if v_response->'application'->>'status'<>'submitted'
      or v_response->'application'->'snapshot'->>'cv_url'<>'https://drive.google.com/file/d/example/view'
      or v_response->'application'->'snapshot'->>'cv_path' is not null then

@@ -85,14 +85,17 @@ describe('account setup actions', () => {
     await completeSetup('en', 5, '/en/student');
     expect(rpc).toHaveBeenCalledOnce();
     expect(rpc).toHaveBeenCalledWith('complete_student_account_setup', expect.objectContaining({ p_expected_version: 5 }));
-    expect(rpc).not.toHaveBeenCalledWith('complete_teacher_account_setup', expect.anything());
+    expect(rpc).not.toHaveBeenCalledWith('complete_teacher_account_setup_with_rules', expect.anything());
   });
 
   it('chooses the teacher finalizer from the canonical server role and returns application status', async () => {
     const rpc = vi.fn().mockResolvedValue({ data: { ok: true, destination: '/en/teacher', application: {} }, error: null }); setup({ role: 'teacher', rpc });
-    const result = await completeSetup('en', 9, '/en/teacher');
+    const denied = await completeSetup('en', 9, '/en/teacher');
+    expect(denied).toEqual({ error: 'teacher-rules' });
+    expect(rpc).not.toHaveBeenCalled();
+    const result = await completeSetup('en', 9, '/en/teacher', true);
     expect(rpc).toHaveBeenCalledOnce();
-    expect(rpc).toHaveBeenCalledWith('complete_teacher_account_setup', expect.objectContaining({ p_expected_version: 9 }));
+    expect(rpc).toHaveBeenCalledWith('complete_teacher_account_setup_with_rules', expect.objectContaining({ p_expected_version: 9, p_rules_version: '2026-10-18' }));
     expect(result).toEqual({ destination: '/en/teacher' });
   });
 });
