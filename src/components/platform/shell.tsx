@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import {LayoutDashboard,BookOpen,CalendarDays,FolderOpen,Compass,Bookmark,Bell,UserRound,Flag} from 'lucide-react';
+import {LayoutDashboard,BookOpen,CalendarDays,FolderOpen,Compass,Bookmark,Bell,UserRound,Flag,UsersRound,ClipboardList,GraduationCap,LibraryBig,MessageSquareText} from 'lucide-react';
 import { ActiveLink, MobileNavigationSummary } from '@/components/active-link';
 import type { PlatformRole } from './access';
 
@@ -11,16 +11,16 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
   const notifications={href:`/${locale}/notifications`,label:ar?'الإشعارات':'Notifications'};
   const reportProblem={href:`/${locale}/reports`,label:ar?'الإبلاغ عن مشكلة':'Report a problem'};
   if (role === 'teacher') return [
-    { href: `/${locale}/teacher`, label: ar ? 'نظرة عامة' : 'Overview' },
-    { href: `/${locale}/teacher/catalogue`, label: ar ? 'المواد والفئات' : 'Subjects & categories' },
-    { href: `/${locale}/teacher/feedback`, label: ar ? 'آراء الطلاب' : 'Student feedback' },
+    { href: `/${locale}/teacher`, label: ar ? 'الرئيسية التعليمية' : 'Teaching home' },
     { href: `/${locale}/teacher/groups`, label: ar ? 'المجموعات' : 'Groups' },
-    { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Requests' },
+    { href: `/${locale}/teacher/lessons`, label: ar ? 'تقويم الحصص' : 'Lesson calendar' },
+    { href: `/${locale}/teacher/requests`, label: ar ? 'طلبات الانضمام' : 'Enrollment requests' },
     { href: `/${locale}/teacher/students`, label: ar ? 'الطلاب' : 'Students' },
-    { href: `/${locale}/teacher/lessons`, label: ar ? 'الحصص' : 'Lessons' },
-    { href: `/${locale}/account`, label: ar ? 'الحساب' : 'Account' },
-    reportProblem,
+    { href: `/${locale}/teacher/catalogue`, label: ar ? 'المواد والفئات' : 'Subjects & categories' },
+    { href: `/${locale}/teacher/feedback`, label: ar ? 'آراء الطلاب' : 'Feedback' },
     notifications,
+    { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
+    reportProblem,
   ];
   if (role === 'admin') return [
     { href: `/${locale}/admin`, label: ar ? 'نظرة عامة' : 'Overview' },
@@ -53,9 +53,9 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
 function itemLabel(item: NavItem, unreadCount: number|null, locale:string,role?:PlatformRole) {
   const ar=locale==='ar';
   const path=item.href.split('/').at(-1);
-  const icons:Record<string,typeof BookOpen>={student:LayoutDashboard,classes:BookOpen,timetable:CalendarDays,materials:FolderOpen,teachers:Compass,saved:Bookmark,notifications:Bell,account:UserRound,reports:Flag};
-  const Icon=role==='student'?icons[path??'']:null;
-  return <span className="flex w-full min-w-0 items-center justify-between gap-2"><span className="flex min-w-0 items-center gap-3">{Icon&&<Icon size={17} aria-hidden="true" className="shrink-0"/>}<span className="truncate">{item.label}</span></span>{item.href.endsWith('/notifications') && unreadCount!==null && unreadCount>0 && <span aria-label={ar?`${unreadCount} غير مقروء`:`${unreadCount} unread`} className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}</span>;
+  const icons:Record<string,typeof BookOpen>={student:LayoutDashboard,classes:BookOpen,timetable:CalendarDays,materials:FolderOpen,teachers:Compass,saved:Bookmark,notifications:Bell,account:UserRound,reports:Flag,teacher:LayoutDashboard,groups:UsersRound,lessons:CalendarDays,requests:ClipboardList,students:GraduationCap,catalogue:LibraryBig,feedback:MessageSquareText};
+  const Icon=role==='admin'?null:icons[path??''];
+  return <span className="flex w-full min-w-0 items-center justify-between gap-2"><span className="flex min-w-0 items-center gap-3">{Icon&&<Icon size={17} aria-hidden="true" className="shrink-0"/>}<span className={role === 'teacher' ? 'whitespace-normal break-words leading-5' : 'truncate'}>{item.label}</span></span>{item.href.endsWith('/notifications') && unreadCount!==null && unreadCount>0 && <span aria-label={ar?`${unreadCount} غير مقروء`:`${unreadCount} unread`} className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}</span>;
 }
 
 export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {

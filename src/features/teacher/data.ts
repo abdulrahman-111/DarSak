@@ -15,6 +15,7 @@ export async function teacherViewer(locale: Locale) {
 }
 
 type OwnedGroup = { id: string; name: string; capacity: number; status: string; location: string; description: string; offering: unknown };
+type TeacherDashboardLesson = { id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown };
 type GroupStudentRow = { enrollment_id: string; student_id: string; full_name: string; status: string; group_id: string; group_name: string };
 type TeacherEnrollmentPage = { rows: GroupStudentRow[]; total: number };
 type TeacherGroupChoice = { id: string; name: string; status: string };
@@ -152,6 +153,7 @@ function emptyTeacherOverview(me: Awaited<ReturnType<typeof teacherViewer>>, loc
   return {
     me,
     groups: [] as OwnedGroup[],
+    nextLesson: null as TeacherDashboardLesson | null,
     todayLessons: [] as Array<{ id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown }>,
     upcomingLessons: [] as Array<{ id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; group: unknown }>,
     pendingRequests: [] as GroupStudentRow[],
@@ -164,13 +166,21 @@ function emptyTeacherOverview(me: Awaited<ReturnType<typeof teacherViewer>>, loc
 export async function teacherOverview(locale: Locale, now = new Date()) {
   const me = await teacherViewer(locale);
   const bounds = cairoDayBounds(now);
-  const [summaryResult, students] = await Promise.all([
+  const [summaryResult, students, nextLessonResult] = await Promise.all([
     me.db.rpc('teacher_dashboard_summary', {
       p_day_start: bounds.start.toISOString(), p_day_end: bounds.end.toISOString(), p_now: now.toISOString(),
     }),
     teacherEnrollmentPage(me, 'pending', 1),
+    me.db.from('lessons')
+      .select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,teacher_id)')
+      .eq('group.teacher_id', me.id)
+      .eq('status', 'scheduled')
+      .gt('ends_at', now.toISOString())
+      .order('starts_at', { ascending: true })
+      .order('id', { ascending: true })
+      .limit(1),
   ]);
-  if (summaryResult.error || students.error || me.teacherError || !me.teacher) {
+  if (summaryResult.error || students.error || nextLessonResult.error || me.teacherError || !me.teacher) {
     return emptyTeacherOverview(me, locale);
   }
   const summary = summaryResult.data as {
@@ -199,6 +209,7 @@ export async function teacherOverview(locale: Locale, now = new Date()) {
   return {
     me,
     groups,
+    nextLesson: ((nextLessonResult.data?.[0] ?? null) as TeacherDashboardLesson | null),
     todayLessons,
     upcomingLessons,
     pendingRequests,
