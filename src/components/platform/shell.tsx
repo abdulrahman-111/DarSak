@@ -28,6 +28,7 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
     { href: `/${locale}/admin/education`, label: ar ? 'الدليل التعليمي' : 'Education' },
     { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
     { href: `/${locale}/admin/reports`, label: ar ? 'البلاغات' : 'Reports' },
+    { href: `/${locale}/admin/health`, label: ar ? 'حالة التشغيل' : 'Operational health' },
     { href: `/${locale}/admin/settings`, label: ar ? 'الإعدادات' : 'Settings' },
     { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
     reportProblem,

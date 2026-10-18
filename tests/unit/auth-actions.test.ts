@@ -1,3 +1,4 @@
+vi.mock('@/features/monitoring/server',()=>({observeOperation:(_operation:unknown,_locale:unknown,run:()=>unknown)=>run()}));
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { createClientMock, getVerifiedUserMock, getVerifiedRecoveryUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock, signupAvailabilityMock, recoveryCookieDeleteMock, isolatedClientMock } = vi.hoisted(() => ({

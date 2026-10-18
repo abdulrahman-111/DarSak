@@ -1,3 +1,4 @@
+import { observeOperation } from '@/features/monitoring/server';
 import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { after } from 'next/server';
@@ -71,7 +72,7 @@ export async function GET(request: NextRequest) {
         const { data: verified, error: verifyError } = await db.auth.getUser();
         if (verifyError || !verified.user?.identities?.some(identity => identity.provider === 'google')) setupError = true;
         else {
-          const completion = await db.rpc('complete_google_signup', { p_role: googleRole });
+          const completion = await observeOperation('google_setup',locale,()=>db.rpc('complete_google_signup', { p_role: googleRole }));
           const completedRole = completion.data;
           setupError = !!completion.error || !['student', 'teacher', 'admin'].includes(completedRole);
           if (!setupError && completedRole === 'teacher') after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
