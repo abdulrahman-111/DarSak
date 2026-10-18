@@ -12,6 +12,7 @@ const suffix = randomUUID().slice(0, 8);
 const uploadedPaths = [];
 const uploadedAvatarPaths = [];
 const uploadedCoverPaths = [];
+const uploadedCvPaths = [];
 const signBody = {expiresIn:60};
 const wait = milliseconds => new Promise(resolve=>setTimeout(resolve,milliseconds));
 let passed = 0;
@@ -31,15 +32,18 @@ async function success(path, options) {
   assert(r.ok, `${path}: ${r.status} ${JSON.stringify(r.data)}`);
   return r.data;
 }
-async function uploadAvatar(path, mime, bytes, token) {
-  const response = await fetch(`${origin}/storage/v1/object/teacher-avatars/${path.split('/').map(encodeURIComponent).join('/')}`, {
+async function uploadObject(bucket, path, mime, bytes, token, upsert = false) {
+  const response = await fetch(`${origin}/storage/v1/object/${bucket}/${path.split('/').map(encodeURIComponent).join('/')}`, {
     method: 'POST',
-    headers: {apikey: token === service ? service : anon, Authorization: `Bearer ${token}`, 'Content-Type': mime, 'x-upsert': 'false'},
+    headers: {apikey: token === service ? service : anon, Authorization: `Bearer ${token}`, 'Content-Type': mime, 'x-upsert': String(upsert)},
     body: bytes,
   });
   const raw = await response.text();
   let data; try { data = JSON.parse(raw); } catch { data = raw; }
   return {status: response.status, ok: response.ok, data};
+}
+async function uploadAvatar(path, mime, bytes, token, upsert = false) {
+  return uploadObject('teacher-avatars', path, mime, bytes, token, upsert);
 }
 function check(condition, message) { assert(condition, message); passed++; console.log(`PASS ${message}`); }
 async function signup(role) {
@@ -352,10 +356,27 @@ try {
   check(protectedFields[0].role==='teacher' && protectedFields[0].status==='active' && protectedApproval[0].approved && loginUser.email.startsWith('integration-teacher-'),'profile save preserves role, status, approval, and Auth email');
   const pngBytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/aWQAAAAASUVORK5CYII=', 'base64');
   const avatarPath = `${teacher.id}/${randomUUID()}.png`;
-  const avatarUpload = await uploadAvatar(avatarPath, 'image/png', pngBytes, teacher.token);
-  assert(avatarUpload.ok, `Valid avatar upload failed: ${avatarUpload.status} ${JSON.stringify(avatarUpload.data)}`);
+  const deniedAvatarPath = `${teacher.id}/${randomUUID()}.png`;
+  const deniedAvatarUpload = await uploadAvatar(deniedAvatarPath,'image/png',pngBytes,teacher.token);
+  check(!deniedAvatarUpload.ok,'launch policy blocks a valid authenticated teacher avatar upload');
+  const avatarUpload = await uploadAvatar(avatarPath, 'image/png', pngBytes, service);
+  assert(avatarUpload.ok, `Legacy avatar fixture seeding failed: ${avatarUpload.status} ${JSON.stringify(avatarUpload.data)}`);
   uploadedAvatarPaths.push(avatarPath);
+  const avatarUpsert = await uploadAvatar(avatarPath,'image/png',pngBytes,teacher.token,true);
+  check(!avatarUpsert.ok,'launch policy blocks authenticated avatar replacement of a legacy object');
+  const deniedCoverPath = `${teacher.id}/cover/${randomUUID()}.png`;
+  const deniedCoverUpload = await uploadAvatar(deniedCoverPath,'image/png',pngBytes,teacher.token);
+  check(!deniedCoverUpload.ok,'launch policy blocks a valid authenticated cover upload');
   await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}`,{token:service,method:'PATCH',body:{avatar_path:avatarPath}});
+
+  const cvPath = `${teacher.id}/${randomUUID()}.pdf`;
+  const deniedCvUpload = await uploadObject('teacher-applications',cvPath,'application/pdf',Buffer.from('%PDF-1.4\n%%EOF'),teacher.token);
+  check(!deniedCvUpload.ok,'launch policy blocks a valid authenticated teacher CV upload');
+  const legacyCvUpload = await uploadObject('teacher-applications',cvPath,'application/pdf',Buffer.from('%PDF-1.4\n%%EOF'),service);
+  assert(legacyCvUpload.ok,`Legacy CV fixture seeding failed: ${legacyCvUpload.status}`);
+  uploadedCvPaths.push(cvPath);
+  const cvUpsert = await uploadObject('teacher-applications',cvPath,'application/pdf',Buffer.from('%PDF-1.4\n%%EOF'),teacher.token,true);
+  check(!cvUpsert.ok,'launch policy blocks authenticated CV replacement of a legacy object');
   const publicAvatarAccess = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:avatarPath}});
   check(publicAvatarAccess===true,'anonymous avatar helper permits the currently referenced approved teacher image');
   const publicAvatarRead = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{method:'POST',body:signBody});
@@ -365,7 +386,7 @@ try {
   const unrelatedAvatarRead = await request(`/storage/v1/object/sign/teacher-avatars/${avatarPath}`,{token:otherTeacher.token,method:'POST',body:signBody});
   check(unrelatedAvatarRead.ok,'unrelated active user can sign the publicly referenced approved avatar');
   const ownUnreferencedPath = `${teacher.id}/${randomUUID()}.png`;
-  const ownUnreferenced = await uploadAvatar(ownUnreferencedPath,'image/png',pngBytes,teacher.token);
+  const ownUnreferenced = await uploadAvatar(ownUnreferencedPath,'image/png',pngBytes,service);
   assert(ownUnreferenced.ok,`Active owner could not upload an unreferenced avatar: ${ownUnreferenced.status} ${JSON.stringify(ownUnreferenced.data)}`);
   uploadedAvatarPaths.push(ownUnreferencedPath);
   const anonUnreferenced = await success('/rest/v1/rpc/can_read_teacher_avatar',{method:'POST',body:{p_name:ownUnreferencedPath}});
@@ -393,7 +414,7 @@ try {
   const initialCoverPath = `${teacher.id}/cover/${randomUUID()}.png`;
   const coverPngAtLimit = Buffer.alloc(2097152);
   pngBytes.copy(coverPngAtLimit);
-  const boundaryCoverUpload = await uploadAvatar(initialCoverPath,'image/png',coverPngAtLimit,teacher.token);
+  const boundaryCoverUpload = await uploadAvatar(initialCoverPath,'image/png',coverPngAtLimit,service);
   assert(boundaryCoverUpload.ok,`Cover upload at exactly 2 MiB failed: ${boundaryCoverUpload.status} ${JSON.stringify(boundaryCoverUpload.data)}`);
   uploadedCoverPaths.push(initialCoverPath);
   const emptyPublicCoverPath = await success('/rest/v1/rpc/public_teacher_cover_path',{method:'POST',body:{p_teacher_id:teacher.id}});
@@ -411,8 +432,8 @@ try {
   check((!directAvatarWrite.ok || directAvatarWrite.data.length===0) && avatarAfterRawWrite===avatarPath,'active teacher cannot bypass avatar compare-and-set with a raw column update');
   const competingAvatarPaths = [`${teacher.id}/${randomUUID()}.webp`,`${teacher.id}/${randomUUID()}.jpg`];
   const competingAvatarUploads = await Promise.all([
-    uploadAvatar(competingAvatarPaths[0],'image/webp',Buffer.from('UklGRgAAAABXRUJQVlA4','ascii'),teacher.token),
-    uploadAvatar(competingAvatarPaths[1],'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),teacher.token),
+    uploadAvatar(competingAvatarPaths[0],'image/webp',Buffer.from('UklGRgAAAABXRUJQVlA4','ascii'),service),
+    uploadAvatar(competingAvatarPaths[1],'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),service),
   ]);
   assert(competingAvatarUploads.every(result=>result.ok),`Competing avatar fixtures uploaded: ${JSON.stringify(competingAvatarUploads)}`);
   uploadedAvatarPaths.push(...competingAvatarPaths);
@@ -439,8 +460,8 @@ try {
   const secondCoverPath = `${teacher.id}/cover/${randomUUID()}.webp`;
   const thirdCoverPath = `${teacher.id}/cover/${randomUUID()}.jpg`;
   const webpBytes = Buffer.from('UklGRgAAAABXRUJQVlA4', 'ascii');
-  const secondCoverUpload = await uploadAvatar(secondCoverPath,'image/webp',webpBytes,teacher.token);
-  const thirdCoverUpload = await uploadAvatar(thirdCoverPath,'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),teacher.token);
+  const secondCoverUpload = await uploadAvatar(secondCoverPath,'image/webp',webpBytes,service);
+  const thirdCoverUpload = await uploadAvatar(thirdCoverPath,'image/jpeg',Buffer.from([0xff,0xd8,0xff,0xe0]),service);
   assert(secondCoverUpload.ok && thirdCoverUpload.ok,'Cover concurrency fixtures uploaded');
   uploadedCoverPaths.push(secondCoverPath,thirdCoverPath);
   const concurrentCoverSaves = await Promise.all([
@@ -451,7 +472,7 @@ try {
   const currentCover = (await success(`/rest/v1/teacher_profiles?id=eq.${teacher.id}&select=cover_path`,{token:service}))[0].cover_path;
   check(concurrentCoverSaves.filter(result=>result.data===true).length===1 && [secondCoverPath,thirdCoverPath].includes(currentCover),'concurrent compare-and-set cover replacements have one winner');
   const failedSavePath = `${teacher.id}/cover/${randomUUID()}.png`;
-  const failedSaveUpload = await uploadAvatar(failedSavePath,'image/png',pngBytes,teacher.token);
+  const failedSaveUpload = await uploadAvatar(failedSavePath,'image/png',pngBytes,service);
   assert(failedSaveUpload.ok,'Failed-save cover fixture uploaded');
   uploadedCoverPaths.push(failedSavePath);
   const failedMetadataSave = await success('/rest/v1/rpc/set_teacher_cover_path',{token:teacher.token,method:'POST',body:{p_cover_path:failedSavePath,p_expected_path:initialCoverPath}});
@@ -472,7 +493,7 @@ try {
   check(!overLimitCoverUpload.ok,'cover storage rejects files larger than 2 MiB');
 
   const pendingCoverPath = `${pendingTeacher.id}/cover/${randomUUID()}.png`;
-  const pendingCoverUpload = await uploadAvatar(pendingCoverPath,'image/png',pngBytes,pendingTeacher.token);
+  const pendingCoverUpload = await uploadAvatar(pendingCoverPath,'image/png',pngBytes,service);
   assert(pendingCoverUpload.ok,'Unapproved active teacher can upload a private cover');
   uploadedCoverPaths.push(pendingCoverPath);
   const pendingCoverSaved = await success('/rest/v1/rpc/set_teacher_cover_path',{token:pendingTeacher.token,method:'POST',body:{p_cover_path:pendingCoverPath,p_expected_path:null}});
@@ -486,7 +507,7 @@ try {
   const hiddenSpecializations = await success('/rest/v1/rpc/public_teacher_specializations',{method:'POST',body:{p_teacher_id:otherTeacher.id}});
   check(hiddenSpecializations.length===0,'public specialization RPC hides an unapproved teacher');
   const unapprovedAvatarPath = `${otherTeacher.id}/${randomUUID()}.png`;
-  const unapprovedUpload = await uploadAvatar(unapprovedAvatarPath,'image/png',pngBytes,otherTeacher.token);
+  const unapprovedUpload = await uploadAvatar(unapprovedAvatarPath,'image/png',pngBytes,service);
   assert(unapprovedUpload.ok,`Active unapproved teacher upload failed: ${unapprovedUpload.status} ${JSON.stringify(unapprovedUpload.data)}`);
   uploadedAvatarPaths.push(unapprovedAvatarPath);
   await success(`/rest/v1/teacher_profiles?id=eq.${otherTeacher.id}`,{token:service,method:'PATCH',body:{avatar_path:unapprovedAvatarPath}});
@@ -614,10 +635,19 @@ try {
   const memberLessons = await success(`/rest/v1/lessons?id=eq.${lessonId}`,{token:member.token});
   check(memberLessons.length===1,'accepted student can read their lesson');
   const objectPath = `${teacher.id}/${lessonId}/${randomUUID()}.pdf`;
-  const upload = await fetch(`${origin}/storage/v1/object/lesson-materials/${objectPath}`, {method:'POST',headers:{apikey:anon,Authorization:`Bearer ${teacher.token}`,'Content-Type':'application/pdf'},body:'%PDF-1.4\n%%EOF'});
-  assert(upload.ok, `Teacher upload failed: ${upload.status} ${await upload.text()}`);
+  const upload = await uploadObject('lesson-materials',objectPath,'application/pdf',Buffer.from('%PDF-1.4\n%%EOF'),teacher.token);
+  check(!upload.ok,'launch policy blocks a valid authenticated lesson file upload');
+  const legacyUpload = await uploadObject('lesson-materials',objectPath,'application/pdf',Buffer.from('%PDF-1.4\n%%EOF'),service);
+  assert(legacyUpload.ok, `Legacy lesson file fixture seeding failed: ${legacyUpload.status}`);
   uploadedPaths.push(objectPath);
-  await success('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'file',title:'Test PDF',storage_path:objectPath,file_size:14,mime_type:'application/pdf',uploaded_by:teacher.id}});
+  const fileMetadata = await request('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'file',title:'Test PDF',storage_path:objectPath,file_size:14,mime_type:'application/pdf',uploaded_by:teacher.id}});
+  check(!fileMetadata.ok,'launch policy blocks authenticated creation of file resource metadata');
+  const legacyFileMetadata = await success('/rest/v1/lesson_materials',{token:service,method:'POST',body:{lesson_id:lessonId,kind:'file',title:'Legacy PDF',storage_path:objectPath,file_size:14,mime_type:'application/pdf',uploaded_by:teacher.id}});
+  check(legacyFileMetadata.length===1 && legacyFileMetadata[0].kind==='file','service fixture can retain preexisting lesson-file metadata');
+  const noteMetadata = await request('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'note',title:'New note',content:'New standalone note.',uploaded_by:teacher.id}});
+  check(!noteMetadata.ok,'launch policy blocks new non-link lesson-resource metadata');
+  const lessonUpsert = await uploadObject('lesson-materials',objectPath,'application/pdf',Buffer.from('%PDF-1.4\n%%EOF'),teacher.token,true);
+  check(!lessonUpsert.ok,'launch policy blocks authenticated replacement of a legacy lesson file');
   const memberDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{token:member.token,method:'POST',body:signBody});
   check(memberDownload.ok,'accepted student can obtain a private download');
   const anonymousLessonDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{method:'POST',body:signBody});
@@ -625,8 +655,8 @@ try {
   const pendingDownload = await request(`/storage/v1/object/sign/lesson-materials/${objectPath}`,{token:pending.token,method:'POST',body:signBody});
   check(!pendingDownload.ok,'pending student cannot obtain a private download');
   const goodLink = (await success('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'link',title:'Reference',url:'https://example.com/lesson',uploaded_by:teacher.id}}))[0];
-  const note = (await success('/rest/v1/lesson_materials',{token:teacher.token,method:'POST',body:{lesson_id:lessonId,kind:'note',title:'Reminder',content:'Bring the worksheet.',uploaded_by:teacher.id}}))[0];
-  check(Boolean(goodLink?.id&&note?.id), 'teacher can add link and note materials without storage paths');
+  const note = (await success('/rest/v1/lesson_materials',{token:service,method:'POST',body:{lesson_id:lessonId,kind:'note',title:'Reminder',content:'Bring the worksheet.',uploaded_by:teacher.id}}))[0];
+  check(Boolean(goodLink?.id&&note?.id), 'teacher can add links and retain legacy notes without storage paths');
   const foreignDelete = await request(`/rest/v1/lesson_materials?id=eq.${goodLink.id}`,{token:otherTeacher.token,method:'DELETE'});
   const linkStillExists = await success(`/rest/v1/lesson_materials?id=eq.${goodLink.id}`,{token:teacher.token});
   check((!foreignDelete.ok || foreignDelete.data.length===0) && linkStillExists.length===1, 'teacher cannot delete another teacher material');
@@ -776,7 +806,7 @@ try {
   check(absentManual.length===0,'owner can delete a future manual lesson without history or files');
   const objectGuardLesson = await success('/rest/v1/rpc/create_lesson',{token:otherTeacher.token,method:'POST',body:{p_group_id:otherGroup.id,p_title:'Keep uploaded object',p_starts_at:'2036-05-01T10:00:00Z',p_ends_at:'2036-05-01T11:00:00Z'}});
   const guardPath = `${otherTeacher.id}/${objectGuardLesson}/${randomUUID()}.pdf`;
-  const guardUpload = await fetch(`${origin}/storage/v1/object/lesson-materials/${guardPath}`,{method:'POST',headers:{apikey:anon,Authorization:`Bearer ${otherTeacher.token}`,'Content-Type':'application/pdf'},body:'%PDF-1.4\n%%EOF'});
+  const guardUpload = await fetch(`${origin}/storage/v1/object/lesson-materials/${guardPath}`,{method:'POST',headers:{apikey:anon,Authorization:`Bearer ${service}`,'Content-Type':'application/pdf'},body:'%PDF-1.4\n%%EOF'});
   assert(guardUpload.ok,`Storage-only deletion guard fixture upload failed: ${guardUpload.status}`);
   uploadedPaths.push(guardPath);
   const objectGuardDelete = await request('/rest/v1/rpc/delete_manual_teacher_lesson',{token:otherTeacher.token,method:'POST',body:{p_lesson_id:objectGuardLesson}});
@@ -821,6 +851,10 @@ try {
     for (const id of users) await request(`/rest/v1/teacher_profiles?id=eq.${id}`,{token:service,method:'PATCH',body:{cover_path:null}});
     const cleanup = await request('/storage/v1/object/teacher-avatars',{token:service,method:'DELETE',body:{prefixes:uploadedCoverPaths}});
     if (!cleanup.ok) console.error(`Cover fixture cleanup failed: ${cleanup.status}`);
+  }
+  if (uploadedCvPaths.length) {
+    const cleanup = await request('/storage/v1/object/teacher-applications',{token:service,method:'DELETE',body:{prefixes:uploadedCvPaths}});
+    if (!cleanup.ok) console.error(`CV fixture cleanup failed: ${cleanup.status}`);
   }
   for (const id of users.reverse()) {
     const result = await request(`/auth/v1/admin/users/${id}`,{token:service,method:'DELETE'});

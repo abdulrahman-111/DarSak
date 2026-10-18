@@ -10,7 +10,6 @@ export type TeacherApplicationStatus = (typeof TEACHER_APPLICATION_STATUSES)[num
 
 export const TEACHER_APPLICATION_MISSING_CODES = [
   "full_name",
-  "photo",
   "headline",
   "bio",
   "specializations",

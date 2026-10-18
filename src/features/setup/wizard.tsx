@@ -4,7 +4,6 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { setupCopy } from './copy';
 import { saveSetupStage, completeSetup, restartSetup } from './actions';
-import { uploadTeacherAvatar } from '@/features/teacher/profile-actions';
 import { addTeacherSpecialization } from '@/features/teacher/profile-actions';
 import { catalogueDisplayName, isTeacherCatalogueCategory, type CatalogueChoiceNode, type CatalogueChoiceSubject } from '@/features/teacher/catalogue-domain';
 import { saveTeacherCatalogueSubject } from '@/features/teacher/catalogue-actions';
@@ -16,7 +15,7 @@ import { splitStudentInterests, validateStudentLearningProfile } from '@/feature
 import { TeacherRulesPanel } from '@/features/teacher/teacher-rules-panel';
 
 type Offering = { id: string; label: string };
-type Props = { locale: Locale; draft: SetupDraft | null; role: 'teacher'|'student'; offerings: Offering[]; subjects: CatalogueChoiceSubject[]; nodes: CatalogueChoiceNode[]; returnTo: string; hasAvatar: boolean; loadError: boolean };
+type Props = { locale: Locale; draft: SetupDraft | null; role: 'teacher'|'student'; offerings: Offering[]; subjects: CatalogueChoiceSubject[]; nodes: CatalogueChoiceNode[]; returnTo: string; loadError: boolean };
 type Entry = { id: string; title: {ar:string;en:string}; organization: {ar:string;en:string}; description: {ar:string;en:string}; start_year:number|null; end_year:number|null; current:boolean };
 type SetupValues = {
   about?: { full_name?: string; headline?: string; age_range?: string | null; school_name?: string };
@@ -29,27 +28,9 @@ type SetupValues = {
 const emptyEntry = (): Entry => ({ id: crypto.randomUUID(), title:{ar:'',en:''}, organization:{ar:'',en:''}, description:{ar:'',en:''}, start_year:null, end_year:null, current:false });
 const inputClass = 'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
 
-function AvatarUpload({ locale, hasAvatar, onUploaded }: {locale:Locale;hasAvatar:boolean;onUploaded:()=>void}) {
-  const ar = locale === 'ar';
-  const [pending, start] = useTransition();
-  const [notice, setNotice] = useState('');
-  return <form className="rounded-xl border border-line p-4" action={form => start(async () => {
-    const result = await uploadTeacherAvatar(locale, null, form);
-    if (!result?.error) onUploaded();
-    setNotice(result?.error ? (ar ? 'تعذر رفع الصورة. تحقق من النوع والحجم وحاول مجدداً.' : 'Photo upload failed. Check the file type and size, then try again.') : (ar ? 'تم تحديث الصورة.' : 'Photo updated.'));
-  })}>
-    <label htmlFor="setup-photo" className="font-bold">{ar ? 'الصورة الشخصية' : 'Profile photo'} *</label>
-    <p className="mt-1 text-sm text-muted">{ar ? 'صورة JPEG أو PNG أو WebP حتى ٢ ميجابايت.' : 'JPEG, PNG, or WebP image up to 2 MiB.'} {hasAvatar && (ar ? 'توجد صورة محفوظة.' : 'A photo is saved.')}</p>
-    <input id="setup-photo" name="avatar" type="file" accept="image/jpeg,image/png,image/webp" className="mt-2 block w-full text-sm" required={!hasAvatar}/>
-    <button disabled={pending} className="mt-3 min-h-11 rounded-xl border border-teal px-4 font-bold text-teal disabled:opacity-50">{pending ? (ar ? 'جارٍ الرفع…' : 'Uploading…') : (ar ? 'رفع الصورة' : 'Upload photo')}</button>
-    {notice && <p role="status" className="mt-2 text-sm">{notice}</p>}
-  </form>;
-}
-
-export function SetupWizard({ locale, draft: initial, role, offerings, subjects, nodes, returnTo, hasAvatar, loadError }: Props) {
+export function SetupWizard({ locale, draft: initial, role, offerings, subjects, nodes, returnTo, loadError }: Props) {
   const ar = locale === 'ar'; const c = setupCopy(locale); const router = useRouter();
   const [draft, setDraft] = useState(initial);
-  const [photoExists, setPhotoExists] = useState(hasAvatar);
   const [stage, setStage] = useState(initial?.stage ?? 1);
   const [review, setReview] = useState(false);
   const [busy, start] = useTransition();
@@ -100,7 +81,6 @@ export function SetupWizard({ locale, draft: initial, role, offerings, subjects,
     if (teacher && stage === 1) {
       if ((payload.about?.full_name ?? '').trim().length < 2) invalid.push('about-full_name');
       if (!languagesText.split(',').map(x=>x.trim()).filter(Boolean).length) invalid.push('languages');
-      if (!photoExists) invalid.push('setup-photo');
       if ((payload.about?.headline ?? '').trim().length < 5) invalid.push('about-headline');
     } else if (teacher && stage === 2) {
       if (Math.max((payload.details?.about?.ar ?? '').trim().length,(payload.details?.about?.en ?? '').trim().length) < 80) invalid.push('details-about-en');
@@ -235,7 +215,6 @@ export function SetupWizard({ locale, draft: initial, role, offerings, subjects,
   if (loadError || !draft) return <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">{c.loadingError}</p>;
   return <div dir={ar?'rtl':'ltr'} className="grid gap-6">
     <header><h1 className="text-3xl font-bold text-ink">{c.title}</h1><p className="mt-2 text-sm text-muted">{c.requiredHint}</p><ol aria-label={ar?'مراحل الإعداد':'Setup progress'} className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">{labels.map((label,index)=><li key={label} aria-current={effectiveStage===index+1?'step':undefined} className={`rounded-xl border p-3 text-sm ${effectiveStage===index+1?'border-teal bg-teal/10 font-bold':'border-line text-muted'}`}><span className="me-2">{index+1}.</span>{label}</li>)}</ol></header>
-    {teacher && stage === 1 && !review && <AvatarUpload locale={locale} hasAvatar={photoExists} onUploaded={()=>setPhotoExists(true)}/>}
     {!review && <section className="grid gap-5 rounded-2xl border border-line bg-white p-4 sm:p-6"><fieldset disabled={busy} className="contents">
       {teacher && stage===1 && <>{field(c.name,['about','full_name'],'text',{minLength:2,maxLength:100})}{field(c.headline,['about','headline'],'text',{minLength:5,maxLength:160})}<p className="-mt-4 text-sm text-muted">{ar?'مثال: معلمة رياضيات للمرحلتين المتوسطة والثانوية':'Example: Middle and high school mathematics teacher'}</p><label className="block font-bold">{c.languages} *<input id="languages" maxLength={609} className={inputClass} value={languagesText} onChange={e=>setLanguagesText(e.currentTarget.value)} onBlur={()=>setAt(['details','languages'],languagesText.split(',').map(x=>x.trim()).filter(Boolean))}/>{fieldErrors.includes('languages')&&<small className="text-red-800">{c.invalid}</small>}</label></>}
       {teacher && stage===2 && <><p className="text-sm text-muted">{c.bioHint}</p>{textarea(c.aboutEn,['details','about','en'],{maxLength:5000})}<p className="-mt-4 text-sm text-muted">Example: I have taught mathematics for eight years, helping learners build confidence through clear explanations and practice.</p>{textarea(c.aboutAr,['details','about','ar'],{maxLength:5000})}<p className="-mt-4 text-sm text-muted">مثال: أدرّس الرياضيات منذ ثمانية أعوام، وأساعد الطلاب على بناء الثقة من خلال الشرح الواضح والتدريب.</p>{textarea(c.approachEn,['details','approach','en'],{maxLength:2000})}<p className="-mt-4 text-sm text-muted">Example: I start with a short check-in, explain one idea at a time, then use guided problems and feedback.</p>{textarea(c.approachAr,['details','approach','ar'],{maxLength:2000})}<p className="-mt-4 text-sm text-muted">مثال: أبدأ بمراجعة قصيرة، ثم أشرح فكرة واحدة في كل مرة وأستخدم مسائل موجهة مع ملاحظات.</p>{field(c.years,['background','teaching_years'],'number',{min:0,max:60})}{entries('qualifications')}{entries('experience')}</>}

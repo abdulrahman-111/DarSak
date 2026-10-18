@@ -30,5 +30,6 @@ export async function saveLessonAttendance(locale: Locale, lessonId: string, stu
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   revalidatePath(`/${locale}/student/lessons/${lessonId}`);
+  revalidatePath(`/${locale}/student/classes/[groupId]`, 'page');
   return { success: msg('Attendance saved.', 'تم حفظ الحضور.') };
 }

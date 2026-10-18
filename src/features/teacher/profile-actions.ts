@@ -1,10 +1,9 @@
 'use server';
 
-import { randomUUID } from 'node:crypto';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
-import { avatarPathIsCurrent, profileFieldErrors, storageRemovalConfirmed, teacherAvatarExtension, teacherAvatarPath, teacherProfileSchema, teacherSpecializationPairSchema } from './profile-domain';
+import { avatarPathIsCurrent, profileFieldErrors, storageRemovalConfirmed, teacherProfileSchema, teacherSpecializationPairSchema } from './profile-domain';
 
 export type TeacherProfileActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
 export type TeacherSpecializationActionState = {
@@ -73,47 +72,8 @@ function revalidateTeacherProfilePaths(locale: Locale, teacherId: string) {
   revalidatePath('/[locale]/teachers/[id]', 'page');
 }
 
-export async function uploadTeacherAvatar(locale: Locale, _state: TeacherProfileActionState, form: FormData): Promise<TeacherProfileActionState> {
-  const file = form.get('avatar');
-  const extension = file instanceof File ? teacherAvatarExtension(file) : null;
-  if (!(file instanceof File) || !extension) return {
-    error: message(locale, 'Choose a JPEG, PNG, or WebP image up to 2 MB.', 'اختر صورة JPEG أو PNG أو WebP بحجم لا يتجاوز ٢ ميجابايت.'),
-    fieldErrors: { avatar: 'invalid' },
-  };
-
-  const me = await activeTeacher();
-  if (!me) return { error: message(locale, 'An active teacher account is required to change your photo.', 'يلزم حساب معلم نشط لتغيير الصورة.') };
-  const current = await currentAvatarPath(me.db, me.id);
-  if (current.error) return { error: message(locale, 'Could not load your current photo. Please try again.', 'تعذر تحميل الصورة الحالية. حاول مرة أخرى.') };
-
-  const path = teacherAvatarPath(me.id, randomUUID(), file.type);
-  const uploaded = await me.db.storage.from('teacher-avatars').upload(path, file, { contentType: file.type, upsert: false });
-  if (uploaded.error) return { error: message(locale, 'Photo upload failed. Please try again.', 'تعذر رفع الصورة. حاول مرة أخرى.') };
-
-  const saved = await me.db.rpc('set_teacher_avatar_path', { p_avatar_path: path, p_expected_path: current.path });
-  let avatarSaved = !saved.error && saved.data === true;
-  if (!avatarSaved) {
-    const verified = await currentAvatarPath(me.db, me.id);
-    if (verified.error) return { error: message(locale, 'The save result could not be confirmed. The uploaded file remains private; please retry or contact support.', 'تعذر التحقق من نتيجة الحفظ. بقي الملف المرفوع خاصاً؛ حاول مرة أخرى أو تواصل مع الدعم.') };
-    avatarSaved = avatarPathIsCurrent(path, verified.path);
-    if (!avatarSaved) {
-      const cleaned = await removeAvatarObject(me.db, path);
-      return { error: !cleaned
-        ? message(locale, 'The photo could not be saved or cleaned up. Please contact support.', 'تعذر حفظ الصورة أو تنظيف الملف المرفوع. تواصل مع الدعم.')
-        : verified.path
-          ? message(locale, 'Your photo changed in another request. The newer photo was kept.', 'تغيرت صورتك في طلب آخر. تم الاحتفاظ بالصورة الأحدث.')
-          : message(locale, 'Your photo changed in another request. Please try again.', 'تغيرت صورتك في طلب آخر. حاول مرة أخرى.') };
-    }
-  }
-
-  let oldPhotoCleanupFailed = false;
-  if (current.path && current.path !== path) {
-    oldPhotoCleanupFailed = !await removeAvatarObject(me.db, current.path);
-  }
-  revalidateTeacherProfilePaths(locale, me.id);
-  return { success: oldPhotoCleanupFailed
-    ? message(locale, 'Photo updated. The previous file could not be cleaned up.', 'تم تحديث الصورة. تعذر تنظيف الملف السابق.')
-    : message(locale, 'Photo updated.', 'تم تحديث الصورة.') };
+export async function uploadTeacherAvatar(locale: Locale, _state: TeacherProfileActionState, _form: FormData): Promise<TeacherProfileActionState> {
+  return { error: message(locale, 'Photo uploads are unavailable at launch. Your existing photo remains visible.', 'رفع الصور غير متاح عند الإطلاق. ستظل صورتك الحالية ظاهرة.') };
 }
 
 export async function removeTeacherAvatar(locale: Locale, _state: TeacherProfileActionState, _form: FormData): Promise<TeacherProfileActionState> {

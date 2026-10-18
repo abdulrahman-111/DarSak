@@ -17,7 +17,7 @@ export async function teacherApplication(viewer: PlatformViewer): Promise<Teache
 export function applicationMissingLabel(locale: Locale, code: string): string {
   const ar = locale === 'ar';
   const labels: Record<string, [string, string]> = {
-    full_name: ['Full name', 'الاسم الكامل'], photo: ['Profile photo', 'الصورة الشخصية'], headline: ['Profile headline', 'العنوان المهني'],
+    full_name: ['Full name', 'الاسم الكامل'], headline: ['Profile headline', 'العنوان المهني'],
     bio: ['Public biography (at least 80 characters)', 'النبذة العامة (80 حرفاً على الأقل)'], specializations: ['At least one subject and level', 'مادة ومرحلة واحدة على الأقل'],
     languages: ['At least one language', 'لغة واحدة على الأقل'], experience: ['A complete experience entry', 'خبرة مكتملة واحدة'],
     qualifications: ['A complete qualification entry', 'مؤهل مكتمل واحد'], approach: ['Teaching approach (at least 40 characters)', 'منهجية التدريس (40 حرفاً على الأقل)'],

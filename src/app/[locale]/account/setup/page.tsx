@@ -19,5 +19,5 @@ export default async function AccountSetupPage({
   const candidate = Array.isArray(query.returnTo) ? query.returnTo[0] : query.returnTo;
   const data = await accountSetupData(locale, candidate);
   if (data.error || !data.draft) return unavailable;
-  return <AccountPageFrame>{data.role === 'teacher' && <TeacherSubscriptionNotice locale={locale} signedInTeacher/>}<SetupWizard locale={locale} role={data.role} draft={data.draft} offerings={data.offerings} subjects={data.subjects} nodes={data.nodes} returnTo={data.draft.return_to} hasAvatar={data.hasAvatar} loadError={false}/></AccountPageFrame>;
+  return <AccountPageFrame>{data.role === 'teacher' && <TeacherSubscriptionNotice locale={locale} signedInTeacher/>}<SetupWizard locale={locale} role={data.role} draft={data.draft} offerings={data.offerings} subjects={data.subjects} nodes={data.nodes} returnTo={data.draft.return_to} loadError={false}/></AccountPageFrame>;
 }
