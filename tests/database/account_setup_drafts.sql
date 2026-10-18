@@ -125,7 +125,15 @@ begin
   v_saved:=public.save_account_setup_stage(3::smallint,jsonb_build_object('offering_ids',jsonb_build_array(v_offering)),2,'en',null);
   v_saved:=public.save_account_setup_stage(4::smallint,'{"admin_phone":"+1234567890","supporting_links":[],"attested":true}'::jsonb,3,'en',null);
   v_version:=(v_saved->>'version')::bigint;
-  v_result:=public.complete_teacher_account_setup(v_version,'en',null);
+  begin
+    perform public.complete_teacher_account_setup(v_version,'en',null);
+    raise exception 'direct wizard completion bypassed teacher rules';
+  exception when sqlstate '22023' then null; end;
+  if exists(select 1 from public.teacher_rules_acceptances where teacher_id=auth.uid()) then raise exception 'failed wizard invented acceptance'; end if;
+  v_result:=public.complete_teacher_account_setup_with_rules(v_version,'en',null,'2026-10-18');
+  if v_result#>>'{application,application,snapshot,teacher_rules_version}' is distinct from '2026-10-18'
+    or v_result#>>'{application,application,snapshot,teacher_rules_accepted_at}' is null then raise exception 'wizard acceptance evidence missing'; end if;
+
   if v_result->>'destination' is distinct from '/en/teacher'
     or v_result#>>'{application,application,status}' is distinct from 'submitted'
     or v_result#>>'{application,application,snapshot,full_name}' is distinct from 'Complete setup teacher'

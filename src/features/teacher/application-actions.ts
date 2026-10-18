@@ -4,13 +4,14 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import { isGoogleDriveCvUrl, parseTeacherApplicationReadResponse } from './application-domain';
+import { TEACHER_RULES_VERSION } from './teacher-rules';
 
 export type ApplicationActionState = {
   error?: string;
   success?: string;
   updatedAt?: string;
   fieldErrors?: Record<string, string>;
-  values?: { teachingYears: string; adminPhone: string; links: string[]; cvUrl: string; attested: boolean };
+  values?: { teachingYears: string; adminPhone: string; links: string[]; cvUrl: string; attested: boolean; teacherRulesAccepted: boolean };
 } | null;
 
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -20,6 +21,7 @@ const valuesFrom = (form: FormData) => ({
   cvUrl: String(form.get('cv_url') ?? '').trim(),
   links: [0, 1, 2].map(index => String(form.get(`supporting_link_${index}`) ?? '').trim()),
   attested: form.get('attested') === 'on',
+  teacherRulesAccepted: form.get('teacher_rules') === 'on',
 });
 const linksValid = (links: string[]) => {
   const present = links.filter(Boolean);
@@ -43,6 +45,7 @@ export async function saveTeacherApplication(locale: Locale, _state: Application
   if (years !== null && (!Number.isInteger(years) || years < 0 || years > 60)) fieldErrors.teaching_years = 'invalid';
   if ((submitting && !values.adminPhone.trim()) || (values.adminPhone.trim() && (!/^[\d\s()+-]{7,30}$/.test(values.adminPhone) || phoneDigits.length < 7))) fieldErrors.admin_phone = 'invalid';
   if (submitting && years === null) fieldErrors.teaching_years = 'invalid';
+  if (submitting && !values.teacherRulesAccepted) fieldErrors.teacher_rules = 'required';
   if (!linksValid(values.links)) fieldErrors.supporting_links = 'invalid';
   if (values.cvUrl && !isGoogleDriveCvUrl(values.cvUrl)) fieldErrors.cv_url = 'invalid';
   if (Object.keys(fieldErrors).length) return { error: message(locale, 'Please check the highlighted fields.', 'يرجى مراجعة الحقول المحددة.'), fieldErrors, values };
@@ -77,7 +80,10 @@ export async function saveTeacherApplication(locale: Locale, _state: Application
 
   if (submitting) {
     if (!values.attested) return { error: message(locale, 'Confirm the truth statement before submitting. Your draft has been saved.', 'أقر بصحة المعلومات قبل الإرسال. تم حفظ المسودة.'), fieldErrors: { attested: 'required' }, values, updatedAt: savedResponse.application.updated_at };
-    const submitted = await db.rpc('submit_teacher_application', { p_expected_updated_at: savedResponse.application.updated_at });
+    const submitted = await db.rpc('submit_teacher_application_with_rules', {
+      p_expected_updated_at: savedResponse.application.updated_at,
+      p_rules_version: TEACHER_RULES_VERSION,
+    });
     if (submitted.error) {
       const stale = submitted.error.code === 'PT409';
       const missing = submitted.error.code === '22023';
@@ -86,7 +92,7 @@ export async function saveTeacherApplication(locale: Locale, _state: Application
     const response = parseTeacherApplicationReadResponse(submitted.data);
     if (!response.application) return { error: message(locale, 'The submission result could not be confirmed. Refresh before retrying.', 'تعذر التحقق من الإرسال. حدّث الصفحة قبل المحاولة مجدداً.'), values };
     revalidate(locale, id);
-    return { success: message(locale, 'Your application was submitted for review.', 'تم إرسال طلبك للمراجعة.'), values: { ...values, attested: true }, updatedAt: response.application.updated_at };
+    return { success: message(locale, 'Your application was submitted for review.', 'تم إرسال طلبك للمراجعة.'), values: { ...values, attested: true, teacherRulesAccepted: true }, updatedAt: response.application.updated_at };
   }
   revalidate(locale, id);
   return { success: message(locale, 'Draft saved.', 'تم حفظ المسودة.'), values, updatedAt: savedResponse.application.updated_at };

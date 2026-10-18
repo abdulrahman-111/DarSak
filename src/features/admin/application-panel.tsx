@@ -60,6 +60,7 @@ export function TeacherApplicationPanel({
     identity: 'الاسم والعنوان', bio: 'النبذة', subjects: 'المواد والمستويات', qualifications: 'المؤهلات',
     experience: 'الخبرة', approach: 'أسلوب التدريس', languages: 'اللغات', years: 'سنوات الخبرة',
     phone: 'هاتف المسؤول الخاص', links: 'روابط داعمة', attested: 'أقر بصحة المعلومات', unavailable: 'تعذر عرض بعض تفاصيل لقطة الإرسال.',
+    teacherRules: 'قواعد المعلمين', rulesVersion: 'إصدار القواعد المقبول', rulesAcceptedAt: 'تاريخ قبول القواعد', rulesNoRecord: 'لا يوجد سجل لقبول قواعد المعلمين في لقطة هذا الطلب.',
     noCv: 'لا يوجد ملف سيرة ذاتية في الإرسال.',
     legacyApproved: 'حساب معتمد سابقًا؛ لا تغيّر متطلبات الطلب الجديد حالة اعتماده، ولم تكن هناك حاجة إلى لقطة طلب جديدة.',
   } : {
@@ -72,6 +73,7 @@ export function TeacherApplicationPanel({
     identity: 'Name and headline', bio: 'Biography', subjects: 'Subjects and levels', qualifications: 'Qualifications',
     experience: 'Experience', approach: 'Teaching approach', languages: 'Languages', years: 'Years of experience',
     phone: 'Private administrator phone', links: 'Supporting links', attested: 'Applicant attestation', unavailable: 'Some submitted snapshot details could not be displayed.',
+    teacherRules: 'Teacher rules', rulesVersion: 'Accepted rules version', rulesAcceptedAt: 'Rules accepted', rulesNoRecord: 'This application snapshot has no recorded teacher-rules acceptance.',
     noCv: 'No CV was attached to this submission.',
     legacyApproved: 'Existing approved account; new application requirements do not change its approval. No new application snapshot was required.',
   };
@@ -97,6 +99,12 @@ export function TeacherApplicationPanel({
     {application.status === 'draft' && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">{words.draft}</p>}
     {application.status === 'changes_requested' && <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">{words.changes}</p>}
     {application.status === 'submitted' && !ready && <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">{words.unavailable}</p>}
+    {snapshot && <section className="mt-5 border-t border-line pt-4" aria-label={words.teacherRules}>
+      <h3 className="font-bold text-teal">{words.teacherRules}</h3>
+      {typeof snapshot.teacher_rules_version === 'string' && typeof snapshot.teacher_rules_accepted_at === 'string'
+        ? <dl className="mt-2 grid gap-2 text-sm sm:grid-cols-2"><div><dt className="text-muted">{words.rulesVersion}</dt><dd>{snapshot.teacher_rules_version}</dd></div><div><dt className="text-muted">{words.rulesAcceptedAt}</dt><dd>{cairoDate(snapshot.teacher_rules_accepted_at, locale)}</dd></div></dl>
+        : <p className="mt-2 text-sm text-muted">{words.rulesNoRecord}</p>}
+    </section>}
     <dl className="mt-4 grid gap-4 sm:grid-cols-2">
       <div><dt className="text-sm text-muted">{words.received}</dt><dd className="mt-1 font-semibold">{application.submitted_at ? cairoDate(application.submitted_at, locale) : '—'}</dd></div>
       <div><dt className="text-sm text-muted">{words.reviewed}</dt><dd className="mt-1 font-semibold">{application.reviewed_at ? cairoDate(application.reviewed_at, locale) : '—'}</dd></div>
