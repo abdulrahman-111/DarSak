@@ -2,13 +2,16 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ currentUser: vi.fn(), isConfigured: vi.fn() }));
+const mocks = vi.hoisted(() => ({ currentUser: vi.fn(), isConfigured: vi.fn(), getRequestViewer: vi.fn(), unread: vi.fn(), pathname: '/en/admin' }));
+vi.mock('next/navigation', () => ({ usePathname: () => mocks.pathname, useSearchParams: () => new URLSearchParams() }));
 vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => createElement('a', { href, ...props }, children) }));
 vi.mock('next/image', () => ({ default: (props: Record<string, unknown>) => createElement('img', props) }));
 vi.mock('@/components/active-link', () => ({ ActiveLink: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => createElement('a', { href, ...props }, children) }));
 vi.mock('@/components/locale-switch', () => ({ LocaleSwitch: () => createElement('span') }));
 vi.mock('@/features/auth/actions', () => ({ logoutAction: vi.fn() }));
 vi.mock('@/features/platform/data', () => ({ currentUser: mocks.currentUser }));
+vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.getRequestViewer }));
+vi.mock('@/features/notifications/data', () => ({ unreadNotificationCount: mocks.unread }));
 vi.mock('@/lib/supabase/server', () => ({ isConfigured: mocks.isConfigured }));
 import { globalReportsHref, Header } from '@/components/header';
 
@@ -16,6 +19,8 @@ describe('global Reports navigation', () => {
   beforeEach(() => {
     mocks.currentUser.mockReset();
     mocks.isConfigured.mockReset().mockReturnValue(true);
+    mocks.getRequestViewer.mockReset().mockResolvedValue({ db: {} });
+    mocks.unread.mockReset().mockResolvedValue(2);
   });
 
   it('links active admins to the localized reports page', () => {
@@ -29,17 +34,34 @@ describe('global Reports navigation', () => {
     expect(globalReportsHref('en', null)).toBeNull();
   });
 
-  it('renders localized admin Reports and hides discovery links from teachers and admins', async () => {
+  it('keeps public role work on the mobile bar and removes duplicate header routes for active workspaces', async () => {
     const labels = { brand: 'Dars', home: 'Home', discover: 'Discover', teacherRole: 'Teach', dashboard: 'Dashboard', account: 'Account', reports: 'Report a problem', logout: 'Log out', login: 'Log in', register: 'Register' };
 
     mocks.currentUser.mockResolvedValue({ profile: { role: 'admin', status: 'active' } });
+    mocks.pathname = '/en/admin';
     const adminHtml = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
-    expect(adminHtml).toContain('>Reports</a>');
+    expect(adminHtml).toContain('data-mobile-workspace-nav="true"');
+    expect(adminHtml).toContain('href="/en/admin/reports"');
+    expect(adminHtml).toContain('href="/en/admin/users"');
     expect(adminHtml).not.toContain('href="/en/teachers"');
 
     mocks.currentUser.mockResolvedValue({ profile: { role: 'teacher', status: 'active' } });
+    mocks.pathname = '/ar/teacher';
     const teacherHtml = renderToStaticMarkup(await Header({ locale: 'ar', t: labels }));
-    expect(teacherHtml).toContain('الإبلاغ عن مشكلة');
+    expect(teacherHtml).toContain('href="/ar/teacher/lessons"');
+    expect(teacherHtml).toContain('href="/ar/teacher/requests"');
     expect(teacherHtml).not.toContain('href="/ar/teachers"');
+  });
+
+  it('keeps dashboard and account access for signed-in inactive profiles without showing the workspace bar', async () => {
+    const labels = { brand: 'Dars', home: 'Home', discover: 'Discover', teacherRole: 'Teach', dashboard: 'Dashboard', account: 'Account', reports: 'Report a problem', logout: 'Log out', login: 'Log in', register: 'Register' };
+
+    mocks.currentUser.mockResolvedValue({ profile: { role: 'teacher', status: 'suspended' } });
+    mocks.pathname = '/en/account';
+    const html = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+
+    expect(html).toContain('href="/en/dashboard"');
+    expect(html).toContain('href="/en/account"');
+    expect(html).not.toContain('data-mobile-workspace-nav="true"');
   });
 });

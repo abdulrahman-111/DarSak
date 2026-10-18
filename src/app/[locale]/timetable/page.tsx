@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight, ListFilter } from 'lucide-react';
+import { DayStrip } from '@/components/platform/day-strip';
+import { FilterDisclosure } from '@/components/platform/filter-disclosure';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { PlatformShell } from '@/components/platform/shell';
@@ -29,10 +31,10 @@ export default async function Timetable({ params, searchParams }: { params: Prom
   const pageCount = Math.max(1, Math.ceil(data.total / TIMETABLE_LESSON_LIMIT));
   const exportRange = defaultCalendarRange();
   const copy = ar ? {
-    title: 'جدولي الدراسي', intro: 'مواعيد حصصك حسب التاريخ والمجموعة، بتوقيت القاهرة.', prev: 'الأسبوع السابق', next: 'الأسبوع التالي', today: 'هذا الأسبوع', classes: 'كل مجموعاتي', filter: 'تصفية', selectClass: 'المجموعة', selected: 'اليوم المحدد', timezone: 'بتوقيت القاهرة',
+    title: 'جدولي الدراسي', intro: 'مواعيد حصصك حسب التاريخ والمجموعة، بتوقيت القاهرة.', prev: 'السابق', next: 'التالي', today: 'هذا الأسبوع', classes: 'كل مجموعاتي', filter: 'تصفية', selectClass: 'المجموعة', selected: 'اليوم المحدد', timezone: 'بتوقيت القاهرة', filterDetails: 'تصفية المجموعة', active: 'نشط', currentDay: 'اليوم', clearClass: 'اختر كل مجموعاتي لإزالة التصفية.',
     empty: 'لا توجد حصص مسجلة في هذا اليوم. المواعيد الأسبوعية أدناه هي أنماط متكررة وليست حصصًا بتاريخ محدد.', error: 'تعذر تحميل جدولك. حدّث الصفحة وحاول مرة أخرى.', retry: 'إعادة المحاولة', open: 'عرض تفاصيل الحصة', class: 'عرض المجموعة', location: 'المكان', noLocation: 'لم يحدد المكان', allDays: 'أيام الأسبوع', limited: `نعرض ${TIMETABLE_LESSON_LIMIT} حصة في كل صفحة. استخدم التنقل لعرض بقية الحصص.`, previousPage: 'الصفحة السابقة', nextPage: 'الصفحة التالية', weekly: 'المواعيد الأسبوعية المتكررة', weeklyHint: 'نمط موعد المجموعة فقط، وليس حصة بتاريخ محدد.', slotsLimited: 'تظهر أول ٢٠٠ موعد أسبوعي.',
   } : {
-    title: 'My timetable', intro: 'Browse your dated lessons by week, day and class. All times use Cairo time.', prev: 'Previous week', next: 'Next week', today: 'This week', classes: 'All my classes', filter: 'Apply filters', selectClass: 'Class', selected: 'Selected day', timezone: 'Africa/Cairo time',
+    title: 'My timetable', intro: 'Browse your dated lessons by week, day and class. All times use Cairo time.', prev: 'Prev', next: 'Next', today: 'This week', classes: 'All my classes', filter: 'Apply', selectClass: 'Class', selected: 'Selected day', timezone: 'Africa/Cairo time', filterDetails: 'Class filter', active: 'active', currentDay: 'Today', clearClass: 'Choose All my classes to clear the class filter.',
     empty: 'No dated lessons are scheduled for this day. Weekly times below are recurring patterns, not lessons on specific dates.', error: 'Could not load your timetable. Refresh and try again.', retry: 'Try again', open: 'Open lesson details', class: 'View class', location: 'Location', noLocation: 'Location not set', allDays: 'Days of the week', limited: `Showing ${TIMETABLE_LESSON_LIMIT} lessons per page. Use the page controls to see the rest.`, previousPage: 'Previous page', nextPage: 'Next page', weekly: 'Weekly recurring times', weeklyHint: 'These are class schedule patterns, not lessons on specific dates.', slotsLimited: 'Showing the first 200 weekly times.',
   };
   const dateLabel = (date: string, options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', { ...options, timeZone: 'Africa/Cairo' }).format(new Date(`${date}T12:00:00Z`));
@@ -52,34 +54,37 @@ export default async function Timetable({ params, searchParams }: { params: Prom
         <div className="flex flex-wrap items-center justify-between gap-3">
           <p className="text-lg font-black text-teal" aria-live="polite">{weekLabel}</p>
           <nav aria-label={ar ? 'التنقل بين الأسابيع' : 'Week navigation'} className="flex flex-wrap gap-2">
-            <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line px-4 py-2 font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={weekHref(shiftTimetableWeek(week.weekStart, -1), { group: selection.group })}><ChevronLeft aria-hidden="true" className="h-4 w-4"/>{copy.prev}</Link>
-            {!week.isCurrentWeek && <Link className="min-h-11 rounded-xl border border-line px-4 py-2 font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={`/${locale}/timetable`}>{copy.today}</Link>}
-            <Link className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line px-4 py-2 font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={weekHref(shiftTimetableWeek(week.weekStart, 1), { group: selection.group })}>{copy.next}<ChevronRight aria-hidden="true" className="h-4 w-4"/></Link>
+            <Link className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={weekHref(shiftTimetableWeek(week.weekStart, -1), { group: selection.group })}><ChevronLeft aria-hidden="true" className="h-4 w-4"/>{copy.prev}</Link>
+            {!week.isCurrentWeek && <Link className="min-h-11 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={weekHref(week.today, { group: selection.group })}>{copy.today}</Link>}
+            <Link className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={weekHref(shiftTimetableWeek(week.weekStart, 1), { group: selection.group })}>{copy.next}<ChevronRight aria-hidden="true" className="h-4 w-4"/></Link>
           </nav>
         </div>
-        <form method="get" action={`/${locale}/timetable`} className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <input type="hidden" name="week" value={week.weekStart}/><input type="hidden" name="day" value={selectedDay}/>
-          <label className="grid gap-2 text-sm font-bold text-teal">{copy.selectClass}
-            <select name="group" defaultValue={selection.group ?? ''} className="min-h-11 rounded-xl border border-line bg-cream px-3 py-2">
-              <option value="">{copy.classes}</option>
-              {data.groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
-            </select>
-          </label>
-          <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-5 py-2 font-bold text-white hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"><ListFilter aria-hidden="true" className="h-4 w-4"/>{copy.filter}</button>
-        </form>
+        <FilterDisclosure label={copy.filterDetails} activeCount={Number(!!selection.group)} activeLabel={copy.active}>
+          <form method="get" action={`/${locale}/timetable`} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <input type="hidden" name="week" value={week.weekStart}/><input type="hidden" name="day" value={selectedDay}/>
+            <label className="grid min-w-0 gap-2 text-sm font-bold text-teal">{copy.selectClass}
+              <select name="group" defaultValue={selection.group ?? ''} className="min-h-11 w-full rounded-xl border border-line bg-cream px-3 py-2">
+                <option value="">{copy.classes}</option>
+                {data.groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
+              </select>
+            </label>
+            <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-5 py-2 font-bold text-white hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"><ListFilter aria-hidden="true" className="h-4 w-4"/>{copy.filter}</button>
+          </form>
+          {selection.group && <p className="mt-2 text-xs text-muted">{copy.clearClass}</p>}
+        </FilterDisclosure>
         {data.groupsLimited && <p className="mt-3 text-xs text-muted">{ar ? 'تظهر أول ٢٠٠ مجموعة مسجلة.' : 'Showing your first 200 enrolled classes.'}</p>}
       </Panel>
 
       <section aria-labelledby="week-days-title" className="mt-5">
         <h2 id="week-days-title" className="sr-only">{copy.allDays}</h2>
-        <nav aria-label={copy.allDays} className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-7">
-          {days.map(({ date, weekday: day }) => {
-            const isSelected = date === selectedDay;
-            return <Link key={date} aria-current={isSelected ? 'date' : undefined} href={weekHref(week.weekStart, { day: date, group: selection.group })} className={`min-h-16 rounded-2xl border p-3 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange ${isSelected ? 'border-teal bg-teal text-white' : 'border-line bg-white text-teal hover:border-orange'}`}>
-              <span className="block text-xs font-bold opacity-80">{weekday(day, locale)}</span><span className="mt-1 block text-lg font-black">{dateLabel(date, { day: 'numeric', month: 'short' })}</span>
-            </Link>;
-          })}
-        </nav>
+        <DayStrip label={copy.allDays} locale={locale} selectedStyle="bg-teal text-white" selectedLabel={copy.selected} currentLabel={copy.currentDay} items={days.map(({ date, weekday: day }) => ({
+          href: weekHref(week.weekStart, { day: date, group: selection.group }),
+          date,
+          label: weekday(day, locale),
+          dateLabel: dateLabel(date, { day: 'numeric', month: 'short' }),
+          selected: date === selectedDay,
+          current: date === week.today,
+        }))}/>
       </section>
 
       <Panel className="mt-5">

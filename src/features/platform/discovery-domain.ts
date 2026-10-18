@@ -31,7 +31,7 @@ function firstValue(input: DiscoveryFilterInput, key: string): string {
 
 function optionalUuid(input: DiscoveryFilterInput, key: string): string | null {
   const value = firstValue(input, key).trim();
-  return z.string().uuid().safeParse(value).success ? value.toLowerCase() : null;
+  return z.guid().safeParse(value).success ? value.toLowerCase() : null;
 }
 
 function optionalWeekday(input: DiscoveryFilterInput): number | null {

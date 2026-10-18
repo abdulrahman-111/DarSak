@@ -59,74 +59,86 @@ export default async function Teachers({
     filters.subjectId || filters.nodeId || filters.teacherId || filters.weekday !== null ||
     filters.hasSeats || filters.query || filters.page > 1 || teacherSearch
   );
+  const activeFilterCount = [filters.subjectId, filters.nodeId, filters.teacherId, filters.weekday !== null ? 'weekday' : '', filters.hasSeats ? 'hasSeats' : '', filters.query, teacherSearch].filter(Boolean).length;
   const retryUrl = urlFor(locale, filters, filters.page, teacherSearch);
   const retryHref = `${retryUrl}${retryUrl.includes('?') ? '&' : '?'}retry=1`;
 
   return (
     <div className="min-h-[70vh] bg-[#f6f0e4]">
-      <section className="container py-12 md:py-16">
-        <div className="mb-7 flex flex-wrap items-end justify-between gap-5">
+      <section className="container py-7 sm:py-10 md:py-16">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4 md:mb-7 md:gap-5">
           <div>
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{c.browseEyebrow}</p>
-            <h1 className="mt-2 max-w-3xl text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{c.browseTitle}</h1>
-            <p className="mt-3 max-w-2xl leading-7 text-[#4d473f]">{c.browseBody}</p>
+            <h1 className="mt-1 max-w-3xl text-2xl font-black leading-tight tracking-[-.03em] text-teal sm:text-3xl md:mt-2 md:text-5xl">{c.browseTitle}</h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[#4d473f] md:mt-3 md:text-base md:leading-7">{c.browseBody}</p>
           </div>
           {!error && fullDiscovery && <p className="font-bold text-muted" aria-live="polite">{c.results(groups.length)}</p>}
         </div>
 
-        {fullDiscovery ? <form key={discoverySearchParams(filters).toString()} className="mb-7 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-3" action={`/${locale}/teachers`} method="get">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <label className="flex h-12 min-w-0 items-center gap-3 rounded-xl bg-[#f6f0e4] px-4 sm:col-span-2 lg:col-span-1">
+        {fullDiscovery ? <form key={discoverySearchParams(filters).toString()} className="mb-5 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-3 md:mb-7 md:p-4" action={`/${locale}/teachers`} method="get">
+          <div className="flex min-w-0 flex-wrap gap-2">
+            <label className="flex h-12 min-w-0 flex-1 basis-48 items-center gap-3 rounded-xl bg-[#f6f0e4] px-3 sm:px-4">
               <Search size={18} className="shrink-0 text-muted"/>
               <span className="sr-only">{c.searchLabel}</span>
               <input className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="query" maxLength={120} defaultValue={filters.query} placeholder={c.searchPlaceholder}/>
             </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
-              <SlidersHorizontal size={17} className="shrink-0 text-muted"/>
-              <span className="sr-only">{c.subject}</span>
-              <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="subject_id" defaultValue={filters.subjectId || ''}>
-                <option value="">{c.allSubjects}</option>
-                {subjects.map(subject => <option key={subject.id} value={subject.id}>{catalogueDisplayName(subject, locale)}</option>)}
-              </select>
-            </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
-              <span className="sr-only">{c.context}</span>
-              <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="node_id" defaultValue={filters.nodeId || ''}>
-                <option value="">{c.allContexts}</option>
-                {nodes.map(node => <option key={node.id} value={node.id}>{catalogueDisplayName(node, locale)}</option>)}
-              </select>
-            </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
-              <span className="sr-only">{locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}</span>
-              <input aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
-            </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
-              <span className="sr-only">{c.teacherFilter}</span>
-              <select aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="teacher_id" defaultValue={filters.teacherId || ''}>
-                <option value="">{c.allTeachers}</option>
-                {teachers.map(teacher => <option key={teacher.id} value={teacher.id}>{teacher.full_name}</option>)}
-              </select>
-            </label>
-            <label className="flex h-12 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
-              <span className="sr-only">{c.weekday}</span>
-              <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="weekday" defaultValue={filters.weekday === null ? '' : String(filters.weekday)}>
-                <option value="">{c.anyDay}</option>
-                {c.weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}
-              </select>
-            </label>
-            <label className="flex h-12 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 font-medium">
-              <input type="checkbox" name="has_seats" value="true" defaultChecked={filters.hasSeats} className="size-4 accent-teal"/>
-              {c.seatsAvailable}
-            </label>
+            <button className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal px-4 font-bold text-white transition hover:bg-[#0e4a4b] sm:px-5" type="submit"><Search aria-hidden="true" size={17}/>{c.filter}</button>
+            {hasActiveFilters && <Link className="inline-flex min-h-12 items-center px-2 text-sm font-bold text-orange" href={`/${locale}/teachers`}>{c.clear}</Link>}
           </div>
-          <p id="teacher-search-help" className="mt-2 text-sm text-muted">
-            {locale === 'ar'
-              ? 'ابحث عن المدرسين المعتمدين بالاسم (حتى ٥٠ نتيجة)، ثم اضغط «تصفية» واختر المدرس.'
-              : 'Search approved teachers by name (up to 50 matches), press Apply filters, then choose a teacher.'}
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-3">
-            <button className="h-12 rounded-xl bg-teal px-5 font-bold text-white transition hover:bg-[#0e4a4b]" type="submit">{c.filter}</button>
-            {hasActiveFilters && <Link className="px-1 text-sm font-bold text-orange" href={`/${locale}/teachers`}>{c.clear}</Link>}
+          <div className="mt-2">
+            <details className="rounded-xl border border-[#e3d9c8] px-3 py-2 md:border-0 md:px-0 md:py-0">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+                <SlidersHorizontal aria-hidden="true" size={17}/>{locale === 'ar' ? 'تصفية النتائج' : 'More filters'}
+                {activeFilterCount > 0 && <span className="rounded-full bg-teal/10 px-2 py-1 text-xs">{activeFilterCount} {locale === 'ar' ? 'نشط' : 'active'}</span>}
+                <span aria-hidden="true" className="ms-auto">⌄</span>
+              </summary>
+              <div className="pt-2 md:pt-0">
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
+                    <span className="sr-only">{c.subject}</span>
+                    <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="subject_id" defaultValue={filters.subjectId || ''}>
+                      <option value="">{c.allSubjects}</option>
+                      {subjects.map(subject => <option key={subject.id} value={subject.id}>{catalogueDisplayName(subject, locale)}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
+                    <span className="sr-only">{c.context}</span>
+                    <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="node_id" defaultValue={filters.nodeId || ''}>
+                      <option value="">{c.allContexts}</option>
+                      {nodes.map(node => <option key={node.id} value={node.id}>{catalogueDisplayName(node, locale)}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
+                    <span className="sr-only">{locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}</span>
+                    <input aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" type="search" name="teacher_search" maxLength={80} defaultValue={teacherSearch} placeholder={locale === 'ar' ? 'ابحث عن مدرس' : 'Search teachers'}/>
+                  </label>
+                  <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 focus-within:ring-2 focus-within:ring-teal focus-within:ring-offset-2">
+                    <span className="sr-only">{c.teacherFilter}</span>
+                    <select aria-describedby="teacher-search-help" className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="teacher_id" defaultValue={filters.teacherId || ''}>
+                      <option value="">{c.allTeachers}</option>
+                      {teachers.map(teacher => <option key={teacher.id} value={teacher.id}>{teacher.full_name}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3">
+                    <span className="sr-only">{c.weekday}</span>
+                    <select className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset" name="weekday" defaultValue={filters.weekday === null ? '' : String(filters.weekday)}>
+                      <option value="">{c.anyDay}</option>
+                      {c.weekdays.map((day, index) => <option key={day} value={index}>{day}</option>)}
+                    </select>
+                  </label>
+                  <label className="flex min-h-11 items-center gap-2 rounded-xl border border-[#d8ccb8] px-3 font-medium">
+                    <input type="checkbox" name="has_seats" value="true" defaultChecked={filters.hasSeats} className="size-4 accent-teal"/>
+                    {c.seatsAvailable}
+                  </label>
+                </div>
+                <p id="teacher-search-help" className="mt-2 text-sm text-muted">
+                  {locale === 'ar'
+                    ? 'ابحث عن المدرسين المعتمدين بالاسم (حتى ٥٠ نتيجة)، ثم اختر المدرس واضغط «تصفية».'
+                    : 'Search approved teachers by name (up to 50 matches), choose a teacher, then apply filters.'}
+                </p>
+                <button className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-teal px-4 font-bold text-teal" type="submit">{c.filter}</button>
+              </div>
+            </details>
           </div>
         </form> : <div className="mb-7 flex flex-wrap items-center justify-between gap-4 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5">
           <p className="max-w-2xl leading-7 text-[#4d473f]">{locale === 'ar' ? 'تعرّف على عينة صغيرة من المجموعات والمدرسين. سجّل كطالب لاستكشاف جميع المدرسين والمجموعات.' : 'Preview a small sample of groups and teachers. Register as a student to explore all teachers and groups.'}</p>

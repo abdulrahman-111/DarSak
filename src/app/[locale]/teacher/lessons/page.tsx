@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
+import { DayStrip } from '@/components/platform/day-strip';
+import { FilterDisclosure } from '@/components/platform/filter-disclosure';
 import { ensureLocale } from '@/i18n/config';
 import { EmptyState, Panel, RowLink, ScreenTitle, Status, cairoDate, weekday } from '@/components/platform/ui';
 import { LessonForm } from '@/components/platform/forms';
@@ -32,11 +34,11 @@ export default async function TeacherLessons({ params, searchParams }: { params:
   const copy = ar ? {
     title: 'الحصص', description: 'نظّم حصصك وافتح مساحة الحصة لمراجعة التفاصيل والمواد.', add: 'إضافة حصة', group: 'المجموعة', choose: '— اختر مجموعة —', select: 'تطبيق',
     noGroups: 'أنشئ مجموعة قبل إضافة حصة.', createGroup: 'إنشاء مجموعة', noLessons: 'لا توجد حصص في هذه الفترة.', previous: 'السابق', next: 'التالي', page: 'الصفحة', retry: 'إعادة المحاولة',
-    invalidGroup: 'اختر إحدى مجموعاتك من القائمة لإضافة حصة.', failed: 'تعذر تحميل حصصك ومجموعاتك. حدّث الصفحة وحاول مرة أخرى.', week: 'الأسبوع', all: 'كل الحصص', today: 'اليوم', currentWeek: 'الأسبوع الحالي', date: 'انتقل إلى الأسبوع الذي يتضمن التاريخ', shown: 'المعروض', cancelled: 'ملغاة', groupLimit: 'تظهر أول ٢٠٠ مجموعة فقط.', lessons: 'حصة',
+    invalidGroup: 'اختر إحدى مجموعاتك من القائمة لإضافة حصة.', failed: 'تعذر تحميل حصصك ومجموعاتك. حدّث الصفحة وحاول مرة أخرى.', week: 'الأسبوع', all: 'كل الحصص', today: 'اليوم', currentWeek: 'الأسبوع الحالي', date: 'انتقل إلى الأسبوع الذي يتضمن التاريخ', shown: 'المعروض', cancelled: 'ملغاة', groupLimit: 'تظهر أول ٢٠٠ مجموعة فقط.', lessons: 'حصة', filters: 'التاريخ والمجموعة', active: 'نشط', previousShort: 'السابق', nextShort: 'التالي', currentDay: 'اليوم', selectedDay: 'اليوم المحدد', clearGroup: 'اختر كل المجموعات لإزالة التصفية.',
   } : {
     title: 'Lessons', description: 'Plan your lessons and open a lesson workspace to review its details and materials.', add: 'Add lesson', group: 'Group', choose: '— Choose a group —', select: 'Apply',
     noGroups: 'Create a group before adding a lesson.', createGroup: 'Create group', noLessons: 'No lessons in this period.', previous: 'Previous', next: 'Next', page: 'Page', retry: 'Try again',
-    invalidGroup: 'Choose one of your groups from the list to add a lesson.', failed: 'Could not load your lessons and groups. Refresh and try again.', week: 'Week', all: 'All lessons', today: 'Today', currentWeek: 'Current week', date: 'Go to week containing date', shown: 'shown', cancelled: 'Cancelled', groupLimit: 'Showing the first 200 groups.', lessons: 'lessons',
+    invalidGroup: 'Choose one of your groups from the list to add a lesson.', failed: 'Could not load your lessons and groups. Refresh and try again.', week: 'Week', all: 'All lessons', today: 'Today', currentWeek: 'Current week', date: 'Go to week containing date', shown: 'shown', cancelled: 'Cancelled', groupLimit: 'Showing the first 200 groups.', lessons: 'lessons', filters: 'Date and group filters', active: 'active', previousShort: 'Prev', nextShort: 'Next', currentDay: 'Today', selectedDay: 'Selected day', clearGroup: 'Choose All groups to clear the group filter.',
   };
   const routeError = newData?.error ?? calendarData?.error ?? allData?.error ?? null;
   const allView = allData !== null;
@@ -84,39 +86,50 @@ export default async function TeacherLessons({ params, searchParams }: { params:
             <Link href={statusHref({ view: 'all', page: 1 })} aria-current={allView ? 'page' : undefined} className={`inline-flex min-h-11 items-center rounded-xl px-4 py-2 font-bold ${allView ? 'bg-teal text-white' : 'border border-line text-teal'}`}>{copy.all}</Link>
           </div>
           {calendarData && week && <>
-            <nav aria-label={ar ? 'التنقل بين الأسابيع' : 'Week navigation'} className="mb-4 flex flex-wrap items-center gap-2">
-              <Link className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 py-2 font-bold text-teal" href={statusHref({ date: shiftTimetableWeek(week.weekStart, -1), groupId: selectedGroup?.id })}><ChevronLeft aria-hidden="true" size={18}/><span className="ms-2">{copy.previous}</span></Link>
-              <Link className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 py-2 font-bold text-teal" href={statusHref({ date: week.today, day: week.today, groupId: selectedGroup?.id })}>{copy.today}</Link>
-              <Link className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 py-2 font-bold text-teal" href={statusHref({ date: week.today, groupId: selectedGroup?.id })}>{copy.currentWeek}</Link>
-              <Link className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 py-2 font-bold text-teal" href={statusHref({ date: shiftTimetableWeek(week.weekStart, 1), groupId: selectedGroup?.id })}>{copy.next}<ChevronRight aria-hidden="true" className="ms-2" size={18}/></Link>
-              <form method="get" className="flex min-h-11 flex-wrap items-center gap-2">
-                {selectedGroup && <input type="hidden" name="groupId" value={selectedGroup.id} />}
-                <label htmlFor="teacher-calendar-date" className="text-sm font-bold">{copy.date}</label>
-                <input id="teacher-calendar-date" name="date" type="date" defaultValue={week.weekStart} className="min-h-11 rounded-xl border border-line bg-white px-3 py-2" />
-                <button className="min-h-11 rounded-xl border border-line px-4 py-2 font-bold text-teal">{copy.select}</button>
-              </form>
+            <nav aria-label={ar ? 'التنقل بين الأسابيع' : 'Week navigation'} className="mb-4 flex min-w-0 flex-wrap gap-2">
+              <Link className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal" href={statusHref({ date: shiftTimetableWeek(week.weekStart, -1), groupId: selectedGroup?.id })}><ChevronLeft aria-hidden="true" size={16}/>{copy.previousShort}</Link>
+              <Link className="inline-flex min-h-11 items-center rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal" href={statusHref({ date: week.today, day: week.today, groupId: selectedGroup?.id })}>{copy.today}</Link>
+              <Link className="inline-flex min-h-11 items-center rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal" href={statusHref({ date: week.today, groupId: selectedGroup?.id })}>{copy.currentWeek}</Link>
+              <Link className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal" href={statusHref({ date: shiftTimetableWeek(week.weekStart, 1), groupId: selectedGroup?.id })}>{copy.nextShort}<ChevronRight aria-hidden="true" size={16}/></Link>
             </nav>
-            <form method="get" className="flex flex-col gap-3 sm:flex-row sm:items-end">
-              <input type="hidden" name="date" value={week.weekStart} />
-              {calendarData.day && <input type="hidden" name="day" value={calendarData.day} />}
-              <label htmlFor="teacher-calendar-group" className="min-w-0 flex-1 text-sm font-bold">{copy.group}
-                <select id="teacher-calendar-group" name="groupId" defaultValue={selectedGroup?.id ?? ''} className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-cream p-3">
-                  <option value="">{ar ? 'كل المجموعات' : 'All groups'}</option>
-                  {groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
-                </select>
-              </label>
-              <button className="min-h-11 rounded-xl border border-line px-4 py-3 font-bold text-teal">{copy.select}</button>
-            </form>
+            <FilterDisclosure label={copy.filters} activeCount={Number(!!selectedGroup)} activeLabel={copy.active}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <form method="get" className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+                  {selectedGroup && <input type="hidden" name="groupId" value={selectedGroup.id} />}
+                  <label htmlFor="teacher-calendar-date" className="min-w-0 flex-1 text-sm font-bold">{copy.date}
+                    <input id="teacher-calendar-date" name="date" type="date" defaultValue={week.weekStart} className="mt-1 min-h-11 w-full rounded-xl border border-line bg-white px-3 py-2" />
+                  </label>
+                  <button className="min-h-11 rounded-xl border border-line px-4 py-2 font-bold text-teal">{copy.select}</button>
+                </form>
+                <form method="get" className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-end">
+                  <input type="hidden" name="date" value={week.weekStart} />
+                  {calendarData.day && <input type="hidden" name="day" value={calendarData.day} />}
+                  <label htmlFor="teacher-calendar-group" className="min-w-0 flex-1 text-sm font-bold">{copy.group}
+                    <select id="teacher-calendar-group" name="groupId" defaultValue={selectedGroup?.id ?? ''} className="mt-1 block min-h-11 w-full rounded-xl border border-line bg-cream p-3">
+                      <option value="">{ar ? 'كل المجموعات' : 'All groups'}</option>
+                      {groups.map(group => <option key={group.id} value={group.id}>{group.name}</option>)}
+                    </select>
+                  </label>
+                  <button className="min-h-11 rounded-xl border border-line px-4 py-2 font-bold text-teal">{copy.select}</button>
+                </form>
+              </div>
+              {selectedGroup && <p className="mt-2 text-xs text-muted">{copy.clearGroup}</p>}
+            </FilterDisclosure>
             {calendarData.groupsLimited && <p className="mt-2 text-xs text-muted">{copy.groupLimit}</p>}
-            <div className="mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-              {timetableDayDates(week.weekStart).map(({ date: dayDate, weekday: weekdayNumber }) => {
+            <div className="mt-4">
+              <DayStrip label={ar ? 'أيام الأسبوع' : 'Days of the week'} locale={locale} selectedLabel={copy.selectedDay} currentLabel={copy.currentDay} items={timetableDayDates(week.weekStart).map(({ date: dayDate, weekday: weekdayNumber }) => {
                 const countShown = dayGroups.get(dayDate)?.length ?? 0;
                 const selected = calendarData.day === dayDate;
-                return <Link key={dayDate} href={statusHref({ date: week.weekStart, day: dayDate, groupId: selectedGroup?.id })} aria-current={selected ? 'date' : undefined} className={`flex min-h-16 items-center justify-between gap-2 rounded-xl border p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange ${selected ? 'border-teal bg-teal/5' : 'border-line hover:border-orange/60'}`}>
-                  <span className="min-w-0"><strong className="block text-sm text-teal">{weekday(weekdayNumber, locale)}</strong><span className="text-xs text-muted">{new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' }).format(new Date(`${dayDate}T12:00:00Z`))}</span></span>
-                  {!calendarData.day && <span className="shrink-0 rounded-full bg-cream px-2 py-1 text-xs font-bold text-teal">{countShown}<span className="ms-1 font-normal text-muted">{copy.shown}</span></span>}
-                </Link>;
-              })}
+                return {
+                  href: statusHref({ date: week.weekStart, day: dayDate, groupId: selectedGroup?.id }),
+                  date: dayDate,
+                  label: weekday(weekdayNumber, locale),
+                  dateLabel: new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Cairo' }).format(new Date(`${dayDate}T12:00:00Z`)),
+                  selected,
+                  current: dayDate === week.today,
+                  detail: !calendarData.day ? <>{countShown}<span className="ms-1 font-normal text-muted">{copy.shown}</span></> : undefined,
+                };
+              })}/>
             </div>
             <div className="mt-5">
               <h2 className="mb-3 text-lg font-black text-teal">{calendarData.day ? `${weekday(teacherCalendarWeekday(calendarData.day), locale)} · ${calendarData.day} · ${calendarData.total} ${copy.lessons}` : `${week.startDate} – ${dayDates.at(-1)} · ${calendarData.total} ${copy.lessons}`}</h2>
