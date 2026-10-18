@@ -28,6 +28,10 @@ describe('teacher group setup details', () => {
     expect(groupDetailsSchema.safeParse({ ...validDetails, capacity: '501' }).success).toBe(false);
   });
 
+  it('accepts the existing Physics and Grade 12 catalogue UUIDs', () => {
+    expect(groupDetailsSchema.safeParse({ ...validDetails, subject_id: '00000000-0000-0000-0000-000000000102', category_id: '00000000-0000-0000-0000-000000000021' }).success).toBe(true);
+  });
+
   it('requires separate valid subject and category IDs and valid capacity values', () => {
     expect(groupDetailsSchema.safeParse({ ...validDetails, subject_id: 'english-only' }).success).toBe(false);
     expect(groupDetailsSchema.safeParse({ ...validDetails, category_id: 'english-only' }).success).toBe(false);

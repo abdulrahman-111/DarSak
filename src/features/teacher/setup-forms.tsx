@@ -17,12 +17,14 @@ const copy = (locale: Locale) => locale === 'ar' ? {
   save: 'حفظ التفاصيل', editSave: 'حفظ تفاصيل المجموعة', cancel: 'إلغاء', saving: 'جارٍ الحفظ…',
   nameRequired: 'أدخل اسماً من حرفين على الأقل.', nameBounds: 'يجب ألا يتجاوز الاسم 120 حرفاً.', descriptionBounds: 'يجب ألا يتجاوز الوصف 2000 حرف.',
   locationBounds: 'يجب ألا يتجاوز المكان 200 حرف.', capacityError: 'أدخل سعة من 1 إلى 500.', offeringError: 'اختر مادة وفئة دراسية نشطتين.',
+  catalogueHelp: 'اختر أي مادة وسنة أو فئة. سنربطهما تلقائيًا عند حفظ المجموعة، دون إعداد مسبق في صفحة المواد والفئات.', chooseSubject: 'اختر مادة', chooseCategory: 'اختر سنة أو فئة طلاب', newSubject: '+ إضافة مادة غير موجودة', newCategory: '+ إضافة سنة أو فئة غير موجودة', backToGroup: 'العودة إلى المجموعة',
   details: 'التفاصيل', schedule: 'الجدول', review: 'المراجعة', reviewPending: 'راجع إعدادات مجموعتك هنا قبل نشرها.',
 } : {
   name: 'Group name', description: 'Description', subject: 'Subject', category: 'Year / student category', capacity: 'Capacity', location: 'Location', addSubject: 'Add subject', addCategory: 'Add year / category',
   save: 'Save details', editSave: 'Save group details', cancel: 'Cancel', saving: 'Saving…',
   nameRequired: 'Enter a name with at least 2 characters.', nameBounds: 'Name must be no longer than 120 characters.', descriptionBounds: 'Description must be no longer than 2,000 characters.',
   locationBounds: 'Location must be no longer than 200 characters.', capacityError: 'Enter a capacity from 1 to 500.', offeringError: 'Choose an active subject and year or student category.',
+  catalogueHelp: 'Choose any subject and year or category. We connect them when you save—no setup in Subjects & categories is needed.', chooseSubject: 'Choose a subject', chooseCategory: 'Choose a year or student category', newSubject: '+ Add a missing subject', newCategory: '+ Add a missing year or category', backToGroup: 'Back to group',
   details: 'Details', schedule: 'Schedule', review: 'Review', reviewPending: 'Review your group setup here before publishing.',
 };
 
@@ -62,6 +64,14 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     }
   }, [copyScheduleFrom, editPublished, locale, router, state?.id]);
 
+  useEffect(() => {
+    const section = addSubject ? 'group-add-subject' : addCategory ? 'group-add-category' : null;
+    if (!section) return;
+    const panel = document.getElementById(section);
+    panel?.scrollIntoView({ block: 'center' });
+    panel?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+  }, [addSubject, addCategory]);
+
   const fieldError = (field: string) => state?.fieldErrors?.[field];
   const fieldMessage = (field: string) => {
     if (field === 'name') return formValues.name.trim().length < 2 ? t.nameRequired : t.nameBounds;
@@ -84,12 +94,14 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     setSubjects(current => current.some(item => item.id === subject.id) ? current.map(item => item.id === subject.id ? subject : item) : [...current, subject]);
     setFormValues(current => ({ ...current, subject_id: subject.id, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }));
     setAddSubject(false);
+    document.getElementById('group-subject')?.focus();
   }, [catalogue.retained, retainedCategoryIsArchived]);
   const onCategorySaved = useCallback((row: TeacherCatalogueSubject | TeacherCatalogueCategory) => {
     const category = row as TeacherCatalogueCategory;
     setNodes(current => current.some(item => item.id === category.id) ? current.map(item => item.id === category.id ? category : item) : [...current, category]);
     setFormValues(current => ({ ...current, category_id: category.id, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }));
     setAddCategory(false);
+    document.getElementById('group-category')?.focus();
   }, [catalogue.retained, retainedSubjectIsArchived]);
   const retainedPairUnchanged = isRetainedCataloguePair(formValues, catalogue.retained);
   const subjectNeedsActiveChoice = !!catalogue.retained && retainedSubjectIsArchived && formValues.category_id !== catalogue.retained.category_id && !formValues.subject_id;
@@ -109,6 +121,7 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
   };
 
   return <div className="grid gap-5">
+  <p id="group-catalogue-help" className="rounded-xl bg-teal/5 p-4 text-sm leading-6 text-muted">{t.catalogueHelp}</p>
   <form action={action} data-confirm-unsaved-navigation onReset={event => event.preventDefault()} className="grid gap-5">
     {groupId && <input type="hidden" name="group_id" value={groupId} />}
     {groupId && <input type="hidden" name="expected_updated_at" value={formValues.updated_at ?? ''} />}
@@ -124,23 +137,25 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     </div>
     <div>
       <label htmlFor="group-subject" className="block text-sm font-bold">{t.subject}</label>
-      <select id="group-subject" name="subject_id" value={formValues.subject_id} onChange={event => setFormValues(current => ({ ...current, subject_id: event.target.value, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) }))} required {...invalid('subject_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
-        <option value="">—</option>
+      <select id="group-subject" name="subject_id" value={formValues.subject_id} onChange={event => { if (event.target.value === '__new__') { setAddSubject(true); setAddCategory(false); return; } setFormValues(current => ({ ...current, subject_id: event.target.value, ...(retainedCategoryIsArchived && current.category_id === catalogue.retained?.category_id ? { category_id: '' } : {}) })); }} required {...invalid('subject_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+        <option value="">{t.chooseSubject}</option>
         {activeSubjects.map(subject => <option key={subject.id} value={subject.id}>{subject.id === catalogue.retained?.subject_id && retainedSubjectArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}` : locale === 'ar' ? subject.name_ar || subject.name_en : subject.name_en || subject.name_ar}</option>)}
+      <option value="__new__">{t.newSubject}</option>
       </select>
       {fieldError('subject_id') && <p id="group-subject_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('subject_id')}</p>}
       {subjectNeedsActiveChoice && <p className="mt-1 text-sm text-muted">{t.offeringError}</p>}
-      <button type="button" onClick={() => setAddSubject(value => !value)} className="mt-2 text-sm font-bold text-teal underline">{t.addSubject}</button>
+      <button type="button" aria-expanded={addSubject} aria-controls="group-add-subject" onClick={() => { setAddSubject(value => !value); setAddCategory(false); }} className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm font-bold text-teal">{t.addSubject}</button>
     </div>
     <div>
       <label htmlFor="group-category" className="block text-sm font-bold">{t.category}</label>
-      <select id="group-category" name="category_id" value={formValues.category_id} onChange={event => setFormValues(current => ({ ...current, category_id: event.target.value, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) }))} required {...invalid('category_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
-        <option value="">—</option>
+      <select id="group-category" name="category_id" value={formValues.category_id} onChange={event => { if (event.target.value === '__new__') { setAddCategory(true); setAddSubject(false); return; } setFormValues(current => ({ ...current, category_id: event.target.value, ...(retainedSubjectIsArchived && current.subject_id === catalogue.retained?.subject_id ? { subject_id: '' } : {}) })); }} required {...invalid('category_id')} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">
+        <option value="">{t.chooseCategory}</option>
         {eligibleNodes.map(node => <option key={node.id} value={node.id}>{node.id === catalogue.retained?.category_id && retainedCategoryArchived ? `${locale === 'ar' ? 'الاختيار المحفوظ — ' : 'Saved selection — '}${contextLabel(node.id)}` : contextLabel(node.id)}</option>)}
+      <option value="__new__">{t.newCategory}</option>
       </select>
       {fieldError('category_id') && <p id="group-category_id-error" className="mt-1 text-sm text-red-700">{fieldMessage('category_id')}</p>}
       {categoryNeedsActiveChoice && <p className="mt-1 text-sm text-muted">{t.offeringError}</p>}
-      <button type="button" onClick={() => setAddCategory(value => !value)} className="mt-2 text-sm font-bold text-teal underline">{t.addCategory}</button>
+      <button type="button" aria-expanded={addCategory} aria-controls="group-add-category" onClick={() => { setAddCategory(value => !value); setAddSubject(false); }} className="mt-2 inline-flex min-h-11 items-center rounded-lg border border-line px-3 text-sm font-bold text-teal">{t.addCategory}</button>
     </div>
     <div className="grid gap-5 sm:grid-cols-2">
       <div>
@@ -158,8 +173,8 @@ export function GroupDetailsForm({ locale, values, groupId, catalogue, copySched
     {state?.success && <p role="status" aria-live="polite" className="rounded-xl bg-green-50 p-3 text-sm text-teal">{state.success}</p>}
     <div className="flex flex-wrap gap-3"><button type="submit" disabled={pending} aria-live="polite" className="w-full rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:cursor-wait disabled:opacity-50 sm:w-auto">{pending ? t.saving : editPublished ? t.editSave : t.save}</button>{editPublished && groupId && <Link href={`/${locale}/teacher/groups/${groupId}`} className="rounded-xl border border-line px-5 py-3 font-bold text-teal">{t.cancel}</Link>}</div>
   </form>
-  {addSubject && <section className="rounded-2xl border border-line bg-cream p-4"><h3 className="mb-3 font-bold text-teal">{t.addSubject}</h3><CatalogueLabelEditor locale={locale} kind="subject" onSaved={onSubjectSaved} /></section>}
-  {addCategory && <section className="rounded-2xl border border-line bg-cream p-4"><h3 className="mb-3 font-bold text-teal">{t.addCategory}</h3><CatalogueLabelEditor locale={locale} kind="category" onSaved={onCategorySaved} /></section>}
+  {addSubject && <section id="group-add-subject" aria-labelledby="group-add-subject-heading" className="rounded-2xl border border-line bg-cream p-4"><h3 id="group-add-subject-heading" className="mb-3 font-bold text-teal">{t.addSubject}</h3><CatalogueLabelEditor locale={locale} kind="subject" onSaved={onSubjectSaved} /><button type="button" onClick={()=>{setAddSubject(false);document.getElementById('group-subject')?.focus();}} className="mt-3 min-h-11 font-bold text-teal underline">{t.backToGroup}</button></section>}
+  {addCategory && <section id="group-add-category" aria-labelledby="group-add-category-heading" className="rounded-2xl border border-line bg-cream p-4"><h3 id="group-add-category-heading" className="mb-3 font-bold text-teal">{t.addCategory}</h3><CatalogueLabelEditor locale={locale} kind="category" onSaved={onCategorySaved} /><button type="button" onClick={()=>{setAddCategory(false);document.getElementById('group-category')?.focus();}} className="mt-3 min-h-11 font-bold text-teal underline">{t.backToGroup}</button></section>}
   </div>;
 }
 
