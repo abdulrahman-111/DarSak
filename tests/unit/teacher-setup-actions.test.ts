@@ -99,3 +99,42 @@ describe('teacher group draft action', () => {
     expect(writes).toEqual([]);
   });
 });
+
+
+describe('unified group details save', () => {
+  beforeEach(() => { createClientMock.mockReset(); revalidatePathMock.mockReset(); });
+  const learning = {
+    learning_details: '1', outcomes: 'Build useful programs', prerequisites: 'No experience needed',
+    delivery_mode: 'online', fee_egp: '150', fee_basis: 'month', fee_includes: 'Practice sheets',
+    expected_learning_updated_at: '',
+  };
+  it('saves basics and learning information together in one atomic RPC from first creation', async () => {
+    const {rpc, writes} = setup();
+    const result = await saveGroupDraft('en', 'draft', null, form({...fields,...learning}));
+    expect(rpc).toHaveBeenCalledWith('save_teacher_group_details', {
+      p_group_id: null, p_subject_id: subjectId, p_category_id: categoryId,
+      p_name: 'Algebra group', p_description: 'weekly', p_capacity: 12, p_location: 'Room 2',
+      p_expected_updated_at: null, p_expected_learning_updated_at: null,
+      p_learning_values: {outcomes:'Build useful programs',prerequisites:'No experience needed',delivery_mode:'online',fee_egp:150,fee_basis:'month',fee_includes:'Practice sheets'},
+    });
+    expect(rpc).not.toHaveBeenCalledWith('save_teacher_group_draft',expect.anything());
+    expect(writes).toEqual([]);
+    expect(result?.id).toBe(groupId);
+  });
+  it('rejects an incomplete fee before any database work and identifies the field', async () => {
+    const result=await saveGroupDraft('en','draft',null,form({...fields,...learning,fee_basis:''}));
+    expect(result?.fieldErrors).toHaveProperty('fee_basis');
+    expect(createClientMock).not.toHaveBeenCalled();
+  });
+  it('preserves both exact version tokens for an existing published group',async()=>{
+    const {rpc}=setup();
+    await saveGroupDraft('ar','published-edit',null,form({...fields,...learning,group_id:groupId,expected_updated_at:exactTimestamp,expected_learning_updated_at:exactTimestamp}));
+    expect(rpc).toHaveBeenCalledWith('save_teacher_group_details',expect.objectContaining({p_group_id:groupId,p_expected_updated_at:exactTimestamp,p_expected_learning_updated_at:exactTimestamp}));
+  });
+  it('allows every optional learning field to remain blank',async()=>{
+    const {rpc}=setup();
+    const result=await saveGroupDraft('en','draft',null,form({...fields,learning_details:'1',outcomes:'',prerequisites:'',delivery_mode:'',fee_egp:'',fee_basis:'',fee_includes:''}));
+    expect(result?.id).toBe(groupId);
+    expect(rpc).toHaveBeenCalledWith('save_teacher_group_details',expect.objectContaining({p_learning_values:{outcomes:'',prerequisites:'',delivery_mode:null,fee_egp:null,fee_basis:null,fee_includes:''}}));
+  });
+});

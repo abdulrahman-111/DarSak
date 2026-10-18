@@ -6,6 +6,7 @@ import type { Locale } from '@/features/student/domain';
 import { groupDetailsFieldErrors, groupDetailsSchema, groupScheduleSlotFieldErrors, groupScheduleSlotSchema } from './setup-domain';
 import { idSchema } from '@/features/student/domain';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
+import { groupLearningDetailsSchema } from './group-learning-domain';
 import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export type GroupDraftActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; id?: string; updated_at?: string } | null;
@@ -25,6 +26,19 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
   if (!parsed.success) return {
     error: message(locale, 'Please check the highlighted fields.', 'يرجى مراجعة الحقول المحددة.'),
     fieldErrors: groupDetailsFieldErrors(parsed.error),
+  };
+
+  // Older clients may still save the basic form. The current setup always sends
+  // learning_details and commits both sections through one database transaction.
+  const includeLearning = form.get('learning_details') === '1';
+  const learning = includeLearning ? groupLearningDetailsSchema.safeParse({
+    outcomes: form.get('outcomes') ?? '', prerequisites: form.get('prerequisites') ?? '',
+    delivery_mode: form.get('delivery_mode') ?? '', fee_egp: form.get('fee_egp') ?? '',
+    fee_basis: form.get('fee_basis') ?? '', fee_includes: form.get('fee_includes') ?? '',
+  }) : null;
+  if (learning && !learning.success) return {
+    error: message(locale, 'Check the highlighted learning details. Enter both a fee and its unit, or leave both blank.', 'راجع تفاصيل التعلم المحددة. أدخل الرسوم ووحدتها معًا أو اتركهما فارغين.'),
+    fieldErrors: Object.fromEntries(learning.error.issues.map(issue => [String(issue.path[0]), issue.message])),
   };
 
   const rawId = form.get('group_id');
@@ -49,7 +63,7 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
   if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
   const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
 
-  const { data: savedId, error } = await db.rpc('save_teacher_group_draft', {
+  const { data: savedId, error } = await db.rpc(includeLearning ? 'save_teacher_group_details' : 'save_teacher_group_draft', {
     p_group_id: id,
     p_subject_id: parsed.data.subject_id,
     p_category_id: parsed.data.category_id,
@@ -58,6 +72,10 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
     p_capacity: parsed.data.capacity,
     p_location: parsed.data.location,
     p_expected_updated_at: id ? expectedUpdatedAt : null,
+    ...(learning?.success ? {
+      p_learning_values: learning.data,
+      p_expected_learning_updated_at: form.get('expected_learning_updated_at') || null,
+    } : {}),
   });
   if (error) {
     const raw = error.message.toLowerCase();
