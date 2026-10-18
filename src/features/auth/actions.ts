@@ -1,4 +1,5 @@
 'use server';
+import { observeOperation } from '@/features/monitoring/server';
 import { redirect } from 'next/navigation';
 import { after } from 'next/server';
 import { flushEmailOutbox } from '@/features/email/worker';
@@ -97,14 +98,14 @@ export async function signupAction(locale: string, _previous: unknown, formData:
     return { error: authErrorMessage(locale, undefined, 'signup'), ...signupEcho(formData) };
   }
   if (emailRegistered) return { error: authErrorMessage(locale, 'user_already_exists', 'signup'), ...signupEcho(formData) };
-  const { data, error } = await db.auth.signUp({
+  const { data, error } = await observeOperation('signup',locale,()=>db.auth.signUp({
     email, password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName, requested_role: parsed.data.role },
       emailRedirectTo: callbackUrl(`/${locale}/dashboard`),
       ...captchaOptions(formData),
     },
-  });
+  }));
   if (error) return { error: authErrorMessage(locale, error.code, 'signup'), ...signupEcho(formData) };
   // Supabase can return an obfuscated existing account with no identity and no error.
   if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
@@ -156,7 +157,7 @@ export async function chooseGoogleRoleAction(locale: string, formData: FormData)
     }
     redirect(loginRedirectPath(locale, null, profile));
   }
-  const { data: completedRole, error: completionError } = await db.rpc('complete_google_signup', { p_role: requestedRole });
+  const { data: completedRole, error: completionError } = await observeOperation('google_setup',locale,()=>db.rpc('complete_google_signup', { p_role: requestedRole }));
   if (completionError || !['student', 'teacher', 'admin'].includes(completedRole)) redirect(`/${locale}/login?error=setup&google_role=${requestedRole}`);
   if (completedRole === 'teacher') after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
   if (completedRole !== requestedRole) redirect(`/${locale}/login?error=role-mismatch&requested=${requestedRole}&actual=${completedRole}`);
@@ -257,7 +258,7 @@ export async function verifySignupCodeAction(locale: string, _previous: unknown,
     return { error: authCopy[locale as Locale].codeInvalid, ...emailEcho(formData) };
   }
   const db = await createClient();
-  const { data, error } = await db.auth.verifyOtp({ email: parsed.data.email, token, type: 'signup' });
+  const { data, error } = await observeOperation('verify_email',locale,()=>db.auth.verifyOtp({ email: parsed.data.email, token, type: 'signup' }));
   // Keep invalid, expired, and mismatched codes indistinguishable.
   if (error?.code && SURFACED_EMAIL_ERRORS.has(error.code)) return { error: authErrorMessage(locale, error.code, 'signup'), ...emailEcho(formData) };
   if (error || !data.session || !data.user) return { error: authCopy[locale as Locale].codeInvalid, ...emailEcho(formData) };
