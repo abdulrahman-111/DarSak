@@ -43,7 +43,7 @@ describe('role navigation shell', () => {
 
     mocks.pathname = '/ar/student/saved';
     const student = renderToStaticMarkup(<PlatformShell locale="ar" role="student" name="طالبة"><main>Saved</main></PlatformShell>);
-    expect(student).toContain('مساحة الطالب · المجموعات المحفوظة');
+    expect(student).toContain('مساحة الطالب · المحفوظات');
   });
 
   it('shows a localized unread count in the shared notification link', () => {
@@ -52,7 +52,7 @@ describe('role navigation shell', () => {
     expect(html).toContain('href="/ar/notifications"');
     expect(html).toContain('aria-label="4 غير مقروء"');
     expect(html).toContain('>4</span>');
-    expect(html).toContain('مساحة الطالب · نظرة عامة');
+    expect(html).toContain('مساحة الطالب · مساحة التعلم');
     expect(html).toContain('4 إشعارات غير مقروءة');
     expect(html).toContain('aria-hidden="true" class="shrink-0 rounded-full bg-orange');
   });

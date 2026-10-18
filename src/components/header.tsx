@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { ActiveLink } from './active-link';
+import { StudentHeaderNavigation } from './student-header-navigation';
 import { Suspense } from 'react';
 import { Globe2, Search } from 'lucide-react';
 import { logoutAction } from '@/features/auth/actions';
@@ -35,14 +36,14 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           <Image src={locale === 'ar' ? '/brand/darsak/the-header-logo-arabic.svg' : '/brand/darsak/english-header-lockup.svg'} alt={t.brand} width={180} height={44} priority className="h-11 w-auto max-w-[min(45vw,180px)] object-contain" />
         </Link>
 
-        <nav className="hidden items-center gap-6 text-sm font-bold text-[#4d473f] md:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
+        <StudentHeaderNavigation locale={locale} enabled={activeRole==='student'}><nav className="hidden items-center gap-6 text-sm font-bold text-[#4d473f] md:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
           {showDiscovery && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}>{t.discover}</ActiveLink>}
           {!me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
           {showPricing && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/pricing`}>{pricingLabel}</ActiveLink>}
           {activeRole && <ActiveLink exact className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
           {me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
-        </nav>
+        </nav></StudentHeaderNavigation>
 
         <div className="ms-auto flex items-center gap-2">
           <Suspense fallback={<span aria-hidden="true" className="grid size-10 place-items-center rounded-xl border border-[#d8ccb8] text-teal"><Globe2 size={16}/></span>}>
@@ -63,7 +64,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
             </>
           )}
         </div>
-        <nav className="flex w-full flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#e3d9c8] pt-3 text-sm font-bold text-[#4d473f] md:hidden" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
+        <StudentHeaderNavigation locale={locale} enabled={activeRole==='student'}><nav className="flex w-full flex-wrap items-center gap-x-5 gap-y-2 border-t border-[#e3d9c8] pt-3 text-sm font-bold text-[#4d473f] md:hidden" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
           {showDiscovery && <ActiveLink className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}><Search size={16}/>{t.discover}</ActiveLink>}
           {!me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-2 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
           {showPricing && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-2 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/pricing`}>{pricingLabel}</ActiveLink>}
@@ -71,7 +72,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           {me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-2 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-2 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
           {!me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-2 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/login`}>{t.login}</ActiveLink>}
-        </nav>
+        </nav></StudentHeaderNavigation>
       </div>
     </header>
   );

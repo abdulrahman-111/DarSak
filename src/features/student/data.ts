@@ -12,6 +12,7 @@ export type Teacher={id:string;full_name:string;headline:string;bio:string};
 export type Group={id:string;teacher_id:string;name:string;description:string;capacity:number;status:string;location:string;available_seats?:number;accepted_count?:number;next_lesson_at?:string|null;offering:{id:string;subject:Named;node:Named}|null};
 export type Slot={id:string;group_id:string;weekday:number;start_time:string;end_time:string;timezone:string};
 export type Enrollment={id:string;group_id:string;status:string;updated_at:string;group:{id:string;name:string;status:string;location:string|null;can_view:boolean}|null};
+export type DashboardClass={id:string;group_id:string;group:{id:string;name:string;status:string;location:string|null}|null};
 export type Lesson={id:string;group_id:string;title:string;starts_at:string;ends_at:string;status:string;notes?:string|null;group?:{name?:string}|{name?:string}[]|null};
 export type Material={id:string;lesson_id:string;kind:string;title:string;url:string|null;content:string|null;storage_path:string|null};
 export async function studentLearningProfile(viewer: { db: Awaited<ReturnType<typeof createClient>>; id: string; fullName?: string }) {
@@ -76,14 +77,15 @@ export async function studentDashboard(locale:Locale,now=new Date()){
  const me=await student(locale),timestamp=now.toISOString();
  const learning=await studentLearningProfile(me);
  if(learning.profile?.onboarding_required&&!learning.profile.onboarding_completed_at)redirect(`/${locale}/account/setup`);
- if(!learning.profile)return {acceptedCount:0,pendingCount:0,upcomingCount:0,lessons:[] as Lesson[],learningProfile:null,error:true};
- const [accepted,pending,upcoming]=await Promise.all([
+ if(!learning.profile)return {acceptedCount:0,pendingCount:0,upcomingCount:0,lessons:[] as Lesson[],learningProfile:null,classes:[] as DashboardClass[],error:true};
+ const [accepted,pending,upcoming,classes]=await Promise.all([
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','accepted'),
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','pending'),
   me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,enrollments!inner(id))',{count:'exact'}).eq('status','scheduled').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').gt('ends_at',timestamp).order('starts_at').order('id').limit(5),
+  me.db.from('enrollments').select('id,group_id,group:groups!inner(id,name,status,location)').eq('student_id',me.id).eq('status','accepted').order('updated_at',{ascending:false}).order('id').limit(4),
  ]);
- const error=!!(accepted.error||pending.error||upcoming.error||accepted.count==null||pending.count==null||upcoming.count==null);
- return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,upcomingCount:upcoming.count??0,lessons:(upcoming.data||[]) as Lesson[],learningProfile:learning.profile,error};
+ const error=!!(accepted.error||pending.error||upcoming.error||classes.error||accepted.count==null||pending.count==null||upcoming.count==null);
+ return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,upcomingCount:upcoming.count??0,lessons:(upcoming.data||[]) as Lesson[],learningProfile:learning.profile,classes:(classes.data??[]) as unknown as DashboardClass[],error};
 }
 export async function studentClasses(locale:Locale,pageInput:unknown=1){
  const me=await student(locale);
