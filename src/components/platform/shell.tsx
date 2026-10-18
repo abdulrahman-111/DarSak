@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import {LayoutDashboard,BookOpen,CalendarDays,FolderOpen,Compass,Bookmark,Bell,UserRound,Flag,UsersRound,ClipboardList,GraduationCap,LibraryBig,MessageSquareText} from 'lucide-react';
-import { ActiveLink, MobileNavigationSummary } from '@/components/active-link';
+import { ActiveLink } from '@/components/active-link';
 import type { PlatformRole } from './access';
 
 type NavItem = { href: string; label: string };
@@ -61,21 +61,12 @@ function itemLabel(item: NavItem, unreadCount: number|null, locale:string,role?:
 export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {
   const ar = locale === 'ar';
   const items = platformNavigation(locale, role);
-  const roleName = role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher workspace') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student workspace');
-  return <div className="container grid grid-cols-1 gap-7 py-8 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start">
-    <aside className="min-w-0 rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:p-4">
+  return <div className="container grid grid-cols-1 gap-3 py-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:py-8">
+    <aside className="hidden min-w-0 rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:block lg:p-4">
       <Link href={`/${locale}/${role}`} aria-label={ar ? 'درسك' : 'DarSak'} className="hidden items-center gap-3 px-3 py-3 lg:flex">
         <Image src="/brand/darsak/favicon.svg" alt={ar ? 'درسك' : 'DarSak'} width={40} height={40} className="size-10 rounded-xl" />
         <span><strong className="block text-lg">{ar ? 'درسك' : 'DarSak'}</strong><small className="text-cream/65">{role === 'teacher' ? (ar ? 'مساحة المعلم' : 'Teacher space') : role === 'admin' ? (ar ? 'الإدارة' : 'Administration') : (ar ? 'مساحة الطالب' : 'Student space')}</small></span>
       </Link>
-      <details className="group lg:hidden">
-        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden">
-          <MobileNavigationSummary items={items} role={role} roleLabel={roleName} name={name} locale={locale} unreadCount={unreadCount}/>
-        </summary>
-        <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? `تنقل ${role === 'admin' ? 'الإدارة' : role === 'teacher' ? 'المعلم' : 'الطالب'}` : `${role === 'admin' ? 'Administration' : role === 'teacher' ? 'Teacher' : 'Student'} navigation`}>
-          {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale,role)}</ActiveLink>)}
-        </nav>
-      </details>
       <nav className="mt-5 hidden gap-2 pb-2 lg:grid" aria-label={ar ? `تنقل ${role === 'admin' ? 'الإدارة' : role === 'teacher' ? 'المعلم' : 'الطالب'}` : `${role === 'admin' ? 'Administration' : role === 'teacher' ? 'Teacher' : 'Student'} navigation`}>
         {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale,role)}</ActiveLink>)}
       </nav>

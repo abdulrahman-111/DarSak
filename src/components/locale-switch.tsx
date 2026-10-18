@@ -7,9 +7,10 @@ import { discoverySearchParams, normalizeDiscoveryFilters, preserveTeacherSearch
 import { switchLocaleReturnParams } from '@/features/auth/return-path';
 import type { Locale } from '@/i18n/config';
 
-export function LocaleSwitch({ otherLocale, label, ariaLabel }: {
+export function LocaleSwitch({ otherLocale, label, shortLabel, ariaLabel }: {
   otherLocale: Locale;
   label: string;
+  shortLabel: string;
   ariaLabel: string;
 }) {
   const pathname = usePathname();
@@ -28,13 +29,13 @@ export function LocaleSwitch({ otherLocale, label, ariaLabel }: {
 
   return (
     <Link
-      className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-[#d8ccb8] px-2.5 text-xs font-bold text-teal transition hover:bg-[#efe6d5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:px-3 sm:text-sm"
+      className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-[#d8ccb8] px-2 text-xs font-bold text-teal transition hover:bg-[#efe6d5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:gap-1.5 sm:px-3 sm:text-sm"
       href={href}
       hrefLang={otherLocale}
       aria-label={ariaLabel}
       title={ariaLabel}
     >
-      <Globe2 size={16}/><span>{label}</span>
+      <Globe2 size={16}/><span className="sm:hidden">{shortLabel}</span><span className="hidden sm:inline">{label}</span>
     </Link>
   );
 }

@@ -56,6 +56,24 @@ describe('public discovery filter normalization', () => {
     expect(normalizeDiscoveryFilters({ weekday: ['0', '4'], page: ['2', '3'] })).toMatchObject({ weekday: 0, page: 2 });
   });
 
+  it('preserves canonical seeded catalogue UUIDs through normalization, URL serialization, and RPC args', () => {
+    const subjectId = '00000000-0000-0000-0000-000000000102';
+    const nodeId = '00000000-0000-0000-0000-000000000021';
+    const teacherId = '00000000-0000-0000-0000-000000000103';
+    const filters = normalizeDiscoveryFilters(new URLSearchParams({ subject_id: subjectId, node_id: nodeId, teacher_id: teacherId }));
+    expect(filters).toMatchObject({ subjectId, nodeId, teacherId });
+    expect(discoverySearchParams(filters).toString()).toBe(`subject_id=${subjectId}&node_id=${nodeId}&teacher_id=${teacherId}`);
+    expect(discoveryRpcArgs(filters)).toMatchObject({ p_subject_id: subjectId, p_node_id: nodeId, p_teacher_id: teacherId });
+  });
+
+  it('continues to reject invalid hexadecimal UUIDs and short UUID strings', () => {
+    expect(normalizeDiscoveryFilters({
+      subject_id: '00000000-0000-0000-0000-00000000010g',
+      node_id: '00000000-0000-0000-0000-00000000021',
+      teacher_id: 'not-a-uuid',
+    })).toMatchObject({ subjectId: null, nodeId: null, teacherId: null });
+  });
+
   it('requests one extra row while keeping stable twelve-row page offsets', () => {
     const filters = normalizeDiscoveryFilters({ page: '4', has_seats: 'true' });
     expect(discoveryRpcArgs(filters)).toMatchObject({ p_offset: 36, p_limit: 13, p_has_seats: true });
