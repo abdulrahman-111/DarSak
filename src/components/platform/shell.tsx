@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
+import {LayoutDashboard,BookOpen,CalendarDays,FolderOpen,Compass,Bookmark,Bell,UserRound,Flag} from 'lucide-react';
 import { ActiveLink, MobileNavigationSummary } from '@/components/active-link';
 import type { PlatformRole } from './access';
 
@@ -37,21 +38,24 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
     notifications,
   ];
   return [
-    { href: `/${locale}/student`, label: ar ? 'نظرة عامة' : 'Overview' },
+    { href: `/${locale}/student`, label: ar ? 'مساحة التعلم' : 'Learning home' },
     { href: `/${locale}/student/classes`, label: ar ? 'مجموعاتي' : 'My classes' },
-    { href: `/${locale}/student/saved`, label: ar ? 'المجموعات المحفوظة' : 'Saved groups' },
-    { href: `/${locale}/timetable`, label: ar ? 'الجدول الأسبوعي' : 'Weekly timetable' },
-    { href: `/${locale}/student/materials`, label: ar ? 'المواد' : 'Materials' },
-    { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Discover' },
-    { href: `/${locale}/account`, label: ar ? 'الحساب' : 'Account' },
-    reportProblem,
+    { href: `/${locale}/timetable`, label: ar ? 'الجدول الدراسي' : 'Timetable' },
+    { href: `/${locale}/student/materials`, label: ar ? 'مكتبة التعلم' : 'Learning library' },
+    { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Explore' },
+    { href: `/${locale}/student/saved`, label: ar ? 'المحفوظات' : 'Saved groups' },
     notifications,
+    { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
+    reportProblem,
   ];
 }
 
-function itemLabel(item: NavItem, unreadCount: number|null, locale:string) {
+function itemLabel(item: NavItem, unreadCount: number|null, locale:string,role?:PlatformRole) {
   const ar=locale==='ar';
-  return <span className="flex min-w-0 items-center justify-between gap-2"><span className="truncate">{item.label}</span>{item.href.endsWith('/notifications') && unreadCount!==null && unreadCount>0 && <span aria-label={ar?`${unreadCount} غير مقروء`:`${unreadCount} unread`} className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}</span>;
+  const path=item.href.split('/').at(-1);
+  const icons:Record<string,typeof BookOpen>={student:LayoutDashboard,classes:BookOpen,timetable:CalendarDays,materials:FolderOpen,teachers:Compass,saved:Bookmark,notifications:Bell,account:UserRound,reports:Flag};
+  const Icon=role==='student'?icons[path??'']:null;
+  return <span className="flex w-full min-w-0 items-center justify-between gap-2"><span className="flex min-w-0 items-center gap-3">{Icon&&<Icon size={17} aria-hidden="true" className="shrink-0"/>}<span className="truncate">{item.label}</span></span>{item.href.endsWith('/notifications') && unreadCount!==null && unreadCount>0 && <span aria-label={ar?`${unreadCount} غير مقروء`:`${unreadCount} unread`} className="shrink-0 rounded-full bg-orange px-2 py-0.5 text-xs font-black text-white">{unreadCount>99?'99+':unreadCount}</span>}</span>;
 }
 
 export function PlatformShell({ locale, role, name, unreadCount=null, children }: { locale: string; role: PlatformRole; name: string; unreadCount?: number|null; children: React.ReactNode }) {
@@ -69,11 +73,11 @@ export function PlatformShell({ locale, role, name, unreadCount=null, children }
           <MobileNavigationSummary items={items} role={role} roleLabel={roleName} name={name} locale={locale} unreadCount={unreadCount}/>
         </summary>
         <nav className="grid gap-1 px-1 pb-1 pt-2" aria-label={ar ? `تنقل ${role === 'admin' ? 'الإدارة' : role === 'teacher' ? 'المعلم' : 'الطالب'}` : `${role === 'admin' ? 'Administration' : role === 'teacher' ? 'Teacher' : 'Student'} navigation`}>
-          {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
+          {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale,role)}</ActiveLink>)}
         </nav>
       </details>
       <nav className="mt-5 hidden gap-2 pb-2 lg:grid" aria-label={ar ? `تنقل ${role === 'admin' ? 'الإدارة' : role === 'teacher' ? 'المعلم' : 'الطالب'}` : `${role === 'admin' ? 'Administration' : role === 'teacher' ? 'Teacher' : 'Student'} navigation`}>
-        {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale)}</ActiveLink>)}
+        {items.map(item => <ActiveLink key={item.href} href={item.href} exact={item.href===`/${locale}/${role}`} className="flex min-h-11 min-w-0 items-center rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream" activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal">{itemLabel(item,unreadCount,locale,role)}</ActiveLink>)}
       </nav>
       <div className="mt-5 hidden rounded-2xl bg-black/10 px-3 py-3 text-sm lg:block"><span className="block truncate font-bold">{name}</span><span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span></div>
     </aside>

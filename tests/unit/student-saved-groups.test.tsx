@@ -26,6 +26,6 @@ describe('student saved groups', () => {
     const english = renderToStaticMarkup(<PlatformShell locale="en" role="student" name="Learner">{null}</PlatformShell>);
     const arabic = renderToStaticMarkup(<PlatformShell locale="ar" role="student" name="طالب">{null}</PlatformShell>);
     expect(english).toContain('Saved groups');
-    expect(arabic).toContain('المجموعات المحفوظة');
+    expect(arabic).toContain('المحفوظات');
   });
 });
