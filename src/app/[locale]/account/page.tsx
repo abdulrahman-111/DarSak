@@ -28,7 +28,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
     { href: 'delete', title: ar ? 'حذف الحساب' : 'Delete account', body: ar ? 'راجع خيارات حذف الحساب وآثاره.' : 'Review account deletion and its effects.' },
   ];
 
-  return <div className="container py-8">
+  return <div>
     <ScreenTitle eyebrow={ar ? 'حسابك' : 'Your account'} title={ar ? 'إعدادات الحساب' : 'Account settings'} description={ar ? 'إدارة بياناتك الشخصية وإعدادات حسابك.' : 'Manage your personal details and account settings.'}/>
     <div className="grid gap-4 sm:grid-cols-2">
       {[...links, ...common].map(item => <Panel key={item.href} className="flex min-h-36 flex-col">
