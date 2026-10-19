@@ -24,7 +24,7 @@ export default async function Register({
   return (
     <div className="bg-[#f6f0e4]">
       <div className="container grid gap-8 py-10 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.72fr)] md:items-start md:py-16">
-        <section className="rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 sm:p-9">
+        <section className="min-w-0 rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 sm:p-9">
           <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{copy.createEyebrow}</p>
           <h1 className="mt-3 text-4xl font-black tracking-[-.03em] text-teal md:text-5xl">{copy.createTitle}</h1>
           <p className="mt-4 max-w-xl leading-7 text-[#4d473f]">{copy.createBody}</p>

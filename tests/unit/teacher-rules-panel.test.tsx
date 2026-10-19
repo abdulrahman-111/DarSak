@@ -8,13 +8,25 @@ describe('teacher rules consent presentation',()=>{
     const html=renderToStaticMarkup(<TeacherRulesPanel locale={locale} showAcceptance/>);
     expect(html).toContain('name="teacher_rules"');
     expect(html).not.toContain('checked=""');
+    expect(html).toContain('<details');
+    expect(html).toContain(TEACHER_RULES_TEXT[locale].fullRules);
+    expect(html.indexOf('</details>')).toBeLessThan(html.indexOf('name="teacher_rules"'));
+    for(const theme of TEACHER_RULES_TEXT[locale].themes) expect(html).toContain(theme);
     for(const rule of TEACHER_RULES_TEXT[locale].rules) expect(html).toContain(rule);
     expect(html).toContain(TEACHER_RULES_TEXT[locale].acceptance);
     expect(TEACHER_RULES_VERSION).toBe('2026-10-18');
   });
-  it('displays rules at signup without implying consent was already given',()=>{
+  it('displays the compact standards and full-rules disclosure at signup without implying consent',()=>{
     const html=renderToStaticMarkup(<TeacherRulesPanel locale="en"/>);
-    expect(html).toContain('before submitting your teacher application');
+    expect(html).toContain(TEACHER_RULES_TEXT.en.intro);
+    expect(html).toContain(TEACHER_RULES_TEXT.en.fullRules);
     expect(html).not.toContain('type="checkbox"');
+  });
+  it('keeps the independent acceptance checkbox disabled and shows the required message when requested',()=>{
+    const html=renderToStaticMarkup(<TeacherRulesPanel locale="ar" showAcceptance disabled error/>);
+    expect(html).toContain('name="teacher_rules"');
+    expect(html).toContain('disabled=""');
+    expect(html).toContain(TEACHER_RULES_TEXT.ar.required);
+    expect(html).toContain('role="alert"');
   });
 });

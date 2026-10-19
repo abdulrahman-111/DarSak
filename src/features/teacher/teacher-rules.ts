@@ -2,8 +2,10 @@ export const TEACHER_RULES_VERSION = '2026-10-18';
 
 export const TEACHER_RULES_TEXT = {
   en: {
-    title: 'Teacher rules',
-    intro: 'These standards help keep DarSak safe and reliable for learners and teachers. You will be asked to accept them before submitting your teacher application:',
+    title: 'Teaching standards',
+    intro: 'Before submitting your teacher application, review these standards for accurate profiles, protected contact details, and respectful, reliable teaching.',
+    themes: ['Keep your profile accurate', 'Share contact details after enrollment is accepted', 'Teach respectfully and reliably'],
+    fullRules: 'Read all six teacher rules',
     rules: [
       'Keep your profile, qualifications, experience, subjects, fees, and schedules accurate and current. Do not impersonate anyone or make misleading claims.',
       'Manage enrollment requests through DarSak. Add phone, WhatsApp and contact email in their designated profile fields; these are shared with learners only after enrollment is accepted.',
@@ -16,8 +18,10 @@ export const TEACHER_RULES_TEXT = {
     required: 'Accept the Teacher rules to continue.',
   },
   ar: {
-    title: 'قواعد المعلمين',
-    intro: 'تساعد هذه المعايير في الحفاظ على أمان وموثوقية دارسَك للمتعلمين والمعلمين. ستُطلب موافقتك عليها قبل إرسال طلبك كمعلم:',
+    title: 'معايير التدريس',
+    intro: 'راجع هذه المعايير قبل إرسال طلبك كمعلم: ملف دقيق، وبيانات تواصل محمية، وتعليم محترم وموثوق.',
+    themes: ['حافظ على دقة ملفك', 'شارك بيانات التواصل بعد قبول التسجيل', 'قدّم تعليمًا محترمًا وموثوقًا'],
+    fullRules: 'اقرأ قواعد المعلمين الست كاملة',
     rules: [
       'احرص على دقة وحداثة بيانات ملفك ومؤهلاتك وخبراتك والمواد والرسوم والمواعيد. لا تنتحل شخصية أحد أو تقدم معلومات مضللة.',
       'تابع طلبات الانضمام عبر دارسَك. أضف الهاتف وواتساب وبريد التواصل في الحقول المخصصة بالملف؛ تُتاح للمتعلمين بعد قبول طلب الانضمام فقط.',

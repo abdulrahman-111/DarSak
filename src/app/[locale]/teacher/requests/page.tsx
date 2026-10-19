@@ -22,7 +22,7 @@ export default async function TeacherRequests({params,searchParams}:{params:Prom
       : <>
         <TeacherRosterFilterForm locale={locale} path="requests" query={data.query} groupId={data.groupId} groups={data.groups}/>
         {data.requests.length
-          ? <div className="grid gap-4 md:grid-cols-2">{data.requests.map(row=><Panel key={row.enrollment_id}><div className="flex items-start justify-between gap-3"><div><h2 className="font-black text-teal">{row.full_name}</h2><p className="mt-1 text-sm text-muted">{row.group_name}</p></div><Status value={row.status} locale={locale}/></div><EnrollmentDecisionButtons locale={locale} id={row.enrollment_id} status={row.status}/></Panel>)}</div>
+          ? <div className="grid min-w-0 gap-4 md:grid-cols-2">{data.requests.map(row=><Panel key={row.enrollment_id} className="min-w-0"><div className="flex min-w-0 items-start justify-between gap-3"><div className="min-w-0 flex-1"><h2 className="break-words font-black text-teal [overflow-wrap:anywhere]">{row.full_name}</h2><p className="mt-1 break-words text-sm text-muted [overflow-wrap:anywhere]">{row.group_name}</p></div><div className="shrink-0"><Status value={row.status} locale={locale}/></div></div><EnrollmentDecisionButtons locale={locale} id={row.enrollment_id} status={row.status}/></Panel>)}</div>
           : <EmptyState>{copy.empty}</EmptyState>}
         <StudentPagination locale={locale} href={`/${locale}/teacher/requests`} page={data.page} pageCount={data.pageCount} labels={copy} preserve={{q:data.query||undefined,group_id:data.groupId||undefined}}/>
       </>}

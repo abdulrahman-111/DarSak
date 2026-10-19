@@ -1,7 +1,7 @@
 vi.mock('@/features/monitoring/server',()=>({observeOperation:(_operation:unknown,_locale:unknown,run:()=>unknown)=>run()}));
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, getVerifiedUserMock, getVerifiedRecoveryUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock, signupAvailabilityMock, recoveryCookieDeleteMock, isolatedClientMock } = vi.hoisted(() => ({
+const { createClientMock, getVerifiedUserMock, getVerifiedRecoveryUserMock, isConfiguredMock, redirectMock, afterMock, onboardingDestinationMock, signupAvailabilityMock, recoveryCookieDeleteMock, isolatedClientMock, requestOriginMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   getVerifiedUserMock: vi.fn(),
   getVerifiedRecoveryUserMock: vi.fn(),
@@ -12,9 +12,10 @@ const { createClientMock, getVerifiedUserMock, getVerifiedRecoveryUserMock, isCo
   signupAvailabilityMock: vi.fn(async (): Promise<{ data: boolean | null; error: { message: string } | null }> => ({ data: false, error: null })),
   recoveryCookieDeleteMock: vi.fn(),
   isolatedClientMock: vi.fn(),
+  requestOriginMock: { value: 'https://dars.example' as string | null },
 }));
 vi.mock('@supabase/supabase-js', () => ({ createClient: isolatedClientMock }));
-vi.mock('next/headers', () => ({ cookies: async () => ({ delete: recoveryCookieDeleteMock }) }));
+vi.mock('next/headers', () => ({ cookies: async () => ({ delete: recoveryCookieDeleteMock }), headers: async () => new Headers(requestOriginMock.value === null ? undefined : { origin: requestOriginMock.value }) }));
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: createClientMock,
@@ -55,6 +56,7 @@ describe('auth actions', () => {
     signupAvailabilityMock.mockReset().mockResolvedValue({ data: false, error: null });
     onboardingDestinationMock.mockReset().mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
     isConfiguredMock.mockReturnValue(true);
+    requestOriginMock.value = 'https://dars.example';
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://dars.example');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://db.example');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'public-key');
@@ -403,6 +405,14 @@ describe('auth actions', () => {
       });
     });
 
+    it('moves alternate-host login attempts to the canonical login before creating a client', async () => {
+      vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
+      requestOriginMock.value = 'https://www.dars.example';
+      const result = await redirectTarget(() => googleSignInAction('en', null, form({ next: '/en/classes/00000000-0000-4000-8000-000000000000' })));
+      expect(result).toBe('https://dars.example/en/login?next=%2Fen%2Fclasses%2F00000000-0000-4000-8000-000000000000');
+      expect(createClientMock).not.toHaveBeenCalled();
+    });
+
     it('passes an allowlisted signup role to the callback without provider authorization parameters', async () => {
       vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
       const signInWithOAuth = vi.fn(async () => ({ data: { url: 'https://accounts.google.com/o/oauth2' }, error: null }));
@@ -412,6 +422,22 @@ describe('auth actions', () => {
         provider: 'google',
         options: { redirectTo: 'https://dars.example/api/auth/callback?next=/en/dashboard&google_role=teacher' },
       });
+    });
+
+    it('preserves the signup role and safe next path on the canonical signup entry', async () => {
+      vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
+      requestOriginMock.value = 'http://dars.example';
+      const result = await redirectTarget(() => googleSignInAction('ar', null, form({ google_role: 'teacher', next: '/ar/groups/00000000-0000-4000-8000-000000000000' })));
+      expect(result).toBe('https://dars.example/ar/register?role=teacher&next=%2Far%2Fgroups%2F00000000-0000-4000-8000-000000000000');
+      expect(createClientMock).not.toHaveBeenCalled();
+    });
+
+    it('fails closed on a malformed Origin without creating a client', async () => {
+      vi.stubEnv('NEXT_PUBLIC_AUTH_GOOGLE_ENABLED', 'true');
+      requestOriginMock.value = 'null';
+      const result = await googleSignInAction('en', null, form({}));
+      expect(result?.error).toBeTruthy();
+      expect(createClientMock).not.toHaveBeenCalled();
     });
 
     it('rejects a malformed signup role before starting OAuth', async () => {

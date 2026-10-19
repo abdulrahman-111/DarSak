@@ -6,12 +6,18 @@ import { buildTeacherSetupTasks, cairoDayBounds, teacherDashboardError } from '.
 import { clampTeacherPage, normalizeTeacherPage, TEACHER_PAGE_SIZE, teacherPageCount, teacherPageOffset } from './enrollment-pagination';
 import { normalizeRosterFilters } from './roster-filters';
 
-export async function teacherViewer(locale: Locale) {
+export async function teacherIdentity(locale: Locale) {
   const { db, user, profile } = await getRequestViewer();
   if (!user) redirect(`/${locale}/login`);
   if (!profile || profile.role !== 'teacher' || profile.status !== 'active') redirect(`/${locale}/dashboard`);
-  const { data: teacher, error: teacherError } = await db.from('teacher_profiles').select('headline,bio,approved,avatar_path,cover_path').eq('id', user.id).maybeSingle();
-  return { db, id: user.id, profile, teacher, teacherError };
+  return { db, id: user.id, profile };
+}
+
+export async function teacherViewer(locale: Locale) {
+  const identity = await teacherIdentity(locale);
+  const { db, id } = identity;
+  const { data: teacher, error: teacherError } = await db.from('teacher_profiles').select('headline,bio,approved,avatar_path,cover_path').eq('id', id).maybeSingle();
+  return { ...identity, teacher, teacherError };
 }
 
 type OwnedGroup = { id: string; name: string; capacity: number; status: string; location: string; description: string; offering: unknown };
@@ -20,7 +26,7 @@ type GroupStudentRow = { enrollment_id: string; student_id: string; full_name: s
 type TeacherEnrollmentPage = { rows: GroupStudentRow[]; total: number };
 type TeacherGroupChoice = { id: string; name: string; status: string };
 
-async function teacherFilteredEnrollmentPage(me: Awaited<ReturnType<typeof teacherViewer>>, status: 'pending' | 'accepted', requestedPage: unknown, query: unknown, groupId: unknown) {
+async function teacherFilteredEnrollmentPage(me: Awaited<ReturnType<typeof teacherIdentity>>, status: 'pending' | 'accepted', requestedPage: unknown, query: unknown, groupId: unknown) {
   const filters = normalizeRosterFilters(query, groupId);
   const requested = normalizeTeacherPage(requestedPage);
   const [pageResult, groupsResult] = await Promise.all([
@@ -225,13 +231,13 @@ export async function teacherOverview(locale: Locale, now = new Date()) {
 }
 
 export async function teacherRequests(locale: Locale, requestedPage: unknown = 1, query: unknown = '', groupId: unknown = '') {
-  const me = await teacherViewer(locale);
+  const me = await teacherIdentity(locale);
   const page = await teacherFilteredEnrollmentPage(me, 'pending', requestedPage, query, groupId);
   return { me, requests: page.rows, ...page };
 }
 
 export async function teacherStudents(locale: Locale, requestedPage: unknown = 1, query: unknown = '', groupId: unknown = '') {
-  const me = await teacherViewer(locale);
+  const me = await teacherIdentity(locale);
   const page = await teacherFilteredEnrollmentPage(me, 'accepted', requestedPage, query, groupId);
   return { me, students: page.rows, ...page };
 }

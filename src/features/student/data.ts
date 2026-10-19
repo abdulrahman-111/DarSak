@@ -77,15 +77,15 @@ export async function studentDashboard(locale:Locale,now=new Date()){
  const me=await student(locale),timestamp=now.toISOString();
  const learning=await studentLearningProfile(me);
  if(learning.profile?.onboarding_required&&!learning.profile.onboarding_completed_at)redirect(`/${locale}/account/setup`);
- if(!learning.profile)return {acceptedCount:0,pendingCount:0,upcomingCount:0,lessons:[] as Lesson[],learningProfile:null,classes:[] as DashboardClass[],error:true};
+ if(!learning.profile)return {acceptedCount:0,pendingCount:0,lessons:[] as Lesson[],learningProfile:null,classes:[] as DashboardClass[],error:true};
  const [accepted,pending,upcoming,classes]=await Promise.all([
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','accepted'),
   me.db.from('enrollments').select('id',{count:'exact',head:true}).eq('student_id',me.id).eq('status','pending'),
-  me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,enrollments!inner(id))',{count:'exact'}).eq('status','scheduled').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').gt('ends_at',timestamp).order('starts_at').order('id').limit(5),
+  me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,enrollments!inner(id))').eq('status','scheduled').eq('group.enrollments.student_id',me.id).eq('group.enrollments.status','accepted').gt('ends_at',timestamp).order('starts_at').order('id').limit(5),
   me.db.from('enrollments').select('id,group_id,group:groups!inner(id,name,status,location)').eq('student_id',me.id).eq('status','accepted').order('updated_at',{ascending:false}).order('id').limit(4),
  ]);
- const error=!!(accepted.error||pending.error||upcoming.error||classes.error||accepted.count==null||pending.count==null||upcoming.count==null);
- return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,upcomingCount:upcoming.count??0,lessons:(upcoming.data||[]) as Lesson[],learningProfile:learning.profile,classes:(classes.data??[]) as unknown as DashboardClass[],error};
+ const error=!!(accepted.error||pending.error||upcoming.error||classes.error||accepted.count==null||pending.count==null);
+ return {acceptedCount:accepted.count??0,pendingCount:pending.count??0,lessons:(upcoming.data||[]) as Lesson[],learningProfile:learning.profile,classes:(classes.data??[]) as unknown as DashboardClass[],error};
 }
 export async function studentClasses(locale:Locale,pageInput:unknown=1){
  const me=await student(locale);
