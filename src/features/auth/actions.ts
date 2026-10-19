@@ -58,6 +58,31 @@ function captchaOptions(formData: FormData) {
 function callbackUrl(path: string) {
   return `${siteUrl()}/api/auth/callback?next=${path}`;
 }
+/** Keep the OAuth PKCE verifier on the same host that starts and receives the flow. */
+async function redirectToCanonicalGoogleEntry(locale: Locale, requestedRole: 'student' | 'teacher' | null, next: string, submittedNext: unknown) {
+  const { headers } = await import('next/headers');
+  const origin = (await headers()).get('origin');
+  // Server initiated calls may not carry Origin; preserve their existing behavior.
+  if (origin === null) return false;
+
+  let requestOrigin: string;
+  try {
+    const parsed = new URL(origin);
+    if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password
+      || parsed.pathname !== '/' || parsed.search || parsed.hash) return null;
+    requestOrigin = parsed.origin;
+  } catch {
+    return null;
+  }
+  if (requestOrigin === siteUrl()) return false;
+
+  const path = requestedRole ? `/${locale}/register?role=${requestedRole}` : `/${locale}/login`;
+  const target = new URL(path, siteUrl());
+  if (typeof submittedNext === 'string' && safeAuthNext(submittedNext, locale) === submittedNext) {
+    target.searchParams.set('next', next);
+  }
+  redirect(target.toString());
+}
 const NEUTRAL_ERRORS = new Set(['over_email_send_rate_limit', 'over_request_rate_limit', 'captcha_failed']);
 // Safe to show: says nothing about whether an account exists.
 const SURFACED_EMAIL_ERRORS = new Set([...NEUTRAL_ERRORS, 'email_address_invalid']);
@@ -134,6 +159,8 @@ export async function googleSignInAction(locale: string, _previous: unknown, for
     return { error: authCopy[locale as Locale].googleRoleInvalid };
   }
   const next = safeAuthNext(formData.get('next'), locale as Locale);
+  const canonicalRedirect = await redirectToCanonicalGoogleEntry(locale as Locale, requestedRole, next, formData.get('next'));
+  if (canonicalRedirect === null) return { error: authErrorMessage(locale, undefined, 'login') };
   const db = await createClient();
   const redirectTo = callbackUrl(next);
   const { data, error } = await db.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: requestedRole ? `${redirectTo}&google_role=${requestedRole}` : redirectTo } });

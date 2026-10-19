@@ -37,7 +37,7 @@ export function AuthForm({ locale, mode, labels, initialRole = 'student', return
     <form action={formAction} className="space-y-5" aria-describedby={state?.error ? errorId : undefined}>
       {mode === 'login' && returnPath && <input type="hidden" name="next" value={returnPath}/>}
       {mode === 'signup' && (
-        <fieldset>
+        <fieldset className="min-w-0">
           <legend className="mb-3 font-bold text-ink">{copy.joinAs}</legend>
           <div className="grid grid-cols-2 gap-3">
             <RoleCard

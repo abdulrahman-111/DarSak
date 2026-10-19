@@ -12,7 +12,7 @@ import { studentClasses, studentDashboard, studentTimetable } from '@/features/s
 describe('student dashboard loader query contract', () => {
   beforeEach(() => mocks.getRequestViewer.mockReset());
 
-  it('filters past lesson history before its five-row preview and retains exact counts', async () => {
+  it('filters past lesson history before its five-row preview while retaining exact enrollment counts', async () => {
     const now = new Date('2026-10-12T10:00:00.000Z');
     const allLessons = [
       ...Array.from({ length: 500 }, (_, index) => ({
@@ -60,7 +60,7 @@ describe('student dashboard loader query contract', () => {
                 return new Date(String(actual)).getTime() > new Date(String(value)).getTime();
               }));
               if (query.limit !== undefined) rows = rows.slice(0, query.limit);
-              return Promise.resolve(resolve({ data: rows, count: allLessons.filter(row => row.status === 'scheduled' && new Date(row.ends_at).getTime() > now.getTime()).length, error: null }));
+              return Promise.resolve(resolve({ data: rows, count: null, error: null }));
             }
             const status = query.filters.find(([kind, column]) => kind === 'eq' && column === 'status')?.[2];
             return Promise.resolve(resolve({ data: null, count: status === 'accepted' ? 14 : 3, error: null }));
@@ -74,16 +74,16 @@ describe('student dashboard loader query contract', () => {
     const result = await studentDashboard('en', now);
 
     expect(result.error).toBe(false);
+    expect(result).not.toHaveProperty('upcomingCount');
     expect(result.learningProfile).toMatchObject({ onboarding_required: false, onboarding_completed_at: null });
     expect(result.acceptedCount).toBe(14);
     expect(result.pendingCount).toBe(3);
-    expect(result.upcomingCount).toBe(8);
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['future-0', 'future-1', 'future-2', 'future-3', 'future-4']);
     expect(Array.isArray(result.lessons[0].group) ? result.lessons[0].group[0]?.name : result.lessons[0].group?.name).toBe('Algebra group');
     expect(queries.find(query => query.table === 'lessons')).toMatchObject({
       filters: [['eq', 'status', 'scheduled'], ['eq', 'group.enrollments.student_id', 'student-id'], ['eq', 'group.enrollments.status', 'accepted'], ['gt', 'ends_at', now.toISOString()]],
       limit: 5,
-      selectOptions: { count: 'exact' },
+      selectOptions: undefined,
     });
     expect(queries.find(query => query.table === 'lessons')?.fields).toContain('groups!inner(id,name,enrollments!inner(id))');
   });
