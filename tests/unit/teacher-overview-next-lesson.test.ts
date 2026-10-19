@@ -17,6 +17,33 @@ describe('teacher overview next lesson query', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['en', 'student', '/en/student'], ['ar', 'student', '/ar/student'],
+    ['en', 'admin', '/en/admin'], ['ar', 'admin', '/ar/admin'],
+  ] as const)('sends an active %s wrong-role viewer to %s', async (locale, role, destination) => {
+    const reads = vi.fn();
+    mocks.getRequestViewer.mockResolvedValue({
+      db: { from: reads, rpc: reads }, user: { id: 'other-role' },
+      profile: { id: 'other-role', role, status: 'active', full_name: 'Other Role' },
+    });
+    await expect(teacherOverview(locale)).rejects.toThrow(`redirect:${destination}`);
+    expect(reads).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['en', 'missing-user', '/en/login'], ['ar', 'missing-profile', '/ar/login'],
+    ['en', 'suspended', '/en/login'], ['ar', 'suspended', '/ar/login'],
+    ['en', 'unknown-role', '/en/login'], ['ar', 'unknown-role', '/ar/login'],
+  ] as const)('sends missing, suspended, or unknown %s profile to login', async (locale, kind, destination) => {
+    const reads = vi.fn();
+    mocks.getRequestViewer.mockResolvedValue({
+      db: { from: reads, rpc: reads }, user: kind === 'missing-user' ? null : { id: 'teacher' },
+      profile: kind === 'missing-user' || kind === 'missing-profile' ? null : { id: 'teacher', role: kind === 'unknown-role' ? 'visitor' : 'teacher', status: kind === 'suspended' ? 'suspended' : 'active', full_name: 'Taylor' },
+    });
+    await expect(teacherOverview(locale)).rejects.toThrow(`redirect:${destination}`);
+    expect(reads).not.toHaveBeenCalled();
+  });
+
   it('reads one earliest owned scheduled lesson that has not ended', async () => {
     const now = new Date('2026-10-13T12:00:00.000Z');
     const query = { filters: [] as Array<[string, string, unknown]>, orders: [] as Array<[string, boolean]>, limit: 0, columns: '' };
@@ -62,5 +89,47 @@ describe('teacher overview next lesson query', () => {
     ]);
     expect(query.orders).toEqual([['starts_at', true], ['id', true]]);
     expect(query.limit).toBe(1);
+  });
+
+  it('starts profile, summary, pending enrollment, and next lesson reads before profile resolves', async () => {
+    let resolveProfile!: (value: unknown) => void;
+    const profile = new Promise(resolve => { resolveProfile = resolve; });
+    const started = new Set<string>();
+    const db = {
+      from(table: string) {
+        const builder: any = {
+          select() { return builder; },
+          eq() { return builder; },
+          gt() { return builder; },
+          order() { return builder; },
+          limit() { return builder; },
+          maybeSingle() { started.add('profile'); return profile; },
+          then(resolve: (value: unknown) => unknown, reject: (error: unknown) => unknown) {
+            started.add('next-lesson');
+            return Promise.resolve({ data: [], error: null }).then(resolve, reject);
+          },
+        };
+        return builder;
+      },
+      rpc(name: string) {
+        started.add(name === 'teacher_dashboard_summary' ? 'summary' : 'pending-enrollment');
+        const data = name === 'teacher_dashboard_summary' ? {
+          groups: [], group_count: 0, today: [], today_count: 0, upcoming: [], upcoming_count: 0,
+          has_specializations: false, draft_candidate: null, missing_schedule_candidate: null,
+        } : { rows: [], total: 0 };
+        return Promise.resolve({ data, error: null });
+      },
+    };
+    mocks.getRequestViewer.mockResolvedValue({
+      db, user: { id: 'teacher-1' },
+      profile: { id: 'teacher-1', role: 'teacher', status: 'active', full_name: 'Taylor Teacher' },
+    });
+
+    const result = teacherOverview('en', new Date('2026-10-13T12:00:00.000Z'));
+    for (let i = 0; i < 5; i++) await Promise.resolve();
+    expect(started).toEqual(new Set(['profile', 'summary', 'pending-enrollment', 'next-lesson']));
+
+    resolveProfile({ data: { headline: 'Math', bio: 'Teacher', approved: true }, error: null });
+    await expect(result).resolves.toMatchObject({ error: null, me: { teacher: { headline: 'Math' } } });
   });
 });

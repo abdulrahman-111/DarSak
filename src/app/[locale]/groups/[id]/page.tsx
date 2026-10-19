@@ -41,12 +41,12 @@ export default async function GroupDetail({ params,searchParams }: { searchParam
   const data = detail.group;
 
   const me = requestViewer.user ? { user: requestViewer.user, profile: requestViewer.profile } : null;
-  const [announcement, enrollment, saved] = await Promise.all([
+  const [announcement, enrollment, saved, learning] = await Promise.all([
     activeViewer ? groupAnnouncement(requestViewer.db, id) : Promise.resolve(null),
     me?.profile?.role === 'student' ? enrollmentForGroup(id) : Promise.resolve(null),
     activeViewer && me?.profile?.role === 'student' ? savedGroupStatus(id) : Promise.resolve(false),
+    groupLearningDetails(requestViewer.db, id),
   ]);
-  const learning=await groupLearningDetails(requestViewer.db,id);
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject ? catalogueDisplayName(data.offering.subject, locale) || t.groups : t.groups;
   const nextLesson = data.next_lesson_at

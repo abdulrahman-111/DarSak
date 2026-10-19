@@ -6,11 +6,14 @@ import { buildTeacherSetupTasks, cairoDayBounds, teacherDashboardError } from '.
 import { clampTeacherPage, normalizeTeacherPage, TEACHER_PAGE_SIZE, teacherPageCount, teacherPageOffset } from './enrollment-pagination';
 import { normalizeRosterFilters } from './roster-filters';
 import { measuredServerRead } from '@/lib/server-read-diagnostics';
+import { roleHome } from '@/components/platform/access';
 
 export async function teacherIdentity(locale: Locale) {
   const { db, user, profile } = await getRequestViewer();
   if (!user) redirect(`/${locale}/login`);
-  if (!profile || profile.role !== 'teacher' || profile.status !== 'active') redirect(`/${locale}/dashboard`);
+  if (!profile || profile.status !== 'active') redirect(`/${locale}/login`);
+  if (profile.role !== 'student' && profile.role !== 'teacher' && profile.role !== 'admin') redirect(`/${locale}/login`);
+  if (profile.role !== 'teacher') redirect(roleHome(locale, profile.role));
   return { db, id: user.id, profile };
 }
 
@@ -59,7 +62,7 @@ async function teacherFilteredEnrollmentPage(me: Awaited<ReturnType<typeof teach
 }
 
 async function teacherEnrollmentPage(
-  me: Awaited<ReturnType<typeof teacherViewer>>,
+  me: Pick<Awaited<ReturnType<typeof teacherIdentity>>, 'db'>,
   status: 'pending' | 'accepted',
   requestedPage: unknown,
 ): Promise<{ rows: GroupStudentRow[]; total: number; page: number; pageCount: number; error: { message: string } | null }> {
@@ -158,23 +161,23 @@ function emptyTeacherOverview(me: Awaited<ReturnType<typeof teacherViewer>>, loc
 export async function teacherOverview(locale: Locale, now = new Date()) {
   const identity = await teacherIdentity(locale);
   return measuredServerRead('teacher_overview', locale, async () => {
-  const { data: teacher, error: teacherError } = await identity.db.from('teacher_profiles').select('headline,bio,approved,avatar_path,cover_path').eq('id', identity.id).maybeSingle();
-  const me = { ...identity, teacher, teacherError };
   const bounds = cairoDayBounds(now);
-  const [summaryResult, students, nextLessonResult] = await Promise.all([
-    me.db.rpc('teacher_dashboard_summary', {
+  const [teacherResult, summaryResult, students, nextLessonResult] = await Promise.all([
+    identity.db.from('teacher_profiles').select('headline,bio,approved,avatar_path,cover_path').eq('id', identity.id).maybeSingle(),
+    identity.db.rpc('teacher_dashboard_summary', {
       p_day_start: bounds.start.toISOString(), p_day_end: bounds.end.toISOString(), p_now: now.toISOString(),
     }),
-    teacherEnrollmentPage(me, 'pending', 1),
-    me.db.from('lessons')
+    teacherEnrollmentPage(identity, 'pending', 1),
+    identity.db.from('lessons')
       .select('id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,teacher_id)')
-      .eq('group.teacher_id', me.id)
+      .eq('group.teacher_id', identity.id)
       .eq('status', 'scheduled')
       .gt('ends_at', now.toISOString())
       .order('starts_at', { ascending: true })
       .order('id', { ascending: true })
       .limit(1),
   ]);
+  const me = { ...identity, teacher: teacherResult.data, teacherError: teacherResult.error };
   if (summaryResult.error || students.error || nextLessonResult.error || me.teacherError || !me.teacher) {
     return emptyTeacherOverview(me, locale);
   }

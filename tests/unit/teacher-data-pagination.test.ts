@@ -68,7 +68,7 @@ describe('teacher enrollment page loader', () => {
     const rpc = vi.fn();
     viewer(rpc, { id: 'student', role: 'student', status: 'active' });
 
-    await expect(teacherRequests('en')).rejects.toThrow('redirect:/en/dashboard');
+    await expect(teacherRequests('en')).rejects.toThrow('redirect:/en/student');
     expect(rpc).not.toHaveBeenCalled();
   });
 });
