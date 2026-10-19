@@ -42,6 +42,43 @@ begin
   end if;
 end $$;
 
+-- Review readiness keeps essential identity and contact information required,
+-- while allowing a qualification OR an experience entry to support the
+-- application. Languages, teaching approach, profile photo, and CV are optional.
+do $$
+declare
+  v_base jsonb:=jsonb_build_object(
+    'full_name','Minimal Teacher','headline','Maths teacher',
+    'specializations',jsonb_build_array(jsonb_build_object('id','offering-1')),
+    'profile_details',jsonb_build_object(
+      'about',jsonb_build_object('ar','','en',repeat('A',80)),
+      'languages','[]'::jsonb,'approach',jsonb_build_object('ar','','en',''),
+      'qualifications','[]'::jsonb,'experience','[]'::jsonb),
+    'teaching_years',0,'admin_phone','1234567','attested',true);
+  v_qualification jsonb:=jsonb_build_object('title',jsonb_build_object('en','BSc Mathematics'),
+    'organization',jsonb_build_object('en','Cairo University'),'current',true);
+  v_experience jsonb:=jsonb_build_object('title',jsonb_build_object('en','Independent tutor'),
+    'organization',jsonb_build_object('en','Self employed'),'description',jsonb_build_object('en','Tutored learners'),
+    'start_year',2020,'current',true);
+  v_missing text[];
+begin
+  v_missing:=dars_private.teacher_application_snapshot_missing(v_base||jsonb_build_object(
+    'profile_details',(v_base->'profile_details')||jsonb_build_object('qualifications',jsonb_build_array(v_qualification))));
+  if cardinality(v_missing)>0 then raise exception 'qualification-only application should be ready; missing: %',array_to_string(v_missing,','); end if;
+
+  v_missing:=dars_private.teacher_application_snapshot_missing(v_base||jsonb_build_object(
+    'profile_details',(v_base->'profile_details')||jsonb_build_object('experience',jsonb_build_array(v_experience))));
+  if cardinality(v_missing)>0 then raise exception 'experience-only application should be ready; missing: %',array_to_string(v_missing,','); end if;
+
+  v_missing:=dars_private.teacher_application_snapshot_missing(v_base);
+  if not ('experience_or_qualification'=any(v_missing)) then
+    raise exception 'application without experience or qualification must be rejected';
+  end if;
+  if 'languages'=any(v_missing) or 'approach'=any(v_missing) or 'photo'=any(v_missing) then
+    raise exception 'optional teacher supporting information was treated as required';
+  end if;
+end $$;
+
 set local role authenticated;
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 do $$
@@ -138,17 +175,16 @@ insert into storage.objects(bucket_id,name,owner_id,metadata) values
  ('teacher-applications','7c000000-0000-4000-8000-000000000001/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf','7c000000-0000-4000-8000-000000000001','{"mimetype":"application/pdf","size":100}');
 reset role;
 
--- Build a complete rich profile and attach the private CV through the exact RPC.
+-- Submit with a qualification but no experience, language list, teaching
+-- approach, or profile photo to exercise the streamlined minimum requirements.
 update public.profiles set full_name='Application owner' where id='7c000000-0000-4000-8000-000000000001';
-insert into storage.objects(bucket_id,name,owner_id,metadata) values
- ('teacher-avatars','7c000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png','7c000000-0000-4000-8000-000000000001','{"mimetype":"image/png","size":100}');
-update public.teacher_profiles set headline='Experienced language tutor',avatar_path='7c000000-0000-4000-8000-000000000001/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png' where id='7c000000-0000-4000-8000-000000000001';
+update public.teacher_profiles set headline='Experienced language tutor',avatar_path=null where id='7c000000-0000-4000-8000-000000000001';
 insert into public.teacher_specializations(teacher_id,offering_id)
 select '7c000000-0000-4000-8000-000000000001',id from public.offerings order by id limit 1;
 set local role authenticated;
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 select public.save_teacher_profile_details(
- '{"about":{"ar":"هذه نبذة تعريفية طويلة ومفصلة عن خبرة المعلم وطريقته في مساعدة الطلاب على التعلم بثقة ووضوح.","en":"This is a detailed teacher biography with enough information about their work and the way they help learners build confidence."},"approach":{"ar":"أبدأ بفهم أهداف الطالب ثم أبني دروسا عملية واضحة وأراجع التقدم باستمرار.","en":"I begin by understanding each learner’s goals, then build clear practical lessons and review progress regularly."},"goals":{"ar":"","en":""},"qualifications":[{"id":"qualification-1","title":{"ar":"شهادة تعليم","en":"Teaching certificate"},"organization":{"ar":"جامعة القاهرة","en":"Cairo University"},"description":{"ar":"","en":""},"start_year":null,"end_year":2020,"current":false}],"experience":[{"id":"experience-1","title":{"ar":"مدرس لغة","en":"Language tutor"},"organization":{"ar":"عمل مستقل","en":"Independent work"},"description":{"ar":"دروس فردية ومشروعات تعليمية","en":"One-to-one lessons and independent learning projects"},"start_year":2019,"end_year":null,"current":true}],"languages":["Arabic","English"],"city":{"ar":"","en":""},"teaching_mode":"online","layout":"classic","palette":"teal","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,0
+ '{"about":{"ar":"هذه نبذة تعريفية طويلة ومفصلة عن خبرة المعلم وطريقته في مساعدة الطلاب على التعلم بثقة ووضوح.","en":"This is a detailed teacher biography with enough information about their work and the way they help learners build confidence."},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[{"id":"qualification-1","title":{"ar":"شهادة تعليم","en":"Teaching certificate"},"organization":{"ar":"جامعة القاهرة","en":"Cairo University"},"description":{"ar":"","en":""},"start_year":null,"end_year":2020,"current":false}],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":"online","layout":"classic","palette":"teal","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,0
 );
 do $$
 declare v_updated timestamptz; v_response jsonb; v_request uuid; v_event_count bigint;
@@ -172,7 +208,10 @@ begin
 
   if v_response->'application'->>'status'<>'submitted' or v_response->'application'->'snapshot'->>'full_name'<>'Application owner'
      or jsonb_array_length(v_response->'application'->'snapshot'->'specializations')<>1
-     or v_response->'application'->'snapshot'->'profile_details'->'experience'->0->>'id'<>'experience-1' then
+     or v_response->'application'->'snapshot'->'profile_details'->'qualifications'->0->>'id'<>'qualification-1'
+     or jsonb_array_length(v_response->'application'->'snapshot'->'profile_details'->'experience')<>0
+     or jsonb_array_length(v_response->'application'->'snapshot'->'profile_details'->'languages')<>0
+     or v_response->'application'->'snapshot'->>'avatar_path' is not null then
     raise exception 'submitted application snapshot is incomplete or not frozen';
   end if;
   select count(*) into v_event_count from public.teacher_review_events where teacher_id=auth.uid() and kind='requested';

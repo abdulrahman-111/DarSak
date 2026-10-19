@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage, teachingMutationMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
+import { revalidateStudentWorkspace, revalidateTeacherWorkspace } from '@/features/student/workspace-revalidation';
 
 export type AttendanceActionState = { error?: string; success?: string } | null;
 
@@ -30,6 +31,7 @@ export async function saveLessonAttendance(locale: Locale, lessonId: string, stu
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
   revalidatePath(`/${locale}/student/lessons/${lessonId}`);
-  revalidatePath(`/${locale}/student/classes/[groupId]`, 'page');
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   return { success: msg('Attendance saved.', 'تم حفظ الحضور.') };
 }

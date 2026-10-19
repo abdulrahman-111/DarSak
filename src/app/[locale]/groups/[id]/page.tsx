@@ -116,16 +116,16 @@ export default async function GroupDetail({ params,searchParams }: { searchParam
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
             {data.available_seats !== undefined && <p className="mt-4 flex items-center gap-2 text-sm font-bold text-cream"><span className="grid size-6 place-items-center rounded-full bg-[#8fd1b5]"><Image aria-hidden="true" src="/brand/darsak/available-seats.svg" alt="" width={16} height={16}/></span>{c.availableSeats}: {data.available_seats}</p>}
-            <div className="mt-6 [&_button]:w-full [&_button]:bg-orange [&_button]:text-white">
+            <div className="mt-6 flex flex-col gap-3 [&_button]:w-full [&_form_.text-muted]:text-[#cfe3de] [&_form_button[type=button]]:border-cream/50 [&_form_button[type=button]]:text-cream">
               {isStudent && detail.publiclyEligible && <SavedGroupForm locale={locale} groupId={id} saved={saved}/>}
               {isStudent && enrollment?.status === 'pending' ? (
-                <><p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.pendingEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
+                <><p className="rounded-xl bg-white/10 p-3 text-sm">{c.pendingEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
               ) : isStudent && enrollment?.status === 'accepted' ? (
-                <><p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.acceptedEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
+                <><p className="rounded-xl bg-white/10 p-3 text-sm">{c.acceptedEnrollment}</p><EnrollmentForm locale={locale} id={enrollment.id} kind="cancel"/></>
               ) : isStudent && canEnroll ? (
                 <>
-                  {enrollment?.status === 'rejected' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.retryEnrollment}</p>}
-                  {enrollment?.status === 'cancelled' && <p className="mb-3 rounded-xl bg-white/10 p-3 text-sm">{c.cancelledEnrollment}</p>}
+                  {enrollment?.status === 'rejected' && <p className="rounded-xl bg-white/10 p-3 text-sm">{c.retryEnrollment}</p>}
+                  {enrollment?.status === 'cancelled' && <p className="rounded-xl bg-white/10 p-3 text-sm">{c.cancelledEnrollment}</p>}
                   <StudentOverlapWarning locale={locale} groupId={id}/>
                   <EnrollmentForm locale={locale} id={id} kind="request"/>
                 </>

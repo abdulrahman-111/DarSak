@@ -28,12 +28,6 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
  ('a7100000-0000-4000-8000-000000000003','authenticated','authenticated','setup-foreign@test.invalid','{"full_name":"Foreign setup student","requested_role":"student"}'),
  ('a7100000-0000-4000-8000-000000000004','authenticated','authenticated','setup-teacher-success@test.invalid','{"full_name":"Original success teacher","requested_role":"teacher"}');
 
--- This teacher fixture already has the avatar required by the canonical application validator.
-insert into storage.objects(bucket_id,name,owner_id,metadata) values
- ('teacher-avatars','a7100000-0000-4000-8000-000000000004/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png','a7100000-0000-4000-8000-000000000004','{"mimetype":"image/png","size":100}');
-update public.teacher_profiles set avatar_path='a7100000-0000-4000-8000-000000000004/cccccccc-cccc-4ccc-8ccc-cccccccccccc.png'
-where id='a7100000-0000-4000-8000-000000000004';
-
 set local role authenticated;
 set local request.jwt.claim.sub='a7100000-0000-4000-8000-000000000001';
 do $$
@@ -119,9 +113,9 @@ begin
   select id::text into v_offering from public.offerings order by id limit 1;
   if v_offering is null then raise exception 'teacher finalization fixture requires an offering'; end if;
   v_draft:=public.get_or_create_account_setup_draft('en','/en/teacher');
-  v_saved:=public.save_account_setup_stage(1::smallint,'{"full_name":"Complete setup teacher","headline":"Experienced language tutor","languages":["Arabic","English"]}'::jsonb,0,'en',null);
+  v_saved:=public.save_account_setup_stage(1::smallint,'{"full_name":"Complete setup teacher","headline":"Experienced language tutor"}'::jsonb,0,'en',null);
   v_saved:=public.save_account_setup_stage(2::smallint,
-    '{"about":{"ar":"هذه نبذة تعريفية طويلة ومفصلة عن خبرة المعلم وطريقته في مساعدة الطلاب على التعلم بثقة ووضوح.","en":"This is a detailed teacher biography with enough information about their work and the way they help learners build confidence."},"approach":{"ar":"أبدأ بفهم أهداف الطالب ثم أبني دروسا عملية واضحة وأراجع التقدم باستمرار.","en":"I begin by understanding each learner’s goals, then build clear practical lessons and review progress regularly."},"qualifications":[{"id":"qualification-1","title":{"ar":"شهادة تعليم","en":"Teaching certificate"},"organization":{"ar":"جامعة القاهرة","en":"Cairo University"},"description":{"ar":"","en":""},"start_year":null,"end_year":2020,"current":false}],"experience":[{"id":"experience-1","title":{"ar":"مدرس لغة","en":"Language tutor"},"organization":{"ar":"عمل مستقل","en":"Independent work"},"description":{"ar":"دروس فردية ومشروعات تعليمية","en":"One-to-one lessons and independent learning projects"},"start_year":2019,"end_year":null,"current":true}],"teaching_years":3}'::jsonb,1,'en',null);
+    '{"about":{"ar":"هذه نبذة تعريفية طويلة ومفصلة عن خبرة المعلم وطريقته في مساعدة الطلاب على التعلم بثقة ووضوح.","en":"This is a detailed teacher biography with enough information about their work and the way they help learners build confidence."},"approach":{"ar":"","en":""},"qualifications":[{"id":"qualification-1","title":{"ar":"شهادة تعليم","en":"Teaching certificate"},"organization":{"ar":"جامعة القاهرة","en":"Cairo University"},"description":{"ar":"","en":""},"start_year":null,"end_year":2020,"current":false}],"experience":[],"teaching_years":0}'::jsonb,1,'en',null);
   v_saved:=public.save_account_setup_stage(3::smallint,jsonb_build_object('offering_ids',jsonb_build_array(v_offering)),2,'en',null);
   v_saved:=public.save_account_setup_stage(4::smallint,'{"admin_phone":"+1234567890","supporting_links":[],"attested":true}'::jsonb,3,'en',null);
   v_version:=(v_saved->>'version')::bigint;

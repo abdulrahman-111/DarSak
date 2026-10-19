@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
+import { revalidateStudentWorkspace, revalidateTeacherWorkspace } from '@/features/student/workspace-revalidation';
 
 export type ManagementActionState = { error?: string; success?: string } | null;
 
@@ -38,6 +39,8 @@ function managementError(locale: Locale, raw: string | undefined) {
 }
 
 function refreshManagement(locale: Locale, groupId?: string, lessonId?: string) {
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   for (const current of ['en', 'ar'] as const) {
     revalidatePath(`/${current}/teacher/groups`);
     revalidatePath(`/${current}/teacher`);

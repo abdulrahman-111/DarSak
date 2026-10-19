@@ -6,6 +6,7 @@ const { createClientMock, revalidatePathMock } = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
+vi.mock('server-only', () => ({}));
 vi.mock('@/lib/action-diagnostics', () => ({ logActionFailure: vi.fn() }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidatePathMock }));
 
@@ -64,6 +65,17 @@ describe('lesson material actions', () => {
     expect(await addMaterial('en', lessonId, null, form)).toMatchObject({ success: 'Material added.' });
     expect(select).toHaveBeenCalledWith('id,group:groups!inner(teacher_id)');
     expect(eqCalls).toContainEqual(['group.teacher_id', teacherId]);
+    expect(revalidatePathMock).toHaveBeenCalledWith('/ar/student/materials');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/en/teacher/lessons/[id]', 'page');
+  });
+
+  it('does not invalidate routes when material insertion fails', async () => {
+    setup({ insertError: { message: 'failed' } });
+    const form = new FormData();
+    form.set('kind', 'link'); form.set('title', 'Reference'); form.set('url', 'https://example.com');
+
+    expect(await addMaterial('en', lessonId, null, form)).toMatchObject({ error: 'Could not add the material.' });
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it('rejects new standalone notes so launch resources stay link-only', async () => {
@@ -88,6 +100,8 @@ describe('lesson material actions', () => {
 
     expect(await deleteMaterial('en', lessonId, materialId)).toEqual({ ok: true });
     expect(calls).toEqual(['storage', 'metadata']);
+    expect(revalidatePathMock).toHaveBeenCalledWith('/ar/student/classes/[id]', 'page');
+    expect(revalidatePathMock).toHaveBeenCalledWith('/en/timetable');
   });
 
   it('allows retry when the object was removed earlier but metadata remains', async () => {
@@ -102,6 +116,7 @@ describe('lesson material actions', () => {
 
     expect(await deleteMaterial('en', lessonId, materialId)).toMatchObject({ error: expect.stringMatching(/retry/i) });
     expect(calls).toEqual(['storage']);
+    expect(revalidatePathMock).not.toHaveBeenCalled();
   });
 
   it('does not treat an unavailable listing as proof that an object is absent', async () => {

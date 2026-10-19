@@ -1,3 +1,5 @@
+import type { RichProfileInput } from '@/features/teacher/profile-details-domain';
+
 export const TEACHER_APPLICATION_STATUSES = [
   "draft",
   "submitted",
@@ -13,10 +15,7 @@ export const TEACHER_APPLICATION_MISSING_CODES = [
   "headline",
   "bio",
   "specializations",
-  "languages",
-  "experience",
-  "qualifications",
-  "approach",
+  "experience_or_qualification",
   "teaching_years",
   "admin_phone",
   "attestation",
@@ -24,6 +23,22 @@ export const TEACHER_APPLICATION_MISSING_CODES = [
 
 export type TeacherApplicationMissing =
   (typeof TEACHER_APPLICATION_MISSING_CODES)[number];
+
+export function hasTeacherApplicationBackground(
+  details: Pick<RichProfileInput, 'experience' | 'qualifications'>,
+): boolean {
+  const hasQualification = details.qualifications.some(entry =>
+    (entry.title.ar.trim() || entry.title.en.trim())
+      && (entry.organization.ar.trim() || entry.organization.en.trim())
+      && (entry.current || entry.end_year !== null));
+  const hasExperience = details.experience.some(entry =>
+    (entry.title.ar.trim() || entry.title.en.trim())
+      && (entry.organization.ar.trim() || entry.organization.en.trim())
+      && (entry.description.ar.trim() || entry.description.en.trim())
+      && entry.start_year !== null
+      && (entry.current || entry.end_year !== null));
+  return !!(hasExperience || hasQualification);
+}
 
 export type TeacherApplication = {
   teacher_id: string;

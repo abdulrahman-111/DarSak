@@ -7,6 +7,7 @@ import { idSchema, type Locale } from '@/features/student/domain';
 import { lessonStatusSchema, materialSchema } from './domain';
 import { storageRemovalConfirmed } from './profile-domain';
 import { checkTeachingAccess, teachingGuardMessage, teachingMutationMessage } from '@/features/teacher-access/guard';
+import { revalidateStudentWorkspace, revalidateTeacherWorkspace } from '@/features/student/workspace-revalidation';
 
 export type TeacherActionState = { error?: string; success?: string } | null;
 const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
@@ -64,6 +65,8 @@ export async function addMaterial(locale: Locale, lessonId: string, _state: Teac
     return { error: message(locale, 'Could not add the material.', 'تعذرت إضافة المادة.') };
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   return { success: message(locale, 'Material added.', 'تمت إضافة المادة.') };
 }
 
@@ -79,7 +82,11 @@ export async function setLessonStatus(locale: Locale, lessonId: string, status: 
   if(!me.access.allowed)return {error:teachingGuardMessage(locale,me.access.reason)};
   const { error } = await me.db.rpc('set_lesson_status', { p_lesson_id: lessonId, p_status: status });
   if (error) logActionFailure('lesson_status.save', startedAt, error, 'DB_ERROR');
-  if (!error) revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
+  if (!error) {
+    revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
+    revalidateStudentWorkspace();
+    revalidateTeacherWorkspace();
+  }
   if (!error) return { ok: true };
   const raw = error.message.toLowerCase();
   if(error.code==='42501'&&error.message==='teacher teaching access expired')return {error:teachingMutationMessage(locale,error,'')};
@@ -113,5 +120,7 @@ export async function deleteMaterial(locale: Locale, lessonId: string, materialI
     return { error: message(locale, 'Could not delete the material. Refresh and try again.', 'تعذر حذف المادة. حدّث الصفحة وحاول مرة أخرى.') };
   }
   revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   return { ok: true };
 }
