@@ -1,7 +1,8 @@
 {
-  "name": "dars-tutoring-platform",
+  "name": "darsak",
   "version": "0.1.0",
   "private": true,
+  "description": "DarSak connects students and teachers through bilingual profiles, learning groups, interactive schedules, and organized resources.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
