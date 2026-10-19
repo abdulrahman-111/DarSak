@@ -7,7 +7,7 @@ vi.mock('@/features/admin/application-forms', () => ({
   RequestApplicationChangesForm: () => <button>Request changes action</button>,
 }));
 
-import { TeacherApplicationPanel } from '@/features/admin/application-panel';
+import { submittedApplicationReady, TeacherApplicationPanel } from '@/features/admin/application-panel';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const details = {
@@ -25,6 +25,23 @@ const application = {
 };
 
 describe('admin submitted teacher application panel', () => {
+  it('keeps qualification-only applications ready when optional teaching approach and languages are empty', () => {
+    const minimalDetails = {
+      ...details,
+      about: { en: 'A'.repeat(80), ar: '' },
+      approach: { en: '', ar: '' },
+      qualifications: [details.qualifications[0]],
+      experience: [],
+      languages: [],
+    };
+    const minimalApplication = {
+      ...application,
+      snapshot: { ...application.snapshot, avatar_path: null, profile_details: minimalDetails },
+    };
+    expect(submittedApplicationReady(minimalApplication, [])).toBe(true);
+    expect(submittedApplicationReady({ ...minimalApplication, snapshot: { ...minimalApplication.snapshot, profile_details: { ...minimalDetails, qualifications: [], experience: [] } } }, [])).toBe(false);
+  });
+
   it('renders the frozen snapshot, private fields, feedback, and application actions', () => {
     const html = renderToStaticMarkup(<TeacherApplicationPanel locale="en" application={application} missing={[]} requestId="22222222-2222-4222-8222-222222222222"/>);
     for (const value of ['Frozen submitted application snapshot', 'Ada Teacher', 'Math · Primary', 'BEd', '2010 – 2014', 'Tutor', '2015 – Present', 'A patient approach', 'English', '+20123456789', '8', 'https://example.com/portfolio', 'https://drive.google.com/file/d/new-cv/view', 'Google Drive CV link', 'Please review the attached CV.', 'Teacher rules', 'Accepted rules version', '2026-10-18', 'Rules accepted', 'Private CV action', 'Request changes action']) expect(html).toContain(value);

@@ -1,19 +1,17 @@
 import { Panel, cairoDate } from '@/components/platform/ui';
-import type { TeacherApplication, TeacherApplicationMissing } from '@/features/teacher/application-domain';
+import { hasTeacherApplicationBackground, type TeacherApplication, type TeacherApplicationMissing } from '@/features/teacher/application-domain';
 import { localizedProfileText, richProfileSchema } from '@/features/teacher/profile-details-domain';
 import { ApplicationCvDownload, RequestApplicationChangesForm } from './application-forms';
 
 const missingCopy = {
   en: {
     full_name: 'Full name', headline: 'Headline', bio: 'Biography',
-    specializations: 'At least one subject and level', languages: 'At least one language',
-    experience: 'Experience entry', qualifications: 'Qualification entry', approach: 'Teaching approach',
+    specializations: 'At least one subject and level', experience_or_qualification: 'At least one experience or qualification entry',
     teaching_years: 'Years of experience', admin_phone: 'Private administrator phone', attestation: 'Attestation',
   },
   ar: {
     full_name: 'الاسم الكامل', headline: 'العنوان التعريفي', bio: 'النبذة',
-    specializations: 'مادة ومستوى واحد على الأقل', languages: 'لغة واحدة على الأقل',
-    experience: 'بيانات الخبرة', qualifications: 'بيانات المؤهل', approach: 'أسلوب التدريس',
+    specializations: 'مادة ومستوى واحد على الأقل', experience_or_qualification: 'بيان خبرة أو مؤهل واحد على الأقل',
     teaching_years: 'سنوات الخبرة', admin_phone: 'هاتف المسؤول الخاص', attestation: 'الإقرار',
   },
 } satisfies Record<string, Record<TeacherApplicationMissing, string>>;
@@ -35,6 +33,7 @@ export function submittedApplicationReady(application: TeacherApplication | null
   return typeof snapshot.full_name === 'string'
     && Array.isArray(snapshot.specializations) && snapshot.specializations.length > 0
     && details.success
+    && hasTeacherApplicationBackground(details.data)
     && typeof snapshot.teaching_years === 'number'
     && typeof snapshot.admin_phone === 'string'
     && Array.isArray(snapshot.supporting_links)

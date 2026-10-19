@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import { idSchema } from '@/features/student/domain';
 import { validateAnnouncement } from './announcement-domain';
+import { revalidateStudentWorkspace, revalidateTeacherWorkspace } from '@/features/student/workspace-revalidation';
 
 export type AnnouncementActionState = { error?: string; success?: string; editedAt?: string | null; body?: string; revision?: string } | null;
 
@@ -28,6 +29,8 @@ export async function saveGroupAnnouncement(locale: Locale, groupId: string, pre
     if (raw.includes('owner') || raw.includes('teacher') || raw.includes('approved') || raw.includes('active')) return failed(message(locale, 'Only the active approved owner of this group can edit its announcement.', 'يمكن لمالك المجموعة النشط والمعتمد فقط تعديل إعلانها.'));
     return failed(fail);
   }
+  revalidateStudentWorkspace();
+  revalidateTeacherWorkspace();
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/teacher/groups/${groupId}`);
     revalidatePath(`/${currentLocale}/groups/${groupId}`);

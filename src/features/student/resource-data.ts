@@ -14,19 +14,60 @@ export async function studentResources(locale: Locale, input: { group?: unknown;
     me.db.rpc('student_resource_group_choices', { p_query: filters.groupQuery, p_selected_id: filters.group || null }),
   ]);
   const payload = pageResult.data as { rows?: StudentResource[]; total?: number } | null;
-  const total = Number(payload?.total ?? 0);
-  const pagination = resourcePagination(total, filters.page);
-  let rows = Array.isArray(payload?.rows) ? payload.rows : [];
-  let pageError = !!pageResult.error;
+  const validPayload = (value: unknown): value is { rows: StudentResource[]; total: number } => {
+    if (!value || typeof value !== 'object') return false;
+    const candidate = value as { rows?: unknown; total?: unknown };
+    return Array.isArray(candidate.rows) && typeof candidate.total === 'number'
+      && Number.isSafeInteger(candidate.total) && candidate.total >= 0;
+  };
+  if (pageResult.error || !validPayload(payload)) {
+    return {
+      rows: [], groups: (groupResult.data || []) as ResourceGroup[], filters,
+      page: 1, pageCount: 1, total: 0, error: true,
+    };
+  }
+  let total = payload.total;
+  let pagination = resourcePagination(total, filters.page);
+  let rows = payload.rows;
+  let pageError = false;
   // If a requested page is now out of range, reload the last valid page.
   if (!pageResult.error && pagination.page !== filters.page) {
+    const correctedPage = pagination.page;
     const corrected = await me.db.rpc('student_resource_page', {
       p_group_id: filters.group || null, p_kind: filters.kind || null, p_query: filters.q,
       p_offset: pagination.offset, p_limit: 20,
     });
-    const correctedPayload = corrected.data as { rows?: StudentResource[] } | null;
-    rows = Array.isArray(correctedPayload?.rows) ? correctedPayload.rows : [];
-    pageError = !!corrected.error;
+    if (corrected.error || !validPayload(corrected.data)) {
+      rows = [];
+      pageError = true;
+    } else {
+      rows = corrected.data.rows;
+      if (corrected.data.total !== total) {
+        total = corrected.data.total;
+        pagination = resourcePagination(total, pagination.page);
+        if (pagination.page !== correctedPage) {
+          const latestPage = pagination.page;
+          const latest = await me.db.rpc('student_resource_page', {
+            p_group_id: filters.group || null, p_kind: filters.kind || null, p_query: filters.q,
+            p_offset: pagination.offset, p_limit: 20,
+          });
+          if (latest.error || !validPayload(latest.data)) {
+            rows = [];
+            pageError = true;
+          } else {
+            rows = latest.data.rows;
+            if (latest.data.total !== total) {
+              total = latest.data.total;
+              pagination = resourcePagination(total, pagination.page);
+              if (pagination.page !== latestPage) {
+                rows = [];
+                pageError = true;
+              }
+            }
+          }
+        }
+      }
+    }
   }
   return {
     rows,

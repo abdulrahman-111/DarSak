@@ -48,7 +48,7 @@ export function TeacherApplicationForm({ locale, application, canSubmit }: { loc
       </fieldset>
       <div className="rounded-2xl border border-line p-4">
         <h3 className="font-bold text-ink">{ar ? 'اكتمال الملف العام' : 'Public profile checklist'}</h3>
-        <p className="mt-1 text-sm text-muted">{ar ? 'أكمل الملف العام والدليل التعليمي من الصفحات الحالية. استخدم محرر الملف نفسه لتفاصيل الخبرة والمؤهلات واللغات والمنهجية.' : 'Complete your existing public profile and catalogue. Use the profile editor for experience, qualifications, languages, and teaching approach.'}</p>
+        <p className="mt-1 text-sm text-muted">{ar ? 'أكمل ملفك العام ودليلك التعليمي. أضف بيان خبرة أو مؤهلاً مكتملاً واحداً على الأقل من محرر الملف؛ لغات التدريس وأساليب التدريس اختيارية.' : 'Complete your public profile and catalogue. Add at least one complete experience or qualification entry in the profile editor; teaching languages and approach are optional.'}</p>
         <div className="mt-3 flex flex-wrap gap-4 text-sm font-bold text-teal underline"><Link href={`/${locale}/account/profile`}>{ar ? 'تعديل الملف العام' : 'Edit public profile'}</Link><Link href={`/${locale}/teacher/catalogue`}>{ar ? 'اختيار المواد والمراحل' : 'Choose subjects and levels'}</Link></div>
       </div>
       <TeacherRulesPanel locale={locale} accepted={teacherRulesAccepted} onAcceptedChange={setTeacherRulesAccepted} showAcceptance={!locked} disabled={pending || locked} error={!!state?.fieldErrors?.teacher_rules}/>

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { createClientMock, revalidatePathMock, logActionFailureMock } = vi.hoisted(() => ({ createClientMock: vi.fn(), revalidatePathMock: vi.fn(), logActionFailureMock: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
+vi.mock('server-only', () => ({}));
 vi.mock('@/lib/action-diagnostics', () => ({ logActionFailure: logActionFailureMock }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidatePathMock }));
 

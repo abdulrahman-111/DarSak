@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { attendancePageHref, clampAttendancePage, normalizeAttendancePage } from '@/features/teacher/attendance-data';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
+vi.mock('server-only', () => ({}));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 
 import { createClient } from '@/lib/supabase/server';

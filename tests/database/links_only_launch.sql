@@ -55,10 +55,10 @@ begin
   v_missing := dars_private.teacher_application_snapshot_missing(jsonb_build_object(
     'full_name','','headline','','profile_details','{}'::jsonb,'specializations','[]'::jsonb,
     'teaching_years',-1,'admin_phone','','attested',false));
-  if not (v_missing @> array['full_name','headline','bio','specializations','languages','experience',
-      'qualifications','approach','teaching_years','admin_phone','attestation']::text[])
-      or v_missing && array['photo','cv']::text[] then
-    raise exception 'application validator dropped other review requirements or still requires photo/CV: %',v_missing;
+  if not (v_missing @> array['full_name','headline','bio','specializations','experience_or_qualification',
+      'teaching_years','admin_phone','attestation']::text[])
+      or v_missing && array['languages','experience','qualifications','approach','photo','cv']::text[] then
+    raise exception 'application validator dropped a required field or still requires optional supporting information: %',v_missing;
   end if;
 end
 $$;
