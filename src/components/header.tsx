@@ -30,8 +30,6 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
   const homeHref = activeRole ? dashboardHref : `/${locale}`;
   const reportsHref = globalReportsHref(locale, activeRole);
   const showDiscovery = shouldShowDiscoveryNavigation(activeRole);
-  const showPricing = !me;
-  const pricingLabel = locale === 'ar' ? 'الأسعار' : 'Pricing';
   const reportsLabel = activeRole === 'admin' ? (locale === 'ar' ? 'البلاغات' : 'Reports') : locale === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report a problem';
   const workspaceItems = activeRole ? platformNavigation(locale, activeRole) : [];
   const unreadCount = activeRole ? await unreadNotificationCount((await getRequestViewer()).db) : null;
@@ -47,7 +45,6 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
         <StudentHeaderNavigation locale={locale} enabled={activeRole !== null} role={navRole}><nav className="hidden items-center gap-6 text-sm font-bold text-[#4d473f] lg:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
           {showDiscovery && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}>{t.discover}</ActiveLink>}
           {!me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
-          {showPricing && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/pricing`}>{pricingLabel}</ActiveLink>}
           {activeRole && <ActiveLink exact className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
           {me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
@@ -63,7 +60,6 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
               {me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={dashboardHref}>{t.dashboard}</Link>}
               {showDiscovery && <Link className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/teachers`}><Search size={16} aria-hidden="true" />{t.discover}</Link>}
               {!me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</Link>}
-              {showPricing && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/pricing`}>{pricingLabel}</Link>}
               {me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/account`}>{t.account}</Link>}
               {reportsHref && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={reportsHref}>{reportsLabel}</Link>}
             </nav>

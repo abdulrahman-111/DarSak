@@ -17,5 +17,4 @@ export const TEACHER_PLANS = {
   },
 } as const;
 
-export const PLAN_EFFECTIVE_AT = '2026-11-14T22:00:00.000Z';
 export const PLAN_ENFORCEMENT_DEFAULT_ENABLED = false;

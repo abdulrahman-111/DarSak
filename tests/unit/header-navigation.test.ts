@@ -80,5 +80,6 @@ describe('global Reports navigation', () => {
     mocks.pathname = '/en/teachers';
     const guestHtml = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
     expect(guestHtml).toContain('aria-label="Primary navigation"');
+    expect(guestHtml).not.toContain('href="/en/pricing"');
   });
 });

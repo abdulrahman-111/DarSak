@@ -141,7 +141,6 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <p className="mt-5 max-w-xl leading-7 text-[#cfe3de]">{c.teacherBody}</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href={`/${locale}/register?role=teacher`} className="inline-flex min-h-12 items-center rounded-[.9rem] bg-cream px-6 font-bold text-teal transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-teal">{c.teach}</Link>
-              <Link href={`/${locale}/pricing`} className="inline-flex min-h-12 items-center rounded-[.9rem] border border-cream/70 px-5 font-bold text-cream transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{c.pricingLink}</Link>
             </div>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.approvalNote}</p>
           </div>

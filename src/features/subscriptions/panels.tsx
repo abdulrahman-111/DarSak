@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useActionState } from 'react';
 import { assignTeacherPlan, type PlanActionState } from './actions';
 import { canAssignPlan, type TeacherPlanStatus } from './domain';
@@ -30,8 +29,7 @@ export function TeacherPlanPanel({ locale, status, error }: { locale: string; st
       <div><dt className="text-sm text-muted">{ar ? 'الاستخدام الحالي' : 'Current usage'}</dt><dd className="mt-1 font-bold">{ar ? `${status.active_groups} مجموعات · ${status.stored_files} ملفات · ${bytes(status.stored_bytes, locale)}` : `${status.active_groups} groups · ${status.stored_files} files · ${bytes(status.stored_bytes, locale)}`}</dd></div>
       {status.plan_active && <div className="sm:col-span-2"><dt className="text-sm text-muted">{ar ? 'حدود الخطة' : 'Plan limits'}</dt><dd className="mt-1 font-semibold">{limits(status.plan_code, ar)}</dd></div>}
     </dl>
-    <p className="mt-4 text-sm text-muted">{ar ? `الأسعار الشهرية: القياسية ${TEACHER_PLANS.standard.monthlyEgp} جنيه، والاحترافية ${TEACHER_PLANS.pro.monthlyEgp} جنيه.${freePhase ? ' لا تُحصّل أي رسوم حالياً.' : ''}` : `Monthly prices: Standard EGP ${TEACHER_PLANS.standard.monthlyEgp}, Pro EGP ${TEACHER_PLANS.pro.monthlyEgp}.${freePhase ? ' No charges are collected now.' : ''}`}</p>
-    <Link href={`/${locale}/pricing`} className="mt-3 inline-flex font-bold text-teal underline">{ar ? 'تفاصيل الخطط والأسعار' : 'Plan and pricing details'}</Link>
+    {freePhase && <p className="mt-4 text-sm text-muted">{ar ? 'المنصة مجانية حتى الفصل الدراسي القادم. سنعلن عن الخطط المدفوعة قبل بدء تطبيقها.' : 'The platform is free until next semester. Paid plans will be announced before they begin.'}</p>}
   </section>;
 }
 
