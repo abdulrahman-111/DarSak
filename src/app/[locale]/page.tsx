@@ -22,7 +22,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
   }
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
-  const groupResult = configured ? await publicGroups() : null;
+  const groupResult = configured ? await publicGroups(undefined, 3) : null;
   const groups = groupResult?.data ?? [];
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
   const featureIcons = [
