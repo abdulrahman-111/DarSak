@@ -7,6 +7,7 @@ import { catalogue, publicGroupDetail, publicGroups, publicTeachers } from '@/fe
 import { normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from './pagination-domain';
 import { parseStudentLearningProfileRow } from './student-profile-domain';
+import { readCountedPage } from '@/lib/supabase/counted-page';
 export type Named={id:string;name_ar:string;name_en:string;parent_id?:string|null};
 export type Teacher={id:string;full_name:string;headline:string;bio:string};
 export type Group={id:string;teacher_id:string;name:string;description:string;capacity:number;status:string;location:string;available_seats?:number;accepted_count?:number;next_lesson_at?:string|null;offering:{id:string;subject:Named;node:Named}|null};
@@ -67,10 +68,9 @@ export async function classDetail(id:string){
 }
 export async function enrollmentForGroup(id:string){const me=await viewer();if(!me||me.role!=='student')return null;const {data,error}=await me.db.from('enrollments').select('id,status').eq('group_id',id).eq('student_id',me.id).maybeSingle();if(error)throw new Error('Enrollment lookup failed');return data as {id:string;status:string}|null}
 async function pagedRows<T>(input:unknown,fetch:(from:number,to:number)=>PromiseLike<{data:T[]|null;count:number|null;error:unknown|null}>){
- const requestedPage=normalizeStudentPage(input),requestedFrom=(requestedPage-1)*STUDENT_PAGE_SIZE;
- let result=await fetch(requestedFrom,requestedFrom+STUDENT_PAGE_SIZE-1),page=requestedPage;
+ const requestedPage=normalizeStudentPage(input);
+ const {result,page}=await readCountedPage(requestedPage,STUDENT_PAGE_SIZE,p=>fetch((p-1)*STUDENT_PAGE_SIZE,p*STUDENT_PAGE_SIZE-1));
  const total=result.count??0,pageCount=studentPageCount(total);
- if(!result.error&&result.count!=null&&page>pageCount){page=pageCount;const from=(page-1)*STUDENT_PAGE_SIZE;result=await fetch(from,from+STUDENT_PAGE_SIZE-1);}
  return {rows:result.data??[],page,total,pageCount,error:!!(result.error||result.count==null)};
 }
 export async function studentDashboard(locale:Locale,now=new Date()){

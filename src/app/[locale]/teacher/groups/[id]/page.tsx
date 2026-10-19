@@ -13,6 +13,7 @@ import { StudentPagination } from '@/features/student/pagination';
 import { WeeklyScheduleEditor } from '@/features/teacher/setup-forms';
 import { AnnouncementForm } from '@/features/groups/announcement-form';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
+import { readCountedPage } from '@/lib/supabase/counted-page';
 
 export default async function TeacherGroupDetail({ params, searchParams }: { params: Promise<{ locale: string; id: string }>; searchParams: Promise<{ page?: string; roster_page?: string; detailsSaved?: string }> }) {
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
@@ -27,24 +28,21 @@ export default async function TeacherGroupDetail({ params, searchParams }: { par
   const fetchRoster = (page: number) => me.db.rpc('group_enrollment_page', {
     p_group_id: id, p_offset: (page - 1) * STUDENT_PAGE_SIZE, p_limit: STUDENT_PAGE_SIZE,
   });
-  let page = normalizeStudentPage(query.page);
+  const requestedPage = normalizeStudentPage(query.page);
   const maxRosterPage = Math.floor(2_147_483_647 / STUDENT_PAGE_SIZE);
   let rosterPage = Math.min(normalizeStudentPage(query.roster_page), maxRosterPage);
   const [group, slots, initialLessons, initialStudents, exclusions, announcement] = await Promise.all([
     me.db.from('groups').select('id,name,description,status,capacity,location').eq('id', id).eq('teacher_id', me.id).maybeSingle(),
     me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id).order('weekday').order('start_time'),
-    fetchLessons(page),
+    readCountedPage(requestedPage, STUDENT_PAGE_SIZE, fetchLessons),
     fetchRoster(rosterPage),
     me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id).order('local_date'),
     groupAnnouncement(me.db, id),
   ]);
-  let lessons = initialLessons;
+  let page = initialLessons.page;
+  const lessons = initialLessons.result;
   const lessonCount = lessons.count ?? 0;
   const lessonPageCount = studentPageCount(lessonCount);
-  if (!lessons.error && lessons.count != null && page > lessonPageCount) {
-    page = lessonPageCount;
-    lessons = await fetchLessons(page);
-  }
   let students = initialStudents;
   const rosterTotal = (students.data as { total?: number } | null)?.total ?? 0;
   const rosterPageCount = studentPageCount(rosterTotal);

@@ -4,17 +4,17 @@ import { requireViewer } from '@/components/platform/access';
 import { AdminForm } from '@/features/admin/forms';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
 import { canonicalTeacherReviewStatus, pageOffset, peopleTeacherMetadata, safeRole, safeStatus } from '@/features/admin/review-data';
+import { readCountedPage } from '@/lib/supabase/counted-page';
 
 const PAGE_SIZE=30;
 export default async function AdminUsers({params,searchParams}:{params:Promise<{locale:string}>;searchParams:Promise<{q?:string;role?:string;status?:string;page?:string}>}){
  const [{locale:raw},{q='',role:roleInput='all',status:statusInput='all',page}]=await Promise.all([params,searchParams]);
  const locale=ensureLocale(raw),ar=locale==='ar',me=await requireViewer(locale,'admin');
- const query=q.trim().slice(0,120),role=safeRole(roleInput),status=safeStatus(statusInput),offset=pageOffset(page,PAGE_SIZE);
- let request=me.db.from('profiles').select('id,full_name,role,status,created_at',{count:'exact'}).order('created_at',{ascending:false}).order('id').range(offset,offset+PAGE_SIZE-1);
- if(query)request=request.ilike('full_name',`%${query}%`);if(role!=='all')request=request.eq('role',role);if(status!=='all')request=request.eq('status',status);
- const profiles=await request;const teacherIds=(profiles.data||[]).filter(profile=>profile.role==='teacher').map(profile=>profile.id);
+ const query=q.trim().slice(0,120),role=safeRole(roleInput),status=safeStatus(statusInput),requestedPage=Math.floor(pageOffset(page,PAGE_SIZE)/PAGE_SIZE)+1;
+ const fetchProfiles=(requested:number)=>{let request=me.db.from('profiles').select('id,full_name,role,status,created_at',{count:'exact'}).order('created_at',{ascending:false}).order('id').range((requested-1)*PAGE_SIZE,requested*PAGE_SIZE-1);if(query)request=request.ilike('full_name',`%${query}%`);if(role!=='all')request=request.eq('role',role);if(status!=='all')request=request.eq('status',status);return request;};
+ const {result:profiles,page:currentPage}=await readCountedPage(requestedPage,PAGE_SIZE,fetchProfiles);const teacherIds=(profiles.data||[]).filter(profile=>profile.role==='teacher').map(profile=>profile.id);
  const metadata=await peopleTeacherMetadata(me.db,teacherIds);
- const teacherMap=new Map(metadata.teachers.map(x=>[x.id,x]));const reviewMap=new Map(metadata.reviews.map(x=>[x.teacher_id,canonicalTeacherReviewStatus(x.status)]));const total=profiles.count??0,currentPage=Math.floor(offset/PAGE_SIZE)+1,lastPage=Math.max(1,Math.ceil(total/PAGE_SIZE));
+ const teacherMap=new Map(metadata.teachers.map(x=>[x.id,x]));const reviewMap=new Map(metadata.reviews.map(x=>[x.teacher_id,canonicalTeacherReviewStatus(x.status)]));const total=profiles.count??0,lastPage=Math.max(1,Math.ceil(total/PAGE_SIZE));
  const href=(next:number)=>{const params=new URLSearchParams();if(query)params.set('q',query);if(role!=='all')params.set('role',role);if(status!=='all')params.set('status',status);if(next>1)params.set('page',String(next));return `/${locale}/admin/users${params.size?`?${params}`:''}`;};
  const copy=ar?{title:'المستخدمون',eyebrow:'الحسابات والصلاحيات',description:'ابحث في جميع الحسابات وصفِّها. حالة الحساب منفصلة عن مراجعة طلب المعلم.',search:'البحث بالاسم',role:'الدور',status:'حالة الحساب',all:'الكل',teachers:'المعلمون',students:'الطلاب',admins:'المسؤولون',active:'نشط',suspended:'موقوف',apply:'تطبيق',page:'صفحة',of:'من',prev:'السابق',next:'التالي',review:'مراجعة الطلب',approval:'حالة المراجعة',unavailable:'غير متاح',noResults:'لا توجد حسابات تطابق هذه المرشحات.',error:'تعذر تحميل الحسابات. حاول مرة أخرى.'}:{title:'People',eyebrow:'Accounts and access',description:'Search and filter every account. Account status is separate from teacher review.',search:'Search by name',role:'Role',status:'Account status',all:'All',teachers:'Teachers',students:'Students',admins:'Administrators',active:'Active',suspended:'Suspended',apply:'Apply',page:'Page',of:'of',prev:'Previous',next:'Next',review:'Review request',approval:'Review status',unavailable:'Unavailable',noResults:'No accounts match these filters.',error:'Could not load accounts. Please try again.'};
  const roleLabels:Record<string,string>={teacher:copy.teachers,student:copy.students,admin:copy.admins};

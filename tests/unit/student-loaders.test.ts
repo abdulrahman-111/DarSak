@@ -7,7 +7,7 @@ vi.mock('@/lib/supabase/server', () => ({ isConfigured: mocks.isConfigured }));
 vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.getRequestViewer }));
 vi.mock('@/features/platform/data', () => ({ catalogue: vi.fn(), publicGroupDetail: vi.fn(), publicGroups: vi.fn(), publicTeachers: vi.fn(), teacherById: vi.fn() }));
 
-import { studentClasses, studentDashboard, studentTimetable } from '@/features/student/data';
+import { studentClasses, studentDashboard, studentLessons, studentTimetable } from '@/features/student/data';
 
 describe('student dashboard loader query contract', () => {
   beforeEach(() => mocks.getRequestViewer.mockReset());
@@ -170,5 +170,85 @@ describe('student classes loader RPC contract', () => {
     const db = { rpc: vi.fn(async () => ({ data: null, error: new Error('failed') })) };
     mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', role: 'student', status: 'active' } });
     expect(await studentClasses('en', '2')).toMatchObject({ page: 2, pageCount: 1, total: 0, error: true, enrollments: [] });
+  });
+});
+
+describe('student lesson pagination recovery', () => {
+  beforeEach(() => mocks.getRequestViewer.mockReset());
+
+  function setupLessonPages(results: Array<{ data: Array<{ id: string }> | null; count: number | null; error: unknown | null }>) {
+    const calls: Array<{ filters: Array<[string, unknown]>; range: [number, number] | null; selectOptions: unknown }> = [];
+    const db = {
+      from(table: string) {
+        expect(table).toBe('lessons');
+        const call = { filters: [] as Array<[string, unknown]>, range: null as [number, number] | null, selectOptions: undefined as unknown };
+        calls.push(call);
+        const builder = {
+          select(_fields: string, options?: unknown) { call.selectOptions = options; return builder; },
+          eq(column: string, value: unknown) { call.filters.push([column, value]); return builder; },
+          gt(column: string, value: unknown) { call.filters.push([column, value]); return builder; },
+          order: () => builder,
+          range(from: number, to: number) { call.range = [from, to]; return builder; },
+          then(resolve: (value: unknown) => unknown) { return Promise.resolve(resolve(results.shift())); },
+        };
+        return builder;
+      },
+    };
+    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', role: 'student', status: 'active' } });
+    return calls;
+  }
+
+  it('keeps valid pages to one exact-count query', async () => {
+    const calls = setupLessonPages([
+      { data: [{ id: 'page-two' }], count: 45, error: null },
+    ]);
+
+    const result = await studentLessons('en', 2);
+
+    expect(result).toMatchObject({ lessons: [{ id: 'page-two' }], page: 2, total: 45, pageCount: 3, error: false });
+    expect(calls.map(call => call.range)).toEqual([[20, 39]]);
+  });
+
+  it('recovers an out-of-range response, clamps to the last page, and repeats the own-enrollment filters', async () => {
+    const calls = setupLessonPages([
+      { data: null, count: null, error: { code: 'PGRST103' } },
+      { data: [{ id: 'first' }], count: 45, error: null },
+      { data: [{ id: 'last' }], count: 45, error: null },
+    ]);
+
+    const result = await studentLessons('en', 9999);
+
+    expect(result).toMatchObject({ lessons: [{ id: 'last' }], page: 3, total: 45, pageCount: 3, error: false });
+    expect(calls.map(call => call.range)).toEqual([[199960, 199979], [0, 19], [40, 59]]);
+    expect(calls.map(call => call.selectOptions)).toEqual([{ count: 'exact' }, { count: 'exact' }, { count: 'exact' }]);
+    expect(calls[1].filters).toEqual(calls[0].filters);
+    expect(calls[2].filters).toEqual(calls[0].filters);
+    expect(calls[0].filters).toEqual([
+      ['group.enrollments.student_id', 'student-id'],
+      ['group.enrollments.status', 'accepted'],
+    ]);
+  });
+
+  it('uses the recovered first page when the exact count is zero', async () => {
+    const calls = setupLessonPages([
+      { data: null, count: null, error: { code: 'PGRST103' } },
+      { data: [], count: 0, error: null },
+    ]);
+
+    const result = await studentLessons('en', 9999);
+
+    expect(result).toMatchObject({ lessons: [], page: 1, total: 0, pageCount: 1, error: false });
+    expect(calls.map(call => call.range)).toEqual([[199960, 199979], [0, 19]]);
+  });
+
+  it('keeps non-range errors visible without issuing a recovery query', async () => {
+    const calls = setupLessonPages([
+      { data: null, count: null, error: { code: '42501' } },
+    ]);
+
+    const result = await studentLessons('en', 9999);
+
+    expect(result).toMatchObject({ lessons: [], page: 9999, total: 0, pageCount: 1, error: true });
+    expect(calls.map(call => call.range)).toEqual([[199960, 199979]]);
   });
 });

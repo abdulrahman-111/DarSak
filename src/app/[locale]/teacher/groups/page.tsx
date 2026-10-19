@@ -6,6 +6,7 @@ import { GroupManagementControls } from '@/features/teacher/management-forms';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
 import { StudentPagination } from '@/features/student/pagination';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
+import { readCountedPage } from '@/lib/supabase/counted-page';
 
 export default async function TeacherGroups({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ deleted?: string; page?: string }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
@@ -16,10 +17,8 @@ export default async function TeacherGroups({ params, searchParams }: { params: 
     .select('id,name,description,status,capacity,location,offering:offerings(subject:subjects(name_ar,name_en))', { count: 'exact' })
     .eq('teacher_id', me.id).order('created_at', { ascending: false }).order('id', { ascending: false })
     .range((page - 1) * STUDENT_PAGE_SIZE, page * STUDENT_PAGE_SIZE - 1);
-  let page = normalizeStudentPage(query.page);
-  let groups = await fetchGroups(page);
+  const { result: groups, page } = await readCountedPage(normalizeStudentPage(query.page), STUDENT_PAGE_SIZE, fetchGroups);
   const count = groups.count ?? 0, pageCount = studentPageCount(count);
-  if (!groups.error && groups.count != null && page > pageCount) { page = pageCount; groups = await fetchGroups(page); }
   const failed = !!groups.error || groups.count == null;
   const pageLabels = ar ? { previous: 'السابق', next: 'التالي', page: 'صفحة' } : { previous: 'Previous', next: 'Next', page: 'Page' };
 

@@ -19,8 +19,9 @@ export async function proxy(request: NextRequest) {
         },
       },
     });
-    // Verify with Auth; never authorize from the cookie-only session object.
-    await db.auth.getUser();
+    // Verify claims and refresh the session here; authoritative authorization
+    // uses a fresh getUser() result and live profile in getRequestViewer.
+    await db.auth.getClaims();
   }
   // Route after refreshing so rewrites forward fresh cookies to Server Components.
   const response = localize(request);
