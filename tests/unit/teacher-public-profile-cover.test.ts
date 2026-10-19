@@ -141,4 +141,28 @@ describe('public teacher profile cover projection', () => {
     resolveAvatar({ data: { signedUrl: 'signed-avatar-url' }, error: null });
     await expect(resultPromise).resolves.toMatchObject({ error: null, avatarUrl: 'signed-avatar-url' });
   });
+
+  it('starts all six public profile reads before the teacher row resolves', async () => {
+    const db = setup(null);
+    let resolveTeacher!: (value: { data: unknown; error: null }) => void;
+    db.rpc.mockImplementation((name: string) => {
+      if (name === 'public_teachers') return {
+        eq: vi.fn(() => ({ maybeSingle: () => new Promise(resolve => { resolveTeacher = resolve; }) })),
+      };
+      return name === 'public_teacher_specialization_labels'
+        ? Promise.resolve({ data: [], error: null })
+        : Promise.resolve({ data: null, error: null });
+    });
+    const pending = publicTeacherDetail('en', teacherId);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(db.rpc).toHaveBeenCalledWith('public_teacher_profile_details', { p_teacher_id: teacherId });
+    expect(db.rpc).toHaveBeenCalledWith('public_teacher_cover_path', { p_teacher_id: teacherId });
+    expect(publicGroupsMock).toHaveBeenCalled();
+    expect(db.rpc.mock.calls.map(([name]) => name)).toEqual(expect.arrayContaining([
+      'public_teachers', 'public_teacher_specialization_labels', 'public_teacher_profile_details', 'public_teacher_cover_path',
+    ]));
+    resolveTeacher({ data: { id: teacherId, full_name: 'Cover Teacher', headline: null, avatar_path: null }, error: null });
+    await expect(pending).resolves.toMatchObject({ error: null });
+  });
 });

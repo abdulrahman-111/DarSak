@@ -125,10 +125,13 @@ export async function teacherProfile(locale: Locale) {
 
 export async function publicTeacherDetail(locale: Locale, teacherId: string) {
   const db = await createClient();
-  const [teacherResult, contactsResult, specializationResult] = await Promise.all([
+  const [teacherResult, contactsResult, specializationResult, detailsResult, coverResult, groupsResult] = await Promise.all([
     db.rpc('public_teachers').eq('id', teacherId).maybeSingle(),
     db.from('teacher_contacts').select('phone_number,whatsapp_number,contact_email,visibility').eq('teacher_id', teacherId).maybeSingle(),
     db.rpc('public_teacher_specialization_labels', { p_teacher_id: teacherId }),
+    db.rpc('public_teacher_profile_details', { p_teacher_id: teacherId }),
+    db.rpc('public_teacher_cover_path', { p_teacher_id: teacherId }),
+    publicGroups(normalizeDiscoveryFilters({ teacher_id: teacherId })),
   ]);
   const ar = locale === 'ar';
   if (teacherResult.error || contactsResult.error || specializationResult.error) {
@@ -137,11 +140,6 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
   const teacher = teacherResult.data as unknown as PublicTeacherRow | null;
   if (!teacher) return { teacher: null, visitor: null, avatarUrl: null, error: null };
 
-  const [detailsResult, coverResult, groupsResult] = await Promise.all([
-    db.rpc('public_teacher_profile_details', { p_teacher_id: teacherId }),
-    db.rpc('public_teacher_cover_path', { p_teacher_id: teacherId }),
-    publicGroups(normalizeDiscoveryFilters({ teacher_id: teacherId })),
-  ]);
   if (detailsResult.error || coverResult.error || groupsResult.error) {
     return { teacher: null, visitor: null, avatarUrl: null, error: ar ? 'تعذر تحميل ملف المعلم. حاول مرة أخرى.' : 'Could not load this teacher profile. Please try again.' };
   }
