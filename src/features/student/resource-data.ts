@@ -2,9 +2,11 @@ import 'server-only';
 import { student } from './data';
 import type { Locale } from './domain';
 import { normalizeResourceFilters, resourcePagination, type ResourceGroup, type StudentResource } from './resource-domain';
+import { measuredServerRead } from '@/lib/server-read-diagnostics';
 
 export async function studentResources(locale: Locale, input: { group?: unknown; kind?: unknown; q?: unknown; groupQuery?: unknown; page?: unknown } = {}) {
   const me = await student(locale);
+  return measuredServerRead('student_resources', locale, async () => {
   const filters = normalizeResourceFilters(input);
   const [pageResult, groupResult] = await Promise.all([
     me.db.rpc('student_resource_page', {
@@ -78,4 +80,5 @@ export async function studentResources(locale: Locale, input: { group?: unknown;
     total,
     error: !!(pageError || groupResult.error || payload?.total == null),
   };
+  }, result => result.error);
 }

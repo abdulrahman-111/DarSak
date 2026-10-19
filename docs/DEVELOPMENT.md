@@ -18,6 +18,8 @@ Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.e
 
 The first six variables in `.env.example` cover the browser-facing Supabase connection, canonical app URL, optional Turnstile site key, Google sign-in toggle, and recovery-proof secret. Optional server-only values are documented in [Deployment](DEPLOYMENT.md). Never put a service-role key or other server secret in a `NEXT_PUBLIC_*` variable.
 
+Categorical `server_read` and `server_request_error` warnings appear only in Vercel runtime logs; they do not create database-backed counters. Read warnings are emitted for failed critical reads or reads taking at least two seconds; request errors include only the route type. They omit request and record details. Server durations help locate slow loaders but do not measure browser load metrics such as LCP. These diagnostics do not include browser real-user monitoring. Vercel Hobby runtime logs have short retention, so use them for recent diagnosis rather than long-term monitoring.
+
 ## Useful commands
 
 - `npm run dev` — start the development server.

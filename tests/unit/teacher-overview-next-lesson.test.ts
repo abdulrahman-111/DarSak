@@ -8,7 +8,14 @@ vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.g
 import { teacherOverview } from '@/features/teacher/data';
 
 describe('teacher overview next lesson query', () => {
-  beforeEach(() => mocks.getRequestViewer.mockReset());
+  beforeEach(() => { vi.restoreAllMocks(); mocks.getRequestViewer.mockReset(); });
+
+  it('redirects unauthenticated viewers before starting measured loader reads', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    mocks.getRequestViewer.mockResolvedValue({ db: {}, user: null, profile: null });
+    await expect(teacherOverview('en')).rejects.toThrow('redirect:/en/login');
+    expect(warn).not.toHaveBeenCalled();
+  });
 
   it('reads one earliest owned scheduled lesson that has not ended', async () => {
     const now = new Date('2026-10-13T12:00:00.000Z');
