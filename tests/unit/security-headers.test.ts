@@ -12,6 +12,12 @@ describe('global security response headers', () => {
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
       'content-security-policy': "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+      'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
     });
+  });
+
+  it('limits server action and proxy request bodies to one megabyte', () => {
+    expect(nextConfig.experimental?.serverActions?.bodySizeLimit).toBe('1mb');
+    expect(nextConfig.experimental?.proxyClientMaxBodySize).toBe('1mb');
   });
 });

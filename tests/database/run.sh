@@ -22,6 +22,7 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_profile_
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_preview.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_generation.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/schedule_slot_deletion.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/public_schedule_visibility.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_publication.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_duplication.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/discovery.sql
