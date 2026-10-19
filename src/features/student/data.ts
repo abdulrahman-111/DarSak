@@ -8,6 +8,7 @@ import { normalizeDiscoveryFilters } from '@/features/platform/discovery-domain'
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from './pagination-domain';
 import { parseStudentLearningProfileRow } from './student-profile-domain';
 import { readCountedPage } from '@/lib/supabase/counted-page';
+import { roleHome } from '@/components/platform/access';
 export type Named={id:string;name_ar:string;name_en:string;parent_id?:string|null};
 export type Teacher={id:string;full_name:string;headline:string;bio:string};
 export type Group={id:string;teacher_id:string;name:string;description:string;capacity:number;status:string;location:string;available_seats?:number;accepted_count?:number;next_lesson_at?:string|null;offering:{id:string;subject:Named;node:Named}|null};
@@ -26,7 +27,13 @@ export async function studentLearningProfile(viewer: { db: Awaited<ReturnType<ty
 }
 const groupFields='id,teacher_id,name,description,capacity,status,location,offering:offerings(id,subject:subjects(id,name_ar,name_en),node:education_nodes(id,name_ar,name_en))';
 export async function viewer(){if(!isConfigured())return null;const {db,user,profile}=await getRequestViewer();return user&&profile?{db,id:user.id,fullName:profile.full_name,role:profile.role as string,status:profile.status as string}:null}
-export async function student(locale:Locale){const me=await viewer();if(!me)redirect(`/${locale}/login`);if(me.role!=='student'||me.status!=='active')redirect(`/${locale}/dashboard`);return me}
+export async function student(locale:Locale){
+ const me=await viewer();
+ if(!me||me.status!=='active')redirect(`/${locale}/login`);
+ if(me.role!=='student'&&me.role!=='teacher'&&me.role!=='admin')redirect(`/${locale}/login`);
+ if(me.role!=='student')redirect(roleHome(locale,me.role));
+ return me;
+}
 export async function discovery(filters:{subject?:string;education?:string;teacher?:string;page?:number}={}){
  const [groups,catalogueResult,teacherResult]=await Promise.all([
   publicGroups(normalizeDiscoveryFilters({subject_id:filters.subject, node_id:filters.education, teacher_id:filters.teacher, page:String(filters.page||1)})),
