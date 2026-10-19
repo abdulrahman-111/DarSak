@@ -11,6 +11,7 @@ const nextConfig: NextConfig = {
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Content-Security-Policy', value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()' },
         ],
       },
     ];
@@ -20,9 +21,9 @@ const nextConfig: NextConfig = {
     // local TypeScript binary's arguments correctly in this environment.
     useTypeScriptCli: false,
     serverActions: {
-      bodySizeLimit: '12mb',
+      bodySizeLimit: '1mb',
     },
-    proxyClientMaxBodySize: '12mb',
+    proxyClientMaxBodySize: '1mb',
   },
 };
 export default nextConfig;
