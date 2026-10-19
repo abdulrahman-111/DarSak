@@ -1,23 +1,18 @@
 import Link from 'next/link';
-import { TEACHER_PLANS } from '@/features/subscriptions/plans';
 
 export function teacherSubscriptionNoticeCopy(locale: string) {
   return locale === 'ar'
     ? {
         title: 'اشتراكات المعلمين',
-        free: 'تستمر الفترة المجانية حتى نهاية يوم ١٤ نوفمبر ٢٠٢٦.',
-        plans: `الخطط القادمة: ستاندرد ${TEACHER_PLANS.standard.monthlyEgp} جنيه شهرياً وبرو ${TEACHER_PLANS.pro.monthlyEgp} جنيه شهرياً.`,
-        details: 'لن تبدأ الخطط المدفوعة قبل ١٥ نوفمبر ٢٠٢٦. حسابك مجاني خلال مرحلة الإطلاق.',
-        link: 'عرض تفاصيل الخطط',
+        free: 'المنصة مجانية حتى الفصل الدراسي القادم. سنعلن عن الخطط المدفوعة قبل بدء تطبيقها.',
+        details: 'لا توجد رسوم اشتراك خلال الفترة المجانية.',
         compactLink: 'إدارة الخطة',
         support: 'سيتواصل معك فريق الدعم لاستكمال التسجيل وشرح خيارات الخطط قبل بدء الاشتراكات المدفوعة.',
       }
     : {
         title: 'Teacher subscriptions',
-        free: 'The free launch runs through 14 November 2026.',
-        plans: `Upcoming plans: Standard at EGP ${TEACHER_PLANS.standard.monthlyEgp}/month and Pro at EGP ${TEACHER_PLANS.pro.monthlyEgp}/month.`,
-        details: 'Paid plans start no earlier than 15 November 2026. Your account is free during the launch phase.',
-        link: 'View plan details',
+        free: 'The platform is free until next semester. We will announce paid plans before they begin.',
+        details: 'There are no subscription fees during the free launch.',
         compactLink: 'Manage plan',
         support: 'Our support team will contact you to complete registration and explain the plan options before paid subscriptions begin.',
       };
@@ -33,9 +28,8 @@ export function TeacherSubscriptionNotice({ locale, signedInTeacher = false, com
     <span className="mb-3 inline-flex max-w-full shrink-0 whitespace-normal rounded-full bg-[#e0eeec] px-3 py-1 text-xs font-black text-teal sm:mb-0">{copy.free}</span>
     <div className="min-w-0 break-words [overflow-wrap:anywhere]">
       <h2 className="font-black text-teal">{copy.title}</h2>
-      <p className="mt-1">{copy.plans} {copy.details}</p>
+      <p className="mt-1">{copy.details}</p>
       {signedInTeacher && <p className="mt-2 rounded-xl bg-[#e0eeec] p-3 font-semibold text-[#0e3b3c]" role="note">{copy.support}</p>}
-      <Link className="mt-2 inline-block font-bold text-orange underline underline-offset-2" href={`/${locale}/pricing`}>{copy.link}</Link>
     </div>
   </aside>;
 }
