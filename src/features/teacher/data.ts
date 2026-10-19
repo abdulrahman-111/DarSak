@@ -57,21 +57,6 @@ async function teacherFilteredEnrollmentPage(me: Awaited<ReturnType<typeof teach
   return { ...result, page, pageCount: teacherPageCount(result.total), query: filters.query, groupId: filters.groupId, groups, error: null };
 }
 
-async function readAllPages<T>(fetchPage: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
-  const rows: T[] = [];
-  for (let offset = 0; ; offset += 1000) {
-    const result = await fetchPage(offset, offset + 999);
-    if (result.error) return { rows: [] as T[], error: result.error };
-    const page = result.data ?? [];
-    rows.push(...page);
-    if (page.length < 1000) return { rows, error: null };
-  }
-}
-
-async function calendarGroups(me: Awaited<ReturnType<typeof teacherViewer>>) {
-  return readAllPages<{ id: string; name: string }>((from, to) => me.db.from('groups').select('id,name').eq('teacher_id', me.id).order('name').order('id').range(from, to));
-}
-
 async function teacherEnrollmentPage(
   me: Awaited<ReturnType<typeof teacherViewer>>,
   status: 'pending' | 'accepted',
@@ -118,40 +103,40 @@ async function teacherEnrollmentPage(
   return { ...lastPayload, page, pageCount: teacherPageCount(lastPayload.total), error: null };
 }
 
-async function calendarLessonRows(me: Awaited<ReturnType<typeof teacherViewer>>, requestedPage: unknown) {
+async function calendarLessonRows(me: Awaited<ReturnType<typeof teacherIdentity>>, requestedPage: unknown) {
   type LessonRow = { id: string; group_id: string; title: string; starts_at: string; ends_at: string; status: string; notes: string; group: unknown };
   const selected = 'id,group_id,title,starts_at,ends_at,status,notes,group:groups!inner(name,teacher_id)';
   const targetPage = normalizeTeacherPage(requestedPage);
-  let total: number | null = null;
-  if (targetPage > 1) {
-    const count = await me.db.from('lessons').select('id,group:groups!inner(teacher_id)', { count: 'exact', head: true }).eq('group.teacher_id', me.id);
-    if (count.error || count.count == null) return { rows: [] as LessonRow[], total: 0, page: 1, pageCount: 1, error: count.error ?? { message: 'Exact lesson count unavailable.' } };
-    total = count.count;
-  }
-
-  let page = targetPage;
-  if (total != null) page = clampTeacherPage(targetPage, total);
-  let result = await me.db.from('lessons')
-    .select(selected, total == null ? { count: 'exact' } : {})
-    .eq('group.teacher_id', me.id)
-    .order('starts_at', { ascending: false })
-    .order('id', { ascending: false })
-    .range(teacherPageOffset(page), teacherPageOffset(page) + TEACHER_PAGE_SIZE - 1);
-  if (result.error) return { rows: [] as LessonRow[], total: total ?? 0, page, pageCount: teacherPageCount(total ?? 0), error: result.error };
-  total ??= result.count;
-  if (total == null) return { rows: [] as LessonRow[], total: 0, page: 1, pageCount: 1, error: { message: 'Exact lesson count unavailable.' } };
-
-  const latestPage = clampTeacherPage(page, total);
-  if (latestPage !== page) {
-    page = latestPage;
-    result = await me.db.from('lessons')
-      .select(selected)
+  const buildQuery = (page: number, withCount: boolean) => {
+    let query = me.db.from('lessons').select(selected, withCount ? { count: 'exact' } : {})
       .eq('group.teacher_id', me.id)
       .order('starts_at', { ascending: false })
       .order('id', { ascending: false })
       .range(teacherPageOffset(page), teacherPageOffset(page) + TEACHER_PAGE_SIZE - 1);
-    if (result.error) return { rows: [] as LessonRow[], total, page, pageCount: teacherPageCount(total), error: result.error };
+    return query;
+  };
+  const initial = await buildQuery(targetPage, true);
+  if (initial.error?.code === 'PGRST103') {
+    const count = await me.db.from('lessons').select('id,group:groups!inner(teacher_id)', { count: 'exact', head: true }).eq('group.teacher_id', me.id);
+    if (count.error) return { rows: [] as LessonRow[], total: 0, page: 1, pageCount: 1, error: count.error };
+    if (count.count == null) return { rows: [] as LessonRow[], total: 0, page: 1, pageCount: 1, error: { message: 'Exact lesson count unavailable.' } };
+    const total = count.count;
+    const page = clampTeacherPage(targetPage, total);
+    const retry = await buildQuery(page, false);
+    if (retry.error) return { rows: [] as LessonRow[], total, page, pageCount: teacherPageCount(total), error: retry.error };
+    return { rows: (retry.data ?? []) as LessonRow[], total, page, pageCount: teacherPageCount(total), error: null };
   }
+  if (initial.error) {
+    const total = initial.count ?? 0;
+    const page = total > 0 ? clampTeacherPage(targetPage, total) : 1;
+    return { rows: [] as LessonRow[], total, page, pageCount: teacherPageCount(total), error: initial.error };
+  }
+  if (initial.count == null) return { rows: [] as LessonRow[], total: 0, page: 1, pageCount: 1, error: { message: 'Exact lesson count unavailable.' } };
+
+  const total = initial.count;
+  const page = clampTeacherPage(targetPage, total);
+  const result = page === targetPage ? initial : await buildQuery(page, false);
+  if (result.error) return { rows: [] as LessonRow[], total, page, pageCount: teacherPageCount(total), error: result.error };
   return { rows: (result.data ?? []) as LessonRow[], total, page, pageCount: teacherPageCount(total), error: null };
 }
 
@@ -243,15 +228,9 @@ export async function teacherStudents(locale: Locale, requestedPage: unknown = 1
 }
 
 export async function teacherLessons(locale: Locale, requestedPage: unknown = 1) {
-  const me = await teacherViewer(locale);
-  const [groupsResult, lessons] = await Promise.all([
-    calendarGroups(me),
-    calendarLessonRows(me, requestedPage),
-  ]);
-  if (groupsResult.error) return { me, groups: [], lessons: [], total: 0, page: 1, pageCount: 1, error: groupsResult.error };
-  const groups = groupsResult.rows;
-  if (!groups.length) return { me, groups, lessons: [], total: 0, page: 1, pageCount: 1, error: null };
-  return { me, groups, lessons: lessons.rows, total: lessons.total, page: lessons.page, pageCount: lessons.pageCount, error: lessons.error };
+  const me = await teacherIdentity(locale);
+  const lessons = await calendarLessonRows(me, requestedPage);
+  return { me, groups: [] as Array<{ id: string; name: string }>, lessons: lessons.rows, total: lessons.total, page: lessons.page, pageCount: lessons.pageCount, error: lessons.error };
 }
 
 export async function teacherLesson(locale: Locale, id: string) {

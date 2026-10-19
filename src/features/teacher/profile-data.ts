@@ -160,7 +160,7 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
   }));
   const [avatar, coverUrl] = await Promise.all([
     teacher.avatar_path
-    ? await db.storage.from('teacher-avatars').createSignedUrl(teacher.avatar_path, 300)
+    ? db.storage.from('teacher-avatars').createSignedUrl(teacher.avatar_path, 300)
     : null,
     readTeacherCover(db, coverResult.data ?? null),
   ]);

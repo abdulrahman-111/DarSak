@@ -4,6 +4,7 @@ import {idSchema,type Locale} from './domain';
 import {classPage,classLessonView,classView,parseClassDetail} from './class-workspace-domain';
 import type {StudentResource} from './resource-domain';
 import {studentPageCount} from './pagination-domain';
+import {readCountedPage} from '@/lib/supabase/counted-page';
 
 export async function studentClassWorkspace(locale:Locale,id:string,query:Record<string,string|undefined>={}){
  const me=await student(locale);
@@ -18,7 +19,7 @@ export async function studentClassWorkspace(locale:Locale,id:string,query:Record
  let lessons:Lesson[]=[],resources:StudentResource[]=[],page=requestedPage,total=0,error=false;
  if(view==='lessons'){
   const fetch=(p:number)=>{let q=me.db.from('lessons').select('id,group_id,title,starts_at,ends_at,status,notes',{count:'exact'}).eq('group_id',id);q=lessonView==='history'?q.lt('ends_at',now):q.gte('ends_at',now);return q.order('starts_at',{ascending:lessonView!=='history'}).order('id').range((p-1)*20,p*20-1);};
-  let result=await fetch(page);total=result.count??0;page=Math.min(page,studentPageCount(total));if(!result.error&&page!==requestedPage)result=await fetch(page);
+  const counted=await readCountedPage(page,20,fetch);page=counted.page;const result=counted.result;total=result.count??0;
   lessons=(result.data??[]) as Lesson[];error=!!result.error||result.count==null;
  }else if(view==='materials'){
   const fetch=(p:number)=>me.db.rpc('student_resource_page',{p_group_id:id,p_kind:null,p_query:typeof query.q==='string'?query.q.trim().slice(0,100):'',p_offset:(p-1)*20,p_limit:20});

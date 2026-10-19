@@ -6,6 +6,7 @@ import { AdminForm } from '@/features/admin/forms';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
 import { StudentPagination } from '@/features/student/pagination';
+import { readCountedPage } from '@/lib/supabase/counted-page';
 
 export default async function AdminGroups({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<{ deleted?: string; page?: string }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
@@ -14,10 +15,8 @@ export default async function AdminGroups({ params, searchParams }: { params: Pr
   const me = await requireViewer(locale, 'admin');
   const fetchGroups = (page: number) => me.db.from('groups').select('id,name,status,capacity,location,teacher_id', { count: 'exact' })
     .order('created_at', { ascending: false }).order('id', { ascending: false }).range((page - 1) * STUDENT_PAGE_SIZE, page * STUDENT_PAGE_SIZE - 1);
-  let page = normalizeStudentPage(query.page);
-  let groups = await fetchGroups(page);
+  const { result: groups, page } = await readCountedPage(normalizeStudentPage(query.page), STUDENT_PAGE_SIZE, fetchGroups);
   const count = groups.count ?? 0, pageCount = studentPageCount(count);
-  if (!groups.error && groups.count != null && page > pageCount) { page = pageCount; groups = await fetchGroups(page); }
   const teacherIds = [...new Set((groups.data || []).map(row => row.teacher_id))];
   const namesResult = teacherIds.length
     ? await me.db.from('profiles').select('id,full_name').in('id', teacherIds)

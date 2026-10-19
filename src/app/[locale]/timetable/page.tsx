@@ -23,11 +23,12 @@ export default async function Timetable({ params, searchParams }: { params: Prom
   const week = normalizeTimetableWeek(search?.week);
   const selection = normalizeTimetableSelection(week.weekStart, search?.day, search?.group);
   const requestedPage = Number(search?.page);
-  const page = Number.isInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 1000) : 1;
+  const pageInput = Number.isInteger(requestedPage) && requestedPage > 0 ? Math.min(requestedPage, 1000) : 1;
   const days = timetableDayDates(week.weekStart);
   const selectedDay = selection.day ?? (week.isCurrentWeek ? week.today : week.weekStart);
   const dayBounds = cairoDayBounds(selectedDay);
-  const data = await studentTimetableDay(locale, dayBounds.start, dayBounds.end, selection.group, page);
+  const data = await studentTimetableDay(locale, dayBounds.start, dayBounds.end, selection.group, pageInput);
+  const page = data.page;
   const pageCount = Math.max(1, Math.ceil(data.total / TIMETABLE_LESSON_LIMIT));
   const exportRange = defaultCalendarRange();
   const copy = ar ? {

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, publicGroupsMock, readTeacherCoverMock } = vi.hoisted(() => ({
+const { createClientMock, publicGroupsMock, readTeacherCoverMock, createSignedUrlMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
   publicGroupsMock: vi.fn(),
   readTeacherCoverMock: vi.fn(),
+  createSignedUrlMock: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
@@ -40,8 +41,8 @@ function query(result: { data?: unknown; error?: unknown }) {
 
 type SpecializationLabel = { offering_id: string; subject_name_ar: string; subject_name_en: string; context_ar: string; context_en: string };
 
-function setup(coverPath: string | null, specializationRows: SpecializationLabel[] = []) {
-  const teacher = { id: teacherId, full_name: 'Cover Teacher', headline: null, avatar_path: null };
+function setup(coverPath: string | null, specializationRows: SpecializationLabel[] = [], avatarPath: string | null = null) {
+  const teacher = { id: teacherId, full_name: 'Cover Teacher', headline: null, avatar_path: avatarPath };
   const db = {
     rpc: vi.fn((name: string) => {
       if (name === 'public_teachers') return query({ data: teacher, error: null });
@@ -54,8 +55,10 @@ function setup(coverPath: string | null, specializationRows: SpecializationLabel
       if (table === 'teacher_contacts') return query({ data: null, error: null });
       throw new Error(`Unexpected table query: ${table}`);
     }),
+    storage: { from: () => ({ createSignedUrl: createSignedUrlMock }) },
   };
   createClientMock.mockResolvedValue(db);
+  createSignedUrlMock.mockResolvedValue({ data: { signedUrl: 'signed-avatar-url' }, error: null });
   publicGroupsMock.mockResolvedValue({ data: [], error: null });
   readTeacherCoverMock.mockImplementation(async (_client: unknown, path: string | null) => path ? 'signed-cover-url' : null);
   return db;
@@ -124,5 +127,18 @@ describe('public teacher profile cover projection', () => {
       { id: 'english-only', subject: 'Science', context: 'Grade 8' },
     ]);
     expect(arabic.visitor?.specializations).toEqual(english.visitor?.specializations);
+  });
+
+  it('starts public cover signing while avatar signing is still pending', async () => {
+    let resolveAvatar!: (value: { data: { signedUrl: string }; error: null }) => void;
+    setup('cover/path.webp', [], 'avatar/path.webp');
+    createSignedUrlMock.mockReturnValue(new Promise(resolve => { resolveAvatar = resolve; }));
+
+    const resultPromise = publicTeacherDetail('en', teacherId);
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    expect(readTeacherCoverMock).toHaveBeenCalledWith(expect.anything(), 'cover/path.webp');
+    resolveAvatar({ data: { signedUrl: 'signed-avatar-url' }, error: null });
+    await expect(resultPromise).resolves.toMatchObject({ error: null, avatarUrl: 'signed-avatar-url' });
   });
 });

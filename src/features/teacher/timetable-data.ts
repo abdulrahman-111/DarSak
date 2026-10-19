@@ -2,12 +2,12 @@ import 'server-only';
 import type { Locale } from '@/features/student/domain';
 import { cairoDayBounds, cairoWeekBounds, normalizeTimetableSelection, normalizeTimetableWeek } from '@/features/student/timetable-domain';
 import { clampTeacherPage, normalizeTeacherPage, teacherPageCount, teacherPageOffset, TEACHER_PAGE_SIZE } from './enrollment-pagination';
-import { teacherViewer } from './data';
+import { teacherIdentity } from './data';
 
 export const TEACHER_TIMETABLE_GROUP_LIMIT = 200;
 type GroupChoice = { id: string; name: string };
 
-async function teacherGroups(me: Awaited<ReturnType<typeof teacherViewer>>, selectedGroupId: string | null, activeOnly = false) {
+async function teacherGroups(me: Awaited<ReturnType<typeof teacherIdentity>>, selectedGroupId: string | null, activeOnly = false) {
   let groupQuery = me.db.from('groups').select('id,name').eq('teacher_id', me.id).order('name').order('id');
   if (activeOnly) groupQuery = groupQuery.neq('status', 'archived');
   const result = await groupQuery.range(0, TEACHER_TIMETABLE_GROUP_LIMIT);
@@ -26,7 +26,7 @@ async function teacherGroups(me: Awaited<ReturnType<typeof teacherViewer>>, sele
 }
 
 export async function teacherCalendarGroupChoices(locale: Locale, requestedGroup: unknown = '') {
-  const me = await teacherViewer(locale);
+  const me = await teacherIdentity(locale);
   const normalized = normalizeTimetableSelection('2000-01-03', null, requestedGroup).group;
   const groups = await teacherGroups(me, normalized, true);
   const selectedGroup = groups.groups.find(group => group.id === normalized) ?? null;
@@ -34,7 +34,7 @@ export async function teacherCalendarGroupChoices(locale: Locale, requestedGroup
 }
 
 export async function teacherTimetable(locale: Locale, dateInput: unknown, dayInput: unknown, groupInput: unknown, pageInput: unknown = 1, now = new Date()) {
-  const me = await teacherViewer(locale);
+  const me = await teacherIdentity(locale);
   const week = normalizeTimetableWeek(dateInput, now);
   const selection = normalizeTimetableSelection(week.weekStart, dayInput, groupInput);
   const groupsPromise = teacherGroups(me, selection.group);
@@ -47,12 +47,31 @@ export async function teacherTimetable(locale: Locale, dateInput: unknown, dayIn
     if (selection.group) query = query.eq('group_id', selection.group);
     return query;
   };
+  const buildCountQuery = () => {
+    let query = me.db.from('lessons').select('id,group:groups!inner(teacher_id)', { count: 'exact', head: true })
+      .eq('group.teacher_id', me.id).lt('starts_at', bounds.end.toISOString()).gt('ends_at', bounds.start.toISOString());
+    if (selection.group) query = query.eq('group_id', selection.group);
+    return query;
+  };
   const [groupsResult, initial] = await Promise.all([groupsPromise, buildQuery(requestedPage)]);
   if (groupsResult.error) return { groups: [], groupsLimited: false, selectedGroup: null, lessons: [], total: 0, page: 1, pageCount: 1, week, ...selection, error: groupsResult.error };
-  if (initial.error || initial.count == null) return { groups: groupsResult.groups, groupsLimited: groupsResult.groupsLimited, selectedGroup: groupsResult.groups.find(group => group.id === selection.group) ?? null, lessons: [], total: 0, page: 1, pageCount: 1, week, ...selection, error: initial.error ?? { message: 'Exact lesson count unavailable.' } };
-  const total = initial.count;
-  const page = clampTeacherPage(requestedPage, total);
-  const result = page === requestedPage ? initial : await buildQuery(page);
+  let total: number;
+  let page: number;
+  let result: Awaited<ReturnType<typeof buildQuery>>;
+  if (initial.error?.code === 'PGRST103') {
+    const count = await buildCountQuery();
+    if (count.error || count.count == null) {
+      return { groups: groupsResult.groups, groupsLimited: groupsResult.groupsLimited, selectedGroup: groupsResult.groups.find(group => group.id === selection.group) ?? null, lessons: [], total: 0, page: 1, pageCount: 1, week, ...selection, error: count.error ?? { message: 'Exact lesson count unavailable.' } };
+    }
+    total = count.count;
+    page = clampTeacherPage(requestedPage, total);
+    result = await buildQuery(page);
+  } else {
+    if (initial.error || initial.count == null) return { groups: groupsResult.groups, groupsLimited: groupsResult.groupsLimited, selectedGroup: groupsResult.groups.find(group => group.id === selection.group) ?? null, lessons: [], total: 0, page: 1, pageCount: 1, week, ...selection, error: initial.error ?? { message: 'Exact lesson count unavailable.' } };
+    total = initial.count;
+    page = clampTeacherPage(requestedPage, total);
+    result = page === requestedPage ? initial : await buildQuery(page);
+  }
   return {
     groups: groupsResult.groups,
     groupsLimited: groupsResult.groupsLimited,

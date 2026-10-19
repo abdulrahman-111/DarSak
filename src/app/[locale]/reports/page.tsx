@@ -7,6 +7,7 @@ import { StudentPagination } from '@/features/student/pagination';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from '@/features/student/pagination-domain';
 import { ProblemReportForm } from '@/features/reports/form';
 import { PlatformShell } from '@/components/platform/shell';
+import { readCountedPage } from '@/lib/supabase/counted-page';
 
 export default async function ReportsPage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams?: Promise<{ page?: string; status?: string }> }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams ?? Promise.resolve<{ page?: string; status?: string }>({})]);
@@ -23,15 +24,14 @@ export default async function ReportsPage({ params, searchParams }: { params: Pr
   if (profile?.status !== 'active' || !['student','teacher','admin'].includes(profile.role)) return <div className="container max-w-3xl py-8"><ScreenTitle eyebrow={copy.eyebrow} title={copy.title}/><Panel><p role="alert" className="text-sm text-red-800">{copy.denied}</p></Panel></div>;
 
   const status = ['open','resolved'].includes(query?.status || '') ? query?.status as 'open'|'resolved' : 'all';
-  let page = normalizeStudentPage(query?.page);
+  const requestedPage = normalizeStudentPage(query?.page);
   const fetchHistory = (requested: number) => {
     let request = db.from('reports').select('id,subject,description,status,page_path,created_at,updated_at,public_response,reviewed_at', { count: 'exact' }).eq('reporter_id', user.id);
     if (status !== 'all') request = request.eq('status', status);
     return request.order('created_at', { ascending: false }).order('id', { ascending: false }).range((requested - 1) * STUDENT_PAGE_SIZE, requested * STUDENT_PAGE_SIZE - 1);
   };
-  let history = await fetchHistory(page);
+  const { result: history, page } = await readCountedPage(requestedPage, STUDENT_PAGE_SIZE, fetchHistory);
   const total = history.count ?? 0, pageCount = studentPageCount(total);
-  if (!history.error && history.count != null && page > pageCount) { page = pageCount; history = await fetchHistory(page); }
   const failed = !!history.error || history.count == null;
   const labels = { page: copy.page, previous: copy.previous, next: copy.next };
   return <PlatformShell locale={locale} role={profile.role as 'student'|'teacher'|'admin'} name={profile.full_name}>

@@ -53,4 +53,42 @@ describe('student timetable day loader query contract', () => {
     expect(slots?.filters).toContainEqual(['eq', 'group_id', groupId]);
     expect(slots?.filters).toContainEqual(['neq', 'group.status', 'archived']);
   });
+
+  it('recovers an out-of-range lesson page and returns the clamped page with the same student filters', async () => {
+    const lessonCalls: Array<{ filters: Array<[string, string, unknown]>; range: [number, number] | undefined }> = [];
+    const db = {
+      from(table: string) {
+        const query = { table, filters: [] as Array<[string, string, unknown]>, range: undefined as [number, number] | undefined };
+        if (table === 'lessons') lessonCalls.push(query);
+        const builder: any = {
+          select: () => builder,
+          eq(column: string, value: unknown) { query.filters.push(['eq', column, value]); return builder; },
+          neq(column: string, value: unknown) { query.filters.push(['neq', column, value]); return builder; },
+          gt(column: string, value: unknown) { query.filters.push(['gt', column, value]); return builder; },
+          lt(column: string, value: unknown) { query.filters.push(['lt', column, value]); return builder; },
+          order: () => builder,
+          range(from: number, to: number) { query.range = [from, to]; return builder; },
+          limit: () => builder,
+          then(resolve: (value: unknown) => unknown) {
+            if (table === 'lessons') {
+              const page = lessonCalls.length;
+              if (page === 1) return Promise.resolve(resolve({ data: null, count: null, error: { code: 'PGRST103', message: 'Requested range not satisfiable' } }));
+              return Promise.resolve(resolve({ data: [{ id: page === 2 ? 'first' : 'last' }], count: 120, error: null }));
+            }
+            return Promise.resolve(resolve({ data: [], error: null }));
+          },
+        };
+        return builder;
+      },
+    };
+    mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'student-id' }, profile: { id: 'student-id', role: 'student', status: 'active' } });
+
+    const bounds = cairoDayBounds('2026-10-13');
+    const result = await studentTimetableDay('en', bounds.start, bounds.end, null, 99);
+
+    expect(result).toMatchObject({ page: 3, total: 120, lessons: [{ id: 'last' }], error: false });
+    expect(lessonCalls.map(query => query.range)).toEqual([[4900, 4949], [0, 49], [100, 149]]);
+    expect(lessonCalls[1].filters).toEqual(lessonCalls[0].filters);
+    expect(lessonCalls[2].filters).toEqual(lessonCalls[0].filters);
+  });
 });
