@@ -1,10 +1,9 @@
 'use client';
 
-import { useParams } from 'next/navigation';
+import { startTransition } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 
 type RouteArea = 'discovery' | 'group' | 'groupSetup' | 'page';
-type ErrorArea = Exclude<RouteArea, 'page'>;
-
 const copy = {
   en: {
     discoveryLoading: 'Loading groups…',
@@ -14,6 +13,8 @@ const copy = {
     discoveryError: 'We could not load discovery right now.',
     groupError: 'We could not load this group right now.',
     setupError: 'We could not load this group setup right now.',
+    pageError: 'We could not load this page right now.',
+    pageHint: 'Please try again in a moment.',
     retry: 'Try again',
   },
   ar: {
@@ -24,6 +25,8 @@ const copy = {
     discoveryError: 'تعذر تحميل صفحة المجموعات الآن.',
     groupError: 'تعذر تحميل هذه المجموعة الآن.',
     setupError: 'تعذر تحميل إعداد هذه المجموعة الآن.',
+    pageError: 'تعذر تحميل هذه الصفحة الآن.',
+    pageHint: 'يرجى المحاولة مرة أخرى بعد قليل.',
     retry: 'حاول مرة أخرى',
   },
 };
@@ -41,13 +44,21 @@ export function RouteLoading({ area }: { area: RouteArea }) {
   </section>;
 }
 
-export function RouteError({ area, retry }: { area: ErrorArea; retry: () => void }) {
+export function RouteError({ area, retry }: { area: RouteArea; retry: () => void }) {
   const t = useRouteCopy();
-  const text = area === 'discovery' ? t.discoveryError : area === 'group' ? t.groupError : t.setupError;
+  const router = useRouter();
+  const text = area === 'discovery' ? t.discoveryError : area === 'group' ? t.groupError : area === 'page' ? t.pageError : t.setupError;
+  const retryRoute = () => startTransition(() => {
+    router.refresh();
+    retry();
+  });
   return <section className="container py-16" role="alert">
     <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6">
-      <p className="text-sm text-red-800">{text}</p>
-      <button type="button" onClick={retry} className="mt-4 rounded-xl bg-teal px-4 py-2.5 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{t.retry}</button>
+      {area === 'page' ? <>
+        <h1 className="text-xl font-bold leading-snug text-red-900">{text}</h1>
+        <p className="mt-2 text-sm leading-6 text-red-800">{t.pageHint}</p>
+      </> : <p className="text-sm text-red-800">{text}</p>}
+      <button type="button" onClick={retryRoute} className="mt-4 min-h-11 rounded-xl bg-teal px-4 py-2.5 font-bold text-white transition hover:bg-[#164d47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2">{t.retry}</button>
     </div>
   </section>;
 }

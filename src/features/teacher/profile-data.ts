@@ -10,6 +10,7 @@ import { safePublicTeacherProfileDetails, teacherProfileDetails } from './profil
 import { buildTeacherVisitorView } from '@/components/public/teacher-profile';
 import { teacherCatalogueChoices, type TeacherCatalogueNode, type TeacherCatalogueOffering, type TeacherCatalogueSubject } from './catalogue-data';
 import { catalogueDisplayName } from './catalogue-domain';
+import { measuredServerRead } from '@/lib/server-read-diagnostics';
 
 export type ProfileCatalogueNode = TeacherCatalogueNode;
 export type ProfileCatalogueSubject = TeacherCatalogueSubject;
@@ -124,6 +125,7 @@ export async function teacherProfile(locale: Locale) {
 }
 
 export async function publicTeacherDetail(locale: Locale, teacherId: string) {
+  return measuredServerRead('public_teacher_detail', locale, async () => {
   const db = await createClient();
   const [teacherResult, contactsResult, specializationResult, detailsResult, coverResult, groupsResult] = await Promise.all([
     db.rpc('public_teachers').eq('id', teacherId).maybeSingle(),
@@ -179,4 +181,5 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
     avatarUrl: visitor.avatarUrl,
     error: null,
   };
+  }, result => result.error !== null);
 }

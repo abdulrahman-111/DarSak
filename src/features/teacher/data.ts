@@ -5,6 +5,7 @@ import type { Locale } from '@/features/student/domain';
 import { buildTeacherSetupTasks, cairoDayBounds, teacherDashboardError } from './dashboard-domain';
 import { clampTeacherPage, normalizeTeacherPage, TEACHER_PAGE_SIZE, teacherPageCount, teacherPageOffset } from './enrollment-pagination';
 import { normalizeRosterFilters } from './roster-filters';
+import { measuredServerRead } from '@/lib/server-read-diagnostics';
 
 export async function teacherIdentity(locale: Locale) {
   const { db, user, profile } = await getRequestViewer();
@@ -155,7 +156,10 @@ function emptyTeacherOverview(me: Awaited<ReturnType<typeof teacherViewer>>, loc
 }
 
 export async function teacherOverview(locale: Locale, now = new Date()) {
-  const me = await teacherViewer(locale);
+  const identity = await teacherIdentity(locale);
+  return measuredServerRead('teacher_overview', locale, async () => {
+  const { data: teacher, error: teacherError } = await identity.db.from('teacher_profiles').select('headline,bio,approved,avatar_path,cover_path').eq('id', identity.id).maybeSingle();
+  const me = { ...identity, teacher, teacherError };
   const bounds = cairoDayBounds(now);
   const [summaryResult, students, nextLessonResult] = await Promise.all([
     me.db.rpc('teacher_dashboard_summary', {
@@ -213,6 +217,7 @@ export async function teacherOverview(locale: Locale, now = new Date()) {
     setupTasks,
     error: null,
   };
+  }, result => result.error !== null);
 }
 
 export async function teacherRequests(locale: Locale, requestedPage: unknown = 1, query: unknown = '', groupId: unknown = '') {
