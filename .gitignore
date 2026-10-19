@@ -2,7 +2,11 @@ node_modules
 .next
 .next-stale-*
 out
-.env.local
+.env*
+!.env.example
+.vercel/
+*.log
+.DS_Store
 *.tsbuildinfo
 coverage
 supabase/.temp/
