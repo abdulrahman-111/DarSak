@@ -5,15 +5,15 @@ export function isActivePath(pathname: string, href: string, exact = false): boo
 
 export function hasStudentWorkspaceNavigation(pathname:string,locale:string):boolean{
  const path=pathname.replace(/\/$/,'');
- return [`/${locale}/student`,`/${locale}/timetable`,`/${locale}/notifications`,`/${locale}/reports`].some(base=>path===base||path.startsWith(`${base}/`));
+ return [`/${locale}/student`,`/${locale}/timetable`,`/${locale}/notifications`,`/${locale}/reports`,`/${locale}/account`,`/${locale}/teachers`,`/${locale}/groups`].some(base=>path===base||path.startsWith(`${base}/`));
 }
 
 export function hasTeacherWorkspaceNavigation(pathname:string,locale:string):boolean{
  const path=pathname.replace(/\/$/,'');
- return [`/${locale}/teacher`,`/${locale}/notifications`,`/${locale}/reports`].some(base=>path===base||path.startsWith(`${base}/`));
+ return [`/${locale}/teacher`,`/${locale}/notifications`,`/${locale}/reports`,`/${locale}/account`,`/${locale}/teachers`,`/${locale}/groups`].some(base=>path===base||path.startsWith(`${base}/`));
 }
 
 export function hasAdminWorkspaceNavigation(pathname:string,locale:string):boolean{
  const path=pathname.replace(/\/$/,'');
- return [`/${locale}/admin`,`/${locale}/notifications`,`/${locale}/reports`].some(base=>path===base||path.startsWith(`${base}/`));
+ return [`/${locale}/admin`,`/${locale}/notifications`,`/${locale}/reports`,`/${locale}/account`,`/${locale}/teachers`,`/${locale}/groups`].some(base=>path===base||path.startsWith(`${base}/`));
 }

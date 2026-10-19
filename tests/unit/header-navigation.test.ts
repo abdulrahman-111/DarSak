@@ -64,4 +64,21 @@ describe('global Reports navigation', () => {
     expect(html).toContain('href="/en/account"');
     expect(html).not.toContain('data-mobile-workspace-nav="true"');
   });
+
+  it('hides legacy primary navigation for active account and explore workspaces, while guests keep public navigation', async () => {
+    const labels = { brand: 'Dars', home: 'Home', discover: 'Discover', teacherRole: 'Teach', dashboard: 'Dashboard', account: 'Account', reports: 'Report a problem', logout: 'Log out', login: 'Log in', register: 'Register' };
+
+    for (const [role, pathname] of [['student', '/en/account'], ['teacher', '/en/teachers'], ['admin', '/en/groups/abc']] as const) {
+      mocks.currentUser.mockResolvedValue({ profile: { role, status: 'active' } });
+      mocks.pathname = pathname;
+      const html = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+      expect(html).not.toContain('class="hidden items-center gap-6 text-sm font-bold text-[#4d473f] lg:flex"');
+      expect(html).toContain('data-mobile-workspace-nav="true"');
+    }
+
+    mocks.currentUser.mockResolvedValue(null);
+    mocks.pathname = '/en/teachers';
+    const guestHtml = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+    expect(guestHtml).toContain('aria-label="Primary navigation"');
+  });
 });
