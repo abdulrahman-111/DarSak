@@ -12,6 +12,12 @@ fi
 # including the post-rollout column revoke, are applied.
 # tests/database/concurrency.sql is not listed: it is the postcondition for a
 # manual two-session race (see its header) and needs that setup first.
+# monthly_teacher_access_engine.sql and monthly_teacher_access_enforcement.sql
+# are also not listed: they assert the monthly free-month/renewal model that
+# 20261017191934_teacher_plan_quota_foundation.sql replaced (approved teachers
+# now have open access and can_renew is false until plan quotas activate).
+# The new model is covered by supabase/tests/teacher_plan_quota_*.test.sql.
+# Rewrite or delete them once the quota rollout is final.
 fixtures=(
   tests/database/foundation.sql
   tests/database/auth_role_fallback.sql
@@ -51,8 +57,6 @@ fixtures=(
   tests/database/lesson_attendance.sql
   tests/database/calendar_lesson_export.sql
   tests/database/user_notifications.sql
-  tests/database/monthly_teacher_access_engine.sql
-  tests/database/monthly_teacher_access_enforcement.sql
   tests/database/email_outbox.sql
   tests/database/problem_reports.sql
   tests/database/teacher_rules.sql
