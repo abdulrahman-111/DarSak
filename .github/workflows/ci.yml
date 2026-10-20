@@ -86,7 +86,14 @@ jobs:
       - name: Database fixtures
         env:
           SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        run: ./tests/database/run.sh
+        # On failure, repeat the last lines as an annotation so the failing
+        # fixture shows on the PR page without opening the full log.
+        run: |
+          set -o pipefail
+          if ! ./tests/database/run.sh 2>&1 | tee "$RUNNER_TEMP/database-fixtures.log"; then
+            echo "::error title=Database fixtures failed::$(tail -n 12 "$RUNNER_TEMP/database-fixtures.log" | tr '\n' ' ' | cut -c1-1500)"
+            exit 1
+          fi
 
       - name: Stop local Supabase
         if: always()
