@@ -21,8 +21,18 @@ export default {
         card: '0 16px 45px rgba(14, 74, 75, 0.08)',
       },
       fontFamily: {
-        sans: ['var(--font-instrument-sans)', 'var(--font-ibm-plex-sans-arabic)', 'Arial', 'sans-serif'],
-        display: ['var(--font-bricolage-grotesque)', 'var(--font-ibm-plex-sans-arabic)', 'Arial', 'sans-serif'],
+        sans: [
+          'var(--font-instrument-sans)',
+          'var(--font-ibm-plex-sans-arabic)',
+          'Arial',
+          'sans-serif',
+        ],
+        display: [
+          'var(--font-bricolage-grotesque)',
+          'var(--font-ibm-plex-sans-arabic)',
+          'Arial',
+          'sans-serif',
+        ],
       },
     },
   },

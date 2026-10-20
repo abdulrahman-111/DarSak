@@ -9,8 +9,11 @@ import PricingPage from '@/app/[locale]/pricing/page';
 describe('pricing during the free launch', () => {
   beforeEach(() => redirect.mockReset());
 
-  it.each(['en', 'ar'])('redirects the localized %s pricing route to its home page', async (locale) => {
-    await PricingPage({ params: Promise.resolve({ locale }) });
-    expect(redirect).toHaveBeenCalledWith(`/${locale}`);
-  });
+  it.each(['en', 'ar'])(
+    'redirects the localized %s pricing route to its home page',
+    async locale => {
+      await PricingPage({ params: Promise.resolve({ locale }) });
+      expect(redirect).toHaveBeenCalledWith(`/${locale}`);
+    },
+  );
 });

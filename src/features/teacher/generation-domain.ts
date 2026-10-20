@@ -12,20 +12,25 @@ function isCalendarDate(value: string): boolean {
 
 export const calendarDateSchema = z.string().refine(isCalendarDate, 'date');
 
-export const generationRangeSchema = z.object({
-  from: calendarDateSchema,
-  until: calendarDateSchema,
-}).superRefine(({ from, until }, context) => {
-  const first = Date.parse(`${from}T00:00:00.000Z`);
-  const last = Date.parse(`${until}T00:00:00.000Z`);
-  const dayDifference = (last - first) / 86_400_000;
-  if (dayDifference < 0) context.addIssue({ code: 'custom', path: ['until'], message: 'reversed' });
-  else if (dayDifference > 90) context.addIssue({ code: 'custom', path: ['until'], message: 'range' });
-});
+export const generationRangeSchema = z
+  .object({
+    from: calendarDateSchema,
+    until: calendarDateSchema,
+  })
+  .superRefine(({ from, until }, context) => {
+    const first = Date.parse(`${from}T00:00:00.000Z`);
+    const last = Date.parse(`${until}T00:00:00.000Z`);
+    const dayDifference = (last - first) / 86_400_000;
+    if (dayDifference < 0)
+      context.addIssue({ code: 'custom', path: ['until'], message: 'reversed' });
+    else if (dayDifference > 90)
+      context.addIssue({ code: 'custom', path: ['until'], message: 'range' });
+  });
 
 export type GenerationRange = z.infer<typeof generationRangeSchema>;
 
-export const lessonExclusionsSchema = z.array(calendarDateSchema)
+export const lessonExclusionsSchema = z
+  .array(calendarDateSchema)
   .max(366, 'max')
   .refine(dates => new Set(dates).size === dates.length, 'distinct');
 
@@ -46,11 +51,16 @@ export type GenerationPreviewRow = {
 
 export type GenerationPreviewSummary = Record<GenerationPreviewState, number>;
 
-export function summarizeGenerationPreview(rows: Array<{ state: GenerationPreviewState }>): GenerationPreviewSummary {
-  return rows.reduce<GenerationPreviewSummary>((summary, row) => {
-    summary[row.state] += 1;
-    return summary;
-  }, { ready: 0, already_generated: 0, excluded: 0, conflicting: 0 });
+export function summarizeGenerationPreview(
+  rows: Array<{ state: GenerationPreviewState }>,
+): GenerationPreviewSummary {
+  return rows.reduce<GenerationPreviewSummary>(
+    (summary, row) => {
+      summary[row.state] += 1;
+      return summary;
+    },
+    { ready: 0, already_generated: 0, excluded: 0, conflicting: 0 },
+  );
 }
 
 export function canConfirmGeneration(rows: Array<{ state: GenerationPreviewState }>): boolean {
@@ -63,10 +73,12 @@ export function isCurrentConflictFreePreview(
   currentRange: { from: string; until: string },
   dirtyExclusions: boolean,
 ): boolean {
-  return rows !== null
-    && previewRange !== null
-    && !dirtyExclusions
-    && previewRange.from === currentRange.from
-    && previewRange.until === currentRange.until
-    && rows.every(row => row.state !== 'conflicting');
+  return (
+    rows !== null &&
+    previewRange !== null &&
+    !dirtyExclusions &&
+    previewRange.from === currentRange.from &&
+    previewRange.until === currentRange.until &&
+    rows.every(row => row.state !== 'conflicting')
+  );
 }

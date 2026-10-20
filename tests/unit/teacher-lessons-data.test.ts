@@ -2,12 +2,22 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ getRequestViewer: vi.fn() }));
 vi.mock('server-only', () => ({}));
-vi.mock('next/navigation', () => ({ redirect: vi.fn((path: string) => { throw new Error(`redirect:${path}`); }) }));
+vi.mock('next/navigation', () => ({
+  redirect: vi.fn((path: string) => {
+    throw new Error(`redirect:${path}`);
+  }),
+}));
 vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.getRequestViewer }));
 
 import { teacherLessons } from '@/features/teacher/data';
 
-type Query = { table: string; selectOptions?: unknown; filters: Array<[string, string, unknown]>; range?: [number, number]; orders: string[] };
+type Query = {
+  table: string;
+  selectOptions?: unknown;
+  filters: Array<[string, string, unknown]>;
+  range?: [number, number];
+  orders: string[];
+};
 
 function setup(total = 21, rejectOutOfRange = false) {
   const queries: Query[] = [];
@@ -16,25 +26,61 @@ function setup(total = 21, rejectOutOfRange = false) {
       const query: Query = { table, filters: [], orders: [] };
       queries.push(query);
       const builder: any = {
-        select: (_columns: string, options?: unknown) => { query.selectOptions = options; return builder; },
-        eq(column: string, value: unknown) { query.filters.push(['eq', column, value]); return builder; },
-        order(column: string) { query.orders.push(column); return builder; },
-        range(from: number, to: number) { query.range = [from, to]; return builder; },
+        select: (_columns: string, options?: unknown) => {
+          query.selectOptions = options;
+          return builder;
+        },
+        eq(column: string, value: unknown) {
+          query.filters.push(['eq', column, value]);
+          return builder;
+        },
+        order(column: string) {
+          query.orders.push(column);
+          return builder;
+        },
+        range(from: number, to: number) {
+          query.range = [from, to];
+          return builder;
+        },
         maybeSingle: async () => ({ data: { headline: '', bio: '', approved: true }, error: null }),
         then(resolve: (value: unknown) => unknown) {
           const range = query.range;
-          if ((query.selectOptions as { head?: boolean } | undefined)?.head) return Promise.resolve(resolve({ data: null, count: total, error: null }));
-          if (rejectOutOfRange && (range?.[0] ?? 0) > 39) return Promise.resolve(resolve({ data: null, count: null, error: { code: 'PGRST103', message: 'Requested range not satisfiable' } }));
-          const data = table === 'lessons' && range?.[0] === 20
-            ? [{ id: 'last', group_id: 'group-1', title: 'Last page', starts_at: '2026-10-13T10:00:00Z', ends_at: '2026-10-13T11:00:00Z', status: 'scheduled', notes: '', group: { name: 'Owned', teacher_id: 'teacher-1' } }]
-            : [];
+          if ((query.selectOptions as { head?: boolean } | undefined)?.head)
+            return Promise.resolve(resolve({ data: null, count: total, error: null }));
+          if (rejectOutOfRange && (range?.[0] ?? 0) > 39)
+            return Promise.resolve(
+              resolve({
+                data: null,
+                count: null,
+                error: { code: 'PGRST103', message: 'Requested range not satisfiable' },
+              }),
+            );
+          const data =
+            table === 'lessons' && range?.[0] === 20
+              ? [
+                  {
+                    id: 'last',
+                    group_id: 'group-1',
+                    title: 'Last page',
+                    starts_at: '2026-10-13T10:00:00Z',
+                    ends_at: '2026-10-13T11:00:00Z',
+                    status: 'scheduled',
+                    notes: '',
+                    group: { name: 'Owned', teacher_id: 'teacher-1' },
+                  },
+                ]
+              : [];
           return Promise.resolve(resolve({ data, count: total, error: null }));
         },
       };
       return builder;
     },
   };
-  mocks.getRequestViewer.mockResolvedValue({ db, user: { id: 'teacher-1' }, profile: { id: 'teacher-1', role: 'teacher', status: 'active' } });
+  mocks.getRequestViewer.mockResolvedValue({
+    db,
+    user: { id: 'teacher-1' },
+    profile: { id: 'teacher-1', role: 'teacher', status: 'active' },
+  });
   return { queries, db };
 }
 
@@ -46,7 +92,13 @@ describe('teacher all-lessons loader query contract', () => {
 
     const result = await teacherLessons('en', 2);
 
-    expect(result).toMatchObject({ lessons: [{ id: 'last' }], total: 21, page: 2, pageCount: 2, error: null });
+    expect(result).toMatchObject({
+      lessons: [{ id: 'last' }],
+      total: 21,
+      page: 2,
+      pageCount: 2,
+      error: null,
+    });
     expect(queries.map(query => query.table)).toEqual(['lessons']);
     expect(queries[0]).toMatchObject({
       selectOptions: { count: 'exact' },
@@ -61,7 +113,13 @@ describe('teacher all-lessons loader query contract', () => {
 
     const result = await teacherLessons('en', 9);
 
-    expect(result).toMatchObject({ lessons: [{ id: 'last' }], total: 21, page: 2, pageCount: 2, error: null });
+    expect(result).toMatchObject({
+      lessons: [{ id: 'last' }],
+      total: 21,
+      page: 2,
+      pageCount: 2,
+      error: null,
+    });
     const lessonQueries = queries.filter(query => query.table === 'lessons');
     expect(lessonQueries).toHaveLength(3);
     expect(lessonQueries.map(query => query.range)).toEqual([[160, 179], undefined, [20, 39]]);

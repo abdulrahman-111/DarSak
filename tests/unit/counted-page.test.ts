@@ -5,7 +5,11 @@ type PageResult = { data: number[] | null; count: number | null; error: unknown 
 
 describe('readCountedPage', () => {
   it('reads a valid page once', async () => {
-    const fetchPage = vi.fn(async (page: number): Promise<PageResult> => ({ data: [page], count: 120, error: null }));
+    const fetchPage = vi.fn(async (page: number): Promise<PageResult> => ({
+      data: [page],
+      count: 120,
+      error: null,
+    }));
 
     const result = await readCountedPage(2, 50, fetchPage);
 
@@ -33,9 +37,11 @@ describe('readCountedPage', () => {
 
   it('reuses the recovered first page when the exact count is zero', async () => {
     const rangeError = { code: 'PGRST103' };
-    const fetchPage = vi.fn(async (page: number): Promise<PageResult> => page === 999
-      ? { data: null, count: null, error: rangeError }
-      : { data: [], count: 0, error: null });
+    const fetchPage = vi.fn(async (page: number): Promise<PageResult> =>
+      page === 999
+        ? { data: null, count: null, error: rangeError }
+        : { data: [], count: 0, error: null },
+    );
 
     const result = await readCountedPage(999, 50, fetchPage);
 
@@ -45,9 +51,11 @@ describe('readCountedPage', () => {
 
   it('keeps the original range error when recovery cannot establish an exact count', async () => {
     const rangeError = { code: 'PGRST103' };
-    const fetchPage = vi.fn(async (page: number): Promise<PageResult> => page === 8
-      ? { data: null, count: null, error: rangeError }
-      : { data: [], count: null, error: null });
+    const fetchPage = vi.fn(async (page: number): Promise<PageResult> =>
+      page === 8
+        ? { data: null, count: null, error: rangeError }
+        : { data: [], count: null, error: null },
+    );
 
     const result = await readCountedPage(8, 20, fetchPage);
 
@@ -66,7 +74,11 @@ describe('readCountedPage', () => {
   });
 
   it('clamps a successful exact-count response without a range error', async () => {
-    const fetchPage = vi.fn(async (page: number): Promise<PageResult> => ({ data: [page], count: 21, error: null }));
+    const fetchPage = vi.fn(async (page: number): Promise<PageResult> => ({
+      data: [page],
+      count: 21,
+      error: null,
+    }));
 
     const result = await readCountedPage(9, 20, fetchPage);
 

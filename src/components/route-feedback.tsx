@@ -38,27 +38,58 @@ function useRouteCopy() {
 
 export function RouteLoading({ area }: { area: RouteArea }) {
   const t = useRouteCopy();
-  const text = area === 'discovery' ? t.discoveryLoading : area === 'group' ? t.groupLoading : area === 'page' ? t.pageLoading : t.setupLoading;
-  return <section className="container py-16" role="status" aria-live="polite" aria-busy="true">
-    <div className="mx-auto max-w-3xl animate-pulse rounded-2xl border border-line bg-white p-6 text-sm font-bold text-muted">{text}</div>
-  </section>;
+  const text =
+    area === 'discovery'
+      ? t.discoveryLoading
+      : area === 'group'
+        ? t.groupLoading
+        : area === 'page'
+          ? t.pageLoading
+          : t.setupLoading;
+  return (
+    <section className="container py-16" role="status" aria-live="polite" aria-busy="true">
+      <div className="mx-auto max-w-3xl animate-pulse rounded-2xl border border-line bg-white p-6 text-sm font-bold text-muted">
+        {text}
+      </div>
+    </section>
+  );
 }
 
 export function RouteError({ area, retry }: { area: RouteArea; retry: () => void }) {
   const t = useRouteCopy();
   const router = useRouter();
-  const text = area === 'discovery' ? t.discoveryError : area === 'group' ? t.groupError : area === 'page' ? t.pageError : t.setupError;
-  const retryRoute = () => startTransition(() => {
-    router.refresh();
-    retry();
-  });
-  return <section className="container py-16" role="alert">
-    <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6">
-      {area === 'page' ? <>
-        <h1 className="text-xl font-bold leading-snug text-red-900">{text}</h1>
-        <p className="mt-2 text-sm leading-6 text-red-800">{t.pageHint}</p>
-      </> : <p className="text-sm text-red-800">{text}</p>}
-      <button type="button" onClick={retryRoute} className="mt-4 min-h-11 rounded-xl bg-teal px-4 py-2.5 font-bold text-white transition hover:bg-[#164d47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2">{t.retry}</button>
-    </div>
-  </section>;
+  const text =
+    area === 'discovery'
+      ? t.discoveryError
+      : area === 'group'
+        ? t.groupError
+        : area === 'page'
+          ? t.pageError
+          : t.setupError;
+  const retryRoute = () =>
+    startTransition(() => {
+      router.refresh();
+      retry();
+    });
+  return (
+    <section className="container py-16" role="alert">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6">
+        {area === 'page' ? (
+          <>
+            <h1 className="text-xl font-bold leading-snug text-red-900">{text}</h1>
+            <p className="mt-2 text-sm leading-6 text-red-800">{t.pageHint}</p>
+          </>
+        ) : (
+          <p className="text-sm text-red-800">{text}</p>
+        )}
+        <button
+          type="button"
+          onClick={retryRoute}
+          className="mt-4 min-h-11 rounded-xl bg-teal px-4 py-2.5 font-bold text-white transition hover:bg-[#164d47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+        >
+          {t.retry}
+        </button>
+      </div>
+    </section>
+  );
 }

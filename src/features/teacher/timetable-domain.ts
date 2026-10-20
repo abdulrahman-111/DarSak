@@ -1,7 +1,21 @@
 import { cairoDateString } from '@/features/calendar/domain';
-import { cairoDayBounds, cairoWeekBounds, normalizeTimetableSelection, normalizeTimetableWeek, timetableDayDates, validTimetableDate } from '@/features/student/timetable-domain';
+import {
+  cairoDayBounds,
+  cairoWeekBounds,
+  normalizeTimetableSelection,
+  normalizeTimetableWeek,
+  timetableDayDates,
+  validTimetableDate,
+} from '@/features/student/timetable-domain';
 
-export { cairoDayBounds, cairoWeekBounds, normalizeTimetableSelection, normalizeTimetableWeek, timetableDayDates, validTimetableDate };
+export {
+  cairoDayBounds,
+  cairoWeekBounds,
+  normalizeTimetableSelection,
+  normalizeTimetableWeek,
+  timetableDayDates,
+  validTimetableDate,
+};
 
 export type TeacherCalendarView = 'week' | 'all';
 
@@ -33,7 +47,8 @@ export function groupTeacherLessonsByCairoDay(lessons: TeacherCalendarLesson[], 
   for (const date of dates) {
     const bounds = cairoDayBounds(date);
     for (const lesson of lessons) {
-      if (new Date(lesson.starts_at) >= bounds.end || new Date(lesson.ends_at) <= bounds.start) continue;
+      if (new Date(lesson.starts_at) >= bounds.end || new Date(lesson.ends_at) <= bounds.start)
+        continue;
       grouped.get(date)!.push(lesson);
     }
   }

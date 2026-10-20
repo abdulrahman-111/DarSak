@@ -2,11 +2,28 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ currentUser: vi.fn(), isConfigured: vi.fn(), getRequestViewer: vi.fn(), unread: vi.fn(), pathname: '/en/admin' }));
-vi.mock('next/navigation', () => ({ usePathname: () => mocks.pathname, useSearchParams: () => new URLSearchParams() }));
-vi.mock('next/link', () => ({ default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => createElement('a', { href, ...props }, children) }));
-vi.mock('next/image', () => ({ default: (props: Record<string, unknown>) => createElement('img', props) }));
-vi.mock('@/components/active-link', () => ({ ActiveLink: ({ href, children, ...props }: { href: string; children: React.ReactNode }) => createElement('a', { href, ...props }, children) }));
+const mocks = vi.hoisted(() => ({
+  currentUser: vi.fn(),
+  isConfigured: vi.fn(),
+  getRequestViewer: vi.fn(),
+  unread: vi.fn(),
+  pathname: '/en/admin',
+}));
+vi.mock('next/navigation', () => ({
+  usePathname: () => mocks.pathname,
+  useSearchParams: () => new URLSearchParams(),
+}));
+vi.mock('next/link', () => ({
+  default: ({ href, children, ...props }: { href: string; children: React.ReactNode }) =>
+    createElement('a', { href, ...props }, children),
+}));
+vi.mock('next/image', () => ({
+  default: (props: Record<string, unknown>) => createElement('img', props),
+}));
+vi.mock('@/components/active-link', () => ({
+  ActiveLink: ({ href, children, ...props }: { href: string; children: React.ReactNode }) =>
+    createElement('a', { href, ...props }, children),
+}));
 vi.mock('@/components/locale-switch', () => ({ LocaleSwitch: () => createElement('span') }));
 vi.mock('@/features/auth/actions', () => ({ logoutAction: vi.fn() }));
 vi.mock('@/features/platform/data', () => ({ currentUser: mocks.currentUser }));
@@ -35,7 +52,18 @@ describe('global Reports navigation', () => {
   });
 
   it('keeps public role work on the mobile bar and removes duplicate header routes for active workspaces', async () => {
-    const labels = { brand: 'Dars', home: 'Home', discover: 'Discover', teacherRole: 'Teach', dashboard: 'Dashboard', account: 'Account', reports: 'Report a problem', logout: 'Log out', login: 'Log in', register: 'Register' };
+    const labels = {
+      brand: 'Dars',
+      home: 'Home',
+      discover: 'Discover',
+      teacherRole: 'Teach',
+      dashboard: 'Dashboard',
+      account: 'Account',
+      reports: 'Report a problem',
+      logout: 'Log out',
+      login: 'Log in',
+      register: 'Register',
+    };
 
     mocks.currentUser.mockResolvedValue({ profile: { role: 'admin', status: 'active' } });
     mocks.pathname = '/en/admin';
@@ -54,7 +82,18 @@ describe('global Reports navigation', () => {
   });
 
   it('keeps dashboard and account access for signed-in inactive profiles without showing the workspace bar', async () => {
-    const labels = { brand: 'Dars', home: 'Home', discover: 'Discover', teacherRole: 'Teach', dashboard: 'Dashboard', account: 'Account', reports: 'Report a problem', logout: 'Log out', login: 'Log in', register: 'Register' };
+    const labels = {
+      brand: 'Dars',
+      home: 'Home',
+      discover: 'Discover',
+      teacherRole: 'Teach',
+      dashboard: 'Dashboard',
+      account: 'Account',
+      reports: 'Report a problem',
+      logout: 'Log out',
+      login: 'Log in',
+      register: 'Register',
+    };
 
     mocks.currentUser.mockResolvedValue({ profile: { role: 'teacher', status: 'suspended' } });
     mocks.pathname = '/en/account';
@@ -66,13 +105,30 @@ describe('global Reports navigation', () => {
   });
 
   it('hides legacy primary navigation for active account and explore workspaces, while guests keep public navigation', async () => {
-    const labels = { brand: 'Dars', home: 'Home', discover: 'Discover', teacherRole: 'Teach', dashboard: 'Dashboard', account: 'Account', reports: 'Report a problem', logout: 'Log out', login: 'Log in', register: 'Register' };
+    const labels = {
+      brand: 'Dars',
+      home: 'Home',
+      discover: 'Discover',
+      teacherRole: 'Teach',
+      dashboard: 'Dashboard',
+      account: 'Account',
+      reports: 'Report a problem',
+      logout: 'Log out',
+      login: 'Log in',
+      register: 'Register',
+    };
 
-    for (const [role, pathname] of [['student', '/en/account'], ['teacher', '/en/teachers'], ['admin', '/en/groups/abc']] as const) {
+    for (const [role, pathname] of [
+      ['student', '/en/account'],
+      ['teacher', '/en/teachers'],
+      ['admin', '/en/groups/abc'],
+    ] as const) {
       mocks.currentUser.mockResolvedValue({ profile: { role, status: 'active' } });
       mocks.pathname = pathname;
       const html = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
-      expect(html).not.toContain('class="hidden items-center gap-6 text-sm font-bold text-[#4d473f] lg:flex"');
+      expect(html).not.toContain(
+        'class="hidden items-center gap-6 text-sm font-bold text-[#4d473f] lg:flex"',
+      );
       expect(html).toContain('data-mobile-workspace-nav="true"');
     }
 

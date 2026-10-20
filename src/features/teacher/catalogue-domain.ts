@@ -9,18 +9,19 @@ export type CatalogueSelectableRow = {
   archived_at: string | null;
 };
 export type CatalogueChoiceSubject = CatalogueSelectableRow & CatalogueLabelInput;
-export type CatalogueChoiceNode = CatalogueSelectableRow & CatalogueLabelInput & { kind: string; parent_id: string | null };
-export type CatalogueChoiceOffering = CatalogueSelectableRow & { node_id: string; subject_id: string };
+export type CatalogueChoiceNode = CatalogueSelectableRow &
+  CatalogueLabelInput & { kind: string; parent_id: string | null };
+export type CatalogueChoiceOffering = CatalogueSelectableRow & {
+  node_id: string;
+  subject_id: string;
+};
 
 const catalogueLabelFields = {
   name_ar: z.string().trim().max(120),
   name_en: z.string().trim().max(120),
 };
 
-function requireAtLeastOneLabel(
-  value: CatalogueLabelInput,
-  context: z.RefinementCtx,
-) {
+function requireAtLeastOneLabel(value: CatalogueLabelInput, context: z.RefinementCtx) {
   if (!value.name_ar && !value.name_en) {
     context.addIssue({
       code: z.ZodIssueCode.custom,
@@ -30,12 +31,16 @@ function requireAtLeastOneLabel(
   }
 }
 
-export const catalogueLabelSchema = z.object(catalogueLabelFields).superRefine(requireAtLeastOneLabel);
+export const catalogueLabelSchema = z
+  .object(catalogueLabelFields)
+  .superRefine(requireAtLeastOneLabel);
 
-export const teacherCategorySchema = z.object({
-  ...catalogueLabelFields,
-  kind: z.enum(['custom_year', 'student_category']),
-}).superRefine(requireAtLeastOneLabel);
+export const teacherCategorySchema = z
+  .object({
+    ...catalogueLabelFields,
+    kind: z.enum(['custom_year', 'student_category']),
+  })
+  .superRefine(requireAtLeastOneLabel);
 
 export function catalogueDisplayName(row: CatalogueLabelInput, locale: Locale): string {
   const arabic = row.name_ar.trim();
@@ -53,7 +58,9 @@ export function canSelectCatalogueRow(
   return isSharedOrOwned && isActiveOrRetained;
 }
 
-export function isTeacherCatalogueCategory(node: Pick<CatalogueChoiceNode, 'owner_teacher_id' | 'kind'>): boolean {
+export function isTeacherCatalogueCategory(
+  node: Pick<CatalogueChoiceNode, 'owner_teacher_id' | 'kind'>,
+): boolean {
   return node.owner_teacher_id === null
     ? ['grade', 'university', 'year'].includes(node.kind)
     : ['custom_year', 'student_category'].includes(node.kind);
@@ -65,10 +72,16 @@ export function filterTeacherCatalogueChoices(
   offerings: CatalogueChoiceOffering[],
   teacherId: string,
 ) {
-  const activeSubjects = subjects.filter(row => row.archived_at === null
-    && (row.owner_teacher_id === null || row.owner_teacher_id === teacherId));
-  const activeNodes = nodes.filter(row => row.archived_at === null
-    && (row.owner_teacher_id === null || row.owner_teacher_id === teacherId));
+  const activeSubjects = subjects.filter(
+    row =>
+      row.archived_at === null &&
+      (row.owner_teacher_id === null || row.owner_teacher_id === teacherId),
+  );
+  const activeNodes = nodes.filter(
+    row =>
+      row.archived_at === null &&
+      (row.owner_teacher_id === null || row.owner_teacher_id === teacherId),
+  );
   const allNodeById = new Map(nodes.map(row => [row.id, row]));
   const nodeById = new Map(activeNodes.map(row => [row.id, row]));
   const subjectIds = new Set(activeSubjects.map(row => row.id));
@@ -76,9 +89,14 @@ export function filterTeacherCatalogueChoices(
     const node = nodeById.get(offering.node_id);
     const subject = activeSubjects.find(row => row.id === offering.subject_id);
     const context = node && isTeacherCatalogueCategory(node);
-    return offering.archived_at === null
-      && (offering.owner_teacher_id === null || offering.owner_teacher_id === teacherId)
-      && !!node && !!subject && !!context && subjectIds.has(subject.id);
+    return (
+      offering.archived_at === null &&
+      (offering.owner_teacher_id === null || offering.owner_teacher_id === teacherId) &&
+      !!node &&
+      !!subject &&
+      !!context &&
+      subjectIds.has(subject.id)
+    );
   });
 
   const eligibleContexts = activeNodes.filter(isTeacherCatalogueCategory);
@@ -96,7 +114,11 @@ export function filterTeacherCatalogueChoices(
   }
   return {
     subjects: activeSubjects,
-    nodes: nodes.filter(node => (node.owner_teacher_id === null || node.owner_teacher_id === teacherId) && usedNodeIds.has(node.id)),
+    nodes: nodes.filter(
+      node =>
+        (node.owner_teacher_id === null || node.owner_teacher_id === teacherId) &&
+        usedNodeIds.has(node.id),
+    ),
     offerings: selectableOfferings,
   };
 }

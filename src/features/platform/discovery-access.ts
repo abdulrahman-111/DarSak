@@ -12,10 +12,17 @@ export function shouldShowDiscoveryNavigation(role: DiscoveryRole) {
   return role !== 'teacher' && role !== 'admin';
 }
 
-export function discoveryFiltersForRole(role: DiscoveryRole, query: Record<string, string | string[] | undefined>) {
-  return canUseFullDiscovery(role) ? normalizeDiscoveryFilters(query) : normalizeDiscoveryFilters({});
+export function discoveryFiltersForRole(
+  role: DiscoveryRole,
+  query: Record<string, string | string[] | undefined>,
+) {
+  return canUseFullDiscovery(role)
+    ? normalizeDiscoveryFilters(query)
+    : normalizeDiscoveryFilters({});
 }
 
 export function discoveryGroupsForRole<T>(role: DiscoveryRole, groups: T[]) {
-  return canUseFullDiscovery(role) ? groups.slice(0, DISCOVERY_PAGE_SIZE) : groups.slice(0, GUEST_DISCOVERY_SAMPLE_SIZE);
+  return canUseFullDiscovery(role)
+    ? groups.slice(0, DISCOVERY_PAGE_SIZE)
+    : groups.slice(0, GUEST_DISCOVERY_SAMPLE_SIZE);
 }

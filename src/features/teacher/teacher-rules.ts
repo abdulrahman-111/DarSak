@@ -3,8 +3,13 @@ export const TEACHER_RULES_VERSION = '2026-10-18';
 export const TEACHER_RULES_TEXT = {
   en: {
     title: 'Teaching standards',
-    intro: 'Before submitting your teacher application, review these standards for accurate profiles, protected contact details, and respectful, reliable teaching.',
-    themes: ['Keep your profile accurate', 'Share contact details after enrollment is accepted', 'Teach respectfully and reliably'],
+    intro:
+      'Before submitting your teacher application, review these standards for accurate profiles, protected contact details, and respectful, reliable teaching.',
+    themes: [
+      'Keep your profile accurate',
+      'Share contact details after enrollment is accepted',
+      'Teach respectfully and reliably',
+    ],
     fullRules: 'Read all six teacher rules',
     rules: [
       'Keep your profile, qualifications, experience, subjects, fees, and schedules accurate and current. Do not impersonate anyone or make misleading claims.',
@@ -19,8 +24,13 @@ export const TEACHER_RULES_TEXT = {
   },
   ar: {
     title: 'معايير التدريس',
-    intro: 'راجع هذه المعايير قبل إرسال طلبك كمعلم: ملف دقيق، وبيانات تواصل محمية، وتعليم محترم وموثوق.',
-    themes: ['حافظ على دقة ملفك', 'شارك بيانات التواصل بعد قبول التسجيل', 'قدّم تعليمًا محترمًا وموثوقًا'],
+    intro:
+      'راجع هذه المعايير قبل إرسال طلبك كمعلم: ملف دقيق، وبيانات تواصل محمية، وتعليم محترم وموثوق.',
+    themes: [
+      'حافظ على دقة ملفك',
+      'شارك بيانات التواصل بعد قبول التسجيل',
+      'قدّم تعليمًا محترمًا وموثوقًا',
+    ],
     fullRules: 'اقرأ قواعد المعلمين الست كاملة',
     rules: [
       'احرص على دقة وحداثة بيانات ملفك ومؤهلاتك وخبراتك والمواد والرسوم والمواعيد. لا تنتحل شخصية أحد أو تقدم معلومات مضللة.',

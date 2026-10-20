@@ -28,9 +28,21 @@ function setup(rpcResult: { data: unknown; error: { message: string } | null }) 
     auth: { getUser: async () => ({ data: { user: { id: teacherId } }, error: null }) },
     from: (table: string) => ({
       select: () => ({
-        eq: () => ({ maybeSingle: async () => ({ data: table === 'offerings' ? {
-          id: offeringId, owner_teacher_id: teacherId, archived_at: null, node_id: categoryId, subject_id: subjectId,
-        } : { role: 'teacher', status: 'active' }, error: null }) }),
+        eq: () => ({
+          maybeSingle: async () => ({
+            data:
+              table === 'offerings'
+                ? {
+                    id: offeringId,
+                    owner_teacher_id: teacherId,
+                    archived_at: null,
+                    node_id: categoryId,
+                    subject_id: subjectId,
+                  }
+                : { role: 'teacher', status: 'active' },
+            error: null,
+          }),
+        }),
       }),
     }),
     rpc,
@@ -58,11 +70,18 @@ describe('teacher profile actions', () => {
       p_subject_id: subjectId,
       p_category_id: categoryId,
     });
-    expect(result).toMatchObject({ success: 'Specialization added to your profile draft.', id: offeringId, row: { id: offeringId, subject_id: subjectId, node_id: categoryId } });
+    expect(result).toMatchObject({
+      success: 'Specialization added to your profile draft.',
+      id: offeringId,
+      row: { id: offeringId, subject_id: subjectId, node_id: categoryId },
+    });
   });
 
   it('localizes archived and unavailable pair refusals', async () => {
-    setup({ data: null, error: { message: 'restore the archived specialization before adding it' } });
+    setup({
+      data: null,
+      error: { message: 'restore the archived specialization before adding it' },
+    });
     const english = await addTeacherSpecialization('en', null, formPair());
     setup({ data: null, error: { message: 'choose active shared or owned catalogue components' } });
     const arabic = await addTeacherSpecialization('ar', null, formPair());

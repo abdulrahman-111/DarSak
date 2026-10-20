@@ -8,8 +8,15 @@ vi.mock('@/components/active-link', async importOriginal => {
   const actual = await importOriginal<typeof import('@/components/active-link')>();
   return {
     ...actual,
-    ActiveLink: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) =>
-      createElement('a', { href, className }, children),
+    ActiveLink: ({
+      href,
+      children,
+      className,
+    }: {
+      href: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => createElement('a', { href, className }, children),
   };
 });
 
@@ -33,42 +40,70 @@ describe('role navigation shell', () => {
 
   it('shows the active nested page in the compact menu for each role and locale', () => {
     mocks.pathname = '/en/teacher/groups';
-    const teacher = renderToStaticMarkup(<PlatformShell locale="en" role="teacher" name="Teacher"><main>Groups</main></PlatformShell>);
+    const teacher = renderToStaticMarkup(
+      <PlatformShell locale="en" role="teacher" name="Teacher">
+        <main>Groups</main>
+      </PlatformShell>,
+    );
     expect(teacher).toContain('href="/en/teacher/groups"');
     expect(teacher).toContain('Groups');
 
     mocks.pathname = '/ar/admin/teachers/abc';
-    const admin = renderToStaticMarkup(<PlatformShell locale="ar" role="admin" name="مسؤول"><main>Requests</main></PlatformShell>);
+    const admin = renderToStaticMarkup(
+      <PlatformShell locale="ar" role="admin" name="مسؤول">
+        <main>Requests</main>
+      </PlatformShell>,
+    );
     expect(admin).toContain('href="/ar/admin/teachers"');
     expect(admin).toContain('طلبات المعلمين');
 
     mocks.pathname = '/ar/student/saved';
-    const student = renderToStaticMarkup(<PlatformShell locale="ar" role="student" name="طالبة"><main>Saved</main></PlatformShell>);
+    const student = renderToStaticMarkup(
+      <PlatformShell locale="ar" role="student" name="طالبة">
+        <main>Saved</main>
+      </PlatformShell>,
+    );
     expect(student).toContain('href="/ar/student/saved"');
     expect(student).toContain('المحفوظات');
   });
 
   it('shows a localized unread count in the shared notification link', () => {
     mocks.pathname = '/ar/student';
-    const html = renderToStaticMarkup(<PlatformShell locale="ar" role="student" name="طالبة" unreadCount={4}><main>Dashboard</main></PlatformShell>);
+    const html = renderToStaticMarkup(
+      <PlatformShell locale="ar" role="student" name="طالبة" unreadCount={4}>
+        <main>Dashboard</main>
+      </PlatformShell>,
+    );
     expect(html).toContain('href="/ar/notifications"');
     expect(html).toContain('aria-label="4 غير مقروء"');
     expect(html).toContain('>4</span>');
   });
 
   it('does not add the redirected teacher plans destination to admin navigation', () => {
-    const html = renderToStaticMarkup(<PlatformShell locale="en" role="admin" name="Admin"><main>Dashboard</main></PlatformShell>);
+    const html = renderToStaticMarkup(
+      <PlatformShell locale="en" role="admin" name="Admin">
+        <main>Dashboard</main>
+      </PlatformShell>,
+    );
     expect(html).not.toContain('href="/en/admin/access"');
     expect(html).toContain('href="/en/admin/teachers"');
   });
 
   it('adds a localized problem-report link for students, teachers, and administrators', () => {
     for (const role of ['student', 'teacher', 'admin'] as const) {
-      const html = renderToStaticMarkup(<PlatformShell locale="en" role={role} name="User"><main>Page</main></PlatformShell>);
+      const html = renderToStaticMarkup(
+        <PlatformShell locale="en" role={role} name="User">
+          <main>Page</main>
+        </PlatformShell>,
+      );
       expect(html).toContain('href="/en/reports"');
       expect(html).toContain('Report a problem');
     }
-    const admin = renderToStaticMarkup(<PlatformShell locale="ar" role="admin" name="مسؤول"><main>Page</main></PlatformShell>);
+    const admin = renderToStaticMarkup(
+      <PlatformShell locale="ar" role="admin" name="مسؤول">
+        <main>Page</main>
+      </PlatformShell>,
+    );
     expect(admin).toContain('href="/ar/reports"');
     expect(admin).toContain('الإبلاغ عن مشكلة');
     expect(admin).toContain('href="/ar/admin/reports"');

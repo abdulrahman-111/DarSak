@@ -2,8 +2,98 @@
 import { useActionState } from 'react';
 import { adminAction } from './actions';
 import { words } from './labels';
-export type Field={name:string;label:string;value?:string;options?:{value:string;label:string}[];type?:'textarea'|'checkbox'|'hidden';required?:boolean;maxLength?:number};
-export function AdminForm({locale,operation,id,fields,button}:{locale:string;operation:string;id?:string;fields:Field[];button?:string}){
- const t=words(locale);const [state,action,pending]=useActionState(adminAction.bind(null,locale,operation),null);
- return <form action={action} onReset={event=>event.preventDefault()} className="grid gap-4"><input type="hidden" name="id" value={id||''}/>{fields.map(f=>f.type==='hidden'?<input key={f.name} type="hidden" name={f.name} value={f.value||''}/>:<label key={f.name} className="block text-sm font-semibold">{f.type==='checkbox'?<span className="flex gap-2"><input name={f.name} type="checkbox" value="yes" required/>{f.label}</span>:<>{f.label}{f.options?<select name={f.name} defaultValue={f.value||''} required={f.required} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3">{f.options.map(o=><option value={o.value} key={o.value}>{o.label}</option>)}</select>:f.type==='textarea'?<textarea name={f.name} defaultValue={f.value} required={f.required} maxLength={f.maxLength||20000} rows={4} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"/>:<input name={f.name} defaultValue={f.value} required={f.required} maxLength={f.maxLength||150} className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"/>}</>}</label>)}<button disabled={pending} className="justify-self-start rounded-xl bg-teal px-5 py-3 text-sm font-bold text-white disabled:opacity-50">{pending?t.working:button||t.save}</button>{state?.error&&<p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}{state?.success&&<p role="status" className="rounded-xl bg-teal/10 p-3 text-sm text-teal">{state.success}</p>}</form>;
+export type Field = {
+  name: string;
+  label: string;
+  value?: string;
+  options?: { value: string; label: string }[];
+  type?: 'textarea' | 'checkbox' | 'hidden';
+  required?: boolean;
+  maxLength?: number;
+};
+export function AdminForm({
+  locale,
+  operation,
+  id,
+  fields,
+  button,
+}: {
+  locale: string;
+  operation: string;
+  id?: string;
+  fields: Field[];
+  button?: string;
+}) {
+  const t = words(locale);
+  const [state, action, pending] = useActionState(adminAction.bind(null, locale, operation), null);
+  return (
+    <form action={action} onReset={event => event.preventDefault()} className="grid gap-4">
+      <input type="hidden" name="id" value={id || ''} />
+      {fields.map(f =>
+        f.type === 'hidden' ? (
+          <input key={f.name} type="hidden" name={f.name} value={f.value || ''} />
+        ) : (
+          <label key={f.name} className="block text-sm font-semibold">
+            {f.type === 'checkbox' ? (
+              <span className="flex gap-2">
+                <input name={f.name} type="checkbox" value="yes" required />
+                {f.label}
+              </span>
+            ) : (
+              <>
+                {f.label}
+                {f.options ? (
+                  <select
+                    name={f.name}
+                    defaultValue={f.value || ''}
+                    required={f.required}
+                    className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
+                  >
+                    {f.options.map(o => (
+                      <option value={o.value} key={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : f.type === 'textarea' ? (
+                  <textarea
+                    name={f.name}
+                    defaultValue={f.value}
+                    required={f.required}
+                    maxLength={f.maxLength || 20000}
+                    rows={4}
+                    className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
+                  />
+                ) : (
+                  <input
+                    name={f.name}
+                    defaultValue={f.value}
+                    required={f.required}
+                    maxLength={f.maxLength || 150}
+                    className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
+                  />
+                )}
+              </>
+            )}
+          </label>
+        ),
+      )}
+      <button
+        disabled={pending}
+        className="justify-self-start rounded-xl bg-teal px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
+      >
+        {pending ? t.working : button || t.save}
+      </button>
+      {state?.error && (
+        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+          {state.error}
+        </p>
+      )}
+      {state?.success && (
+        <p role="status" className="rounded-xl bg-teal/10 p-3 text-sm text-teal">
+          {state.success}
+        </p>
+      )}
+    </form>
+  );
 }

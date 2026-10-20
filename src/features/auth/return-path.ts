@@ -1,9 +1,18 @@
 import type { Locale } from '@/i18n/config';
 
 /** Switches the locale on a safe, internal path while keeping its query and fragment. */
-export function switchInternalLocalePath(candidate: unknown, from: Locale, to: Locale): string | null {
+export function switchInternalLocalePath(
+  candidate: unknown,
+  from: Locale,
+  to: Locale,
+): string | null {
   if (typeof candidate !== 'string' || !candidate.startsWith(`/${from}`)) return null;
-  if (candidate.startsWith('//') || candidate.includes('\\') || /[\u0000-\u001f\u007f]/.test(candidate)) return null;
+  if (
+    candidate.startsWith('//') ||
+    candidate.includes('\\') ||
+    /[\u0000-\u001f\u007f]/.test(candidate)
+  )
+    return null;
 
   const rawPath = candidate.split(/[?#]/, 1)[0];
   if (rawPath !== `/${from}` && !rawPath.startsWith(`/${from}/`)) return null;
@@ -14,7 +23,8 @@ export function switchInternalLocalePath(candidate: unknown, from: Locale, to: L
     } catch {
       return null;
     }
-    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\')) return null;
+    if (decoded === '.' || decoded === '..' || decoded.includes('/') || decoded.includes('\\'))
+      return null;
   }
 
   let url: URL;
@@ -30,7 +40,11 @@ export function switchInternalLocalePath(candidate: unknown, from: Locale, to: L
 }
 
 /** Rewrites safe redirect targets while preserving all unrelated search parameters. */
-export function switchLocaleReturnParams(params: URLSearchParams, from: Locale, to: Locale): URLSearchParams {
+export function switchLocaleReturnParams(
+  params: URLSearchParams,
+  from: Locale,
+  to: Locale,
+): URLSearchParams {
   const switchedParams = new URLSearchParams(params);
   for (const key of ['next', 'returnTo']) {
     const values = switchedParams.getAll(key);
@@ -45,7 +59,8 @@ export function switchLocaleReturnParams(params: URLSearchParams, from: Locale, 
   return switchedParams;
 }
 
-const UUID_PATTERN = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}';
+const UUID_PATTERN =
+  '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89aAbB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}';
 
 /** Accept only a local group/class path in the active locale. */
 export function safeLoginReturnPath(locale: Locale, candidate: unknown): string | null {
@@ -55,11 +70,19 @@ export function safeLoginReturnPath(locale: Locale, candidate: unknown): string 
   return pathPattern.test(candidate) ? candidate : null;
 }
 
-export function loginRedirectPath(locale: Locale, candidate: unknown, profile?: { role?: unknown; status?: unknown } | null): string {
+export function loginRedirectPath(
+  locale: Locale,
+  candidate: unknown,
+  profile?: { role?: unknown; status?: unknown } | null,
+): string {
   const safeReturn = safeLoginReturnPath(locale, candidate);
   if (safeReturn) return safeReturn;
   const role = profile?.role;
-  if (profile?.status === 'active' && (role === 'student' || role === 'teacher' || role === 'admin')) return `/${locale}/${role}`;
+  if (
+    profile?.status === 'active' &&
+    (role === 'student' || role === 'teacher' || role === 'admin')
+  )
+    return `/${locale}/${role}`;
   return `/${locale}/dashboard`;
 }
 
@@ -70,6 +93,7 @@ export function safeAuthNext(candidate: unknown, fallbackLocale: Locale): string
   const fallback = `/${fallbackLocale}/dashboard`;
   if (typeof candidate !== 'string') return fallback;
   if (!AUTH_NEXT_PATTERN.test(candidate)) return fallback;
-  if (candidate.includes('//') || candidate.includes('\\') || candidate.includes('..')) return fallback;
+  if (candidate.includes('//') || candidate.includes('\\') || candidate.includes('..'))
+    return fallback;
   return candidate;
 }

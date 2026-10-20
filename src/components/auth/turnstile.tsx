@@ -9,7 +9,9 @@ type TurnstileApi = {
   remove: (widgetId?: string) => void;
 };
 declare global {
-  interface Window { turnstile?: TurnstileApi }
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
 }
 
 /**
@@ -24,7 +26,10 @@ export function Turnstile({ locale, resetSignal }: { locale: 'ar' | 'en'; resetS
 
   const render = useCallback(() => {
     if (!siteKey || !container.current || widgetId.current !== null || !window.turnstile) return;
-    widgetId.current = window.turnstile.render(container.current, { sitekey: siteKey, language: locale });
+    widgetId.current = window.turnstile.render(container.current, {
+      sitekey: siteKey,
+      language: locale,
+    });
   }, [siteKey, locale]);
 
   useEffect(() => {
@@ -42,8 +47,12 @@ export function Turnstile({ locale, resetSignal }: { locale: 'ar' | 'en'; resetS
   if (!siteKey) return null;
   return (
     <>
-      <Script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" strategy="afterInteractive" onReady={render}/>
-      <div ref={container} className="min-h-[65px]"/>
+      <Script
+        src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+        strategy="afterInteractive"
+        onReady={render}
+      />
+      <div ref={container} className="min-h-[65px]" />
     </>
   );
 }

@@ -13,11 +13,18 @@ describe('readAllPages', () => {
     expect(result.error).toBeNull();
     expect(result.data).toHaveLength(2051);
     expect(result.data.at(-1)?.id).toBe(2050);
-    expect(ranges).toEqual([[0, 999], [1000, 1999], [2000, 2999]]);
+    expect(ranges).toEqual([
+      [0, 999],
+      [1000, 1999],
+      [2000, 2999],
+    ]);
   });
 
   it('returns an error instead of treating a failed page as a complete catalogue', async () => {
-    const result = await readAllPages(async () => ({ data: null, error: new Error('page failed') }));
+    const result = await readAllPages(async () => ({
+      data: null,
+      error: new Error('page failed'),
+    }));
     expect(result.data).toEqual([]);
     expect(result.error).toBeInstanceOf(Error);
   });

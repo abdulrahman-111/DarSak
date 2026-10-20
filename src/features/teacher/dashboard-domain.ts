@@ -6,7 +6,9 @@ const cairoCalendar = new Intl.DateTimeFormat('en-CA', {
 });
 
 function cairoDateKey(instant: Date): string {
-  const parts = Object.fromEntries(cairoCalendar.formatToParts(instant).map(part => [part.type, part.value]));
+  const parts = Object.fromEntries(
+    cairoCalendar.formatToParts(instant).map(part => [part.type, part.value]),
+  );
   return `${parts.year}-${parts.month}-${parts.day}`;
 }
 
@@ -42,12 +44,17 @@ export function isDashboardTodayLesson(
   lesson: { starts_at: string; ends_at: string; status: string },
   bounds: CairoDayBounds,
 ): boolean {
-  return lesson.status !== 'cancelled'
-    && new Date(lesson.starts_at) < bounds.end
-    && new Date(lesson.ends_at) > bounds.start;
+  return (
+    lesson.status !== 'cancelled' &&
+    new Date(lesson.starts_at) < bounds.end &&
+    new Date(lesson.ends_at) > bounds.start
+  );
 }
 
-export function isDashboardUpcomingLesson(lesson: { starts_at: string; status: string }, now: Date): boolean {
+export function isDashboardUpcomingLesson(
+  lesson: { starts_at: string; status: string },
+  now: Date,
+): boolean {
   return lesson.status === 'scheduled' && new Date(lesson.starts_at) >= now;
 }
 
@@ -69,7 +76,12 @@ export function buildTeacherSetupTasks({
   draftCandidate,
   missingScheduleCandidate,
 }: {
-  teacher: { headline: string | null; bio: string | null; approved: boolean; avatar_path?: string | null };
+  teacher: {
+    headline: string | null;
+    bio: string | null;
+    approved: boolean;
+    avatar_path?: string | null;
+  };
   contacts?: unknown;
   specializationCount: number;
   groups: SetupGroup[];
@@ -83,15 +95,23 @@ export function buildTeacherSetupTasks({
     tasks.push({ id: 'profile', href: '/account/profile' });
   }
   if (!teacher.approved) tasks.push({ id: 'approval', href: '/account/application' });
-  const draft = draftCandidate !== undefined ? draftCandidate : groups.find(group => group.status === 'draft');
-  if (draft) tasks.push({ id: 'draft', href: `/teacher/groups/${draft.id}/setup?step=details`, groupName: draft.name });
-  const groupWithoutSlots = missingScheduleCandidate !== undefined
-    ? missingScheduleCandidate
-    : groups.find(group => group.status !== 'archived' && !groupIdsWithSlots.has(group.id));
+  const draft =
+    draftCandidate !== undefined ? draftCandidate : groups.find(group => group.status === 'draft');
+  if (draft)
+    tasks.push({
+      id: 'draft',
+      href: `/teacher/groups/${draft.id}/setup?step=details`,
+      groupName: draft.name,
+    });
+  const groupWithoutSlots =
+    missingScheduleCandidate !== undefined
+      ? missingScheduleCandidate
+      : groups.find(group => group.status !== 'archived' && !groupIdsWithSlots.has(group.id));
   if (groupWithoutSlots) {
-    const href = groupWithoutSlots.status === 'draft'
-      ? `/teacher/groups/${groupWithoutSlots.id}/setup?step=schedule`
-      : `/teacher/groups/${groupWithoutSlots.id}`;
+    const href =
+      groupWithoutSlots.status === 'draft'
+        ? `/teacher/groups/${groupWithoutSlots.id}/setup?step=schedule`
+        : `/teacher/groups/${groupWithoutSlots.id}`;
     tasks.push({ id: 'schedule', href, groupName: groupWithoutSlots.name });
   }
   if (upcomingLessonCount === 0) tasks.push({ id: 'lessons', href: '/teacher/lessons?new=1' });

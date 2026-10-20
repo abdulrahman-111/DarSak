@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { announcementLength, announcementText, validateAnnouncement } from '@/features/groups/announcement-domain';
+import {
+  announcementLength,
+  announcementText,
+  validateAnnouncement,
+} from '@/features/groups/announcement-domain';
 
 describe('group announcement bounds', () => {
   it('counts Unicode code points like PostgreSQL char_length', () => {

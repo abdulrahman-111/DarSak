@@ -3,18 +3,38 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
-import { groupDetailsFieldErrors, groupDetailsSchema, groupScheduleSlotFieldErrors, groupScheduleSlotSchema } from './setup-domain';
+import {
+  groupDetailsFieldErrors,
+  groupDetailsSchema,
+  groupScheduleSlotFieldErrors,
+  groupScheduleSlotSchema,
+} from './setup-domain';
 import { idSchema } from '@/features/student/domain';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { groupLearningDetailsSchema } from './group-learning-domain';
 import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
-export type GroupDraftActionState = { error?: string; success?: string; fieldErrors?: Record<string, string>; id?: string; updated_at?: string } | null;
-export type ScheduleSlotActionState = { error?: string; success?: string; fieldErrors?: Record<string, string> } | null;
+export type GroupDraftActionState = {
+  error?: string;
+  success?: string;
+  fieldErrors?: Record<string, string>;
+  id?: string;
+  updated_at?: string;
+} | null;
+export type ScheduleSlotActionState = {
+  error?: string;
+  success?: string;
+  fieldErrors?: Record<string, string>;
+} | null;
 
-const message = (locale: Locale, en: string, ar: string) => locale === 'ar' ? ar : en;
+const message = (locale: Locale, en: string, ar: string) => (locale === 'ar' ? ar : en);
 
-export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-edit', _state: GroupDraftActionState, form: FormData): Promise<GroupDraftActionState> {
+export async function saveGroupDraft(
+  locale: Locale,
+  mode: 'draft' | 'published-edit',
+  _state: GroupDraftActionState,
+  form: FormData,
+): Promise<GroupDraftActionState> {
   const parsed = groupDetailsSchema.safeParse({
     name: form.get('name'),
     description: form.get('description') ?? '',
@@ -23,80 +43,204 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
     capacity: form.get('capacity') ?? undefined,
     location: form.get('location') ?? '',
   });
-  if (!parsed.success) return {
-    error: message(locale, 'Please check the highlighted fields.', 'يرجى مراجعة الحقول المحددة.'),
-    fieldErrors: groupDetailsFieldErrors(parsed.error),
-  };
+  if (!parsed.success)
+    return {
+      error: message(locale, 'Please check the highlighted fields.', 'يرجى مراجعة الحقول المحددة.'),
+      fieldErrors: groupDetailsFieldErrors(parsed.error),
+    };
 
   // Older clients may still save the basic form. The current setup always sends
   // learning_details and commits both sections through one database transaction.
   const includeLearning = form.get('learning_details') === '1';
-  const learning = includeLearning ? groupLearningDetailsSchema.safeParse({
-    outcomes: form.get('outcomes') ?? '', prerequisites: form.get('prerequisites') ?? '',
-    delivery_mode: form.get('delivery_mode') ?? '', fee_egp: form.get('fee_egp') ?? '',
-    fee_basis: form.get('fee_basis') ?? '', fee_includes: form.get('fee_includes') ?? '',
-  }) : null;
-  if (learning && !learning.success) return {
-    error: message(locale, 'Check the highlighted learning details. Enter both a fee and its unit, or leave both blank.', 'راجع تفاصيل التعلم المحددة. أدخل الرسوم ووحدتها معًا أو اتركهما فارغين.'),
-    fieldErrors: Object.fromEntries(learning.error.issues.map(issue => [String(issue.path[0]), issue.message])),
-  };
+  const learning = includeLearning
+    ? groupLearningDetailsSchema.safeParse({
+        outcomes: form.get('outcomes') ?? '',
+        prerequisites: form.get('prerequisites') ?? '',
+        delivery_mode: form.get('delivery_mode') ?? '',
+        fee_egp: form.get('fee_egp') ?? '',
+        fee_basis: form.get('fee_basis') ?? '',
+        fee_includes: form.get('fee_includes') ?? '',
+      })
+    : null;
+  if (learning && !learning.success)
+    return {
+      error: message(
+        locale,
+        'Check the highlighted learning details. Enter both a fee and its unit, or leave both blank.',
+        'راجع تفاصيل التعلم المحددة. أدخل الرسوم ووحدتها معًا أو اتركهما فارغين.',
+      ),
+      fieldErrors: Object.fromEntries(
+        learning.error.issues.map(issue => [String(issue.path[0]), issue.message]),
+      ),
+    };
 
   const rawId = form.get('group_id');
   const id = typeof rawId === 'string' && rawId.length ? rawId : null;
-  if (id && !idSchema.safeParse(id).success) return {
-    error: message(locale, 'This group could not be saved. Refresh the page and try again.', 'تعذر حفظ هذه المجموعة. حدّث الصفحة وحاول مرة أخرى.'),
-  };
+  if (id && !idSchema.safeParse(id).success)
+    return {
+      error: message(
+        locale,
+        'This group could not be saved. Refresh the page and try again.',
+        'تعذر حفظ هذه المجموعة. حدّث الصفحة وحاول مرة أخرى.',
+      ),
+    };
   const expectedUpdatedAt = form.get('expected_updated_at');
-  if (mode === 'published-edit' && (!id || typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)) {
-    return { error: message(locale, 'This group is missing its save version. Refresh the page and try again.', 'بيانات إصدار المجموعة غير متاحة. حدّث الصفحة وحاول مرة أخرى.') };
+  if (
+    mode === 'published-edit' &&
+    (!id || typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)
+  ) {
+    return {
+      error: message(
+        locale,
+        'This group is missing its save version. Refresh the page and try again.',
+        'بيانات إصدار المجموعة غير متاحة. حدّث الصفحة وحاول مرة أخرى.',
+      ),
+    };
   }
-  if ((id && (typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)) || (!id && expectedUpdatedAt !== null && expectedUpdatedAt !== '')) {
-    return { error: message(locale, 'This draft is missing its save version. Refresh the page and try again.', 'بيانات إصدار المسودة غير متاحة. حدّث الصفحة وحاول مرة أخرى.') };
+  if (
+    (id && (typeof expectedUpdatedAt !== 'string' || !expectedUpdatedAt)) ||
+    (!id && expectedUpdatedAt !== null && expectedUpdatedAt !== '')
+  ) {
+    return {
+      error: message(
+        locale,
+        'This draft is missing its save version. Refresh the page and try again.',
+        'بيانات إصدار المسودة غير متاحة. حدّث الصفحة وحاول مرة أخرى.',
+      ),
+    };
   }
 
   const db = await createClient();
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) return { error: message(locale, 'Sign in as an active teacher to save a group.', 'سجل الدخول بحساب معلم نشط لحفظ المجموعة.') };
+  const {
+    data: { user },
+  } = await db.auth.getUser();
+  if (!user)
+    return {
+      error: message(
+        locale,
+        'Sign in as an active teacher to save a group.',
+        'سجل الدخول بحساب معلم نشط لحفظ المجموعة.',
+      ),
+    };
 
-  const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
-  if (profileError) return { error: message(locale, 'Could not verify your teacher account. Please try again.', 'تعذر التحقق من حساب المعلم. حاول مرة أخرى.') };
-  if (profile?.role !== 'teacher' || profile.status !== 'active') return { error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.') };
-  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
+  const { data: profile, error: profileError } = await db
+    .from('profiles')
+    .select('role,status')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (profileError)
+    return {
+      error: message(
+        locale,
+        'Could not verify your teacher account. Please try again.',
+        'تعذر التحقق من حساب المعلم. حاول مرة أخرى.',
+      ),
+    };
+  if (profile?.role !== 'teacher' || profile.status !== 'active')
+    return {
+      error: message(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.'),
+    };
+  const access = await checkTeachingAccess(db);
+  if (!access.allowed) return { error: teachingGuardMessage(locale, access.reason) };
 
-  const { data: savedId, error } = await db.rpc(includeLearning ? 'save_teacher_group_details' : 'save_teacher_group_draft', {
-    p_group_id: id,
-    p_subject_id: parsed.data.subject_id,
-    p_category_id: parsed.data.category_id,
-    p_name: parsed.data.name,
-    p_description: parsed.data.description,
-    p_capacity: parsed.data.capacity,
-    p_location: parsed.data.location,
-    p_expected_updated_at: id ? expectedUpdatedAt : null,
-    ...(learning?.success ? {
-      p_learning_values: learning.data,
-      p_expected_learning_updated_at: form.get('expected_learning_updated_at') || null,
-    } : {}),
-  });
+  const { data: savedId, error } = await db.rpc(
+    includeLearning ? 'save_teacher_group_details' : 'save_teacher_group_draft',
+    {
+      p_group_id: id,
+      p_subject_id: parsed.data.subject_id,
+      p_category_id: parsed.data.category_id,
+      p_name: parsed.data.name,
+      p_description: parsed.data.description,
+      p_capacity: parsed.data.capacity,
+      p_location: parsed.data.location,
+      p_expected_updated_at: id ? expectedUpdatedAt : null,
+      ...(learning?.success
+        ? {
+            p_learning_values: learning.data,
+            p_expected_learning_updated_at: form.get('expected_learning_updated_at') || null,
+          }
+        : {}),
+    },
+  );
   if (error) {
     const raw = error.message.toLowerCase();
     const quotaMessage = quotaErrorMessage(locale, error.message);
     if (quotaMessage) return { error: quotaMessage };
-    if (error.code === '40001' || raw.includes('changed') || raw.includes('concurrent')) return {
-      error: message(locale, 'This group changed in another tab. Refresh it, review the latest details, and try again.', 'تغيرت هذه المجموعة في علامة تبويب أخرى. حدّث الصفحة وراجع أحدث التفاصيل ثم حاول مرة أخرى.'),
+    if (error.code === '40001' || raw.includes('changed') || raw.includes('concurrent'))
+      return {
+        error: message(
+          locale,
+          'This group changed in another tab. Refresh it, review the latest details, and try again.',
+          'تغيرت هذه المجموعة في علامة تبويب أخرى. حدّث الصفحة وراجع أحدث التفاصيل ثم حاول مرة أخرى.',
+        ),
+      };
+    if (raw.includes('capacity cannot be below'))
+      return {
+        error: message(
+          locale,
+          'Capacity cannot be lower than the number of accepted students.',
+          'لا يمكن أن تقل السعة عن عدد الطلاب المسجلين.',
+        ),
+      };
+    if (
+      raw.includes('archiv') ||
+      raw.includes('subject') ||
+      raw.includes('category') ||
+      raw.includes('offering') ||
+      raw.includes('catalogue') ||
+      raw.includes('not a draft') ||
+      raw.includes('editable group') ||
+      raw.includes('not found') ||
+      raw.includes('owner')
+    )
+      return {
+        error:
+          mode === 'published-edit'
+            ? message(
+                locale,
+                'This group or selection is no longer available. Choose active catalogue items, refresh, and try again.',
+                'لم تعد المجموعة أو عناصر الاختيار متاحة. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.',
+              )
+            : message(
+                locale,
+                'This selection or draft is no longer available. Choose active catalogue items, refresh, and try again.',
+                'لم يعد هذا الاختيار أو هذه المسودة متاحاً. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.',
+              ),
+      };
+    return {
+      error:
+        mode === 'published-edit'
+          ? message(
+              locale,
+              'Your group details could not be saved. Your changes are still in the form; please refresh and try again.',
+              'تعذر حفظ تفاصيل المجموعة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.',
+            )
+          : message(
+              locale,
+              id
+                ? 'Your draft could not be saved. Your changes are still in the form; please refresh and try again.'
+                : 'Your group could not be saved. Your changes are still in the form; please try again.',
+              id
+                ? 'تعذر حفظ المسودة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.'
+                : 'تعذر حفظ المجموعة. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.',
+            ),
     };
-    if (raw.includes('capacity cannot be below')) return { error: message(locale, 'Capacity cannot be lower than the number of accepted students.', 'لا يمكن أن تقل السعة عن عدد الطلاب المسجلين.') };
-    if (raw.includes('archiv') || raw.includes('subject') || raw.includes('category') || raw.includes('offering') || raw.includes('catalogue') || raw.includes('not a draft') || raw.includes('editable group') || raw.includes('not found') || raw.includes('owner')) return {
-      error: mode === 'published-edit'
-        ? message(locale, 'This group or selection is no longer available. Choose active catalogue items, refresh, and try again.', 'لم تعد المجموعة أو عناصر الاختيار متاحة. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.')
-        : message(locale, 'This selection or draft is no longer available. Choose active catalogue items, refresh, and try again.', 'لم يعد هذا الاختيار أو هذه المسودة متاحاً. اختر عناصر نشطة من الدليل وحدّث الصفحة ثم حاول مرة أخرى.'),
-    };
-    return { error: mode === 'published-edit'
-      ? message(locale, 'Your group details could not be saved. Your changes are still in the form; please refresh and try again.', 'تعذر حفظ تفاصيل المجموعة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.')
-      : message(locale, id ? 'Your draft could not be saved. Your changes are still in the form; please refresh and try again.' : 'Your group could not be saved. Your changes are still in the form; please try again.', id ? 'تعذر حفظ المسودة. ستبقى تغييراتك في النموذج؛ حدّث الصفحة وحاول مرة أخرى.' : 'تعذر حفظ المجموعة. ستبقى تغييراتك في النموذج؛ حاول مرة أخرى.') };
   }
-  if (!savedId) return { error: message(locale, 'Your group could not be saved. Please try again.', 'تعذر حفظ المجموعة. حاول مرة أخرى.') };
+  if (!savedId)
+    return {
+      error: message(
+        locale,
+        'Your group could not be saved. Please try again.',
+        'تعذر حفظ المجموعة. حاول مرة أخرى.',
+      ),
+    };
 
-  const { data: savedDraft } = await db.from('groups').select('id,updated_at').eq('id', savedId).eq('teacher_id', user.id).maybeSingle();
+  const { data: savedDraft } = await db
+    .from('groups')
+    .select('id,updated_at')
+    .eq('id', savedId)
+    .eq('teacher_id', user.id)
+    .maybeSingle();
 
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/teacher/groups`);
@@ -110,32 +254,51 @@ export async function saveGroupDraft(locale: Locale, mode: 'draft' | 'published-
     revalidatePath(`/${currentLocale}/teachers`);
     revalidatePath(`/${currentLocale}/student/classes`);
   }
-  return { id: savedId, updated_at: savedDraft?.updated_at, success: mode === 'published-edit' ? message(locale, 'Group details saved.', 'تم حفظ تفاصيل المجموعة.') : message(locale, 'Draft saved.', 'تم حفظ المسودة.') };
+  return {
+    id: savedId,
+    updated_at: savedDraft?.updated_at,
+    success:
+      mode === 'published-edit'
+        ? message(locale, 'Group details saved.', 'تم حفظ تفاصيل المجموعة.')
+        : message(locale, 'Draft saved.', 'تم حفظ المسودة.'),
+  };
 }
 
 function scheduleError(locale: Locale, rawError: string): string {
   const error = rawError.toLowerCase();
   const quotaMessage = quotaErrorMessage(locale, rawError);
   if (quotaMessage) return quotaMessage;
-  if(error==='teacher teaching access expired')return teachingGuardMessage(locale,'expired');
+  if (error === 'teacher teaching access expired') return teachingGuardMessage(locale, 'expired');
   if (error.includes('overlap') && (error.includes('lesson') || error.includes('schedule'))) {
-    return message(locale,
+    return message(
+      locale,
       'That time conflicts with another weekly time or an existing lesson. Choose a different time.',
-      'يتعارض هذا الموعد مع موعد أسبوعي آخر أو حصة موجودة. اختر موعداً آخر.');
+      'يتعارض هذا الموعد مع موعد أسبوعي آخر أو حصة موجودة. اختر موعداً آخر.',
+    );
   }
-  if (error.includes('generated') || error.includes('dated lesson') || (error.includes('lesson') && error.includes('slot'))) {
-    return message(locale,
+  if (
+    error.includes('generated') ||
+    error.includes('dated lesson') ||
+    (error.includes('lesson') && error.includes('slot'))
+  ) {
+    return message(
+      locale,
       'This time is used by an existing lesson or is required by this published group.',
-      'هذا الموعد مرتبط بحصة موجودة أو مطلوب لهذه المجموعة المنشورة.');
+      'هذا الموعد مرتبط بحصة موجودة أو مطلوب لهذه المجموعة المنشورة.',
+    );
   }
   if (error.includes('last schedule') || (error.includes('published') && error.includes('slot'))) {
-    return message(locale,
+    return message(
+      locale,
       'A published group must keep at least one weekly time.',
-      'يجب أن تحتفظ المجموعة المنشورة بموعد أسبوعي واحد على الأقل.');
+      'يجب أن تحتفظ المجموعة المنشورة بموعد أسبوعي واحد على الأقل.',
+    );
   }
-  return message(locale,
+  return message(
+    locale,
     'The schedule could not be changed. Refresh the page and try again.',
-    'تعذر تغيير الجدول. حدّث الصفحة وحاول مرة أخرى.');
+    'تعذر تغيير الجدول. حدّث الصفحة وحاول مرة أخرى.',
+  );
 }
 
 function scheduleInput(form: FormData) {
@@ -149,15 +312,25 @@ function scheduleInput(form: FormData) {
   };
 }
 
-export async function saveScheduleSlot(locale: Locale, _state: ScheduleSlotActionState, form: FormData): Promise<ScheduleSlotActionState> {
+export async function saveScheduleSlot(
+  locale: Locale,
+  _state: ScheduleSlotActionState,
+  form: FormData,
+): Promise<ScheduleSlotActionState> {
   const parsed = groupScheduleSlotSchema.safeParse(scheduleInput(form));
-  if (!parsed.success) return {
-    error: message(locale, 'Check the weekday and start and end times.', 'تحقق من اليوم ووقتَي البداية والنهاية.'),
-    fieldErrors: groupScheduleSlotFieldErrors(parsed.error),
-  };
+  if (!parsed.success)
+    return {
+      error: message(
+        locale,
+        'Check the weekday and start and end times.',
+        'تحقق من اليوم ووقتَي البداية والنهاية.',
+      ),
+      fieldErrors: groupScheduleSlotFieldErrors(parsed.error),
+    };
 
   const db = await createClient();
-  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
+  const access = await checkTeachingAccess(db);
+  if (!access.allowed) return { error: teachingGuardMessage(locale, access.reason) };
   const { error } = await db.rpc('save_schedule_slot', {
     p_group_id: parsed.data.group_id,
     p_weekday: parsed.data.weekday,
@@ -174,16 +347,35 @@ export async function saveScheduleSlot(locale: Locale, _state: ScheduleSlotActio
   return { success: message(locale, 'Weekly time saved.', 'تم حفظ الموعد الأسبوعي.') };
 }
 
-export async function deleteScheduleSlot(locale: Locale, _state: ScheduleSlotActionState, form: FormData): Promise<ScheduleSlotActionState> {
+export async function deleteScheduleSlot(
+  locale: Locale,
+  _state: ScheduleSlotActionState,
+  form: FormData,
+): Promise<ScheduleSlotActionState> {
   const groupId = form.get('group_id');
   const slotId = form.get('slot_id');
-  if (typeof groupId !== 'string' || !idSchema.safeParse(groupId).success || typeof slotId !== 'string' || !idSchema.safeParse(slotId).success) {
-    return { error: message(locale, 'This schedule could not be changed. Refresh the page and try again.', 'تعذر تغيير هذا الموعد. حدّث الصفحة وحاول مرة أخرى.') };
+  if (
+    typeof groupId !== 'string' ||
+    !idSchema.safeParse(groupId).success ||
+    typeof slotId !== 'string' ||
+    !idSchema.safeParse(slotId).success
+  ) {
+    return {
+      error: message(
+        locale,
+        'This schedule could not be changed. Refresh the page and try again.',
+        'تعذر تغيير هذا الموعد. حدّث الصفحة وحاول مرة أخرى.',
+      ),
+    };
   }
 
   const db = await createClient();
-  const access=await checkTeachingAccess(db);if(!access.allowed)return {error:teachingGuardMessage(locale,access.reason)};
-  const { error } = await db.rpc('delete_schedule_slot', { p_group_id: groupId, p_slot_id: slotId });
+  const access = await checkTeachingAccess(db);
+  if (!access.allowed) return { error: teachingGuardMessage(locale, access.reason) };
+  const { error } = await db.rpc('delete_schedule_slot', {
+    p_group_id: groupId,
+    p_slot_id: slotId,
+  });
   if (error) return { error: scheduleError(locale, error.message) };
 
   for (const currentLocale of ['en', 'ar'] as const) {

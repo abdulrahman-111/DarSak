@@ -38,13 +38,28 @@ describe('account and workspace navigation', () => {
   it('orders teacher tasks around teaching work with direct calendar and enrollment labels', () => {
     const teacher = platformNavigation('en', 'teacher');
     expect(teacher.map(item => item.label)).toEqual([
-      'Teaching home', 'Groups', 'Lesson calendar', 'Enrollment requests', 'Students',
-      'Subjects & categories', 'Feedback', 'Notifications', 'My account', 'Report a problem',
+      'Teaching home',
+      'Groups',
+      'Lesson calendar',
+      'Enrollment requests',
+      'Students',
+      'Subjects & categories',
+      'Feedback',
+      'Notifications',
+      'My account',
+      'Report a problem',
     ]);
     expect(teacher.map(item => item.href)).toEqual([
-      '/en/teacher', '/en/teacher/groups', '/en/teacher/lessons', '/en/teacher/requests',
-      '/en/teacher/students', '/en/teacher/catalogue', '/en/teacher/feedback',
-      '/en/notifications', '/en/account', '/en/reports',
+      '/en/teacher',
+      '/en/teacher/groups',
+      '/en/teacher/lessons',
+      '/en/teacher/requests',
+      '/en/teacher/students',
+      '/en/teacher/catalogue',
+      '/en/teacher/feedback',
+      '/en/notifications',
+      '/en/account',
+      '/en/reports',
     ]);
   });
 });

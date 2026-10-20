@@ -6,8 +6,15 @@ vi.mock('@/components/active-link', async importOriginal => {
   const actual = await importOriginal<typeof import('@/components/active-link')>();
   return {
     ...actual,
-    ActiveLink: ({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) =>
-      createElement('a', { href, className }, children),
+    ActiveLink: ({
+      href,
+      children,
+      className,
+    }: {
+      href: string;
+      children: React.ReactNode;
+      className?: string;
+    }) => createElement('a', { href, className }, children),
   };
 });
 import { SAVED_GROUP_PAGE_SIZE, savedGroupOffset } from '@/features/student/saved-domain';
@@ -23,8 +30,16 @@ describe('student saved groups', () => {
   });
 
   it('adds saved groups to student navigation in English and Arabic', () => {
-    const english = renderToStaticMarkup(<PlatformShell locale="en" role="student" name="Learner">{null}</PlatformShell>);
-    const arabic = renderToStaticMarkup(<PlatformShell locale="ar" role="student" name="طالب">{null}</PlatformShell>);
+    const english = renderToStaticMarkup(
+      <PlatformShell locale="en" role="student" name="Learner">
+        {null}
+      </PlatformShell>,
+    );
+    const arabic = renderToStaticMarkup(
+      <PlatformShell locale="ar" role="student" name="طالب">
+        {null}
+      </PlatformShell>,
+    );
     expect(english).toContain('Saved groups');
     expect(arabic).toContain('المحفوظات');
   });

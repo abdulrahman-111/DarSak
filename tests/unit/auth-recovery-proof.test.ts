@@ -1,5 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { issueRecoveryProof, PASSWORD_RECOVERY_TTL_SECONDS, verifyRecoveryProof } from '@/features/auth/recovery-proof';
+import {
+  issueRecoveryProof,
+  PASSWORD_RECOVERY_TTL_SECONDS,
+  verifyRecoveryProof,
+} from '@/features/auth/recovery-proof';
 
 describe('password recovery proof', () => {
   afterEach(() => vi.unstubAllEnvs());
@@ -12,7 +16,14 @@ describe('password recovery proof', () => {
     expect(verifyRecoveryProof(proof ?? undefined, 'user-1', 'session-1', now)).toBe(true);
     expect(verifyRecoveryProof(proof ?? undefined, 'user-2', 'session-1', now)).toBe(false);
     expect(verifyRecoveryProof(proof ?? undefined, 'user-1', 'session-2', now)).toBe(false);
-    expect(verifyRecoveryProof(proof ?? undefined, 'user-1', 'session-1', now + PASSWORD_RECOVERY_TTL_SECONDS)).toBe(false);
+    expect(
+      verifyRecoveryProof(
+        proof ?? undefined,
+        'user-1',
+        'session-1',
+        now + PASSWORD_RECOVERY_TTL_SECONDS,
+      ),
+    ).toBe(false);
     expect(verifyRecoveryProof(`${proof}x`, 'user-1', 'session-1', now)).toBe(false);
   });
 

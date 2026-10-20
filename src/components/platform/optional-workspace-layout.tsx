@@ -8,7 +8,13 @@ import type { PlatformRole } from './access';
 
 const platformRoles = new Set<PlatformRole>(['student', 'teacher', 'admin']);
 
-export async function OptionalWorkspaceLayout({ locale, children }: { locale: string; children: ReactNode }) {
+export async function OptionalWorkspaceLayout({
+  locale,
+  children,
+}: {
+  locale: string;
+  children: ReactNode;
+}) {
   if (!isConfigured()) return <>{children}</>;
 
   const { db, user, profile } = await getRequestViewer();
@@ -18,5 +24,9 @@ export async function OptionalWorkspaceLayout({ locale, children }: { locale: st
 
   const role = profile.role as PlatformRole;
   const unreadCount = await unreadNotificationCount(db);
-  return <PlatformShell locale={locale} role={role} name={profile.full_name} unreadCount={unreadCount}>{children}</PlatformShell>;
+  return (
+    <PlatformShell locale={locale} role={role} name={profile.full_name} unreadCount={unreadCount}>
+      {children}
+    </PlatformShell>
+  );
 }

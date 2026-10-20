@@ -4,10 +4,108 @@ import { saveLesson } from '@/features/platform/actions';
 import { cairoDateTimeToUtc } from '@/lib/domain';
 
 const control = 'mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5';
-function Feedback({ locale, state }: { locale: string; state: { error?: string; ok?: boolean } | null }) { return state?.error ? <p role="alert" className="text-sm text-red-700">{state.error}</p> : state?.ok ? <p role="status" className="text-sm text-teal">{locale === 'ar' ? 'تم الحفظ.' : 'Saved.'}</p> : null; }
-export function LessonForm({ locale, groupId, lesson }: { locale: string; groupId: string; lesson?: { id: string; title: string; starts_at: string; ends_at: string; notes: string } }) {
-  async function submit(previous: {error?:string;ok?:boolean}|null, formData: FormData) { try { formData.set('startsAt',cairoDateTimeToUtc(String(formData.get('startsAt')))); formData.set('endsAt',cairoDateTimeToUtc(String(formData.get('endsAt')))); return await saveLesson(locale,previous,formData); } catch { return {error:locale === 'ar' ? 'تحقق من وقتَي البداية والنهاية.' : 'Check the start and end times.'}; } }
+function Feedback({
+  locale,
+  state,
+}: {
+  locale: string;
+  state: { error?: string; ok?: boolean } | null;
+}) {
+  return state?.error ? (
+    <p role="alert" className="text-sm text-red-700">
+      {state.error}
+    </p>
+  ) : state?.ok ? (
+    <p role="status" className="text-sm text-teal">
+      {locale === 'ar' ? 'تم الحفظ.' : 'Saved.'}
+    </p>
+  ) : null;
+}
+export function LessonForm({
+  locale,
+  groupId,
+  lesson,
+}: {
+  locale: string;
+  groupId: string;
+  lesson?: { id: string; title: string; starts_at: string; ends_at: string; notes: string };
+}) {
+  async function submit(previous: { error?: string; ok?: boolean } | null, formData: FormData) {
+    try {
+      formData.set('startsAt', cairoDateTimeToUtc(String(formData.get('startsAt'))));
+      formData.set('endsAt', cairoDateTimeToUtc(String(formData.get('endsAt'))));
+      return await saveLesson(locale, previous, formData);
+    } catch {
+      return {
+        error:
+          locale === 'ar' ? 'تحقق من وقتَي البداية والنهاية.' : 'Check the start and end times.',
+      };
+    }
+  }
   const [state, action, pending] = useActionState(submit, null);
-  const local = (v?:string) => v ? new Intl.DateTimeFormat('sv-SE',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}).format(new Date(v)).replace(' ','T') : '';
-  return <form action={action} className="grid gap-3"><input type="hidden" name="groupId" value={groupId}/>{lesson && <input type="hidden" name="lessonId" value={lesson.id}/>}<label className="text-sm font-bold">{locale === 'ar' ? 'عنوان الحصة' : 'Lesson title'}<input name="title" required minLength={2} defaultValue={lesson?.title} className={control}/></label><div className="grid gap-3 sm:grid-cols-2"><label className="text-sm font-bold">{locale === 'ar' ? 'البداية' : 'Starts'}<input name="startsAt" type="datetime-local" required defaultValue={local(lesson?.starts_at)} className={control}/></label><label className="text-sm font-bold">{locale === 'ar' ? 'النهاية' : 'Ends'}<input name="endsAt" type="datetime-local" required defaultValue={local(lesson?.ends_at)} className={control}/></label></div><label className="text-sm font-bold">{locale === 'ar' ? 'ملاحظات' : 'Notes'}<textarea name="notes" rows={3} defaultValue={lesson?.notes || ''} className={control}/></label><p className="text-xs text-muted">{locale === 'ar' ? 'أدخل الوقت بتوقيت القاهرة.' : 'Enter times in Africa/Cairo.'}</p><button disabled={pending} className="rounded-xl bg-orange px-4 py-2.5 font-bold text-white hover:bg-orange-deep">{pending ? '…' : locale === 'ar' ? 'حفظ الحصة' : 'Save lesson'}</button><Feedback locale={locale} state={state}/></form>;
+  const local = (v?: string) =>
+    v
+      ? new Intl.DateTimeFormat('sv-SE', {
+          timeZone: 'Africa/Cairo',
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+          .format(new Date(v))
+          .replace(' ', 'T')
+      : '';
+  return (
+    <form action={action} className="grid gap-3">
+      <input type="hidden" name="groupId" value={groupId} />
+      {lesson && <input type="hidden" name="lessonId" value={lesson.id} />}
+      <label className="text-sm font-bold">
+        {locale === 'ar' ? 'عنوان الحصة' : 'Lesson title'}
+        <input
+          name="title"
+          required
+          minLength={2}
+          defaultValue={lesson?.title}
+          className={control}
+        />
+      </label>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <label className="text-sm font-bold">
+          {locale === 'ar' ? 'البداية' : 'Starts'}
+          <input
+            name="startsAt"
+            type="datetime-local"
+            required
+            defaultValue={local(lesson?.starts_at)}
+            className={control}
+          />
+        </label>
+        <label className="text-sm font-bold">
+          {locale === 'ar' ? 'النهاية' : 'Ends'}
+          <input
+            name="endsAt"
+            type="datetime-local"
+            required
+            defaultValue={local(lesson?.ends_at)}
+            className={control}
+          />
+        </label>
+      </div>
+      <label className="text-sm font-bold">
+        {locale === 'ar' ? 'ملاحظات' : 'Notes'}
+        <textarea name="notes" rows={3} defaultValue={lesson?.notes || ''} className={control} />
+      </label>
+      <p className="text-xs text-muted">
+        {locale === 'ar' ? 'أدخل الوقت بتوقيت القاهرة.' : 'Enter times in Africa/Cairo.'}
+      </p>
+      <button
+        disabled={pending}
+        className="rounded-xl bg-orange px-4 py-2.5 font-bold text-white hover:bg-orange-deep"
+      >
+        {pending ? '…' : locale === 'ar' ? 'حفظ الحصة' : 'Save lesson'}
+      </button>
+      <Feedback locale={locale} state={state} />
+    </form>
+  );
 }

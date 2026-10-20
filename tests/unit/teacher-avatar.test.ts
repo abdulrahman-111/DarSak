@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { avatarPathIsCurrent, publicTeacherContactLinks, storageRemovalConfirmed, teacherAvatarExtension, teacherAvatarPath } from '@/features/teacher/profile-domain';
+import {
+  avatarPathIsCurrent,
+  publicTeacherContactLinks,
+  storageRemovalConfirmed,
+  teacherAvatarExtension,
+  teacherAvatarPath,
+} from '@/features/teacher/profile-domain';
 import { teacherCoverImageType, teacherCoverPath } from '@/features/teacher/profile-details-domain';
 
 describe('teacher avatar rules', () => {
@@ -16,11 +22,26 @@ describe('teacher avatar rules', () => {
   });
 
   it('builds owner-scoped random UUID object paths with supported extensions', () => {
-    expect(teacherAvatarPath('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 'image/jpeg'))
-      .toBe('11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.jpg');
-    expect(() => teacherAvatarPath('invalid', '22222222-2222-4222-8222-222222222222', 'image/jpeg')).toThrow();
-    expect(() => teacherAvatarPath('11111111-1111-4111-8111-111111111111', 'invalid', 'image/jpeg')).toThrow();
-    expect(() => teacherAvatarPath('11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222', 'image/gif')).toThrow();
+    expect(
+      teacherAvatarPath(
+        '11111111-1111-4111-8111-111111111111',
+        '22222222-2222-4222-8222-222222222222',
+        'image/jpeg',
+      ),
+    ).toBe('11111111-1111-4111-8111-111111111111/22222222-2222-4222-8222-222222222222.jpg');
+    expect(() =>
+      teacherAvatarPath('invalid', '22222222-2222-4222-8222-222222222222', 'image/jpeg'),
+    ).toThrow();
+    expect(() =>
+      teacherAvatarPath('11111111-1111-4111-8111-111111111111', 'invalid', 'image/jpeg'),
+    ).toThrow();
+    expect(() =>
+      teacherAvatarPath(
+        '11111111-1111-4111-8111-111111111111',
+        '22222222-2222-4222-8222-222222222222',
+        'image/gif',
+      ),
+    ).toThrow();
   });
 });
 
@@ -31,7 +52,9 @@ describe('teacher cover paths', () => {
     expect(teacherCoverPath(owner, file, 'image/jpeg')).toBe(`${owner}/cover/${file}.jpg`);
     expect(teacherCoverPath(owner, file, 'image/png')).toBe(`${owner}/cover/${file}.png`);
     expect(teacherCoverPath(owner, file, 'image/webp')).toBe(`${owner}/cover/${file}.webp`);
-    expect(teacherCoverPath(owner, file, 'image/jpeg')).not.toBe(teacherAvatarPath(owner, file, 'image/jpeg'));
+    expect(teacherCoverPath(owner, file, 'image/jpeg')).not.toBe(
+      teacherAvatarPath(owner, file, 'image/jpeg'),
+    );
     expect(() => teacherCoverPath('invalid', file, 'image/jpeg')).toThrow();
     expect(() => teacherCoverPath(owner, file, 'image/gif')).toThrow();
     expect(() => teacherCoverPath(owner, file, 'toString')).toThrow();
@@ -47,32 +70,82 @@ describe('teacher cover image validation', () => {
     const jpeg = bytes(0xff, 0xd8, 0xff, 0xe0);
     const png = bytes(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
     const webp = bytes(0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50);
-    expect(await teacherCoverImageType({ type: 'image/jpeg', size: jpeg.size, arrayBuffer: () => jpeg.arrayBuffer() })).toBe('image/jpeg');
-    expect(await teacherCoverImageType({ type: 'image/png', size: png.size, arrayBuffer: () => png.arrayBuffer() })).toBe('image/png');
-    expect(await teacherCoverImageType({ type: 'image/webp', size: webp.size, arrayBuffer: () => webp.arrayBuffer() })).toBe('image/webp');
-    expect(await teacherCoverImageType({ type: 'image/png', size: jpeg.size, arrayBuffer: () => jpeg.arrayBuffer() })).toBeNull();
-    expect(await teacherCoverImageType({ type: 'image/svg+xml', size: 8, arrayBuffer: () => png.arrayBuffer() })).toBeNull();
+    expect(
+      await teacherCoverImageType({
+        type: 'image/jpeg',
+        size: jpeg.size,
+        arrayBuffer: () => jpeg.arrayBuffer(),
+      }),
+    ).toBe('image/jpeg');
+    expect(
+      await teacherCoverImageType({
+        type: 'image/png',
+        size: png.size,
+        arrayBuffer: () => png.arrayBuffer(),
+      }),
+    ).toBe('image/png');
+    expect(
+      await teacherCoverImageType({
+        type: 'image/webp',
+        size: webp.size,
+        arrayBuffer: () => webp.arrayBuffer(),
+      }),
+    ).toBe('image/webp');
+    expect(
+      await teacherCoverImageType({
+        type: 'image/png',
+        size: jpeg.size,
+        arrayBuffer: () => jpeg.arrayBuffer(),
+      }),
+    ).toBeNull();
+    expect(
+      await teacherCoverImageType({
+        type: 'image/svg+xml',
+        size: 8,
+        arrayBuffer: () => png.arrayBuffer(),
+      }),
+    ).toBeNull();
   });
 });
 
 describe('public teacher contact links', () => {
   it('creates safe phone, WhatsApp, and email links from valid stored contact values', () => {
-    expect(publicTeacherContactLinks({ phone_number: '+201234567890', whatsapp_number: '+447123456789', contact_email: 'teacher@example.org' }))
-      .toEqual({ phone: 'tel:+201234567890', whatsapp: 'https://wa.me/447123456789', email: 'mailto:teacher@example.org' });
+    expect(
+      publicTeacherContactLinks({
+        phone_number: '+201234567890',
+        whatsapp_number: '+447123456789',
+        contact_email: 'teacher@example.org',
+      }),
+    ).toEqual({
+      phone: 'tel:+201234567890',
+      whatsapp: 'https://wa.me/447123456789',
+      email: 'mailto:teacher@example.org',
+    });
   });
 
   it('omits malformed contact values instead of creating unsafe links', () => {
-    expect(publicTeacherContactLinks({ phone_number: '01012345678', whatsapp_number: '+01234567890', contact_email: 'hello@example.org\r\nBcc:evil@example.org' }))
-      .toEqual({ phone: null, whatsapp: null, email: null });
+    expect(
+      publicTeacherContactLinks({
+        phone_number: '01012345678',
+        whatsapp_number: '+01234567890',
+        contact_email: 'hello@example.org\r\nBcc:evil@example.org',
+      }),
+    ).toEqual({ phone: null, whatsapp: null, email: null });
   });
 });
 
 describe('teacher avatar deletion confirmation', () => {
   it('requires Storage to return the exact deleted object path', () => {
-    expect(storageRemovalConfirmed('teacher/photo.jpg', [{ name: 'teacher/photo.jpg' }], null)).toBe(true);
+    expect(
+      storageRemovalConfirmed('teacher/photo.jpg', [{ name: 'teacher/photo.jpg' }], null),
+    ).toBe(true);
     expect(storageRemovalConfirmed('teacher/photo.jpg', [], null)).toBe(false);
-    expect(storageRemovalConfirmed('teacher/photo.jpg', [{ name: 'teacher/another.jpg' }], null)).toBe(false);
-    expect(storageRemovalConfirmed('teacher/photo.jpg', null, new Error('delete denied'))).toBe(false);
+    expect(
+      storageRemovalConfirmed('teacher/photo.jpg', [{ name: 'teacher/another.jpg' }], null),
+    ).toBe(false);
+    expect(storageRemovalConfirmed('teacher/photo.jpg', null, new Error('delete denied'))).toBe(
+      false,
+    );
   });
 });
 

@@ -1,7 +1,8 @@
 import 'server-only';
 import type { Locale } from '@/features/student/domain';
 
-export type ServerReadOperation = 'public_teacher_detail' | 'teacher_overview' | 'student_resources';
+export type ServerReadOperation =
+  'public_teacher_detail' | 'teacher_overview' | 'student_resources';
 type ReadOutcome = 'success' | 'failed';
 
 const SLOW_READ_MS = 2_000;
@@ -15,7 +16,12 @@ function now() {
   }
 }
 
-function report(operation: ServerReadOperation, locale: Locale, outcome: ReadOutcome, startedAt: number) {
+function report(
+  operation: ServerReadOperation,
+  locale: Locale,
+  outcome: ReadOutcome,
+  startedAt: number,
+) {
   try {
     const elapsed = now() - startedAt;
     const duration_ms = Number.isFinite(elapsed)

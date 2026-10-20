@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { addUniqueOfferingId, teacherProfileSchema, teacherSpecializationPairSchema } from '@/features/teacher/profile-domain';
-import { canSelectCatalogueRow, catalogueDisplayName, isTeacherCatalogueCategory } from '@/features/teacher/catalogue-domain';
+import {
+  addUniqueOfferingId,
+  teacherProfileSchema,
+  teacherSpecializationPairSchema,
+} from '@/features/teacher/profile-domain';
+import {
+  canSelectCatalogueRow,
+  catalogueDisplayName,
+  isTeacherCatalogueCategory,
+} from '@/features/teacher/catalogue-domain';
 
 const validProfile = {
   full_name: 'Mona Ali',
@@ -38,40 +46,73 @@ describe('teacher profile validation', () => {
   });
 
   it('rejects malformed and overlong contact email values', () => {
-    expect(teacherProfileSchema.safeParse({ ...validProfile, contact_email: 'not-an-email' }).success).toBe(false);
-    expect(teacherProfileSchema.safeParse({ ...validProfile, contact_email: `${'a'.repeat(245)}@example.org` }).success).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({ ...validProfile, contact_email: 'not-an-email' }).success,
+    ).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({
+        ...validProfile,
+        contact_email: `${'a'.repeat(245)}@example.org`,
+      }).success,
+    ).toBe(false);
   });
 
   it('uses enrolled visibility by default and rejects unknown visibility values', () => {
     const { visibility: _visibility, ...withoutVisibility } = validProfile;
     expect(teacherProfileSchema.parse(withoutVisibility).visibility).toBe('enrolled');
-    expect(teacherProfileSchema.safeParse({ ...validProfile, visibility: 'everyone' }).success).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({ ...validProfile, visibility: 'everyone' }).success,
+    ).toBe(false);
   });
 
   it('enforces name, headline, and bio bounds', () => {
     expect(teacherProfileSchema.safeParse({ ...validProfile, full_name: 'A' }).success).toBe(false);
-    expect(teacherProfileSchema.safeParse({ ...validProfile, full_name: 'a'.repeat(101) }).success).toBe(false);
-    expect(teacherProfileSchema.safeParse({ ...validProfile, headline: 'a'.repeat(161) }).success).toBe(false);
-    expect(teacherProfileSchema.safeParse({ ...validProfile, bio: 'a'.repeat(5001) }).success).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({ ...validProfile, full_name: 'a'.repeat(101) }).success,
+    ).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({ ...validProfile, headline: 'a'.repeat(161) }).success,
+    ).toBe(false);
+    expect(teacherProfileSchema.safeParse({ ...validProfile, bio: 'a'.repeat(5001) }).success).toBe(
+      false,
+    );
   });
 
   it('rejects duplicate and malformed specialization IDs', () => {
     const id = '22222222-2222-4222-8222-222222222222';
-    expect(teacherProfileSchema.safeParse({ ...validProfile, offering_ids: [id, id] }).success).toBe(false);
-    expect(teacherProfileSchema.safeParse({ ...validProfile, offering_ids: ['not-a-uuid'] }).success).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({ ...validProfile, offering_ids: [id, id] }).success,
+    ).toBe(false);
+    expect(
+      teacherProfileSchema.safeParse({ ...validProfile, offering_ids: ['not-a-uuid'] }).success,
+    ).toBe(false);
   });
 
   it('requires valid subject and category IDs for a new specialization pair', () => {
     const id = '22222222-2222-4222-8222-222222222222';
-    expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: id }).success).toBe(true);
-    expect(teacherSpecializationPairSchema.safeParse({
-      subject_id: '00000000-0000-0000-0000-000000000001',
-      category_id: '00000000-0000-0000-0000-000000000013',
-    }).success).toBe(true);
-    expect(teacherSpecializationPairSchema.safeParse({ subject_id: 'bad', category_id: id }).success).toBe(false);
-    expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: null }).success).toBe(false);
-    for (const category_id of ['00000000-0000-0000-0000-000000000013/path', '00000000-0000-0000-0000-00000000001g', '00000000-0000-0000-0000-00000000001']) {
-      expect(teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id }).success).toBe(false);
+    expect(
+      teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: id }).success,
+    ).toBe(true);
+    expect(
+      teacherSpecializationPairSchema.safeParse({
+        subject_id: '00000000-0000-0000-0000-000000000001',
+        category_id: '00000000-0000-0000-0000-000000000013',
+      }).success,
+    ).toBe(true);
+    expect(
+      teacherSpecializationPairSchema.safeParse({ subject_id: 'bad', category_id: id }).success,
+    ).toBe(false);
+    expect(
+      teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id: null }).success,
+    ).toBe(false);
+    for (const category_id of [
+      '00000000-0000-0000-0000-000000000013/path',
+      '00000000-0000-0000-0000-00000000001g',
+      '00000000-0000-0000-0000-00000000001',
+    ]) {
+      expect(
+        teacherSpecializationPairSchema.safeParse({ subject_id: id, category_id }).success,
+      ).toBe(false);
     }
   });
 
@@ -85,15 +126,33 @@ describe('teacher profile validation', () => {
     const label = { name_ar: '', name_en: 'Algebra' };
     expect(catalogueDisplayName(label, 'ar')).toBe('Algebra');
     expect(catalogueDisplayName({ name_ar: 'الجبر', name_en: '' }, 'en')).toBe('الجبر');
-    expect(canSelectCatalogueRow({ id: 'own-archived', owner_teacher_id: 'teacher', archived_at: '2026-01-01' }, 'teacher', 'own-archived')).toBe(true);
-    expect(canSelectCatalogueRow({ id: 'foreign', owner_teacher_id: 'another-teacher', archived_at: null }, 'teacher', 'foreign')).toBe(false);
+    expect(
+      canSelectCatalogueRow(
+        { id: 'own-archived', owner_teacher_id: 'teacher', archived_at: '2026-01-01' },
+        'teacher',
+        'own-archived',
+      ),
+    ).toBe(true);
+    expect(
+      canSelectCatalogueRow(
+        { id: 'foreign', owner_teacher_id: 'another-teacher', archived_at: null },
+        'teacher',
+        'foreign',
+      ),
+    ).toBe(false);
   });
 
   it('offers only system learning levels and teacher categories as profile categories', () => {
     expect(isTeacherCatalogueCategory({ owner_teacher_id: null, kind: 'grade' })).toBe(true);
-    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'custom_year' })).toBe(true);
-    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'student_category' })).toBe(true);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'custom_year' })).toBe(
+      true,
+    );
+    expect(
+      isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'student_category' }),
+    ).toBe(true);
     expect(isTeacherCatalogueCategory({ owner_teacher_id: null, kind: 'faculty' })).toBe(false);
-    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'department' })).toBe(false);
+    expect(isTeacherCatalogueCategory({ owner_teacher_id: 'teacher', kind: 'department' })).toBe(
+      false,
+    );
   });
 });

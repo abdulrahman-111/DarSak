@@ -14,26 +14,36 @@ const teacherId = '11111111-1111-4111-8111-111111111111';
 const oldCover = `${teacherId}/cover/22222222-2222-4222-8222-222222222222.png`;
 const newCover = `${teacherId}/cover/33333333-3333-4333-8333-333333333333.webp`;
 
-function setupRemoval({ rpc, reads, removalError = false }: {
+function setupRemoval({
+  rpc,
+  reads,
+  removalError = false,
+}: {
   rpc: { data: boolean | null; error: unknown };
   reads: Array<{ path: string | null; error?: unknown }>;
   removalError?: boolean;
 }) {
   let teacherReadIndex = 0;
-  const remove = vi.fn(async (paths: string[]) => removalError
-    ? { data: null, error: new Error('storage cleanup failed') }
-    : { data: paths.map(name => ({ name })), error: null });
+  const remove = vi.fn(async (paths: string[]) =>
+    removalError
+      ? { data: null, error: new Error('storage cleanup failed') }
+      : { data: paths.map(name => ({ name })), error: null },
+  );
   createClientMock.mockResolvedValue({
     auth: { getUser: async () => ({ data: { user: { id: teacherId } } }) },
     from: (table: string) => ({
       select: () => ({
         eq: () => ({
-          maybeSingle: async () => table === 'profiles'
-            ? { data: { role: 'teacher', status: 'active' }, error: null }
-            : (() => {
-              const read = reads[teacherReadIndex++];
-              return { data: read ? { cover_path: read.path } : null, error: read?.error ?? null };
-            })(),
+          maybeSingle: async () =>
+            table === 'profiles'
+              ? { data: { role: 'teacher', status: 'active' }, error: null }
+              : (() => {
+                  const read = reads[teacherReadIndex++];
+                  return {
+                    data: read ? { cover_path: read.path } : null,
+                    error: read?.error ?? null,
+                  };
+                })(),
         }),
       }),
     }),
@@ -50,7 +60,10 @@ describe('removeTeacherCover concurrent result handling', () => {
   });
 
   it('reports a conflict when another save selected a newer cover', async () => {
-    const { remove } = setupRemoval({ rpc: { data: false, error: null }, reads: [{ path: oldCover }, { path: newCover }] });
+    const { remove } = setupRemoval({
+      rpc: { data: false, error: null },
+      reads: [{ path: oldCover }, { path: newCover }],
+    });
 
     const result = await removeTeacherCover('en', null, new FormData());
 
@@ -60,7 +73,10 @@ describe('removeTeacherCover concurrent result handling', () => {
   });
 
   it('reports the same conflict when the CAS errors but verification finds a newer cover', async () => {
-    const { remove } = setupRemoval({ rpc: { data: null, error: new Error('rpc timeout') }, reads: [{ path: oldCover }, { path: newCover }] });
+    const { remove } = setupRemoval({
+      rpc: { data: null, error: new Error('rpc timeout') },
+      reads: [{ path: oldCover }, { path: newCover }],
+    });
 
     const result = await removeTeacherCover('en', null, new FormData());
 
@@ -70,7 +86,10 @@ describe('removeTeacherCover concurrent result handling', () => {
   });
 
   it('reports success after a false CAS only when verification confirms no current cover', async () => {
-    setupRemoval({ rpc: { data: false, error: null }, reads: [{ path: oldCover }, { path: null }] });
+    setupRemoval({
+      rpc: { data: false, error: null },
+      reads: [{ path: oldCover }, { path: null }],
+    });
 
     const result = await removeTeacherCover('en', null, new FormData());
 
@@ -79,7 +98,10 @@ describe('removeTeacherCover concurrent result handling', () => {
   });
 
   it('preserves the current cover when a failed CAS verifies the old cover remains selected', async () => {
-    const { remove } = setupRemoval({ rpc: { data: null, error: new Error('rpc failed') }, reads: [{ path: oldCover }, { path: oldCover }] });
+    const { remove } = setupRemoval({
+      rpc: { data: null, error: new Error('rpc failed') },
+      reads: [{ path: oldCover }, { path: oldCover }],
+    });
 
     const result = await removeTeacherCover('en', null, new FormData());
 
@@ -88,7 +110,10 @@ describe('removeTeacherCover concurrent result handling', () => {
   });
 
   it('leaves the object private and reports uncertainty when verification cannot read the reference', async () => {
-    const { remove } = setupRemoval({ rpc: { data: null, error: new Error('rpc failed') }, reads: [{ path: oldCover }, { path: null, error: new Error('read failed') }] });
+    const { remove } = setupRemoval({
+      rpc: { data: null, error: new Error('rpc failed') },
+      reads: [{ path: oldCover }, { path: null, error: new Error('read failed') }],
+    });
 
     const result = await removeTeacherCover('en', null, new FormData());
 
@@ -97,7 +122,11 @@ describe('removeTeacherCover concurrent result handling', () => {
   });
 
   it('does not return success when the reference is cleared but Storage cleanup fails', async () => {
-    const { remove } = setupRemoval({ rpc: { data: true, error: null }, reads: [{ path: oldCover }], removalError: true });
+    const { remove } = setupRemoval({
+      rpc: { data: true, error: null },
+      reads: [{ path: oldCover }],
+      removalError: true,
+    });
 
     const result = await removeTeacherCover('en', null, new FormData());
 

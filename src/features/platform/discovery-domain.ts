@@ -26,7 +26,7 @@ export type DiscoveryFilters = {
 function firstValue(input: DiscoveryFilterInput, key: string): string {
   if (input instanceof URLSearchParams) return input.get(key) ?? '';
   const value = input[key];
-  return Array.isArray(value) ? value[0] ?? '' : value ?? '';
+  return Array.isArray(value) ? (value[0] ?? '') : (value ?? '');
 }
 
 function optionalUuid(input: DiscoveryFilterInput, key: string): string | null {

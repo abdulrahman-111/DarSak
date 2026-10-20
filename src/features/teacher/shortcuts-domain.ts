@@ -4,14 +4,18 @@ import { quotaErrorMessage } from '@/features/subscriptions/quota-errors';
 
 export const duplicateGroupSchema = z.object({ source_group_id: z.string().uuid() });
 
-export const copyLessonSchema = z.object({
-  source_lesson_id: z.string().uuid(),
-  target_group_id: z.string().uuid(),
-  starts_at: z.string().datetime({ offset: true }),
-  ends_at: z.string().datetime({ offset: true }),
-}).refine(value => Date.parse(value.starts_at) < Date.parse(value.ends_at), { path: ['ends_at'] });
+export const copyLessonSchema = z
+  .object({
+    source_lesson_id: z.string().uuid(),
+    target_group_id: z.string().uuid(),
+    starts_at: z.string().datetime({ offset: true }),
+    ends_at: z.string().datetime({ offset: true }),
+  })
+  .refine(value => Date.parse(value.starts_at) < Date.parse(value.ends_at), { path: ['ends_at'] });
 
-export function scheduleProposalSlots(slots: Array<{ weekday: number; start_time: string; end_time: string }>) {
+export function scheduleProposalSlots(
+  slots: Array<{ weekday: number; start_time: string; end_time: string }>,
+) {
   return slots.map(({ weekday, start_time, end_time }) => ({ weekday, start_time, end_time }));
 }
 
@@ -24,7 +28,10 @@ export function shortcutMutationMessage(locale: Locale, rawError: string): strin
   const ar = locale === 'ar';
   const quotaMessage = quotaErrorMessage(locale, rawError);
   if (quotaMessage) return quotaMessage;
-  if(error==='teacher teaching access expired')return ar?'انتهت صلاحية التدريس. جدّد الوصول من صفحة صلاحية التدريس.':'Teaching access has expired. Renew access from the teaching access page.';
+  if (error === 'teacher teaching access expired')
+    return ar
+      ? 'انتهت صلاحية التدريس. جدّد الوصول من صفحة صلاحية التدريس.'
+      : 'Teaching access has expired. Renew access from the teaching access page.';
   if (error.includes('conflict') || error.includes('overlap') || error.includes('schedule')) {
     return ar
       ? 'يتعارض هذا الموعد مع الجدول أو حصة موجودة. اختر وقتاً آخر.'

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { cairoDayBounds, cairoWeekBounds, normalizeTimetableSelection, normalizeTimetableWeek, shiftTimetableWeek, timetableDayDates, validTimetableDate } from '@/features/student/timetable-domain';
+import {
+  cairoDayBounds,
+  cairoWeekBounds,
+  normalizeTimetableSelection,
+  normalizeTimetableWeek,
+  shiftTimetableWeek,
+  timetableDayDates,
+  validTimetableDate,
+} from '@/features/student/timetable-domain';
 
 describe('student timetable week domain', () => {
   it('returns Cairo-local Monday to next Monday, including the DST offset change', () => {
@@ -28,8 +36,25 @@ describe('student timetable week domain', () => {
 
   it('builds seven Monday-first days and rejects day or class values outside the selection', () => {
     const days = timetableDayDates('2026-10-12');
-    expect(days.map(day => day.date)).toEqual(['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18']);
-    expect(normalizeTimetableSelection('2026-10-12', '2026-10-18', '2d6a0d81-05f3-4d8e-baa0-8440e3e4a0d0')).toEqual({ day: '2026-10-18', group: '2d6a0d81-05f3-4d8e-baa0-8440e3e4a0d0' });
-    expect(normalizeTimetableSelection('2026-10-12', '2026-10-19', 'bad')).toEqual({ day: null, group: null });
+    expect(days.map(day => day.date)).toEqual([
+      '2026-10-12',
+      '2026-10-13',
+      '2026-10-14',
+      '2026-10-15',
+      '2026-10-16',
+      '2026-10-17',
+      '2026-10-18',
+    ]);
+    expect(
+      normalizeTimetableSelection(
+        '2026-10-12',
+        '2026-10-18',
+        '2d6a0d81-05f3-4d8e-baa0-8440e3e4a0d0',
+      ),
+    ).toEqual({ day: '2026-10-18', group: '2d6a0d81-05f3-4d8e-baa0-8440e3e4a0d0' });
+    expect(normalizeTimetableSelection('2026-10-12', '2026-10-19', 'bad')).toEqual({
+      day: null,
+      group: null,
+    });
   });
 });

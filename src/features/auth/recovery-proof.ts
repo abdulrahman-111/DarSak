@@ -12,14 +12,25 @@ function signature(payload: string, key: string) {
   return createHmac('sha256', key).update(payload).digest('base64url');
 }
 
-export function issueRecoveryProof(userId: string, sessionId: string, now = Math.floor(Date.now() / 1000)) {
+export function issueRecoveryProof(
+  userId: string,
+  sessionId: string,
+  now = Math.floor(Date.now() / 1000),
+) {
   const key = secret();
   if (!key || !userId || !sessionId) return null;
-  const payload = Buffer.from(JSON.stringify({ sub: userId, sid: sessionId, exp: now + PASSWORD_RECOVERY_TTL_SECONDS })).toString('base64url');
+  const payload = Buffer.from(
+    JSON.stringify({ sub: userId, sid: sessionId, exp: now + PASSWORD_RECOVERY_TTL_SECONDS }),
+  ).toString('base64url');
   return `${payload}.${signature(payload, key)}`;
 }
 
-export function verifyRecoveryProof(token: string | undefined, userId: string, sessionId: string, now = Math.floor(Date.now() / 1000)) {
+export function verifyRecoveryProof(
+  token: string | undefined,
+  userId: string,
+  sessionId: string,
+  now = Math.floor(Date.now() / 1000),
+) {
   const key = secret();
   if (!key || !token || !userId || !sessionId) return false;
   const [payload, suppliedSignature, extra] = token.split('.');
@@ -29,8 +40,19 @@ export function verifyRecoveryProof(token: string | undefined, userId: string, s
   const expected = Buffer.from(expectedSignature, 'base64url');
   if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) return false;
   try {
-    const proof = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as { sub?: unknown; sid?: unknown; exp?: unknown };
-    return proof.sub === userId && proof.sid === sessionId && typeof proof.exp === 'number' && Number.isInteger(proof.exp) && proof.exp > now && proof.exp <= now + PASSWORD_RECOVERY_TTL_SECONDS;
+    const proof = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8')) as {
+      sub?: unknown;
+      sid?: unknown;
+      exp?: unknown;
+    };
+    return (
+      proof.sub === userId &&
+      proof.sid === sessionId &&
+      typeof proof.exp === 'number' &&
+      Number.isInteger(proof.exp) &&
+      proof.exp > now &&
+      proof.exp <= now + PASSWORD_RECOVERY_TTL_SECONDS
+    );
   } catch {
     return false;
   }
