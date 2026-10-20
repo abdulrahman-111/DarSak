@@ -8,7 +8,8 @@ export type NotificationKind =
   | 'enrollment_requested'
   | 'teacher_review_requested'
   | 'teacher_review_decision'
-  | 'teacher_fee_announcement';
+  | 'teacher_fee_announcement'
+  | 'enrollment_accepted';
 export type NotificationRow = {
   id: string;
   kind: NotificationKind;
@@ -27,6 +28,7 @@ const KINDS = new Set<NotificationKind>([
   'teacher_review_requested',
   'teacher_review_decision',
   'teacher_fee_announcement',
+  'enrollment_accepted',
 ]);
 
 export function parseNotificationsPage(value: unknown): NotificationsPage | null {
@@ -84,6 +86,12 @@ export function notificationHref(
 ): string | null {
   if (locale !== 'en' && locale !== 'ar') return null;
   if (role === 'student') {
+    if (kind === 'enrollment_accepted') {
+      const value = id(payload, 'group_id');
+      return value
+        ? `/${locale}/student/classes/${value}?view=teacher&welcome=1#teacher-contact`
+        : null;
+    }
     if (kind === 'lesson_rescheduled' || kind === 'lesson_cancelled') {
       const value = id(payload, 'lesson_id');
       return value ? `/${locale}/student/lessons/${value}` : null;
@@ -149,6 +157,10 @@ export function notificationSummary(
     return ar
       ? `${text(payload, 'student_name', 'طالب')} طلب الانضمام إلى ${text(payload, 'group_name', 'مجموعة')}`
       : `${text(payload, 'student_name', 'A student')} requested to join ${text(payload, 'group_name', 'a group')}`;
+  if (kind === 'enrollment_accepted')
+    return ar
+      ? `تم قبولك! افتح ${text(payload, 'group_name', 'مجموعتك')} للتواصل مع معلمك والاستعداد لأول حصة.`
+      : `You're accepted! Open ${text(payload, 'group_name', 'your group')} to contact your teacher and prepare for your first lesson.`;
   if (kind === 'teacher_review_requested')
     return ar
       ? `${text(payload, 'teacher_name', 'معلم')} طلب مراجعة حسابه`

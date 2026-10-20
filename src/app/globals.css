@@ -165,6 +165,37 @@ form[aria-busy='true'] {
   }
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  .student-contact-card-welcome {
+    animation: student-contact-arrival 1.4s ease-out 1;
+  }
+  .student-request-confirmation {
+    animation: student-request-arrival 0.45s ease-out 1;
+  }
+}
+
+@keyframes student-request-arrival {
+  0% {
+    opacity: 0.75;
+    transform: translateY(3px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes student-contact-arrival {
+  0% {
+    box-shadow: 0 0 0 0 rgb(20 112 102 / 20%);
+    border-color: rgb(20 112 102 / 50%);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgb(20 112 102 / 0%);
+    border-color: rgb(20 112 102 / 20%);
+  }
+}
+
 /* Small, immediate feedback for the student workspace; no delayed content. */
 .student-card {
   transition:
