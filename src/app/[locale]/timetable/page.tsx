@@ -32,7 +32,8 @@ export default async function Timetable({
   const locale = ensureLocale(raw),
     ar = locale === 'ar';
   const me = await requireViewer(locale, 'student');
-  const unreadCount = await unreadNotificationCount(me.db);
+  // Start the badge count now; it does not depend on the timetable reads below.
+  const unreadCountRead = unreadNotificationCount(me.db);
   const search = await searchParams;
   const week = normalizeTimetableWeek(search?.week);
   const selection = normalizeTimetableSelection(week.weekStart, search?.day, search?.group);
@@ -42,13 +43,10 @@ export default async function Timetable({
   const days = timetableDayDates(week.weekStart);
   const selectedDay = selection.day ?? (week.isCurrentWeek ? week.today : week.weekStart);
   const dayBounds = cairoDayBounds(selectedDay);
-  const data = await studentTimetableDay(
-    locale,
-    dayBounds.start,
-    dayBounds.end,
-    selection.group,
-    pageInput,
-  );
+  const [data, unreadCount] = await Promise.all([
+    studentTimetableDay(locale, dayBounds.start, dayBounds.end, selection.group, pageInput),
+    unreadCountRead,
+  ]);
   const page = data.page;
   const pageCount = Math.max(1, Math.ceil(data.total / TIMETABLE_LESSON_LIMIT));
   const exportRange = defaultCalendarRange();
