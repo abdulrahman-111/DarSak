@@ -118,11 +118,9 @@ export async function signupAction(locale: string, _previous: unknown, formData:
   if (!parsed.success) return { error: locale === 'ar' ? 'تحقق من الاسم والبريد الإلكتروني وكلمة المرور (٨ أحرف على الأقل).' : 'Check your name, email and password (at least 8 characters).', ...signupEcho(formData) };
   const db = await createClient();
   const email = parsed.data.email.trim();
-  const { data: emailRegistered, error: availabilityError } = await db.rpc('signup_email_is_registered', { p_email: email });
-  if (availabilityError || typeof emailRegistered !== 'boolean') {
-    return { error: authErrorMessage(locale, undefined, 'signup'), ...signupEcho(formData) };
-  }
-  if (emailRegistered) return { error: authErrorMessage(locale, 'user_already_exists', 'signup'), ...signupEcho(formData) };
+  // Existing accounts are reported by signUp() itself, which is protected by
+  // Turnstile and Supabase rate limits. A separate public lookup would let
+  // anyone test which emails are registered.
   const { data, error } = await observeOperation('signup',locale,()=>db.auth.signUp({
     email, password: parsed.data.password,
     options: {

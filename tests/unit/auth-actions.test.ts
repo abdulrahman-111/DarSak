@@ -120,25 +120,17 @@ describe('auth actions', () => {
           captchaToken: 'tok',
         },
       });
-      expect(signupAvailabilityMock.mock.invocationCallOrder[0]).toBeLessThan(signUp.mock.invocationCallOrder[0]);
-      expect(signupAvailabilityMock).toHaveBeenCalledWith('signup_email_is_registered', { p_email: signup.email });
+      // No public email lookup: that would let anyone test which emails have accounts.
+      expect(signupAvailabilityMock).not.toHaveBeenCalled();
     });
 
-    it.each(['unconfirmed email', 'confirmed email', 'Google identity'])('blocks an existing %s before calling Supabase signup', async () => {
-      const signUp = vi.fn();
-      signupAvailabilityMock.mockResolvedValue({ data: true, error: null });
+    it.each(['confirmed email', 'Google identity'])('reports an existing %s from the Supabase signup response', async () => {
+      const signUp = vi.fn(async () => ({ data: { user: { identities: [] }, session: null }, error: null }));
       createClientMock.mockResolvedValue(signupClient({ signUp }));
       const result = await signupAction('en', null, form(signup));
       expect(result?.error).toBe('This email is already registered. Sign in or reset your password.');
-      expect(signUp).not.toHaveBeenCalled();
-    });
-
-    it('fails closed with a generic retry message when email availability cannot be checked', async () => {
-      const signUp = vi.fn();
-      signupAvailabilityMock.mockResolvedValue({ data: null, error: { message: 'lookup failed' } });
-      createClientMock.mockResolvedValue(signupClient({ signUp }));
-      expect((await signupAction('en', null, form(signup)))?.error).toBe('Unable to create an account. Please try again.');
-      expect(signUp).not.toHaveBeenCalled();
+      expect(signUp).toHaveBeenCalledOnce();
+      expect(signupAvailabilityMock).not.toHaveBeenCalled();
     });
 
     it('handles the unique-email race errors as an existing account', async () => {
