@@ -6,9 +6,6 @@ import {
   ChevronRight,
   FolderOpen,
   GraduationCap,
-  Mail,
-  MessageCircle,
-  Phone,
   UserRound,
   Activity,
 } from 'lucide-react';
@@ -25,10 +22,10 @@ import { Status, cairoDate, weekday } from '@/components/platform/ui';
 import { StudentPagination } from '@/features/student/pagination';
 import { DownloadForm, EnrollmentForm } from '@/features/student/forms';
 import { safeLink } from '@/features/student/domain';
-import { publicTeacherContactLinks } from '@/features/teacher/profile-domain';
 import { feeLabel } from '@/features/teacher/group-learning-domain';
 import { AnnouncementView } from '@/features/groups/announcement-view';
 import { GroupFeedbackSection } from '@/features/feedback/group-section';
+import { StudentTeacherContactCard } from '@/features/student/teacher-contact-card';
 
 export default async function StudentClassPage({
   params,
@@ -78,7 +75,7 @@ export default async function StudentClassPage({
   const category = ar
     ? group.category.name_ar || group.category.name_en
     : group.category.name_en || group.category.name_ar;
-  const contact = data.contacts ? publicTeacherContactLinks(data.contacts) : null;
+  const welcome = query.welcome === '1';
   const attendanceNames = ar
     ? { present: 'حاضر', late: 'متأخر', absent: 'غائب', excused: 'معذور' }
     : { present: 'Present', late: 'Late', absent: 'Absent', excused: 'Excused' };
@@ -141,6 +138,18 @@ export default async function StudentClassPage({
         </section>
       ) : (
         <>
+          {view === 'overview' && group.teacher_available && (
+            <div className="mb-5 max-w-2xl">
+              <StudentTeacherContactCard
+                locale={locale}
+                groupName={group.name}
+                teacherName={group.teacher_name}
+                teacherHeadline={group.teacher_headline}
+                teacherAvailable={group.teacher_available}
+                contacts={data.contacts}
+              />
+            </div>
+          )}
           {view === 'overview' && (
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
               <div className="grid content-start gap-5">
@@ -449,68 +458,37 @@ export default async function StudentClassPage({
               />
             </section>
           )}
-          {view === 'teacher' && (
-            <section className={`${studentCard} max-w-2xl`}>
-              <div className="flex items-center gap-4">
-                <ClassMark name={group.teacher_name} size={56} />
-                <div className="min-w-0">
-                  <h2 className="break-words text-xl font-bold text-teal">{group.teacher_name}</h2>
-                  <p className="mt-1 text-sm text-muted">{group.teacher_headline}</p>
-                </div>
+          {view === 'teacher' &&
+            (group.teacher_available ? (
+              <div className="max-w-2xl">
+                <StudentTeacherContactCard
+                  locale={locale}
+                  groupName={group.name}
+                  teacherName={group.teacher_name}
+                  teacherHeadline={group.teacher_headline}
+                  teacherAvailable={group.teacher_available}
+                  contacts={data.contacts}
+                  welcome={welcome}
+                />
               </div>
-              <h3 className="mt-6 font-bold text-teal">
-                {ar ? 'تواصل مع معلمك' : 'Contact your teacher'}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                {ar
-                  ? 'هذه البيانات خاصة بالطلاب المقبولين. تواصل بخصوص الحصص واحتياجات التعلم واحترم خصوصية المعلم.'
-                  : 'These details are for accepted students. Contact your teacher about lessons and learning needs, and respect their privacy.'}
-              </p>
-              {contact && (contact.whatsapp || contact.phone || contact.email) ? (
-                <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                  {contact.whatsapp && (
-                    <a
-                      href={contact.whatsapp}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-teal px-4 font-bold text-white"
-                    >
-                      <MessageCircle size={18} />
-                      WhatsApp
-                    </a>
-                  )}
-                  {contact.phone && (
-                    <a
-                      href={contact.phone}
-                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line px-4 font-bold text-teal"
-                    >
-                      <Phone size={18} />
-                      {ar ? 'اتصال' : 'Call'}
-                    </a>
-                  )}
-                  {contact.email && (
-                    <a
-                      href={contact.email}
-                      className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line px-4 font-bold text-teal"
-                    >
-                      <Mail size={18} />
-                      {ar ? 'بريد إلكتروني' : 'Email'}
-                    </a>
-                  )}
+            ) : (
+              <section className={`${studentCard} max-w-2xl`}>
+                <div className="flex items-center gap-4">
+                  <ClassMark name={group.teacher_name} size={56} />
+                  <div className="min-w-0">
+                    <h2 className="break-words text-xl font-bold text-teal">
+                      {group.teacher_name}
+                    </h2>
+                    <p className="mt-1 text-sm text-muted">{group.teacher_headline}</p>
+                  </div>
                 </div>
-              ) : (
                 <p className="mt-5 rounded-xl bg-cream p-4 text-sm leading-6 text-muted">
-                  {group.teacher_available
-                    ? ar
-                      ? 'لم يضف المعلم بيانات تواصل متاحة بعد. تابع إعلانات المجموعة.'
-                      : 'Your teacher has not shared contact details yet. Check class announcements for updates.'
-                    : ar
-                      ? 'التواصل المباشر غير متاح حاليًا. يمكنك الاستمرار في مراجعة سجل تعلمك.'
-                      : 'Direct contact is currently unavailable. You can continue reviewing your learning history.'}
+                  {ar
+                    ? 'التواصل المباشر غير متاح حاليًا. يمكنك الاستمرار في مراجعة سجل تعلمك.'
+                    : 'Direct contact is currently unavailable. You can continue reviewing your learning history.'}
                 </p>
-              )}
-            </section>
-          )}
+              </section>
+            ))}
           {view === 'progress' && (
             <section>
               <h2 className="mb-4 text-lg font-bold text-teal">

@@ -86,7 +86,7 @@ export async function studentClassWorkspace(
           .order('start_time')
           .limit(100)
       : Promise.resolve(null),
-    view === 'teacher'
+    (view === 'teacher' || view === 'overview') && group.teacher_available
       ? me.db
           .from('teacher_contacts')
           .select('phone_number,whatsapp_number,contact_email')

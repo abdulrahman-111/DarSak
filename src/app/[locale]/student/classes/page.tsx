@@ -3,6 +3,7 @@ import { ArrowUpRight, BookOpen, Clock3 } from 'lucide-react';
 import { ensureLocale } from '@/i18n/config';
 import { studentClasses } from '@/features/student/data';
 import { EnrollmentForm } from '@/features/student/forms';
+import { EnrollmentProgress } from '@/features/student/enrollment-progress';
 import { Status } from '@/components/platform/ui';
 import { StudentPagination } from '@/features/student/pagination';
 import {
@@ -73,10 +74,9 @@ export default async function StudentClasses({
               </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {accepted.map(e => (
-                  <Link
+                  <article
                     key={e.id}
-                    href={`/${locale}/student/classes/${e.group_id}`}
-                    className={`${studentCard} group transition-colors hover:border-teal/40 focus-visible:ring-2 focus-visible:ring-teal`}
+                    className={`${studentCard} group transition-colors hover:border-teal/40`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <ClassMark name={e.group?.name ?? 'D'} />
@@ -86,20 +86,27 @@ export default async function StudentClasses({
                       />
                     </div>
                     <h3 className="mt-4 break-words text-lg font-bold text-teal">
-                      {e.group?.name || (ar ? 'مجموعتك التعليمية' : 'Your learning class')}
+                      <Link
+                        className="underline decoration-teal/20 underline-offset-2"
+                        href={`/${locale}/student/classes/${e.group_id}`}
+                      >
+                        {e.group?.name || (ar ? 'مجموعتك التعليمية' : 'Your learning class')}
+                      </Link>
                     </h3>
                     {e.group?.location && (
                       <p className="mt-2 text-sm text-muted">{e.group.location}</p>
                     )}
                     <p className="mt-5 flex items-center gap-2 text-sm font-bold text-teal">
-                      {ar ? 'دخول المجموعة' : 'Open class'}
-                      <ArrowUpRight
-                        size={16}
-                        aria-hidden="true"
-                        className="transition-transform motion-safe:group-hover:-translate-y-0.5"
-                      />
+                      <Link
+                        href={`/${locale}/student/classes/${e.group_id}?view=teacher#teacher-contact`}
+                        className="inline-flex min-h-11 items-center gap-2 underline decoration-teal/30 underline-offset-2"
+                      >
+                        {ar ? 'تواصل مع المعلم' : 'Contact teacher'}
+                        <ArrowUpRight size={16} aria-hidden="true" />
+                      </Link>
                     </p>
-                  </Link>
+                    <EnrollmentProgress locale={locale} current="accepted" />
+                  </article>
                 ))}
               </div>
             </section>
@@ -120,11 +127,14 @@ export default async function StudentClasses({
                           {e.group?.name ||
                             (ar ? 'طلب انضمام لمجموعة' : 'Class enrollment request')}
                         </h3>
-                        <p className="mt-1 text-sm text-muted">
+                        <p
+                          role={e.status === 'pending' ? 'status' : undefined}
+                          className={`mt-1 text-sm text-muted ${e.status === 'pending' ? 'student-request-confirmation' : ''}`}
+                        >
                           {e.status === 'pending'
                             ? ar
-                              ? 'سيراجع معلمك طلبك. تتاح الحصص وبيانات التواصل بعد القبول.'
-                              : 'Your teacher will review your request. Lessons and contact details unlock after acceptance.'
+                              ? 'تم إرسال طلبك! سيراجعه معلمك. تابع الطلب في مجموعاتي.'
+                              : 'Request sent! Your teacher will review it. Track it in My classes.'
                             : ar
                               ? 'يمكنك متابعة القرار هنا.'
                               : 'Your enrollment decision is shown here.'}
@@ -133,12 +143,15 @@ export default async function StudentClasses({
                       <Status value={e.status} locale={locale} />
                     </div>
                     {e.status === 'pending' && (
-                      <details className="mt-3 border-t border-line pt-2">
-                        <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-muted">
-                          {ar ? 'إدارة الطلب' : 'Manage request'}
-                        </summary>
-                        <EnrollmentForm locale={locale} id={e.id} kind="cancel" />
-                      </details>
+                      <>
+                        <EnrollmentProgress locale={locale} current="requested" />
+                        <details className="mt-3 border-t border-line pt-2">
+                          <summary className="inline-flex min-h-11 cursor-pointer items-center text-sm font-semibold text-muted">
+                            {ar ? 'إدارة الطلب' : 'Manage request'}
+                          </summary>
+                          <EnrollmentForm locale={locale} id={e.id} kind="cancel" />
+                        </details>
+                      </>
                     )}
                   </article>
                 ))}

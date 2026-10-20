@@ -116,7 +116,7 @@ export default async function GroupDetail({
             <p className="mt-4 rounded-xl border border-line p-4 text-sm text-muted">
               {enrollment?.status === 'accepted' ? (
                 <Link
-                  href={`/${locale}/teachers/${data.teacher_id}`}
+                  href={`/${locale}/student/classes/${id}?view=teacher#teacher-contact`}
                   className="inline-flex min-h-11 items-center font-bold text-teal underline"
                 >
                   {locale === 'ar'
@@ -266,6 +266,25 @@ export default async function GroupDetail({
           >
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
+            <ol className="mt-4 grid gap-2 text-sm text-cream">
+              {(locale === 'ar'
+                ? [
+                    'أرسل طلب الانضمام',
+                    'ينظر المعلم في طلبك ويقبله',
+                    'بعد القبول، تواصل مع المعلم لتأكيد الترتيبات',
+                  ]
+                : [
+                    'Send your request',
+                    'Your teacher reviews and accepts it',
+                    'After acceptance, contact the teacher to confirm arrangements',
+                  ]
+              ).map((step, index) => (
+                <li key={step} className="flex items-start gap-2 rounded-xl bg-white/10 p-3">
+                  <span className="font-bold text-[#8fd1b5]">{index + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
             {data.available_seats !== undefined && (
               <p className="mt-4 flex items-center gap-2 text-sm font-bold text-cream">
                 <span className="grid size-6 place-items-center rounded-full bg-[#8fd1b5]">
@@ -286,7 +305,17 @@ export default async function GroupDetail({
               )}
               {isStudent && enrollment?.status === 'pending' ? (
                 <>
-                  <p className="rounded-xl bg-white/10 p-3 text-sm">{c.pendingEnrollment}</p>
+                  <p
+                    role="status"
+                    className="student-request-confirmation rounded-xl bg-white/10 p-3 text-sm"
+                  >
+                    {locale === 'ar'
+                      ? 'تم إرسال طلبك! سيراجعه معلمك. تابع الطلب في مجموعاتي.'
+                      : 'Request sent! Your teacher will review it. Track it in My classes.'}{' '}
+                    <Link className="font-bold underline" href={`/${locale}/student/classes`}>
+                      {locale === 'ar' ? 'مجموعاتي' : 'My classes'}
+                    </Link>
+                  </p>
                   <EnrollmentForm locale={locale} id={enrollment.id} kind="cancel" />
                 </>
               ) : isStudent && enrollment?.status === 'accepted' ? (
