@@ -28,6 +28,7 @@ export function EnrollmentForm({
       {kind === 'request' ? (
         <button
           type="submit"
+          data-request-action
           disabled={pending}
           className="rounded-2xl bg-orange px-5 py-3 font-bold text-white disabled:opacity-50 hover:bg-orange-deep"
         >

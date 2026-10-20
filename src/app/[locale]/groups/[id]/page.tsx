@@ -318,6 +318,7 @@ export default async function GroupDetail({
                   <p className="rounded-xl bg-white/10 p-3 text-sm">{c.studentOnlyEnrollment}</p>
                 ) : (
                   <Link
+                    data-request-action
                     className="block rounded-xl bg-cream px-5 py-3 text-center font-bold text-teal transition hover:bg-white"
                     href={`/${locale}/login?next=/${locale}/groups/${id}`}
                   >

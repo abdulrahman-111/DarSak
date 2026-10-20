@@ -3,6 +3,19 @@
 import { useEffect, useState } from 'react';
 import { ArrowDown } from 'lucide-react';
 
+/** Marks the panel's own enrollment action (sign in, or request a place). */
+export const REQUEST_ACTION_SELECTOR = '[data-request-action]';
+
+/**
+ * Focus the panel's enrollment action itself, never whatever control happens to come first:
+ * for an eligible student the first control is Save/Unsave. Returns the focused element, if any.
+ */
+export function focusRequestAction(panel: Pick<ParentNode, 'querySelector'>): HTMLElement | null {
+  const action = panel.querySelector<HTMLElement>(REQUEST_ACTION_SELECTOR);
+  action?.focus({ preventScroll: true });
+  return action;
+}
+
 // On phones the request panel sits below a long page. This bar keeps the next step in reach and
 // jumps to that panel (the single place where enrollment actually happens). It hides once the
 // panel is visible so the two never compete.
@@ -32,7 +45,7 @@ export function GroupRequestBar({
     if (!target) return;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     target.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
-    target.querySelector<HTMLElement>('a, button')?.focus({ preventScroll: true });
+    focusRequestAction(target);
   };
 
   return (
