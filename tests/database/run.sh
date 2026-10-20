@@ -49,3 +49,15 @@ psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_enforcement.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/email_outbox.sql
 psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/problem_reports.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_rules.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_learning_details.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/unified_group_details.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_class_workspace.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/attended_feedback.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/links_only_launch.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/launch_health.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/signup_email_availability.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/rls_auth_uid_initplan.sql
+psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/account_deletion.sql
+# tests/database/concurrency.sql is not run here: it is the postcondition for a
+# manual two-session race (see its header) and needs that setup first.

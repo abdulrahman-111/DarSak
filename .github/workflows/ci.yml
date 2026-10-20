@@ -17,6 +17,10 @@ permissions:
 env:
   NEXT_TELEMETRY_DISABLED: 1
 
+# Third-party actions are pinned to full commit SHAs so a moved tag cannot
+# change the code CI runs. The comment on each line records the release.
+# To upgrade, resolve the new tag to its commit SHA and update both.
+
 jobs:
   verify:
     name: Lint, typecheck, test & build
@@ -25,10 +29,10 @@ jobs:
 
     steps:
       - name: Check out code
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           # Matches the Node version configured for the Vercel project.
           node-version: 24
@@ -47,7 +51,7 @@ jobs:
         run: npm test
 
       - name: Cache Next.js build
-        uses: actions/cache@v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .next/cache
           key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**', 'messages/**') }}
@@ -56,3 +60,34 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+  database:
+    name: Database tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: latest
+
+      # A throwaway local stack on the runner: every migration is applied from
+      # scratch, then seed.sql. Nothing here can reach the hosted project.
+      - name: Start local Supabase
+        run: supabase start
+
+      - name: Contract tests (pgTAP)
+        run: supabase test db
+
+      - name: Database fixtures
+        env:
+          SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: ./tests/database/run.sh
+
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
