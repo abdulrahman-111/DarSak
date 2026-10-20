@@ -24,7 +24,7 @@ export function TeacherSubscriptionNotice({ locale, signedInTeacher = false, com
     <span>{copy.free}</span>
     <Link className="inline-flex min-h-11 items-center font-bold text-teal underline underline-offset-2" href={`/${locale}/account/teaching-access`}>{copy.compactLink}</Link>
   </aside>;
-  return <aside aria-label={copy.title} className="mb-4 min-w-0 rounded-2xl border border-[#d8ccb8] bg-[#fffdf8] p-4 text-sm leading-6 text-[#4d473f] sm:flex sm:flex-wrap sm:items-start sm:gap-4">
+  return <aside aria-label={copy.title} className="mb-4 min-w-0 rounded-2xl border border-line-strong bg-surface p-4 text-sm leading-6 text-ink-soft sm:flex sm:flex-wrap sm:items-start sm:gap-4">
     <span className="mb-3 inline-flex max-w-full shrink-0 whitespace-normal rounded-full bg-[#e0eeec] px-3 py-1 text-xs font-black text-teal sm:mb-0">{copy.free}</span>
     <div className="min-w-0 break-words [overflow-wrap:anywhere]">
       <h2 className="font-black text-teal">{copy.title}</h2>

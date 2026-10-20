@@ -22,16 +22,16 @@ export default async function Login({ params, searchParams }: {
   const googleRetryRole = setupFailed && (googleRole === 'student' || googleRole === 'teacher') ? googleRole : null;
 
   return (
-    <div className="bg-[#f6f0e4]">
-      <div className="container grid min-h-[calc(100vh-9rem)] gap-8 py-10 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.72fr)] md:items-stretch md:py-16">
+    <div className="bg-cream">
+      <div className="container grid min-h-[calc(100vh-9rem)] gap-8 py-10 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.72fr)] md:items-center md:py-16">
         <section className="flex items-center">
-          <div className="w-full max-w-xl rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 sm:p-9">
+          <div className="w-full max-w-xl rounded-[1.4rem] border border-line bg-surface p-6 sm:p-9">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{copy.loginEyebrow}</p>
             <h1 className="mt-3 text-4xl font-black tracking-[-.03em] text-teal md:text-5xl">{copy.loginTitle}</h1>
-            <p className="mt-4 max-w-lg leading-7 text-[#4d473f]">{copy.loginBody}</p>
+            <p className="mt-4 max-w-lg leading-7 text-ink-soft">{copy.loginBody}</p>
             {linkFailed && <p role="alert" className="mt-6 rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{copy.linkInvalid}</p>}
             {setupFailed && <p role="alert" className="mt-6 rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{copy.googleSetupFailed}</p>}
-            {roleMismatch && <div role="status" className="mt-6 rounded-xl bg-[#f6f0e4] p-4 text-sm leading-6 text-[#4d473f]">
+            {roleMismatch && <div role="status" className="mt-6 rounded-xl bg-cream p-4 text-sm leading-6 text-ink-soft">
               <p>{copy.googleRoleMismatch.replace('{role}', actualRoleLabel)}</p>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2 font-bold text-teal underline">
                 {actualRole && <Link href={`/${locale}/${actualRole}`}>{copy.existingAccount}</Link>}

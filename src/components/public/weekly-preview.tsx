@@ -19,7 +19,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
 
   return (
     <div className="landing-preview relative pb-10" aria-label={c.thisWeek}>
-      <div className="rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-4 shadow-[0_30px_60px_-40px_rgba(14,74,75,.5)] sm:p-6">
+      <div className="rounded-[1.4rem] border border-line bg-surface p-4 shadow-[0_30px_60px_-40px_rgba(14,74,75,.5)] sm:p-6">
         <div className="mb-4 flex items-baseline justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-orange">{c.sampleTimetable}</p>

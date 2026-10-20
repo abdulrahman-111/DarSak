@@ -14,7 +14,7 @@ DarSak uses Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase Auth, Postg
 
 ## Get started
 
-Use Node.js 22 and connect the app to the configured Supabase project. Copy `.env.example` to `.env.local`, then set the Supabase URL and publishable key for your development environment. Docker is required for a fresh local Supabase stack.
+Use Node.js 24 (the version Vercel and CI use) and connect the app to the configured Supabase project. Copy `.env.example` to `.env.local`, then set the Supabase URL and publishable key for your development environment. Docker is required for a fresh local Supabase stack.
 
 ```sh
 npm ci

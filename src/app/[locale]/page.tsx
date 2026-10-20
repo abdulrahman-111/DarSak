@@ -41,16 +41,16 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
   ];
 
   return (
-    <div className="bg-[#f6f0e4]">
+    <div className="bg-cream">
       <section className="container grid gap-12 py-14 md:grid-cols-[1.05fr_.95fr] md:items-center md:py-20 lg:gap-16">
         <div className="landing-intro">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-teal">
             <Image aria-hidden="true" src="/brand/darsak/hero-badge-icon.svg" alt="" width={20} height={20} className="size-5"/>{c.eyebrow}
           </p>
           <h1 className={`mt-6 max-w-3xl text-5xl font-black ${locale === 'ar' ? 'leading-[1.18]' : 'leading-[1.02]'} tracking-[-.04em] text-teal md:text-6xl lg:text-7xl`}>{c.heroTitle}</h1>
-          <p className="mt-6 max-w-xl text-lg leading-8 text-[#4d473f]">{c.heroBody}</p>
+          <p className="mt-6 max-w-xl text-lg leading-8 text-ink-soft">{c.heroBody}</p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link href={`/${locale}/teachers`} className="inline-flex min-h-12 items-center gap-2 rounded-[.9rem] bg-orange px-6 font-bold text-white transition hover:-translate-y-0.5 hover:bg-[#c4561a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2">
+            <Link href={`/${locale}/teachers`} className="inline-flex min-h-12 items-center gap-2 rounded-[.9rem] bg-orange px-6 font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2">
               {c.findGroup}<Arrow size={18}/>
             </Link>
             <Link href={`/${locale}/register?role=teacher`} className="inline-flex min-h-12 items-center rounded-[.9rem] border-2 border-teal px-6 font-bold text-teal transition hover:bg-teal hover:text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2">
@@ -61,15 +61,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
         <WeeklyPreview locale={locale}/>
       </section>
 
-      <nav aria-label={c.jumpNavigation} className="border-y border-[#e3d9c8] bg-[#fffdf8] py-2">
-        <div className="container flex flex-wrap gap-2 text-sm font-bold text-teal">
-          {[[c.navLabels[0], '#highlights'], [c.navLabels[1], '#how-it-works'], [c.navLabels[2], '#groups'], [c.navLabels[3], '#for-teachers']].map(([label, href]) => (
-            <a key={href} href={href} className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-3 hover:bg-[#f6f0e4] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{label}</a>
-          ))}
-        </div>
-      </nav>
-
-      <div role="group" aria-label={c.highlights} className="border-y border-[#e3d9c8] bg-[#fffdf8] py-3.5">
+      <div role="group" aria-label={c.highlights} className="border-y border-line bg-surface py-3.5">
         <div className="container flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm font-bold text-teal sm:justify-between sm:text-base">
           {c.subjectRange.map((item, index) => <span key={item} className="flex items-center gap-7"><span className="inline-flex items-center gap-2"><Image aria-hidden="true" src={subjectIcons[index]} alt="" width={20} height={20}/>{item}</span>{index < c.subjectRange.length - 1 && <span aria-hidden="true" className="size-1.5 rounded-full bg-orange"/>}</span>)}
         </div>
@@ -86,10 +78,10 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <div className="mt-4 grid min-w-0 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {c.featureCards.slice(groupIndex * 3, groupIndex * 3 + 3).map(([title, body], index) => {
                 const icon = featureIcons[groupIndex * 3 + index];
-                return <article key={title} className="landing-feature-card min-w-0 rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] p-5 sm:p-6">
+                return <article key={title} className="landing-feature-card min-w-0 rounded-[1.15rem] border border-line bg-surface p-5 sm:p-6">
                   <span aria-hidden="true" className="grid size-11 place-items-center rounded-xl bg-[#d5ebe6]"><Image src={icon} alt="" width={24} height={24}/></span>
                   <h4 className="mt-4 text-lg font-bold leading-snug text-ink">{title}</h4>
-                  <p className="mt-2 break-words text-sm leading-6 text-[#4d473f]">{body}</p>
+                  <p className="mt-2 break-words text-sm leading-6 text-ink-soft">{body}</p>
                 </article>;
               })}
             </div>
@@ -106,7 +98,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
           <div key={number} className="border-t-2 border-teal pt-5">
             <p className="text-4xl font-black text-orange">{number}</p>
             <h3 className="mt-3 text-lg font-bold text-ink">{title}</h3>
-            <p className="mt-2 text-sm leading-6 text-[#4d473f]">{body}</p>
+            <p className="mt-2 text-sm leading-6 text-ink-soft">{body}</p>
           </div>
         ))}
       </section>
@@ -121,14 +113,14 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
         ) : groups.length ? (
           <div className="grid gap-5 md:grid-cols-3">{groups.slice(0, 3).map(group => <GroupCard key={group.id} group={group} locale={locale} t={t}/>)}</div>
         ) : groupResult?.error ? (
-          <div className="rounded-[1.15rem] border border-dashed border-[#d8ccb8] bg-[#fffdf8] p-8 text-center">
+          <div className="rounded-[1.15rem] border border-dashed border-line-strong bg-surface p-8 text-center">
             <p className="text-muted">{c.groupsError}</p>
             <form action={`/${locale}#groups`} className="mt-3">
               <button type="submit" className="inline-flex min-h-11 items-center rounded-lg px-3 font-bold text-orange underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{c.retry}</button>
             </form>
           </div>
         ) : (
-          <p className="rounded-[1.15rem] border border-dashed border-[#d8ccb8] bg-[#fffdf8] p-10 text-center text-muted">{t.noGroups}</p>
+          <p className="rounded-[1.15rem] border border-dashed border-line-strong bg-surface p-10 text-center text-muted">{t.noGroups}</p>
         )}
         <Link href={`/${locale}/teachers`} className="mt-5 inline-flex items-center gap-1 font-bold text-orange sm:hidden">{c.viewAll}<Arrow size={17}/></Link>
       </section>
@@ -152,10 +144,10 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
 
       <section className="container py-16 md:py-20" aria-labelledby="faq-title">
         <h2 id="faq-title" className="text-3xl font-black tracking-tight text-teal">{c.faqTitle}</h2>
-        <div className="mt-6 divide-y divide-[#e3d9c8] rounded-[1.15rem] border border-[#e3d9c8] bg-[#fffdf8] px-5 sm:px-7">
+        <div className="mt-6 divide-y divide-line rounded-[1.15rem] border border-line bg-surface px-5 sm:px-7">
           {c.faq.map(([question, answer]) => <details key={question} className="group py-5">
             <summary className="cursor-pointer text-base font-bold text-teal marker:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">{question}</summary>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-[#4d473f]">{answer}</p>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-ink-soft">{answer}</p>
           </details>)}
         </div>
       </section>

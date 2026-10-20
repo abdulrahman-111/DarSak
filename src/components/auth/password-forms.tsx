@@ -7,7 +7,7 @@ import { inputClass } from './auth-form';
 import { authCopy, type AuthLocale } from './copy';
 import { Turnstile } from './turnstile';
 
-const submitClass = 'h-[52px] w-full rounded-[.9rem] bg-orange px-5 text-base font-bold text-white transition hover:bg-[#c4561a] disabled:cursor-wait disabled:opacity-60';
+const submitClass = 'h-[52px] w-full rounded-[.9rem] bg-orange px-5 text-base font-bold text-white transition hover:bg-orange-deep disabled:cursor-wait disabled:opacity-60';
 
 function Feedback({ state, id }: { state: { error?: string; notice?: string } | null; id: string }) {
   if (state?.error) return <p id={id} role="alert" className="rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">{state.error}</p>;
