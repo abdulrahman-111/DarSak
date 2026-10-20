@@ -42,4 +42,4 @@ The script promotes exactly one existing profile; sign out and back in to refres
 
 ## Release checks
 
-Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before release. Review the Vercel build and function logs, Supabase Auth delivery settings, migration results, and scheduled job responses after deployment.
+Run `npm run lint`, `npm run typecheck`, `npm test`, and `npm run build` before release. The GitHub Actions workflow in `.github/workflows/ci.yml` runs these same checks on every push to `main` and every pull request, and can be started manually from the Actions tab. Review the Vercel build and function logs, Supabase Auth delivery settings, migration results, and scheduled job responses after deployment.
