@@ -1,63 +1,83 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail
 if ! command -v psql >/dev/null 2>&1; then
  echo "SKIP: psql is not installed; run against local Supabase/PostgreSQL." >&2
  exit 2
 fi
 : "${SUPABASE_DB_URL:?Set SUPABASE_DB_URL}"
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/foundation.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/auth_role_fallback.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/google_teacher_signup.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_learning_profile.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/account_setup_drafts.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/security_hardening.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/recurring_generation.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_contacts.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_profile_details.sql
-# The avatar race/permission fixtures assume the app is live and both
-# avatar CAS migrations, including the post-rollout column revoke, are applied.
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_avatars.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_avatar_concurrency.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_profile_covers.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_preview.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_generation.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/schedule_slot_deletion.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/public_schedule_visibility.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_publication.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_duplication.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/discovery.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_catalogue.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/published_group_details_edit.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/public_teacher_specialization_labels.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_reviews.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_applications.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_management_controls.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_enrollment_page.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_dashboard_summary.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_enrollment_page.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_enrollment_page.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/public_teacher_choices.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/enrollment_schedule_stability.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_resource_finder.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_saved_groups.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_schedule_overlap.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_pinned_announcements.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/lesson_attendance.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/calendar_lesson_export.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/user_notifications.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_engine.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/monthly_teacher_access_enforcement.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/email_outbox.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/problem_reports.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/teacher_rules.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/group_learning_details.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/unified_group_details.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/student_class_workspace.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/attended_feedback.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/links_only_launch.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/launch_health.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/signup_email_availability.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/rls_auth_uid_initplan.sql
-psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f tests/database/account_deletion.sql
-# tests/database/concurrency.sql is not run here: it is the postcondition for a
+
+# Fixtures run in this order. Each one runs even if an earlier one fails, so a
+# single run reports every failure; the script exits non-zero if any failed.
+# The avatar race/permission fixtures assume both avatar CAS migrations,
+# including the post-rollout column revoke, are applied.
+# tests/database/concurrency.sql is not listed: it is the postcondition for a
 # manual two-session race (see its header) and needs that setup first.
+fixtures=(
+  tests/database/foundation.sql
+  tests/database/auth_role_fallback.sql
+  tests/database/google_teacher_signup.sql
+  tests/database/student_learning_profile.sql
+  tests/database/account_setup_drafts.sql
+  tests/database/security_hardening.sql
+  tests/database/recurring_generation.sql
+  tests/database/teacher_contacts.sql
+  tests/database/teacher_profile_details.sql
+  tests/database/teacher_avatars.sql
+  tests/database/teacher_avatar_concurrency.sql
+  tests/database/teacher_profile_covers.sql
+  tests/database/lesson_preview.sql
+  tests/database/lesson_generation.sql
+  tests/database/schedule_slot_deletion.sql
+  tests/database/public_schedule_visibility.sql
+  tests/database/group_publication.sql
+  tests/database/group_duplication.sql
+  tests/database/discovery.sql
+  tests/database/teacher_catalogue.sql
+  tests/database/published_group_details_edit.sql
+  tests/database/public_teacher_specialization_labels.sql
+  tests/database/teacher_reviews.sql
+  tests/database/teacher_applications.sql
+  tests/database/teacher_management_controls.sql
+  tests/database/teacher_enrollment_page.sql
+  tests/database/teacher_dashboard_summary.sql
+  tests/database/group_enrollment_page.sql
+  tests/database/student_enrollment_page.sql
+  tests/database/public_teacher_choices.sql
+  tests/database/enrollment_schedule_stability.sql
+  tests/database/student_resource_finder.sql
+  tests/database/student_saved_groups.sql
+  tests/database/student_schedule_overlap.sql
+  tests/database/group_pinned_announcements.sql
+  tests/database/lesson_attendance.sql
+  tests/database/calendar_lesson_export.sql
+  tests/database/user_notifications.sql
+  tests/database/monthly_teacher_access_engine.sql
+  tests/database/monthly_teacher_access_enforcement.sql
+  tests/database/email_outbox.sql
+  tests/database/problem_reports.sql
+  tests/database/teacher_rules.sql
+  tests/database/group_learning_details.sql
+  tests/database/unified_group_details.sql
+  tests/database/student_class_workspace.sql
+  tests/database/attended_feedback.sql
+  tests/database/links_only_launch.sql
+  tests/database/launch_health.sql
+  tests/database/signup_email_availability.sql
+  tests/database/rls_auth_uid_initplan.sql
+  tests/database/account_deletion.sql
+)
+
+failed=()
+for fixture in "${fixtures[@]}"; do
+  echo "== $fixture"
+  if ! psql "$SUPABASE_DB_URL" --set ON_ERROR_STOP=1 -f "$fixture"; then
+    failed+=("$fixture")
+  fi
+done
+
+echo
+if ((${#failed[@]})); then
+  echo "FAILED (${#failed[@]}/${#fixtures[@]}): ${failed[*]}"
+  exit 1
+fi
+echo "All ${#fixtures[@]} database fixtures passed."

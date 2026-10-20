@@ -86,12 +86,15 @@ jobs:
       - name: Database fixtures
         env:
           SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-        # On failure, repeat the last lines as an annotation so the failing
-        # fixture shows on the PR page without opening the full log.
+        # On failure, each psql error becomes an annotation so failing fixtures
+        # show on the PR page without opening the full log.
         run: |
           set -o pipefail
           if ! ./tests/database/run.sh 2>&1 | tee "$RUNNER_TEMP/database-fixtures.log"; then
-            echo "::error title=Database fixtures failed::$(tail -n 12 "$RUNNER_TEMP/database-fixtures.log" | tr '\n' ' ' | cut -c1-1500)"
+            grep -E '^psql:.*ERROR' "$RUNNER_TEMP/database-fixtures.log" | while IFS= read -r line; do
+              echo "::error title=Database fixture error::${line:0:900}"
+            done
+            echo "::error title=Database fixtures failed::$(grep '^FAILED' "$RUNNER_TEMP/database-fixtures.log")"
             exit 1
           fi
 
