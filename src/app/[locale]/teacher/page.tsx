@@ -512,11 +512,7 @@ export default async function TeacherDashboard({
                   })}
                 </ul>
               ) : (
-                <EmptyState
-                  action={{ href: `/${locale}/teacher/lessons?new=1`, label: copy.addLesson }}
-                >
-                  {copy.noToday}
-                </EmptyState>
+                <EmptyState>{copy.noToday}</EmptyState>
               )}
             </section>
 
