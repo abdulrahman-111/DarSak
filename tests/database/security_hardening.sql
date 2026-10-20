@@ -35,13 +35,14 @@ begin
       and conname='lessons_slot_group_fk'
       and contype='f'
   ) then raise exception 'lesson slot/group foreign key missing'; end if;
-  if not exists(
+  -- The upload policy repaired here was later removed on purpose by
+  -- 20261018080722_links_only_launch.sql (no new lesson-file uploads), so
+  -- assert the current launch state instead of the historical repair.
+  if exists(
     select 1 from pg_policies
     where schemaname='storage' and tablename='objects'
       and policyname='lesson_objects_insert'
-      and roles @> array['authenticated'::name]
-      and with_check like '%can_upload_lesson_object%'
-  ) then raise exception 'storage upload policy not repaired'; end if;
+  ) then raise exception 'lesson file uploads must stay closed under the links-only launch policy'; end if;
   if not exists(
     select 1 from pg_policies
     where schemaname='public' and tablename='lesson_materials'
