@@ -145,10 +145,10 @@ describe('public teacher profile cover projection', () => {
   it('starts all six public profile reads before the teacher row resolves', async () => {
     const db = setup(null);
     let resolveTeacher!: (value: { data: unknown; error: null }) => void;
+    const teacherQuery = query({ data: null, error: null });
+    teacherQuery.maybeSingle.mockImplementation(() => new Promise(resolve => { resolveTeacher = resolve; }));
     db.rpc.mockImplementation((name: string) => {
-      if (name === 'public_teachers') return {
-        eq: vi.fn(() => ({ maybeSingle: () => new Promise(resolve => { resolveTeacher = resolve; }) })),
-      };
+      if (name === 'public_teachers') return teacherQuery;
       return name === 'public_teacher_specialization_labels'
         ? Promise.resolve({ data: [], error: null })
         : Promise.resolve({ data: null, error: null });
