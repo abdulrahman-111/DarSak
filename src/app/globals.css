@@ -87,8 +87,9 @@ form[aria-busy='true'] {
   background: var(--surface);
   border: 1px solid var(--line);
 }
+/* Kept short: workspace pages run this on every navigation, so a long fade reads as slowness. */
 .screen-enter {
-  animation: screen-enter 0.52s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: screen-enter 0.2s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 .landing-intro {
   animation: screen-enter 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -115,7 +116,7 @@ form[aria-busy='true'] {
 @keyframes screen-enter {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;

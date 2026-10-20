@@ -5,7 +5,7 @@ const cairoCalendar = new Intl.DateTimeFormat('en-CA', {
   day: '2-digit',
 });
 
-function cairoDateKey(instant: Date): string {
+export function cairoDateKey(instant: Date): string {
   const parts = Object.fromEntries(
     cairoCalendar.formatToParts(instant).map(part => [part.type, part.value]),
   );

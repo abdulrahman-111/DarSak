@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
     // Next 16 defaults to the CLI type-checker. Its wrapper does not pass the
     // local TypeScript binary's arguments correctly in this environment.
     useTypeScriptCli: false,
+    // Keep visited workspace pages in the client router cache briefly so switching
+    // between tabs and going back is instant. Server actions still invalidate it.
+    staleTimes: {
+      dynamic: 30,
+    },
     serverActions: {
       bodySizeLimit: '1mb',
     },

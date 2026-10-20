@@ -5,8 +5,12 @@ import { ensureLocale } from '@/i18n/config';
 import { studentDashboard } from '@/features/student/data';
 import { requireViewer } from '@/components/platform/access';
 import { ClassMark, StudentHeading, studentCard } from '@/features/student/workspace-ui';
-import { cairoDate } from '@/components/platform/ui';
 import { normalizeTimetableWeek, timetableDayDates } from '@/features/student/timetable-domain';
+import {
+  lessonCountdown,
+  lessonDateTile,
+  lessonTimeRange,
+} from '@/components/platform/lesson-time';
 export default async function StudentDashboard({
   params,
 }: {
@@ -28,6 +32,10 @@ export default async function StudentDashboard({
       : next.group?.name
     : null;
   const firstName = me.fullName.trim().split(/\s+/)[0] || me.fullName;
+  const countdown = next ? lessonCountdown(next.starts_at, next.ends_at, locale, now) : null;
+  const lessonDays = new Set(data.occupiedDays);
+  const lessonGroup = (lesson: (typeof data.lessons)[number]) =>
+    Array.isArray(lesson.group) ? lesson.group[0]?.name : lesson.group?.name;
   return (
     <div className="student-workspace screen-enter">
       <StudentHeading
@@ -89,15 +97,31 @@ export default async function StudentDashboard({
                       <h2 className="mt-2 break-words text-2xl font-bold [overflow-wrap:anywhere] sm:text-3xl">
                         {next.title}
                       </h2>
-                      <p className="mt-3 flex min-w-0 items-start gap-2 break-words text-sm leading-6 text-white/85 [overflow-wrap:anywhere]">
-                        <CalendarDays size={18} className="mt-0.5 shrink-0" />
-                        {cairoDate(next.starts_at, locale)}
-                      </p>
+                      <div className="mt-4 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-6 text-white/85">
+                        {countdown && (
+                          <span
+                            className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-bold ${live || countdown.kind === 'soon' ? 'bg-white text-teal' : 'bg-white/10 text-white'}`}
+                          >
+                            {countdown.label}
+                          </span>
+                        )}
+                        <span className="inline-flex min-w-0 items-center gap-2 break-words [overflow-wrap:anywhere]">
+                          <CalendarDays size={17} aria-hidden="true" className="shrink-0" />
+                          {lessonDateTile(next.starts_at, locale).label} ·{' '}
+                          {lessonTimeRange(next.starts_at, next.ends_at, locale)}
+                        </span>
+                      </div>
                       <Link
                         href={`/${locale}/student/lessons/${next.id}`}
                         className="mt-5 inline-flex min-h-12 max-w-full items-center gap-3 rounded-xl bg-white px-4 text-sm font-bold text-teal transition-colors hover:bg-cream sm:px-5"
                       >
-                        {ar ? 'افتح الحصة واستعد' : 'Open lesson & get ready'}
+                        {live
+                          ? ar
+                            ? 'افتح الحصة الآن'
+                            : 'Open lesson now'
+                          : ar
+                            ? 'افتح الحصة واستعد'
+                            : 'Open lesson & get ready'}
                         <ArrowRight size={17} className="shrink-0 rtl:rotate-180" />
                       </Link>
                     </>
@@ -138,7 +162,12 @@ export default async function StudentDashboard({
                   )}
                   <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/15 pt-4 text-xs text-white/80">
                     <span>
-                      {data.acceptedCount} {ar ? 'مجموعات مسجل بها' : 'enrolled classes'}
+                      {data.acceptedCount}{' '}
+                      {ar
+                        ? 'مجموعات مسجل بها'
+                        : data.acceptedCount === 1
+                          ? 'enrolled class'
+                          : 'enrolled classes'}
                     </span>
                     {data.pendingCount > 0 && (
                       <Link
@@ -146,7 +175,12 @@ export default async function StudentDashboard({
                         className="inline-flex items-center gap-1.5 underline underline-offset-4"
                       >
                         <Clock3 size={13} />
-                        {data.pendingCount} {ar ? 'طلبات قيد المراجعة' : 'requests awaiting review'}
+                        {data.pendingCount}{' '}
+                        {ar
+                          ? 'طلبات قيد المراجعة'
+                          : data.pendingCount === 1
+                            ? 'request awaiting review'
+                            : 'requests awaiting review'}
                       </Link>
                     )}
                   </div>
@@ -237,12 +271,21 @@ export default async function StudentDashboard({
                       key={day.date}
                       href={`/${locale}/timetable?week=${week.weekStart}&day=${day.date}`}
                       aria-current={day.date === week.today ? 'date' : undefined}
-                      aria-label={new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
-                        dateStyle: 'full',
-                        timeZone: 'UTC',
-                      }).format(new Date(`${day.date}T12:00:00Z`))}
-                      className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-colors ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
+                      aria-label={
+                        new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
+                          dateStyle: 'full',
+                          timeZone: 'UTC',
+                        }).format(new Date(`${day.date}T12:00:00Z`)) +
+                        (lessonDays.has(day.date) ? (ar ? '، يوجد حصة' : ', has a lesson') : '')
+                      }
+                      className={`relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-colors ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
                     >
+                      {lessonDays.has(day.date) && (
+                        <span
+                          aria-hidden="true"
+                          className={`absolute bottom-1.5 size-1.5 rounded-full ${day.date === week.today ? 'bg-white' : 'bg-orange'}`}
+                        />
+                      )}
                       <span>
                         {new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
                           weekday: 'narrow',
@@ -257,7 +300,16 @@ export default async function StudentDashboard({
                     </Link>
                   ))}
                 </nav>
+                {data.calendarError && (
+                  <p role="status" className="mt-3 text-xs leading-5 text-danger">
+                    {ar
+                      ? 'تعذر تحميل أيام الحصص لهذا الأسبوع.'
+                      : 'Could not load lesson days for this week.'}
+                  </p>
+                )}
                 <p className="mt-3 text-xs leading-5 text-muted">
+                  {lessonDays.size > 0 &&
+                    (ar ? 'النقطة تعني وجود حصة. ' : 'A dot marks a lesson day. ')}
                   {ar
                     ? 'اختر يومًا لعرض مواعيده بتوقيت القاهرة.'
                     : 'Choose a day to see its lessons in Cairo time.'}
@@ -267,26 +319,40 @@ export default async function StudentDashboard({
                 <h2 className="mb-4 font-bold text-teal">{ar ? 'قريبًا في جدولك' : 'Coming up'}</h2>
                 {data.lessons.length > 1 ? (
                   <ul className="divide-y divide-line">
-                    {data.lessons.slice(1, 4).map(lesson => (
-                      <li key={lesson.id}>
-                        <Link
-                          href={`/${locale}/student/lessons/${lesson.id}`}
-                          className="flex min-h-20 items-start gap-3 rounded-lg py-3"
-                        >
-                          <span className="mt-1 rounded-lg bg-teal/5 p-2 text-teal">
-                            <Clock3 size={16} />
-                          </span>
-                          <div className="min-w-0">
-                            <h3 className="break-words text-sm font-bold text-teal">
-                              {lesson.title}
-                            </h3>
-                            <p className="mt-1 text-xs leading-5 text-muted">
-                              {cairoDate(lesson.starts_at, locale)}
-                            </p>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
+                    {data.lessons.slice(1, 4).map(lesson => {
+                      const tile = lessonDateTile(lesson.starts_at, locale);
+                      const group = lessonGroup(lesson);
+                      return (
+                        <li key={lesson.id}>
+                          <Link
+                            href={`/${locale}/student/lessons/${lesson.id}`}
+                            className="group flex min-h-20 items-center gap-3 rounded-lg py-3"
+                          >
+                            <span className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal">
+                              <span className="sr-only">{tile.fullLabel}</span>
+                              <span aria-hidden="true">
+                                <strong className="text-lg leading-none">{tile.day}</strong>
+                                <span className="mt-1 block text-[11px] font-semibold text-muted">
+                                  {tile.month}
+                                </span>
+                              </span>
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <h3 className="break-words text-sm font-bold text-teal group-hover:underline">
+                                {lesson.title}
+                              </h3>
+                              <p className="mt-1 text-xs leading-5 text-muted">
+                                {tile.weekday} ·{' '}
+                                {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
+                              </p>
+                              {group && (
+                                <p className="truncate text-xs leading-5 text-muted">{group}</p>
+                              )}
+                            </div>
+                          </Link>
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p className="text-sm leading-6 text-muted">
