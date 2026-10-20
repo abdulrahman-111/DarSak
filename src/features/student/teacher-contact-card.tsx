@@ -34,7 +34,7 @@ export function StudentTeacherContactCard({
   return (
     <section
       id="teacher-contact"
-      className={`student-contact-card ${welcome ? 'student-contact-card-welcome' : ''} rounded-2xl border border-teal/20 bg-white p-5 shadow-sm`}
+      className={`student-contact-card ${welcome ? 'student-contact-card-welcome' : ''} scroll-mt-24 rounded-2xl border border-teal/20 bg-white p-5 shadow-sm`}
       aria-labelledby="teacher-contact-title"
     >
       {welcome && (
