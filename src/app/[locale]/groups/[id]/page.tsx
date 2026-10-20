@@ -2,6 +2,7 @@ import { groupLearningDetails } from '@/features/teacher/group-learning-data';
 import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import { GroupFeedbackSection } from '@/features/feedback/group-section';
 import Link from 'next/link';
+import { GroupRequestBar } from '@/features/groups/request-bar';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
@@ -80,6 +81,8 @@ export default async function GroupDetail({
   const isStudent = me?.profile?.role === 'student' && me.profile.status === 'active';
   const canEnroll =
     detail.publiclyEligible && canRequest(enrollment?.status) && data.available_seats !== 0;
+  // Phones only: keep the next step reachable when it is an actual action (guest sign-in, or a request the student can make).
+  const showRequestBar = !me || (isStudent && canEnroll);
 
   return (
     <div className="min-h-[72vh] bg-cream">
@@ -257,7 +260,10 @@ export default async function GroupDetail({
             </div>
           </article>
 
-          <aside className="h-fit rounded-[1.4rem] bg-teal p-6 text-cream lg:sticky lg:top-24">
+          <aside
+            id="request-panel"
+            className="h-fit scroll-mt-24 rounded-[1.4rem] bg-teal p-6 text-cream lg:sticky lg:top-24"
+          >
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
             {data.available_seats !== undefined && (
@@ -324,6 +330,26 @@ export default async function GroupDetail({
             </div>
           </aside>
         </div>
+        {showRequestBar && (
+          <>
+            <div aria-hidden="true" className="h-20 lg:hidden" />
+            <GroupRequestBar
+              targetId="request-panel"
+              label={
+                isStudent
+                  ? locale === 'ar'
+                    ? 'اطلب الانضمام'
+                    : 'Request a place'
+                  : c.signInToRequest
+              }
+              detail={
+                data.available_seats !== undefined && data.available_seats !== null
+                  ? `${c.availableSeats}: ${data.available_seats}`
+                  : undefined
+              }
+            />
+          </>
+        )}
       </section>
     </div>
   );

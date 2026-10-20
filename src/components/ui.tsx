@@ -68,20 +68,39 @@ export function GroupCard({
       }).format(new Date(group.next_lesson_at))
     : null;
   const seats = group.available_seats;
+  // Teachers often name a group after its subject; repeating it as a tag above the identical title is noise.
+  const showSubject =
+    !!subject && subject.trim().toLocaleLowerCase() !== group.name.trim().toLocaleLowerCase();
+  const full = seats === 0;
   return (
     <article className="group relative flex h-full flex-col rounded-[1.15rem] border border-line bg-surface p-5 transition duration-200 hover:-translate-y-1 hover:border-[#cdbfa6] hover:shadow-[0_18px_36px_-24px_rgba(14,74,75,.55)]">
-      <div className="flex items-center justify-between gap-3">
-        <span className="rounded-lg bg-mint px-2.5 py-1 text-xs font-bold text-teal">
-          {subject || t.groups}
-        </span>
-        <span className="rounded-full bg-[#dfedd5] px-2.5 py-1 text-xs font-bold text-[#2c5620]">
-          {seats === 0 ? c.noSeats : c.published}
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        {showSubject ? (
+          <span
+            title={subject}
+            className="min-w-0 truncate rounded-lg bg-mint px-2.5 py-1 text-xs font-bold text-teal"
+          >
+            {subject}
+          </span>
+        ) : (
+          <span />
+        )}
+        <span
+          className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${full ? 'bg-[#eee7da] text-ink-soft' : 'bg-success-soft text-success'}`}
+        >
+          <span
+            aria-hidden="true"
+            className={`size-1.5 rounded-full ${full ? 'bg-muted' : 'bg-success'}`}
+          />
+          {full ? c.noSeats : c.published}
         </span>
       </div>
-      <h3 className="mt-4 text-xl font-bold leading-tight text-teal">{group.name}</h3>
-      <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink-soft">
-        {group.description || t.findTutor}
-      </p>
+      <h3 className="mt-4 break-words text-xl font-bold leading-tight text-teal [overflow-wrap:anywhere]">
+        {group.name}
+      </h3>
+      {group.description && (
+        <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink-soft">{group.description}</p>
+      )}
       <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-[#efe6d6] pt-4 text-sm text-muted">
         <span className="flex items-center gap-1.5">
           <MapPin size={15} />

@@ -331,9 +331,25 @@ export default async function Teachers({
                     <Link
                       key={teacher.id}
                       href={`/${locale}/teachers/${teacher.id}`}
-                      className="rounded-[1.15rem] border border-line bg-surface p-5 font-bold text-teal hover:border-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                      className="student-card flex min-w-0 items-center gap-3 rounded-[1.15rem] border border-line bg-surface p-4 text-teal hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                     >
-                      {teacher.full_name}
+                      <span
+                        aria-hidden="true"
+                        className="grid size-11 shrink-0 place-items-center rounded-full bg-mint text-sm font-bold"
+                      >
+                        {teacher.full_name.trim().slice(0, 1).toLocaleUpperCase()}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <strong className="block truncate">{teacher.full_name}</strong>
+                        <span className="text-sm text-muted">
+                          {locale === 'ar' ? 'عرض الملف' : 'View profile'}
+                        </span>
+                      </span>
+                      <ChevronDown
+                        aria-hidden="true"
+                        size={18}
+                        className="shrink-0 -rotate-90 text-muted rtl:rotate-90"
+                      />
                     </Link>
                   ))}
                 </div>
