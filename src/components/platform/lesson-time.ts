@@ -62,5 +62,6 @@ export function lessonDateTile(startsAt: string, locale: string) {
     month: part({ month: 'short' }),
     weekday: part({ weekday: 'long' }),
     label: part({ weekday: 'long', day: 'numeric', month: 'short' }),
+    fullLabel: part({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
   };
 }

@@ -11,7 +11,6 @@ import {
   lessonDateTile,
   lessonTimeRange,
 } from '@/components/platform/lesson-time';
-import { cairoDateKey } from '@/features/teacher/dashboard-domain';
 export default async function StudentDashboard({
   params,
 }: {
@@ -34,7 +33,7 @@ export default async function StudentDashboard({
     : null;
   const firstName = me.fullName.trim().split(/\s+/)[0] || me.fullName;
   const countdown = next ? lessonCountdown(next.starts_at, next.ends_at, locale, now) : null;
-  const lessonDays = new Set(data.lessons.map(lesson => cairoDateKey(new Date(lesson.starts_at))));
+  const lessonDays = new Set(data.occupiedDays);
   const lessonGroup = (lesson: (typeof data.lessons)[number]) =>
     Array.isArray(lesson.group) ? lesson.group[0]?.name : lesson.group?.name;
   return (
@@ -301,6 +300,13 @@ export default async function StudentDashboard({
                     </Link>
                   ))}
                 </nav>
+                {data.calendarError && (
+                  <p role="status" className="mt-3 text-xs leading-5 text-danger">
+                    {ar
+                      ? 'تعذر تحميل أيام الحصص لهذا الأسبوع.'
+                      : 'Could not load lesson days for this week.'}
+                  </p>
+                )}
                 <p className="mt-3 text-xs leading-5 text-muted">
                   {lessonDays.size > 0 &&
                     (ar ? 'النقطة تعني وجود حصة. ' : 'A dot marks a lesson day. ')}
@@ -322,13 +328,13 @@ export default async function StudentDashboard({
                             href={`/${locale}/student/lessons/${lesson.id}`}
                             className="group flex min-h-20 items-center gap-3 rounded-lg py-3"
                           >
-                            <span
-                              aria-hidden="true"
-                              className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal"
-                            >
-                              <strong className="text-lg leading-none">{tile.day}</strong>
-                              <span className="mt-1 text-[11px] font-semibold text-muted">
-                                {tile.month}
+                            <span className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal">
+                              <span className="sr-only">{tile.fullLabel}</span>
+                              <span aria-hidden="true">
+                                <strong className="text-lg leading-none">{tile.day}</strong>
+                                <span className="mt-1 block text-[11px] font-semibold text-muted">
+                                  {tile.month}
+                                </span>
                               </span>
                             </span>
                             <div className="min-w-0 flex-1">

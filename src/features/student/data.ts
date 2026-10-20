@@ -14,6 +14,8 @@ import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from './pag
 import { parseStudentLearningProfileRow } from './student-profile-domain';
 import { readCountedPage } from '@/lib/supabase/counted-page';
 import { roleHome } from '@/components/platform/access';
+import { cairoDateKey } from '@/features/teacher/dashboard-domain';
+import { cairoDayBounds, cairoWeekBounds, timetableDayDates } from './timetable-domain';
 export type Named = { id: string; name_ar: string; name_en: string; parent_id?: string | null };
 export type Teacher = { id: string; full_name: string; headline: string; bio: string };
 export type Group = {
@@ -238,11 +240,15 @@ export async function studentDashboard(locale: Locale, now = new Date()) {
       acceptedCount: 0,
       pendingCount: 0,
       lessons: [] as Lesson[],
+      occupiedDays: [] as string[],
+      calendarError: false,
       learningProfile: null,
       classes: [] as DashboardClass[],
       error: true,
     };
-  const [accepted, pending, upcoming, classes] = await Promise.all([
+  const week = cairoWeekBounds(cairoDateKey(now));
+  const weekDays = timetableDayDates(week.startDate);
+  const [accepted, pending, upcoming, classes, daySummaries] = await Promise.all([
     me.db
       .from('enrollments')
       .select('id', { count: 'exact', head: true })
@@ -273,7 +279,22 @@ export async function studentDashboard(locale: Locale, now = new Date()) {
       .order('updated_at', { ascending: false })
       .order('id')
       .limit(4),
+    Promise.all(
+      weekDays.map(({ date }) => {
+        const bounds = cairoDayBounds(date);
+        return me.db
+          .from('lessons')
+          .select('id,group:groups!inner(enrollments!inner(student_id,status))')
+          .eq('group.enrollments.student_id', me.id)
+          .eq('group.enrollments.status', 'accepted')
+          .neq('status', 'cancelled')
+          .gte('starts_at', bounds.start.toISOString())
+          .lt('starts_at', bounds.end.toISOString())
+          .limit(1);
+      }),
+    ),
   ]);
+  const calendarError = daySummaries.some(result => !!result.error);
   const error = !!(
     accepted.error ||
     pending.error ||
@@ -286,6 +307,12 @@ export async function studentDashboard(locale: Locale, now = new Date()) {
     acceptedCount: accepted.count ?? 0,
     pendingCount: pending.count ?? 0,
     lessons: (upcoming.data || []) as Lesson[],
+    occupiedDays: calendarError
+      ? []
+      : weekDays
+          .filter((_, index) => (daySummaries[index].data ?? []).length > 0)
+          .map(day => day.date),
+    calendarError,
     learningProfile: learning.profile,
     classes: (classes.data ?? []) as unknown as DashboardClass[],
     error,

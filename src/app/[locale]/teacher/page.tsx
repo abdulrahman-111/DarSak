@@ -577,13 +577,13 @@ export default async function TeacherDashboard({
                           href={`/${locale}/teacher/lessons/${lesson.id}`}
                           className="student-card flex h-full min-h-20 items-start gap-3 rounded-xl border border-line p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                         >
-                          <span
-                            aria-hidden="true"
-                            className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal"
-                          >
-                            <strong className="text-lg leading-none">{tile.day}</strong>
-                            <span className="mt-1 text-[11px] font-semibold text-muted">
-                              {tile.month}
+                          <span className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal">
+                            <span className="sr-only">{tile.fullLabel}</span>
+                            <span aria-hidden="true">
+                              <strong className="text-lg leading-none">{tile.day}</strong>
+                              <span className="mt-1 block text-[11px] font-semibold text-muted">
+                                {tile.month}
+                              </span>
                             </span>
                           </span>
                           <span className="min-w-0 flex-1">

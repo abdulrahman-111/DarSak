@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { lessonCountdown, lessonTimeRange } from '@/components/platform/lesson-time';
+import {
+  lessonCountdown,
+  lessonDateTile,
+  lessonTimeRange,
+} from '@/components/platform/lesson-time';
 
 const now = new Date('2026-10-20T10:00:00.000Z'); // 13:00 in Cairo
 
@@ -50,6 +54,29 @@ describe('lesson time range', () => {
   it('formats the start and end in Cairo time', () => {
     expect(lessonTimeRange('2026-10-20T10:00:00Z', '2026-10-20T11:30:00Z', 'en')).toBe(
       '13:00 – 14:30',
+    );
+  });
+});
+
+describe('lesson date tile', () => {
+  it.each([
+    ['en', 'en-GB'],
+    ['ar', 'ar-EG'],
+  ])('provides a localized full date label for %s lesson tiles', (locale, language) => {
+    const startsAt = '2026-10-20T10:00:00Z';
+    const expected = new Intl.DateTimeFormat(language, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'Africa/Cairo',
+    }).format(new Date(startsAt));
+
+    expect(lessonDateTile(startsAt, locale).fullLabel).toBe(expected);
+    expect(lessonDateTile(startsAt, locale).fullLabel).toContain(
+      new Intl.DateTimeFormat(language, { year: 'numeric', timeZone: 'Africa/Cairo' }).format(
+        new Date(startsAt),
+      ),
     );
   });
 });
