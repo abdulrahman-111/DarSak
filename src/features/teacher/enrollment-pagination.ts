@@ -9,7 +9,8 @@ const MAX_TEACHER_PAGE = Math.floor(MAX_RPC_OFFSET / TEACHER_PAGE_SIZE) + 1;
 
 export function normalizeTeacherPage(value: unknown): number {
   const candidate = Array.isArray(value) ? value[0] : value;
-  const parsed = typeof candidate === 'string' || typeof candidate === 'number' ? Number(candidate) : 1;
+  const parsed =
+    typeof candidate === 'string' || typeof candidate === 'number' ? Number(candidate) : 1;
   return Number.isSafeInteger(parsed) && parsed > 0 ? Math.min(parsed, MAX_TEACHER_PAGE) : 1;
 }
 

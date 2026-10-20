@@ -1,20 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { loginRedirectPath, safeAuthNext, safeLoginReturnPath, switchInternalLocalePath, switchLocaleReturnParams } from '@/features/auth/return-path';
+import {
+  loginRedirectPath,
+  safeAuthNext,
+  safeLoginReturnPath,
+  switchInternalLocalePath,
+  switchLocaleReturnParams,
+} from '@/features/auth/return-path';
 
 const groupId = 'A70EA958-E2D5-4C9C-90D1-4E001D9AF93C';
 
 describe('login return paths', () => {
   it('allows same-locale group and class UUID paths for English and Arabic', () => {
     expect(safeLoginReturnPath('en', `/en/groups/${groupId}`)).toBe(`/en/groups/${groupId}`);
-    expect(safeLoginReturnPath('en', `/en/classes/${groupId.toLowerCase()}`)).toBe(`/en/classes/${groupId.toLowerCase()}`);
-    expect(safeLoginReturnPath('en', '/en/groups/00000000-0000-4000-A000-000000000000')).toBe('/en/groups/00000000-0000-4000-A000-000000000000');
+    expect(safeLoginReturnPath('en', `/en/classes/${groupId.toLowerCase()}`)).toBe(
+      `/en/classes/${groupId.toLowerCase()}`,
+    );
+    expect(safeLoginReturnPath('en', '/en/groups/00000000-0000-4000-A000-000000000000')).toBe(
+      '/en/groups/00000000-0000-4000-A000-000000000000',
+    );
     expect(safeLoginReturnPath('ar', `/ar/groups/${groupId}`)).toBe(`/ar/groups/${groupId}`);
-    expect(safeLoginReturnPath('ar', `/ar/classes/${groupId.toLowerCase()}`)).toBe(`/ar/classes/${groupId.toLowerCase()}`);
+    expect(safeLoginReturnPath('ar', `/ar/classes/${groupId.toLowerCase()}`)).toBe(
+      `/ar/classes/${groupId.toLowerCase()}`,
+    );
   });
 
   it('falls back to the same-locale dashboard for invalid or repeated next values', () => {
     expect(loginRedirectPath('en', undefined)).toBe('/en/dashboard');
-    expect(loginRedirectPath('ar', ['/ar/groups/00000000-0000-4000-8000-000000000000', '/ar/groups/00000000-0000-4000-8000-000000000001'])).toBe('/ar/dashboard');
+    expect(
+      loginRedirectPath('ar', [
+        '/ar/groups/00000000-0000-4000-8000-000000000000',
+        '/ar/groups/00000000-0000-4000-8000-000000000001',
+      ]),
+    ).toBe('/ar/dashboard');
     expect(loginRedirectPath('en', '/en/groups/not-a-uuid')).toBe('/en/dashboard');
   });
 
@@ -28,16 +45,17 @@ describe('login return paths', () => {
 
   it('keeps a safe group return path ahead of the role home', () => {
     const groupPath = '/ar/groups/00000000-0000-4000-8000-000000000000';
-    expect(loginRedirectPath('ar', groupPath, { role: 'teacher', status: 'active' })).toBe(groupPath);
+    expect(loginRedirectPath('ar', groupPath, { role: 'teacher', status: 'active' })).toBe(
+      groupPath,
+    );
   });
 
-  it.each([
-    null,
-    { role: 'teacher', status: 'suspended' },
-    { role: 'unknown', status: 'active' },
-  ])('uses the guarded dashboard fallback for missing or invalid active profiles', profile => {
-    expect(loginRedirectPath('en', undefined, profile)).toBe('/en/dashboard');
-  });
+  it.each([null, { role: 'teacher', status: 'suspended' }, { role: 'unknown', status: 'active' }])(
+    'uses the guarded dashboard fallback for missing or invalid active profiles',
+    profile => {
+      expect(loginRedirectPath('en', undefined, profile)).toBe('/en/dashboard');
+    },
+  );
 
   it.each([
     'https://example.com/en/groups/00000000-0000-4000-8000-000000000000',
@@ -86,12 +104,30 @@ describe('safeAuthNext', () => {
 
 describe('switchInternalLocalePath', () => {
   it.each([
-    ['/en/groups/00000000-0000-4000-8000-000000000000?view=details#materials', 'en', 'ar', '/ar/groups/00000000-0000-4000-8000-000000000000?view=details#materials'],
-    ['/ar/classes/00000000-0000-4000-8000-000000000000?from=login#schedule', 'ar', 'en', '/en/classes/00000000-0000-4000-8000-000000000000?from=login#schedule'],
-    ['/en/login?next=%2Fen%2Fgroups%2F00000000-0000-4000-8000-000000000000#form', 'en', 'ar', '/ar/login?next=%2Fen%2Fgroups%2F00000000-0000-4000-8000-000000000000#form'],
-  ] as const)('switches %s from %s to %s and keeps its query and fragment', (path, from, to, expected) => {
-    expect(switchInternalLocalePath(path, from, to)).toBe(expected);
-  });
+    [
+      '/en/groups/00000000-0000-4000-8000-000000000000?view=details#materials',
+      'en',
+      'ar',
+      '/ar/groups/00000000-0000-4000-8000-000000000000?view=details#materials',
+    ],
+    [
+      '/ar/classes/00000000-0000-4000-8000-000000000000?from=login#schedule',
+      'ar',
+      'en',
+      '/en/classes/00000000-0000-4000-8000-000000000000?from=login#schedule',
+    ],
+    [
+      '/en/login?next=%2Fen%2Fgroups%2F00000000-0000-4000-8000-000000000000#form',
+      'en',
+      'ar',
+      '/ar/login?next=%2Fen%2Fgroups%2F00000000-0000-4000-8000-000000000000#form',
+    ],
+  ] as const)(
+    'switches %s from %s to %s and keeps its query and fragment',
+    (path, from, to, expected) => {
+      expect(switchInternalLocalePath(path, from, to)).toBe(expected);
+    },
+  );
 
   it.each([
     'https://evil.example/en/groups/00000000-0000-4000-8000-000000000000',
@@ -106,29 +142,49 @@ describe('switchInternalLocalePath', () => {
 
 describe('switchLocaleReturnParams', () => {
   it('switches safe next and returnTo paths in both directions while keeping queries, fragments, and other filters', () => {
-    const enToAr = switchLocaleReturnParams(new URLSearchParams([
-      ['next', '/en/groups/00000000-0000-4000-8000-000000000000?tab=materials#files'],
-      ['returnTo', '/en/classes/00000000-0000-4000-8000-000000000001?day=2#week'],
-      ['subject', 'math'],
-    ]), 'en', 'ar');
-    expect(enToAr.get('next')).toBe('/ar/groups/00000000-0000-4000-8000-000000000000?tab=materials#files');
-    expect(enToAr.get('returnTo')).toBe('/ar/classes/00000000-0000-4000-8000-000000000001?day=2#week');
+    const enToAr = switchLocaleReturnParams(
+      new URLSearchParams([
+        ['next', '/en/groups/00000000-0000-4000-8000-000000000000?tab=materials#files'],
+        ['returnTo', '/en/classes/00000000-0000-4000-8000-000000000001?day=2#week'],
+        ['subject', 'math'],
+      ]),
+      'en',
+      'ar',
+    );
+    expect(enToAr.get('next')).toBe(
+      '/ar/groups/00000000-0000-4000-8000-000000000000?tab=materials#files',
+    );
+    expect(enToAr.get('returnTo')).toBe(
+      '/ar/classes/00000000-0000-4000-8000-000000000001?day=2#week',
+    );
     expect(enToAr.get('subject')).toBe('math');
 
-    const arToEn = switchLocaleReturnParams(new URLSearchParams([
-      ['next', '/ar/groups/00000000-0000-4000-8000-000000000000?tab=details#about'],
-      ['returnTo', '/ar/classes/00000000-0000-4000-8000-000000000001?day=3#week'],
-    ]), 'ar', 'en');
-    expect(arToEn.get('next')).toBe('/en/groups/00000000-0000-4000-8000-000000000000?tab=details#about');
-    expect(arToEn.get('returnTo')).toBe('/en/classes/00000000-0000-4000-8000-000000000001?day=3#week');
+    const arToEn = switchLocaleReturnParams(
+      new URLSearchParams([
+        ['next', '/ar/groups/00000000-0000-4000-8000-000000000000?tab=details#about'],
+        ['returnTo', '/ar/classes/00000000-0000-4000-8000-000000000001?day=3#week'],
+      ]),
+      'ar',
+      'en',
+    );
+    expect(arToEn.get('next')).toBe(
+      '/en/groups/00000000-0000-4000-8000-000000000000?tab=details#about',
+    );
+    expect(arToEn.get('returnTo')).toBe(
+      '/en/classes/00000000-0000-4000-8000-000000000001?day=3#week',
+    );
   });
 
   it('drops invalid external or malformed redirect targets', () => {
-    const params = switchLocaleReturnParams(new URLSearchParams([
-      ['next', 'https://evil.example/path'],
-      ['returnTo', '//evil.example/path'],
-      ['subject', 'science'],
-    ]), 'en', 'ar');
+    const params = switchLocaleReturnParams(
+      new URLSearchParams([
+        ['next', 'https://evil.example/path'],
+        ['returnTo', '//evil.example/path'],
+        ['subject', 'science'],
+      ]),
+      'en',
+      'ar',
+    );
     expect(params.has('next')).toBe(false);
     expect(params.has('returnTo')).toBe(false);
     expect(params.get('subject')).toBe('science');

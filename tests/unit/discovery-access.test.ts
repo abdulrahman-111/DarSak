@@ -16,7 +16,11 @@ describe('role-specific discovery access', () => {
 
   it('ignores guest filter and pagination queries', () => {
     const query = { query: 'algebra', page: '9', teacher_search: 'A teacher' };
-    expect(discoveryFiltersForRole(null, query)).toMatchObject({ query: '', page: 1, teacherId: null });
+    expect(discoveryFiltersForRole(null, query)).toMatchObject({
+      query: '',
+      page: 1,
+      teacherId: null,
+    });
     expect(discoveryFiltersForRole('student', query)).toMatchObject({ query: 'algebra', page: 9 });
   });
 

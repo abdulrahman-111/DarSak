@@ -1,7 +1,13 @@
 import { redirect } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 
-export default async function LegacyTeacherProfilePage({ params, searchParams }: { params: Promise<{ locale: string }>; searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+export default async function LegacyTeacherProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const search = new URLSearchParams();

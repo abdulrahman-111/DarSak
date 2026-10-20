@@ -39,14 +39,22 @@ describe('public discovery catalogue', () => {
 
   it('bounds guest group and teacher samples at the RPC boundary', async () => {
     const limit = vi.fn(async () => ({ data: [], error: null }));
-    const rpc = vi.fn((name: string, _args?: Record<string, unknown>) => name === 'public_teacher_choices' ? { limit } : Promise.resolve({ data: [], error: null }));
+    const rpc = vi.fn((name: string, _args?: Record<string, unknown>) =>
+      name === 'public_teacher_choices' ? { limit } : Promise.resolve({ data: [], error: null }),
+    );
     createClientMock.mockResolvedValue({ rpc });
 
     await publicGroups(undefined, 3);
     await publicTeacherSample(3);
 
-    expect(rpc).toHaveBeenCalledWith('discover_groups', expect.objectContaining({ p_offset: 0, p_limit: 3, p_query: '' }));
-    expect(rpc).toHaveBeenCalledWith('public_teacher_choices', { p_search: null, p_selected: null });
+    expect(rpc).toHaveBeenCalledWith(
+      'discover_groups',
+      expect.objectContaining({ p_offset: 0, p_limit: 3, p_query: '' }),
+    );
+    expect(rpc).toHaveBeenCalledWith('public_teacher_choices', {
+      p_search: null,
+      p_selected: null,
+    });
     expect(limit).toHaveBeenCalledWith(3);
   });
 });

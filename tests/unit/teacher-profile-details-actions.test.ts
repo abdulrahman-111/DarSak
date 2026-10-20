@@ -26,7 +26,9 @@ function setup(rpcResult: { data: unknown; error: { code?: string; message: stri
     auth: { getUser: async () => ({ data: { user: { id: teacherId } }, error: null }) },
     from: () => ({
       select: () => ({
-        eq: () => ({ maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }) }),
+        eq: () => ({
+          maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }),
+        }),
       }),
     }),
     rpc,
@@ -86,26 +88,48 @@ describe('saveTeacherProfileDetails', () => {
 
   it('removes blank repeater drafts before saving canonical details', async () => {
     const blank = {
-      id: 'blank-draft', title: { ar: '', en: '' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
-      start_year: null, end_year: null, current: false,
+      id: 'blank-draft',
+      title: { ar: '', en: '' },
+      organization: { ar: '', en: '' },
+      description: { ar: '', en: '' },
+      start_year: null,
+      end_year: null,
+      current: false,
     };
     const { rpc } = setup({ data: 1, error: null });
-    await saveTeacherProfileDetails('en', null, formFor({ ...emptyRichProfile(), qualifications: [blank] }));
+    await saveTeacherProfileDetails(
+      'en',
+      null,
+      formFor({ ...emptyRichProfile(), qualifications: [blank] }),
+    );
 
-    expect(rpc).toHaveBeenCalledWith('save_teacher_profile_details', expect.objectContaining({
-      p_details: expect.objectContaining({ qualifications: [] }),
-      p_expected_version: 0,
-    }));
+    expect(rpc).toHaveBeenCalledWith(
+      'save_teacher_profile_details',
+      expect.objectContaining({
+        p_details: expect.objectContaining({ qualifications: [] }),
+        p_expected_version: 0,
+      }),
+    );
   });
 
   it('keeps invalid repeater field paths aligned after blank rows in both lists', async () => {
     const blank = {
-      id: 'blank-draft', title: { ar: '', en: '' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
-      start_year: null, end_year: null, current: false,
+      id: 'blank-draft',
+      title: { ar: '', en: '' },
+      organization: { ar: '', en: '' },
+      description: { ar: '', en: '' },
+      start_year: null,
+      end_year: null,
+      current: false,
     };
     const invalid = {
-      id: 'invalid-qualification', title: { ar: '', en: 'Tutor' }, organization: { ar: '', en: '' }, description: { ar: '', en: '' },
-      start_year: 2025, end_year: 2020, current: false,
+      id: 'invalid-qualification',
+      title: { ar: '', en: 'Tutor' },
+      organization: { ar: '', en: '' },
+      description: { ar: '', en: '' },
+      start_year: 2025,
+      end_year: 2020,
+      current: false,
     };
     const details = {
       ...emptyRichProfile(),

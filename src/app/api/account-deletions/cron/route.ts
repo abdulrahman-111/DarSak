@@ -3,7 +3,10 @@ import { validCronAuthorization } from '@/app/api/email/cron/auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 40;
-const headers = { 'Cache-Control': 'no-store, private', 'Content-Type': 'application/json; charset=utf-8' };
+const headers = {
+  'Cache-Control': 'no-store, private',
+  'Content-Type': 'application/json; charset=utf-8',
+};
 
 export async function GET(request: NextRequest) {
   if (!validCronAuthorization(request.headers.get('authorization'), process.env.CRON_SECRET)) {
@@ -13,7 +16,10 @@ export async function GET(request: NextRequest) {
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   const workerSecret = process.env.ACCOUNT_DELETION_WORKER_SECRET;
   if (!supabaseUrl || !publishableKey || !workerSecret) {
-    return Response.json({ state: 'error', claimed: 0, completed: 0, pending: 0 }, { status: 503, headers });
+    return Response.json(
+      { state: 'error', claimed: 0, completed: 0, pending: 0 },
+      { status: 503, headers },
+    );
   }
   try {
     const response = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/delete-account`, {
@@ -29,7 +35,10 @@ export async function GET(request: NextRequest) {
     });
     const result: unknown = await response.json();
     if (!result || typeof result !== 'object' || Array.isArray(result)) {
-      return Response.json({ state: 'error', claimed: 0, completed: 0, pending: 0 }, { status: 503, headers });
+      return Response.json(
+        { state: 'error', claimed: 0, completed: 0, pending: 0 },
+        { status: 503, headers },
+      );
     }
     const value = result as Record<string, unknown>;
     const safe = {
@@ -40,6 +49,9 @@ export async function GET(request: NextRequest) {
     };
     return Response.json(safe, { status: response.ok ? 200 : 503, headers });
   } catch {
-    return Response.json({ state: 'error', claimed: 0, completed: 0, pending: 0 }, { status: 503, headers });
+    return Response.json(
+      { state: 'error', claimed: 0, completed: 0, pending: 0 },
+      { status: 503, headers },
+    );
   }
 }

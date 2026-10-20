@@ -26,7 +26,9 @@ describe('proxy auth and localization', () => {
   });
 
   it('verifies valid JWT claims and keeps authorization out of proxy', async () => {
-    const getClaims = vi.fn().mockResolvedValue({ data: { claims: { sub: 'user-1', role: 'admin' } }, error: null });
+    const getClaims = vi
+      .fn()
+      .mockResolvedValue({ data: { claims: { sub: 'user-1', role: 'admin' } }, error: null });
     createServerClientMock.mockReturnValue({ auth: { getClaims, getUser: vi.fn() } });
 
     const response = await proxy(new NextRequest('https://dars.example/dashboard'));
@@ -41,23 +43,37 @@ describe('proxy auth and localization', () => {
       auth: {
         getClaims: vi.fn(async () => {
           options.cookies.setAll([
-            { name: 'sb-project-auth-token', value: 'fresh-access', options: { path: '/', httpOnly: true } },
-            { name: 'sb-project-auth-token.1', value: 'fresh-refresh', options: { path: '/', httpOnly: true } },
+            {
+              name: 'sb-project-auth-token',
+              value: 'fresh-access',
+              options: { path: '/', httpOnly: true },
+            },
+            {
+              name: 'sb-project-auth-token.1',
+              value: 'fresh-refresh',
+              options: { path: '/', httpOnly: true },
+            },
           ]);
           return { data: { claims: { sub: 'user-1' } }, error: null };
         }),
       },
     }));
 
-    const response = await proxy(new NextRequest('https://dars.example/dashboard', {
-      headers: { cookie: 'sb-project-auth-token=expired' },
-    }));
+    const response = await proxy(
+      new NextRequest('https://dars.example/dashboard', {
+        headers: { cookie: 'sb-project-auth-token=expired' },
+      }),
+    );
 
     const forwardedCookie = response.headers.get('x-middleware-request-cookie') ?? '';
     expect(forwardedCookie).toContain('sb-project-auth-token=fresh-access');
     expect(forwardedCookie).toContain('sb-project-auth-token.1=fresh-refresh');
-    expect(response.headers.getSetCookie().join('\n')).toContain('sb-project-auth-token=fresh-access');
-    expect(response.headers.getSetCookie().join('\n')).toContain('sb-project-auth-token.1=fresh-refresh');
+    expect(response.headers.getSetCookie().join('\n')).toContain(
+      'sb-project-auth-token=fresh-access',
+    );
+    expect(response.headers.getSetCookie().join('\n')).toContain(
+      'sb-project-auth-token.1=fresh-refresh',
+    );
     expect(response.headers.get('cache-control')).toBe('private, no-store');
   });
 

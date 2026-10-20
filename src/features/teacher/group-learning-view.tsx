@@ -1,6 +1,46 @@
 import { feeLabel, type GroupLearningDetails } from './group-learning-domain';
-export function GroupLearningView({locale,details}:{locale:string;details:GroupLearningDetails|null}){
- const ar=locale==='ar', modes={online:ar?'عن بُعد':'Online',in_person:ar?'حضوري':'In person',hybrid:ar?'حضوري وعن بُعد':'Hybrid'};
- const rows=[{title:ar?'ما ستتعلمه':'What you will learn',text:details?.outcomes},{title:ar?'المعرفة المطلوبة':'Before you join',text:details?.prerequisites},{title:ar?'طريقة التعلم':'Learning format',text:details?.delivery_mode?modes[details.delivery_mode]:null},{title:ar?'رسوم المجموعة':'Group fees',text:feeLabel(locale,details??{fee_egp:null,fee_basis:null})},{title:ar?'ما تتضمنه المجموعة':'What is included',text:details?.fee_includes}];
- return <section className="mt-6 border-t border-line pt-6"><h2 className="text-xl font-black text-teal">{ar?'هل تناسبك هذه المجموعة؟':'Is this group right for you?'}</h2><dl className="mt-4 grid gap-4 sm:grid-cols-2">{rows.map(r=><div key={r.title} className="min-w-0"><dt className="font-bold text-teal">{r.title}</dt><dd className="mt-1 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">{r.text||(ar?'لم يحدد المعلم هذه التفاصيل بعد.':'Not specified by the teacher yet.')}</dd></div>)}</dl></section>;
+export function GroupLearningView({
+  locale,
+  details,
+}: {
+  locale: string;
+  details: GroupLearningDetails | null;
+}) {
+  const ar = locale === 'ar',
+    modes = {
+      online: ar ? 'عن بُعد' : 'Online',
+      in_person: ar ? 'حضوري' : 'In person',
+      hybrid: ar ? 'حضوري وعن بُعد' : 'Hybrid',
+    };
+  const rows = [
+    { title: ar ? 'ما ستتعلمه' : 'What you will learn', text: details?.outcomes },
+    { title: ar ? 'المعرفة المطلوبة' : 'Before you join', text: details?.prerequisites },
+    {
+      title: ar ? 'طريقة التعلم' : 'Learning format',
+      text: details?.delivery_mode ? modes[details.delivery_mode] : null,
+    },
+    {
+      title: ar ? 'رسوم المجموعة' : 'Group fees',
+      text: feeLabel(locale, details ?? { fee_egp: null, fee_basis: null }),
+    },
+    { title: ar ? 'ما تتضمنه المجموعة' : 'What is included', text: details?.fee_includes },
+  ];
+  return (
+    <section className="mt-6 border-t border-line pt-6">
+      <h2 className="text-xl font-black text-teal">
+        {ar ? 'هل تناسبك هذه المجموعة؟' : 'Is this group right for you?'}
+      </h2>
+      <dl className="mt-4 grid gap-4 sm:grid-cols-2">
+        {rows.map(r => (
+          <div key={r.title} className="min-w-0">
+            <dt className="font-bold text-teal">{r.title}</dt>
+            <dd className="mt-1 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
+              {r.text ||
+                (ar ? 'لم يحدد المعلم هذه التفاصيل بعد.' : 'Not specified by the teacher yet.')}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
+  );
 }

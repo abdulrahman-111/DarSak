@@ -44,22 +44,30 @@ export function splitStudentInterests(value: string): string[] {
   return [...unique.values()];
 }
 
-export function validateStudentLearningProfile(input: unknown):
+export function validateStudentLearningProfile(
+  input: unknown,
+):
   | { success: true; data: StudentLearningProfileInput }
   | { success: false; errors: Record<string, string> } {
   const parsed = formSchema.safeParse(input);
   const errors: Record<string, string> = {};
   if (!parsed.success) {
     for (const issue of parsed.error.issues) {
-      const field = issue.path[0] === 'interests_text' ? 'interests' : String(issue.path[0] ?? 'form');
+      const field =
+        issue.path[0] === 'interests_text' ? 'interests' : String(issue.path[0] ?? 'form');
       errors[field] = 'invalid';
     }
   }
-  const rawInterests = input && typeof input === 'object' && !Array.isArray(input)
-    ? (input as Record<string, unknown>).interests_text
-    : null;
+  const rawInterests =
+    input && typeof input === 'object' && !Array.isArray(input)
+      ? (input as Record<string, unknown>).interests_text
+      : null;
   const interests = typeof rawInterests === 'string' ? splitStudentInterests(rawInterests) : [];
-  if (interests.length < 1 || interests.length > 10 || interests.some(interest => interest.length > 80)) {
+  if (
+    interests.length < 1 ||
+    interests.length > 10 ||
+    interests.some(interest => interest.length > 80)
+  ) {
     errors.interests = 'invalid';
   }
   if (!parsed.success || Object.keys(errors).length) return { success: false, errors };
@@ -79,13 +87,21 @@ export function validateStudentLearningProfile(input: unknown):
 export function parseStudentLearningProfileRow(value: unknown): StudentLearningProfile | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   const row = value as Record<string, unknown>;
-  if (typeof row.full_name !== 'string' || row.full_name.length > 100
-    || (row.age_range !== null && !STUDENT_AGE_RANGES.includes(row.age_range as StudentAgeRange))
-    || typeof row.education_year !== 'string' || typeof row.learning_goal !== 'string' || typeof row.school_name !== 'string'
-    || !Array.isArray(row.interests) || !row.interests.every(item => typeof item === 'string')
-    || typeof row.onboarding_required !== 'boolean'
-    || (row.onboarding_completed_at !== null && typeof row.onboarding_completed_at !== 'string')
-    || typeof row.updated_at !== 'string' || !Number.isFinite(Date.parse(row.updated_at))) return null;
+  if (
+    typeof row.full_name !== 'string' ||
+    row.full_name.length > 100 ||
+    (row.age_range !== null && !STUDENT_AGE_RANGES.includes(row.age_range as StudentAgeRange)) ||
+    typeof row.education_year !== 'string' ||
+    typeof row.learning_goal !== 'string' ||
+    typeof row.school_name !== 'string' ||
+    !Array.isArray(row.interests) ||
+    !row.interests.every(item => typeof item === 'string') ||
+    typeof row.onboarding_required !== 'boolean' ||
+    (row.onboarding_completed_at !== null && typeof row.onboarding_completed_at !== 'string') ||
+    typeof row.updated_at !== 'string' ||
+    !Number.isFinite(Date.parse(row.updated_at))
+  )
+    return null;
   return {
     full_name: row.full_name,
     age_range: row.age_range as StudentAgeRange | null,

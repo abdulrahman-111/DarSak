@@ -2,9 +2,18 @@ import { describe, expect, it } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { buildTeacherVisitorView, TeacherProfile } from '@/components/public/teacher-profile';
-import { emptyRichProfile, publicVisitorContacts, visiblePublicTeacherProfile, type PublicTeacherVisitorContacts } from '@/features/teacher/profile-details-domain';
+import {
+  emptyRichProfile,
+  publicVisitorContacts,
+  visiblePublicTeacherProfile,
+  type PublicTeacherVisitorContacts,
+} from '@/features/teacher/profile-details-domain';
 
-const teacher = { id: '11111111-1111-4111-8111-111111111111', full_name: 'Mona Ali', headline: null };
+const teacher = {
+  id: '11111111-1111-4111-8111-111111111111',
+  full_name: 'Mona Ali',
+  headline: null,
+};
 const enrolledContacts: PublicTeacherVisitorContacts = {
   phone_number: '+201234567890',
   whatsapp_number: null,
@@ -90,15 +99,17 @@ describe('shared teacher visitor projection', () => {
       about: { ar: '', en: aboutFallback },
       city: { ar: 'مدينة', en: 'C'.repeat(120) },
       languages: ['L'.repeat(60)],
-      qualifications: [{
-        id: 'long-qualification',
-        title: { ar: '', en: longTitle },
-        organization: { ar: '', en: longOrganization },
-        description: { ar: '', en: longDescription },
-        start_year: null,
-        end_year: null,
-        current: false,
-      }],
+      qualifications: [
+        {
+          id: 'long-qualification',
+          title: { ar: '', en: longTitle },
+          organization: { ar: '', en: longOrganization },
+          description: { ar: '', en: longDescription },
+          start_year: null,
+          end_year: null,
+          current: false,
+        },
+      ],
     });
     const view = buildTeacherVisitorView({
       teacher: { ...teacher, headline: 'H'.repeat(160) },
@@ -108,7 +119,9 @@ describe('shared teacher visitor projection', () => {
       avatarUrl: null,
       coverUrl: null,
     });
-    const markup = renderToStaticMarkup(createElement(TeacherProfile, { view, locale: 'ar', backLabel: 'العودة' }));
+    const markup = renderToStaticMarkup(
+      createElement(TeacherProfile, { view, locale: 'ar', backLabel: 'العودة' }),
+    );
 
     expect(markup).toContain('[overflow-wrap:anywhere]');
     expect(markup).toContain(longTitle);
@@ -130,25 +143,48 @@ describe('shared teacher visitor projection', () => {
       end_year: null,
       current: false,
     };
-    const visible = visiblePublicTeacherProfile({ ...emptyRichProfile(), qualifications: [qualification] });
+    const visible = visiblePublicTeacherProfile({
+      ...emptyRichProfile(),
+      qualifications: [qualification],
+    });
     const hidden = visiblePublicTeacherProfile({
       ...emptyRichProfile(),
       qualifications: [qualification],
       hidden_sections: ['qualifications'],
     });
     const render = (details: ReturnType<typeof visiblePublicTeacherProfile>) => {
-      const view = buildTeacherVisitorView({ teacher, details, specializations: [], groups: [], avatarUrl: null, coverUrl: null });
-      return renderToStaticMarkup(createElement(TeacherProfile, { view, locale: 'en', backLabel: 'Back' }));
+      const view = buildTeacherVisitorView({
+        teacher,
+        details,
+        specializations: [],
+        groups: [],
+        avatarUrl: null,
+        coverUrl: null,
+      });
+      return renderToStaticMarkup(
+        createElement(TeacherProfile, { view, locale: 'en', backLabel: 'Back' }),
+      );
     };
 
     expect(render(visible)).toContain('DarSak does not verify qualifications.');
     expect(render(hidden)).not.toContain('DarSak does not verify qualifications.');
   });
 
-  it('shows a localized unavailable-enrollment state when public group projections are empty',()=>{
-    const view=buildTeacherVisitorView({teacher,details:null,specializations:[],groups:[],avatarUrl:null,coverUrl:null});
-    const en=renderToStaticMarkup(createElement(TeacherProfile,{view,locale:'en',backLabel:'Back'}));
-    const ar=renderToStaticMarkup(createElement(TeacherProfile,{view,locale:'ar',backLabel:'عودة'}));
+  it('shows a localized unavailable-enrollment state when public group projections are empty', () => {
+    const view = buildTeacherVisitorView({
+      teacher,
+      details: null,
+      specializations: [],
+      groups: [],
+      avatarUrl: null,
+      coverUrl: null,
+    });
+    const en = renderToStaticMarkup(
+      createElement(TeacherProfile, { view, locale: 'en', backLabel: 'Back' }),
+    );
+    const ar = renderToStaticMarkup(
+      createElement(TeacherProfile, { view, locale: 'ar', backLabel: 'عودة' }),
+    );
     expect(en).toContain('No groups available for enrollment.');
     expect(ar).toContain('لا توجد مجموعات متاحة للتسجيل.');
     expect(en).not.toContain('View group details');

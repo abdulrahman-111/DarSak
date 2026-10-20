@@ -1,9 +1,20 @@
 import 'server-only';
 import { idSchema, type Locale } from '@/features/student/domain';
-import { teacherCatalogueChoices, type TeacherCatalogueNode, type TeacherCatalogueOffering, type TeacherCatalogueSubject } from './catalogue-data';
+import {
+  teacherCatalogueChoices,
+  type TeacherCatalogueNode,
+  type TeacherCatalogueOffering,
+  type TeacherCatalogueSubject,
+} from './catalogue-data';
 import { catalogueDisplayName } from './catalogue-domain';
 import { teacherViewer } from './data';
-import { setupCatalogueChoices, type SetupCatalogueChoice, type SetupCatalogueNode, type SetupCatalogueOffering, type SetupCatalogueSubject } from './setup-domain';
+import {
+  setupCatalogueChoices,
+  type SetupCatalogueChoice,
+  type SetupCatalogueNode,
+  type SetupCatalogueOffering,
+  type SetupCatalogueSubject,
+} from './setup-domain';
 import { scheduleProposalSlots } from './shortcuts-domain';
 
 export type GroupDetailsFormValues = {
@@ -39,18 +50,29 @@ export type SetupCatalogue = {
   choices: SetupCatalogueChoice[];
 };
 
-const errorCopy = (locale: Locale) => locale === 'ar'
-  ? 'تعذر تحميل إعدادات المجموعة أو عناصر دليلها المحفوظة. حاول مرة أخرى.'
-  : 'Could not load group setup or its saved catalogue items. Please try again.';
+const errorCopy = (locale: Locale) =>
+  locale === 'ar'
+    ? 'تعذر تحميل إعدادات المجموعة أو عناصر دليلها المحفوظة. حاول مرة أخرى.'
+    : 'Could not load group setup or its saved catalogue items. Please try again.';
 
-export async function teacherGroupSetup(locale: Locale, id?: string | null, copyScheduleFrom?: string | null) {
+export async function teacherGroupSetup(
+  locale: Locale,
+  id?: string | null,
+  copyScheduleFrom?: string | null,
+) {
   const me = await teacherViewer(locale);
   const ar = locale === 'ar';
   const empty = {
     me,
     group: null,
     values: null,
-    catalogue: { subjects: [], nodes: [], offerings: [], retained: null, choices: [] } as SetupCatalogue,
+    catalogue: {
+      subjects: [],
+      nodes: [],
+      offerings: [],
+      retained: null,
+      choices: [],
+    } as SetupCatalogue,
     slots: [] as GroupScheduleSlot[],
     scheduleProposal: null as GroupScheduleProposal | null,
     scheduleProposalError: null as string | null,
@@ -61,14 +83,25 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null, copy
   if (id && !idSchema.safeParse(id).success) {
     return { ...empty, error: ar ? 'المجموعة غير موجودة.' : 'Group not found.', notFound: true };
   }
-  const proposalId = copyScheduleFrom && idSchema.safeParse(copyScheduleFrom).success ? copyScheduleFrom : null;
+  const proposalId =
+    copyScheduleFrom && idSchema.safeParse(copyScheduleFrom).success ? copyScheduleFrom : null;
   const [choices, groupResult, sourceGroupResult] = await Promise.all([
     teacherCatalogueChoices(me.db, me.id),
     id
-      ? me.db.from('groups').select('id,teacher_id,name,description,offering_id,capacity,location,status,updated_at').eq('id', id).eq('teacher_id', me.id).maybeSingle()
+      ? me.db
+          .from('groups')
+          .select('id,teacher_id,name,description,offering_id,capacity,location,status,updated_at')
+          .eq('id', id)
+          .eq('teacher_id', me.id)
+          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
     proposalId
-      ? me.db.from('groups').select('id,name').eq('id', proposalId).eq('teacher_id', me.id).maybeSingle()
+      ? me.db
+          .from('groups')
+          .select('id,name')
+          .eq('id', proposalId)
+          .eq('teacher_id', me.id)
+          .maybeSingle()
       : Promise.resolve({ data: null, error: null }),
   ]);
 
@@ -85,31 +118,74 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null, copy
     nodes: nodes as SetupCatalogueNode[],
     offerings: offerings as SetupCatalogueOffering[],
     retained: null,
-    choices: setupCatalogueChoices(locale, nodes as SetupCatalogueNode[], subjects as SetupCatalogueSubject[], offerings as SetupCatalogueOffering[]),
+    choices: setupCatalogueChoices(
+      locale,
+      nodes as SetupCatalogueNode[],
+      subjects as SetupCatalogueSubject[],
+      offerings as SetupCatalogueOffering[],
+    ),
   };
   if (!groupResult.data) return { ...empty, catalogue };
 
   const group = groupResult.data;
-  const [savedOfferingResult, slotsResult, exclusionsResult, proposalSlotsResult] = await Promise.all([
-    me.db.from('offerings').select('id,owner_teacher_id,archived_at,node_id,subject_id').eq('id', group.offering_id).maybeSingle(),
-    me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id!).order('weekday').order('start_time'),
-    me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id!).order('local_date'),
-    proposalId && sourceGroupResult.data
-      ? me.db.from('group_schedule_slots').select('weekday,start_time,end_time').eq('group_id', proposalId).order('weekday').order('start_time')
-      : Promise.resolve({ data: null, error: null }),
-  ]);
-  if (savedOfferingResult.error || !savedOfferingResult.data) return { ...empty, error: errorCopy(locale) };
+  const [savedOfferingResult, slotsResult, exclusionsResult, proposalSlotsResult] =
+    await Promise.all([
+      me.db
+        .from('offerings')
+        .select('id,owner_teacher_id,archived_at,node_id,subject_id')
+        .eq('id', group.offering_id)
+        .maybeSingle(),
+      me.db
+        .from('group_schedule_slots')
+        .select('id,group_id,weekday,start_time,end_time,timezone')
+        .eq('group_id', id!)
+        .order('weekday')
+        .order('start_time'),
+      me.db
+        .from('group_lesson_exclusions')
+        .select('local_date')
+        .eq('group_id', id!)
+        .order('local_date'),
+      proposalId && sourceGroupResult.data
+        ? me.db
+            .from('group_schedule_slots')
+            .select('weekday,start_time,end_time')
+            .eq('group_id', proposalId)
+            .order('weekday')
+            .order('start_time')
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+  if (savedOfferingResult.error || !savedOfferingResult.data)
+    return { ...empty, error: errorCopy(locale) };
   const savedOffering = savedOfferingResult.data as TeacherCatalogueOffering;
-  if (savedOffering.owner_teacher_id !== null && savedOffering.owner_teacher_id !== me.id) return { ...empty, error: errorCopy(locale) };
+  if (savedOffering.owner_teacher_id !== null && savedOffering.owner_teacher_id !== me.id)
+    return { ...empty, error: errorCopy(locale) };
 
   const [savedSubjectResult, savedNodeResult] = await Promise.all([
-    me.db.from('subjects').select('id,owner_teacher_id,archived_at,name_ar,name_en').eq('id', savedOffering.subject_id).maybeSingle(),
-    me.db.from('education_nodes').select('id,owner_teacher_id,archived_at,parent_id,kind,name_ar,name_en').eq('id', savedOffering.node_id).maybeSingle(),
+    me.db
+      .from('subjects')
+      .select('id,owner_teacher_id,archived_at,name_ar,name_en')
+      .eq('id', savedOffering.subject_id)
+      .maybeSingle(),
+    me.db
+      .from('education_nodes')
+      .select('id,owner_teacher_id,archived_at,parent_id,kind,name_ar,name_en')
+      .eq('id', savedOffering.node_id)
+      .maybeSingle(),
   ]);
-  if (savedSubjectResult.error || savedNodeResult.error || !savedSubjectResult.data || !savedNodeResult.data) return { ...empty, error: errorCopy(locale) };
+  if (
+    savedSubjectResult.error ||
+    savedNodeResult.error ||
+    !savedSubjectResult.data ||
+    !savedNodeResult.data
+  )
+    return { ...empty, error: errorCopy(locale) };
   const savedSubject = savedSubjectResult.data as TeacherCatalogueSubject;
   const savedNode = savedNodeResult.data as TeacherCatalogueNode;
-  if ((savedSubject.owner_teacher_id !== null && savedSubject.owner_teacher_id !== me.id) || (savedNode.owner_teacher_id !== null && savedNode.owner_teacher_id !== me.id)) {
+  if (
+    (savedSubject.owner_teacher_id !== null && savedSubject.owner_teacher_id !== me.id) ||
+    (savedNode.owner_teacher_id !== null && savedNode.owner_teacher_id !== me.id)
+  ) {
     return { ...empty, error: errorCopy(locale) };
   }
 
@@ -135,25 +211,41 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null, copy
     context,
     label: `${subjectLabel} · ${context}`,
   };
-  if (!catalogue.subjects.some(row => row.id === savedSubject.id)) catalogue.subjects.push(savedSubject);
+  if (!catalogue.subjects.some(row => row.id === savedSubject.id))
+    catalogue.subjects.push(savedSubject);
   if (!catalogue.nodes.some(row => row.id === savedNode.id)) catalogue.nodes.push(savedNode);
   catalogue.retained = retained;
-  catalogue.choices = setupCatalogueChoices(locale, catalogue.nodes, catalogue.subjects, catalogue.offerings);
-  if (!catalogue.choices.some(choice => choice.id === retained.id)) catalogue.choices.push(retained);
-  if (slotsResult.error || exclusionsResult.error) return { ...empty, catalogue, error: errorCopy(locale) };
+  catalogue.choices = setupCatalogueChoices(
+    locale,
+    catalogue.nodes,
+    catalogue.subjects,
+    catalogue.offerings,
+  );
+  if (!catalogue.choices.some(choice => choice.id === retained.id))
+    catalogue.choices.push(retained);
+  if (slotsResult.error || exclusionsResult.error)
+    return { ...empty, catalogue, error: errorCopy(locale) };
 
   const scheduleProposalError = copyScheduleFrom
-    ? !proposalId || sourceGroupResult.error || !sourceGroupResult.data || proposalSlotsResult?.error
-      ? ar ? 'تعذر تحميل الجدول المقترح من هذه المجموعة.' : 'Could not load a schedule proposal from that group.'
+    ? !proposalId ||
+      sourceGroupResult.error ||
+      !sourceGroupResult.data ||
+      proposalSlotsResult?.error
+      ? ar
+        ? 'تعذر تحميل الجدول المقترح من هذه المجموعة.'
+        : 'Could not load a schedule proposal from that group.'
       : null
     : null;
-  const scheduleProposal = proposalId && sourceGroupResult.data && !proposalSlotsResult?.error
-    ? {
-      sourceId: proposalId,
-      sourceName: sourceGroupResult.data.name,
-      slots: scheduleProposalSlots((proposalSlotsResult?.data ?? []) as GroupScheduleProposal['slots']),
-    }
-    : null;
+  const scheduleProposal =
+    proposalId && sourceGroupResult.data && !proposalSlotsResult?.error
+      ? {
+          sourceId: proposalId,
+          sourceName: sourceGroupResult.data.name,
+          slots: scheduleProposalSlots(
+            (proposalSlotsResult?.data ?? []) as GroupScheduleProposal['slots'],
+          ),
+        }
+      : null;
   const values: GroupDetailsFormValues = {
     name: group.name,
     description: group.description ?? '',

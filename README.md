@@ -30,6 +30,7 @@ Open [http://localhost:3000](http://localhost:3000). Keep server-only credential
 - `npm run build` creates a production build.
 - `npm run start` serves the production build locally.
 - `npm run lint` runs ESLint.
+- `npm run format` formats the code with Prettier; `npm run format:check` (run in CI) fails on unformatted files.
 - `npm run typecheck` checks TypeScript types.
 - `npm test` runs the Vitest suite.
 

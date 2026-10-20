@@ -13,10 +13,28 @@ export function validTimetableDate(value: unknown): value is string {
 function dateAtCairoMidnight(date: string): Date {
   const target = Date.parse(`${date}T00:00:00Z`);
   let guess = target;
-  const formatter = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23' });
+  const formatter = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hourCycle: 'h23',
+  });
   for (let i = 0; i < 3; i++) {
-    const parts = Object.fromEntries(formatter.formatToParts(new Date(guess)).map(part => [part.type, part.value]));
-    const localAsUtc = Date.UTC(Number(parts.year), Number(parts.month) - 1, Number(parts.day), Number(parts.hour), Number(parts.minute), Number(parts.second));
+    const parts = Object.fromEntries(
+      formatter.formatToParts(new Date(guess)).map(part => [part.type, part.value]),
+    );
+    const localAsUtc = Date.UTC(
+      Number(parts.year),
+      Number(parts.month) - 1,
+      Number(parts.day),
+      Number(parts.hour),
+      Number(parts.minute),
+      Number(parts.second),
+    );
     guess += target - localAsUtc;
   }
   return new Date(guess);
@@ -28,7 +46,12 @@ export function cairoWeekBounds(date: string) {
   base.setUTCDate(base.getUTCDate() - weekday);
   const startDate = base.toISOString().slice(0, 10);
   const endDate = new Date(base.getTime() + 7 * DAY_MS).toISOString().slice(0, 10);
-  return { startDate, endDate, start: dateAtCairoMidnight(startDate), end: dateAtCairoMidnight(endDate) };
+  return {
+    startDate,
+    endDate,
+    start: dateAtCairoMidnight(startDate),
+    end: dateAtCairoMidnight(endDate),
+  };
 }
 
 export function cairoDayBounds(date: string) {
@@ -43,9 +66,16 @@ export function normalizeTimetableWeek(input: unknown, now = new Date()) {
   const parsed = validTimetableDate(input) ? input : today;
   const week = cairoWeekBounds(parsed);
   const todayWeek = cairoWeekBounds(today);
-  const distance = Math.abs(Date.parse(`${week.startDate}T00:00:00Z`) - Date.parse(`${todayWeek.startDate}T00:00:00Z`));
+  const distance = Math.abs(
+    Date.parse(`${week.startDate}T00:00:00Z`) - Date.parse(`${todayWeek.startDate}T00:00:00Z`),
+  );
   const selected = distance <= 370 * DAY_MS ? week : todayWeek;
-  return { ...selected, today, weekStart: selected.startDate, isCurrentWeek: selected.startDate === todayWeek.startDate };
+  return {
+    ...selected,
+    today,
+    weekStart: selected.startDate,
+    isCurrentWeek: selected.startDate === todayWeek.startDate,
+  };
 }
 
 export function timetableDayDates(weekStart: string) {
@@ -58,7 +88,10 @@ export function timetableDayDates(weekStart: string) {
 
 export function normalizeTimetableSelection(weekStart: string, day: unknown, group: unknown) {
   const days = timetableDayDates(weekStart).map(item => item.date);
-  return { day: typeof day === 'string' && days.includes(day) ? day : null, group: typeof group === 'string' && UUID_RE.test(group) ? group : null };
+  return {
+    day: typeof day === 'string' && days.includes(day) ? day : null,
+    group: typeof group === 'string' && UUID_RE.test(group) ? group : null,
+  };
 }
 
 export function shiftTimetableWeek(weekStart: string, amount: number) {

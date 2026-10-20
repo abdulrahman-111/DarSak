@@ -1,7 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { createClientMock, afterMock, revalidatePathMock, flushMock } = vi.hoisted(() => ({
-  createClientMock: vi.fn(), afterMock: vi.fn(), revalidatePathMock: vi.fn(), flushMock: vi.fn(),
+  createClientMock: vi.fn(),
+  afterMock: vi.fn(),
+  revalidatePathMock: vi.fn(),
+  flushMock: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/server', () => ({ after: afterMock }));
@@ -15,8 +18,16 @@ const requestId = '11111111-1111-4111-8111-111111111111';
 function setup(error: { code?: string; message: string } | null = null) {
   const rpc = vi.fn(async () => ({ data: null, error }));
   createClientMock.mockResolvedValue({
-    auth: { getUser: async () => ({ data: { user: { id: '22222222-2222-4222-8222-222222222222' } } }) },
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role: 'admin', status: 'active' }, error: null }) }) }) }),
+    auth: {
+      getUser: async () => ({ data: { user: { id: '22222222-2222-4222-8222-222222222222' } } }),
+    },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: { role: 'admin', status: 'active' }, error: null }),
+        }),
+      }),
+    }),
     rpc,
   });
   return rpc;
@@ -28,7 +39,12 @@ function form(decision: string) {
   return data;
 }
 
-beforeEach(() => { createClientMock.mockReset(); afterMock.mockReset(); revalidatePathMock.mockReset(); flushMock.mockReset(); });
+beforeEach(() => {
+  createClientMock.mockReset();
+  afterMock.mockReset();
+  revalidatePathMock.mockReset();
+  flushMock.mockReset();
+});
 
 describe('monthly teacher access decisions', () => {
   it('maps a stale opposing decision to refresh feedback without success effects', async () => {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { clampTeacherPage, normalizeTeacherPage, teacherPageOffset, TEACHER_PAGE_SIZE } from '@/features/teacher/enrollment-pagination';
+import {
+  clampTeacherPage,
+  normalizeTeacherPage,
+  teacherPageOffset,
+  TEACHER_PAGE_SIZE,
+} from '@/features/teacher/enrollment-pagination';
 
 describe('teacher enrollment paging', () => {
   it('normalizes malformed query values and clamps requests to count and Postgres int bounds', () => {

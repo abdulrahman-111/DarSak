@@ -6,13 +6,18 @@ vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer }));
 
 import { GET } from '@/app/api/calendar/route';
 
-const request = (query = 'from=2026-01-01&until=2026-01-31&locale=en') => new NextRequest(`https://dars.example/api/calendar?${query}`);
+const request = (query = 'from=2026-01-01&until=2026-01-31&locale=en') =>
+  new NextRequest(`https://dars.example/api/calendar?${query}`);
 
 describe('calendar route', () => {
   const rpc = vi.fn();
   beforeEach(() => {
     rpc.mockReset().mockResolvedValue({ data: { total: 0, rows: [] }, error: null });
-    getRequestViewer.mockReset().mockResolvedValue({ db: { rpc }, user: { id: 'user' }, profile: { role: 'student', status: 'active' } });
+    getRequestViewer.mockReset().mockResolvedValue({
+      db: { rpc },
+      user: { id: 'user' },
+      profile: { role: 'student', status: 'active' },
+    });
   });
 
   it('returns a private attachment for active viewers', async () => {
@@ -20,8 +25,13 @@ describe('calendar route', () => {
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('private, no-store');
     expect(response.headers.get('content-type')).toBe('text/calendar; charset=utf-8');
-    expect(response.headers.get('content-disposition')).toContain('attachment; filename="dars-lessons-2026-01-01-to-2026-01-31.ics"');
-    expect(rpc).toHaveBeenCalledWith('calendar_lesson_export', { p_from: '2026-01-01', p_until: '2026-01-31' });
+    expect(response.headers.get('content-disposition')).toContain(
+      'attachment; filename="dars-lessons-2026-01-01-to-2026-01-31.ics"',
+    );
+    expect(rpc).toHaveBeenCalledWith('calendar_lesson_export', {
+      p_from: '2026-01-01',
+      p_until: '2026-01-31',
+    });
   });
 
   it('returns private 401/403 responses for missing, inactive, or disallowed viewers', async () => {
@@ -30,22 +40,42 @@ describe('calendar route', () => {
     expect(unauthenticated.status).toBe(401);
     expect(unauthenticated.headers.get('cache-control')).toBe('private, no-store');
 
-    getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: { id: 'user' }, profile: { role: 'student', status: 'inactive' } });
+    getRequestViewer.mockResolvedValueOnce({
+      db: { rpc },
+      user: { id: 'user' },
+      profile: { role: 'student', status: 'inactive' },
+    });
     expect((await GET(request())).status).toBe(403);
-    getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: { id: 'user' }, profile: { role: 'admin', status: 'active' } });
+    getRequestViewer.mockResolvedValueOnce({
+      db: { rpc },
+      user: { id: 'user' },
+      profile: { role: 'admin', status: 'active' },
+    });
     expect((await GET(request())).status).toBe(403);
     expect(rpc).not.toHaveBeenCalled();
   });
 
   it('maps the exact expired-teacher RPC denial to private 403 while student export remains intact', async () => {
-    getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: { id: 'teacher' }, profile: { role: 'teacher', status: 'active' } });
-    rpc.mockResolvedValueOnce({ data: null, error: { code: '42501', message: 'teacher teaching access expired' } });
-    const expired=await GET(request());
-    expect(expired.status).toBe(403);expect(expired.headers.get('cache-control')).toBe('private, no-store');
-    expect(await expired.json()).toEqual({error:'teaching_access_expired'});
-    getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: { id: 'student' }, profile: { role: 'student', status: 'active' } });
-    rpc.mockResolvedValueOnce({data:{total:0,rows:[]},error:null});
-    expect(await GET(request()).then(r=>r.status)).toBe(200);
+    getRequestViewer.mockResolvedValueOnce({
+      db: { rpc },
+      user: { id: 'teacher' },
+      profile: { role: 'teacher', status: 'active' },
+    });
+    rpc.mockResolvedValueOnce({
+      data: null,
+      error: { code: '42501', message: 'teacher teaching access expired' },
+    });
+    const expired = await GET(request());
+    expect(expired.status).toBe(403);
+    expect(expired.headers.get('cache-control')).toBe('private, no-store');
+    expect(await expired.json()).toEqual({ error: 'teaching_access_expired' });
+    getRequestViewer.mockResolvedValueOnce({
+      db: { rpc },
+      user: { id: 'student' },
+      profile: { role: 'student', status: 'active' },
+    });
+    rpc.mockResolvedValueOnce({ data: { total: 0, rows: [] }, error: null });
+    expect(await GET(request()).then(r => r.status)).toBe(200);
   });
 
   it('rejects invalid and oversized ranges and hides RPC errors', async () => {

@@ -1,7 +1,10 @@
 import type { Locale } from '@/features/student/domain';
 
 /** Convert known quota guard failures into actionable, localized messages. */
-export function quotaErrorMessage(locale: Locale, rawError: string | null | undefined): string | null {
+export function quotaErrorMessage(
+  locale: Locale,
+  rawError: string | null | undefined,
+): string | null {
   const error = (rawError ?? '').toLowerCase();
   const ar = locale === 'ar';
   if (error.includes('teacher group quota reached')) {

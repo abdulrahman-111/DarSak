@@ -9,7 +9,23 @@ import { saveTeacherApplication } from '@/features/teacher/application-actions';
 const teacherId = '10000000-0000-4000-8000-000000000001';
 const timestamp = '2026-10-16T12:00:00.000Z';
 function application(updatedAt = timestamp) {
-  return { teacher_id: teacherId, status: 'draft', teaching_years: null, admin_phone: '', cv_path: null, cv_url: null, supporting_links: [], attested: false, snapshot: null, feedback: null, submitted_at: null, reviewed_at: null, reviewed_by: null, updated_at: updatedAt, legacy_approved: false };
+  return {
+    teacher_id: teacherId,
+    status: 'draft',
+    teaching_years: null,
+    admin_phone: '',
+    cv_path: null,
+    cv_url: null,
+    supporting_links: [],
+    attested: false,
+    snapshot: null,
+    feedback: null,
+    submitted_at: null,
+    reviewed_at: null,
+    reviewed_by: null,
+    updated_at: updatedAt,
+    legacy_approved: false,
+  };
 }
 function form(intent = 'draft') {
   const data = new FormData();
@@ -25,12 +41,29 @@ function form(intent = 'draft') {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  rpc.mockImplementation(async (name: string) => name === 'read_teacher_application'
-    ? { data: { application: application(), missing: ['teaching_years', 'admin_phone', 'attestation'] }, error: null }
-    : { data: { application: application('2026-10-16T12:01:00.000Z'), missing: [] }, error: null });
+  rpc.mockImplementation(async (name: string) =>
+    name === 'read_teacher_application'
+      ? {
+          data: {
+            application: application(),
+            missing: ['teaching_years', 'admin_phone', 'attestation'],
+          },
+          error: null,
+        }
+      : {
+          data: { application: application('2026-10-16T12:01:00.000Z'), missing: [] },
+          error: null,
+        },
+  );
   createClient.mockResolvedValue({
     auth: { getUser: async () => ({ data: { user: { id: teacherId } }, error: null }) },
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }) }) }) }),
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }),
+        }),
+      }),
+    }),
     rpc,
     storage: { from: () => ({}) },
   });
@@ -40,7 +73,14 @@ describe('saveTeacherApplication', () => {
   it('allows a truly incomplete draft and passes null years and phone through to the save RPC', async () => {
     const result = await saveTeacherApplication('en', null, form());
     expect(result?.success).toBe('Draft saved.');
-    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_teaching_years: null, p_admin_phone: '', p_expected_updated_at: timestamp }));
+    expect(rpc).toHaveBeenCalledWith(
+      'save_teacher_application',
+      expect.objectContaining({
+        p_teaching_years: null,
+        p_admin_phone: '',
+        p_expected_updated_at: timestamp,
+      }),
+    );
     expect(rpc).not.toHaveBeenCalledWith('submit_teacher_application', expect.anything());
   });
 
@@ -69,27 +109,58 @@ describe('saveTeacherApplication', () => {
 
   it('accepts submission without a CV link and never uploads files', async () => {
     const data = form();
-    data.set('teaching_years', '2'); data.set('admin_phone', '1234567'); data.set('attested', 'on'); data.set('teacher_rules', 'on'); data.set('intent', 'submit');
+    data.set('teaching_years', '2');
+    data.set('admin_phone', '1234567');
+    data.set('attested', 'on');
+    data.set('teacher_rules', 'on');
+    data.set('intent', 'submit');
     const result = await saveTeacherApplication('en', null, data);
     expect(result?.success).toBe('Your application was submitted for review.');
-    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_url: null }));
-    expect(rpc).toHaveBeenCalledWith('submit_teacher_application_with_rules', expect.objectContaining({ p_rules_version: '2026-10-18' }));
+    expect(rpc).toHaveBeenCalledWith(
+      'save_teacher_application',
+      expect.objectContaining({ p_cv_url: null }),
+    );
+    expect(rpc).toHaveBeenCalledWith(
+      'submit_teacher_application_with_rules',
+      expect.objectContaining({ p_rules_version: '2026-10-18' }),
+    );
     expect(rpc).not.toHaveBeenCalledWith('submit_teacher_application', expect.anything());
   });
 
   it('requires separate teacher rules acceptance before saving or submitting the application', async () => {
     const data = form('submit');
-    data.set('teaching_years', '2'); data.set('admin_phone', '1234567'); data.set('attested', 'on');
+    data.set('teaching_years', '2');
+    data.set('admin_phone', '1234567');
+    data.set('attested', 'on');
     const result = await saveTeacherApplication('en', null, data);
     expect(result?.fieldErrors).toEqual({ teacher_rules: 'required' });
-    expect(result?.values).toMatchObject({ teachingYears: '2', adminPhone: '1234567', attested: true, teacherRulesAccepted: false });
+    expect(result?.values).toMatchObject({
+      teachingYears: '2',
+      adminPhone: '1234567',
+      attested: true,
+      teacherRulesAccepted: false,
+    });
     expect(rpc).not.toHaveBeenCalled();
   });
 
   it('maps a stale compare-and-set save to a clear message and never submits', async () => {
-    rpc.mockImplementation(async (name: string) => name === 'read_teacher_application'
-      ? { data: { application: { ...application(), teaching_years: 2, admin_phone: '1234567', cv_path: `${teacherId}/existing.pdf`, attested: true }, missing: [] }, error: null }
-      : { data: null, error: { code: 'PT409', message: 'internal version mismatch' } });
+    rpc.mockImplementation(async (name: string) =>
+      name === 'read_teacher_application'
+        ? {
+            data: {
+              application: {
+                ...application(),
+                teaching_years: 2,
+                admin_phone: '1234567',
+                cv_path: `${teacherId}/existing.pdf`,
+                attested: true,
+              },
+              missing: [],
+            },
+            error: null,
+          }
+        : { data: null, error: { code: 'PT409', message: 'internal version mismatch' } },
+    );
     const data = form('submit');
     data.set('teaching_years', '2');
     data.set('admin_phone', '1234567');
@@ -102,28 +173,61 @@ describe('saveTeacherApplication', () => {
   });
 
   it('rejects non-Drive CV links and accepts a valid Drive link', async () => {
-    const invalid = form(); invalid.set('cv_url', 'https://drive.google.com.evil.test/file/d/abc');
-    expect((await saveTeacherApplication('en', null, invalid))?.fieldErrors).toEqual({ cv_url: 'invalid' });
-    const valid = form(); valid.set('cv_url', 'https://drive.google.com/file/d/abc/view');
+    const invalid = form();
+    invalid.set('cv_url', 'https://drive.google.com.evil.test/file/d/abc');
+    expect((await saveTeacherApplication('en', null, invalid))?.fieldErrors).toEqual({
+      cv_url: 'invalid',
+    });
+    const valid = form();
+    valid.set('cv_url', 'https://drive.google.com/file/d/abc/view');
     const result = await saveTeacherApplication('en', null, valid);
     expect(result?.success).toBe('Draft saved.');
-    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_url: 'https://drive.google.com/file/d/abc/view' }));
+    expect(rpc).toHaveBeenCalledWith(
+      'save_teacher_application',
+      expect.objectContaining({ p_cv_url: 'https://drive.google.com/file/d/abc/view' }),
+    );
   });
 
   it('preserves legacy CV metadata when saving without a new link', async () => {
     let saveCalls = 0;
     rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => {
-      if (name === 'read_teacher_application') return { data: { application: application(), missing: [] }, error: null };
+      if (name === 'read_teacher_application')
+        return { data: { application: application(), missing: [] }, error: null };
       saveCalls += 1;
-      if (saveCalls === 1) return { data: null, error: { code: 'XX000', message: 'internal write issue' } };
-      return { data: { application: { ...application('2026-10-16T12:01:00.000Z'), cv_path: args?.p_cv_path as string }, missing: [] }, error: null };
+      if (saveCalls === 1)
+        return { data: null, error: { code: 'XX000', message: 'internal write issue' } };
+      return {
+        data: {
+          application: {
+            ...application('2026-10-16T12:01:00.000Z'),
+            cv_path: args?.p_cv_path as string,
+          },
+          missing: [],
+        },
+        error: null,
+      };
     });
     const legacy = `${teacherId}/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf`;
-    rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) => name === 'read_teacher_application'
-      ? { data: { application: { ...application(), cv_path: legacy }, missing: [] }, error: null }
-      : { data: { application: { ...application('2026-10-16T12:01:00.000Z'), cv_path: args?.p_cv_path as string, cv_url: null }, missing: [] }, error: null });
+    rpc.mockImplementation(async (name: string, args?: Record<string, unknown>) =>
+      name === 'read_teacher_application'
+        ? { data: { application: { ...application(), cv_path: legacy }, missing: [] }, error: null }
+        : {
+            data: {
+              application: {
+                ...application('2026-10-16T12:01:00.000Z'),
+                cv_path: args?.p_cv_path as string,
+                cv_url: null,
+              },
+              missing: [],
+            },
+            error: null,
+          },
+    );
     const saved = await saveTeacherApplication('en', null, form());
     expect(saved?.success).toBe('Draft saved.');
-    expect(rpc).toHaveBeenCalledWith('save_teacher_application', expect.objectContaining({ p_cv_path: legacy, p_cv_url: null }));
+    expect(rpc).toHaveBeenCalledWith(
+      'save_teacher_application',
+      expect.objectContaining({ p_cv_path: legacy, p_cv_url: null }),
+    );
   });
 });

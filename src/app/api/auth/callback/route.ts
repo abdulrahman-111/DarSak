@@ -10,9 +10,20 @@ import { safeAuthNext } from '@/features/auth/return-path';
 import { resolveSetupDestination } from '@/features/setup/destination';
 import { callDeletionEdge } from '@/features/account/edge';
 import { googleReauthHint } from '@/features/account/google-hint';
-import { issueRecoveryProof, PASSWORD_RECOVERY_COOKIE, PASSWORD_RECOVERY_TTL_SECONDS } from '@/features/auth/recovery-proof';
+import {
+  issueRecoveryProof,
+  PASSWORD_RECOVERY_COOKIE,
+  PASSWORD_RECOVERY_TTL_SECONDS,
+} from '@/features/auth/recovery-proof';
 
-const OTP_TYPES: readonly EmailOtpType[] = ['signup', 'invite', 'magiclink', 'recovery', 'email_change', 'email'];
+const OTP_TYPES: readonly EmailOtpType[] = [
+  'signup',
+  'invite',
+  'magiclink',
+  'recovery',
+  'email_change',
+  'email',
+];
 export const maxDuration = 40;
 
 /** Finish PKCE / email-link auth, then send the user to a sanitized `next` path. */
@@ -36,15 +47,26 @@ export async function GET(request: NextRequest) {
   let setupError = false;
   let profileReadFailure = false;
   const setupTargetForUser = async (userId: string): Promise<string | null> => {
-    const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', userId).maybeSingle();
-    if (profileError) { profileReadFailure = true; return null; }
-    if (profile?.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher')) return null;
+    const { data: profile, error: profileError } = await db
+      .from('profiles')
+      .select('role,status')
+      .eq('id', userId)
+      .maybeSingle();
+    if (profileError) {
+      profileReadFailure = true;
+      return null;
+    }
+    if (profile?.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher'))
+      return null;
     return resolveSetupDestination(db, userId, profile.role, locale, destination);
   };
   if (code) {
     const exchange = await db.auth.exchangeCodeForSession(code);
     error = exchange.error;
-    recoveryFlow = !error && (exchange.data as typeof exchange.data & { redirectType?: string } | null)?.redirectType === 'recovery';
+    recoveryFlow =
+      !error &&
+      (exchange.data as (typeof exchange.data & { redirectType?: string }) | null)?.redirectType ===
+        'recovery';
     const deletionIntent = params.get('delete_intent');
     if (deletionIntent && destination !== `/${locale}/reset-password`) {
       const jar = await cookies();
@@ -52,40 +74,104 @@ export async function GET(request: NextRequest) {
       const nonce = jar.get('dars-delete-nonce')?.value;
       const cookieOwner = jar.get('dars-delete-owner')?.value;
       const fail = () => {
-        jar.delete('dars-delete-intent'); jar.delete('dars-delete-nonce'); jar.delete('dars-delete-owner'); jar.delete('dars-delete-google-ready');
-        const response = NextResponse.redirect(new URL(`/${locale}/account/delete?error=reauth`, request.nextUrl.origin));
-        response.headers.set('Cache-Control', 'private, no-store'); return response;
+        jar.delete('dars-delete-intent');
+        jar.delete('dars-delete-nonce');
+        jar.delete('dars-delete-owner');
+        jar.delete('dars-delete-google-ready');
+        const response = NextResponse.redirect(
+          new URL(`/${locale}/account/delete?error=reauth`, request.nextUrl.origin),
+        );
+        response.headers.set('Cache-Control', 'private, no-store');
+        return response;
       };
-      if (error || !cookieIntent || cookieIntent !== deletionIntent || !nonce || !cookieOwner) return fail();
-      const [{ data: identity, error: identityError }, { data: session }] = await Promise.all([db.auth.getUser(), db.auth.getSession()]);
-      if (identityError || !identity.user || identity.user.id !== cookieOwner || !identity.user.identities?.some(identity => identity.provider === 'google') || !session.session || session.session.user.id !== identity.user.id) return fail();
-      const proof = await callDeletionEdge(session.session.access_token, { operation: 'complete_google_reauth', intent_id: deletionIntent, nonce });
+      if (error || !cookieIntent || cookieIntent !== deletionIntent || !nonce || !cookieOwner)
+        return fail();
+      const [{ data: identity, error: identityError }, { data: session }] = await Promise.all([
+        db.auth.getUser(),
+        db.auth.getSession(),
+      ]);
+      if (
+        identityError ||
+        !identity.user ||
+        identity.user.id !== cookieOwner ||
+        !identity.user.identities?.some(identity => identity.provider === 'google') ||
+        !session.session ||
+        session.session.user.id !== identity.user.id
+      )
+        return fail();
+      const proof = await callDeletionEdge(session.session.access_token, {
+        operation: 'complete_google_reauth',
+        intent_id: deletionIntent,
+        nonce,
+      });
       if (proof.error || !proof.data) return fail();
-      const response = NextResponse.redirect(new URL(`/${locale}/account/delete`, request.nextUrl.origin));
-      response.cookies.set('dars-delete-google-ready', googleReauthHint(deletionIntent, cookieOwner), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: 300 });
-      response.headers.set('Cache-Control', 'private, no-store'); return response;
+      const response = NextResponse.redirect(
+        new URL(`/${locale}/account/delete`, request.nextUrl.origin),
+      );
+      response.cookies.set(
+        'dars-delete-google-ready',
+        googleReauthHint(deletionIntent, cookieOwner),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          path: '/',
+          maxAge: 300,
+        },
+      );
+      response.headers.set('Cache-Control', 'private, no-store');
+      return response;
     }
     if (!error && destination !== `/${locale}/reset-password`) {
       const googleRole = params.get('google_role');
-      if (params.has('google_role') && googleRole !== 'student' && googleRole !== 'teacher') setupError = true;
+      if (params.has('google_role') && googleRole !== 'student' && googleRole !== 'teacher')
+        setupError = true;
       else if (googleRole === 'student' || googleRole === 'teacher') {
         const { data: verified, error: verifyError } = await db.auth.getUser();
-        if (verifyError || !verified.user?.identities?.some(identity => identity.provider === 'google')) setupError = true;
+        if (
+          verifyError ||
+          !verified.user?.identities?.some(identity => identity.provider === 'google')
+        )
+          setupError = true;
         else {
-          const completion = await observeOperation('google_setup',locale,()=>db.rpc('complete_google_signup', { p_role: googleRole }));
+          const completion = await observeOperation('google_setup', locale, () =>
+            db.rpc('complete_google_signup', { p_role: googleRole }),
+          );
           const completedRole = completion.data;
-          setupError = !!completion.error || !['student', 'teacher', 'admin'].includes(completedRole);
-          if (!setupError && completedRole === 'teacher') after(async()=>{try{await flushEmailOutbox(1);}catch{/* Transactional outbox recovery handles delivery. */}});
+          setupError =
+            !!completion.error || !['student', 'teacher', 'admin'].includes(completedRole);
+          if (!setupError && completedRole === 'teacher')
+            after(async () => {
+              try {
+                await flushEmailOutbox(1);
+              } catch {
+                /* Transactional outbox recovery handles delivery. */
+              }
+            });
           if (!setupError && completedRole !== googleRole) {
-            const mismatch = new URL(`/${locale}/login?error=role-mismatch`, request.nextUrl.origin);
-            if (completedRole === 'student' || completedRole === 'teacher' || completedRole === 'admin') mismatch.searchParams.set('actual', completedRole);
+            const mismatch = new URL(
+              `/${locale}/login?error=role-mismatch`,
+              request.nextUrl.origin,
+            );
+            if (
+              completedRole === 'student' ||
+              completedRole === 'teacher' ||
+              completedRole === 'admin'
+            )
+              mismatch.searchParams.set('actual', completedRole);
             mismatch.searchParams.set('requested', googleRole);
             const response = NextResponse.redirect(mismatch);
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
           }
           if (!setupError && (completedRole === 'student' || completedRole === 'teacher')) {
-            const target = await resolveSetupDestination(db, verified.user.id, completedRole, locale, destination);
+            const target = await resolveSetupDestination(
+              db,
+              verified.user.id,
+              completedRole,
+              locale,
+              destination,
+            );
             const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
@@ -95,14 +181,29 @@ export async function GET(request: NextRequest) {
         const { data: authData, error: authError } = await db.auth.getUser();
         const user = authData.user;
         if (!authError && user?.identities?.some(identity => identity.provider === 'google')) {
-          const { data: profile, error: profileError } = await db.from('profiles').select('role,status').eq('id', user.id).maybeSingle();
+          const { data: profile, error: profileError } = await db
+            .from('profiles')
+            .select('role,status')
+            .eq('id', user.id)
+            .maybeSingle();
           if (profileError) profileReadFailure = true;
           else if (!profile) {
-            const response = NextResponse.redirect(new URL(`/${locale}/choose-role`, request.nextUrl.origin));
+            const response = NextResponse.redirect(
+              new URL(`/${locale}/choose-role`, request.nextUrl.origin),
+            );
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
-          } else if (profile.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
-            const target = await resolveSetupDestination(db, user.id, profile.role, locale, destination);
+          } else if (
+            profile.status === 'active' &&
+            (profile.role === 'student' || profile.role === 'teacher')
+          ) {
+            const target = await resolveSetupDestination(
+              db,
+              user.id,
+              profile.role,
+              locale,
+              destination,
+            );
             const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
             response.headers.set('Cache-Control', 'private, no-store');
             return response;
@@ -113,7 +214,13 @@ export async function GET(request: NextRequest) {
     // Older email confirmation callbacks still authenticate users successfully.
     // Route active student/teacher accounts through the same setup resolver;
     // password recovery and deletion reauthentication have already exited above.
-    if (!error && !setupError && params.get('type') !== 'recovery' && destination !== `/${locale}/reset-password` && !params.has('delete_intent')) {
+    if (
+      !error &&
+      !setupError &&
+      params.get('type') !== 'recovery' &&
+      destination !== `/${locale}/reset-password` &&
+      !params.has('delete_intent')
+    ) {
       const { data: authData, error: authError } = await db.auth.getUser();
       const user = authData.user;
       if (!authError && user) {
@@ -125,31 +232,52 @@ export async function GET(request: NextRequest) {
         }
       }
     }
-  }
-  else if (tokenHash && type && OTP_TYPES.includes(type)) {
+  } else if (tokenHash && type && OTP_TYPES.includes(type)) {
     const verified = await db.auth.verifyOtp({ type, token_hash: tokenHash });
     error = verified.error;
     recoveryFlow = !error && type === 'recovery';
   }
 
   if (!error && recoveryFlow) {
-      const [{ data: { user }, error: userError }, { data: claimsData, error: claimsError }] = await Promise.all([
-        db.auth.getUser(), db.auth.getClaims(),
-      ]);
-      const claims = claimsData?.claims;
-      const sessionId = claims?.session_id;
-      const proof = recoveryFlow && !userError && !claimsError && user && claims?.sub === user.id && typeof sessionId === 'string'
+    const [
+      {
+        data: { user },
+        error: userError,
+      },
+      { data: claimsData, error: claimsError },
+    ] = await Promise.all([db.auth.getUser(), db.auth.getClaims()]);
+    const claims = claimsData?.claims;
+    const sessionId = claims?.session_id;
+    const proof =
+      recoveryFlow &&
+      !userError &&
+      !claimsError &&
+      user &&
+      claims?.sub === user.id &&
+      typeof sessionId === 'string'
         ? issueRecoveryProof(user.id, sessionId)
         : null;
-      const jar = await cookies();
-      if (proof) {
-        jar.set(PASSWORD_RECOVERY_COOKIE, proof, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/', maxAge: PASSWORD_RECOVERY_TTL_SECONDS });
-      } else jar.delete(PASSWORD_RECOVERY_COOKIE);
+    const jar = await cookies();
+    if (proof) {
+      jar.set(PASSWORD_RECOVERY_COOKIE, proof, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: PASSWORD_RECOVERY_TTL_SECONDS,
+      });
+    } else jar.delete(PASSWORD_RECOVERY_COOKIE);
   }
 
   // The legacy confirmation template may deliver token_hash URLs instead of PKCE codes.
   // Signup/email confirmations use the same setup resolver as the code path.
-  if (!error && tokenHash && (type === 'signup' || type === 'email') && destination !== `/${locale}/reset-password` && !params.has('delete_intent')) {
+  if (
+    !error &&
+    tokenHash &&
+    (type === 'signup' || type === 'email') &&
+    destination !== `/${locale}/reset-password` &&
+    !params.has('delete_intent')
+  ) {
     const { data: authData, error: authError } = await db.auth.getUser();
     const user = authData.user;
     if (!authError && user) {
@@ -165,10 +293,19 @@ export async function GET(request: NextRequest) {
   const setupFailure = new URL(`/${locale}/login?error=setup`, request.nextUrl.origin);
   if (setupError) {
     const googleRole = params.get('google_role');
-    if (googleRole === 'student' || googleRole === 'teacher') setupFailure.searchParams.set('google_role', googleRole);
+    if (googleRole === 'student' || googleRole === 'teacher')
+      setupFailure.searchParams.set('google_role', googleRole);
   }
   const profileFailure = new URL(`/${locale}/account/setup?load=error`, request.nextUrl.origin);
-  const response = NextResponse.redirect(error ? failure : profileReadFailure ? profileFailure : setupError ? setupFailure : new URL(destination, request.nextUrl.origin));
+  const response = NextResponse.redirect(
+    error
+      ? failure
+      : profileReadFailure
+        ? profileFailure
+        : setupError
+          ? setupFailure
+          : new URL(destination, request.nextUrl.origin),
+  );
   response.headers.set('Cache-Control', 'private, no-store');
   return response;
 }

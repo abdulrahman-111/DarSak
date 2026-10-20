@@ -7,17 +7,18 @@ export function isScheduleOverlap(value: unknown): value is StudentScheduleOverl
 }
 
 export function normalizeScheduleOverlap(value: unknown): StudentScheduleOverlap | null {
-  const row = Array.isArray(value) ? value.length === 1 ? value[0] : null : value;
+  const row = Array.isArray(value) ? (value.length === 1 ? value[0] : null) : value;
   return isScheduleOverlap(row) ? row : null;
 }
 
 export function scheduleOverlapCopy(locale: 'ar' | 'en') {
-  if (locale === 'ar') return {
-    loadError: 'تعذر التحقق من تعارض المواعيد الآن. يمكنك متابعة طلب الانضمام.',
-    weekly: 'قد يتعارض الموعد الأسبوعي مع مجموعة أخرى مسجل بها.',
-    dated: 'قد يتعارض موعد درس قادم مع جدول مجموعة أخرى مسجل بها.',
-    both: 'قد تتعارض المواعيد الأسبوعية ومواعيد الدروس القادمة مع مجموعة أخرى مسجل بها.',
-  };
+  if (locale === 'ar')
+    return {
+      loadError: 'تعذر التحقق من تعارض المواعيد الآن. يمكنك متابعة طلب الانضمام.',
+      weekly: 'قد يتعارض الموعد الأسبوعي مع مجموعة أخرى مسجل بها.',
+      dated: 'قد يتعارض موعد درس قادم مع جدول مجموعة أخرى مسجل بها.',
+      both: 'قد تتعارض المواعيد الأسبوعية ومواعيد الدروس القادمة مع مجموعة أخرى مسجل بها.',
+    };
   return {
     loadError: 'We could not check schedule conflicts right now. You can still request to join.',
     weekly: 'This weekly time may overlap with another group you have joined.',

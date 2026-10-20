@@ -2,11 +2,19 @@ import { z } from 'zod';
 import type { Locale } from '@/features/student/domain';
 import { catalogueDisplayName } from './catalogue-domain';
 
-const capacitySchema = z.preprocess(value => value === '' || value == null ? 10 : value, z.coerce.number().int().min(1).max(500));
-const optionalSlotId = z.preprocess(value => value === '' || value == null ? undefined : value, z.string().uuid().optional());
+const capacitySchema = z.preprocess(
+  value => (value === '' || value == null ? 10 : value),
+  z.coerce.number().int().min(1).max(500),
+);
+const optionalSlotId = z.preprocess(
+  value => (value === '' || value == null ? undefined : value),
+  z.string().uuid().optional(),
+);
 
 // PostgreSQL catalogue IDs include legacy seeded UUIDs without RFC version/variant bits.
-const catalogueId = z.string().regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+const catalogueId = z
+  .string()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
 
 export const groupDetailsSchema = z.object({
   name: z.string().trim().min(2).max(120),
@@ -19,13 +27,18 @@ export const groupDetailsSchema = z.object({
 
 export type GroupDetailsInput = z.infer<typeof groupDetailsSchema>;
 
-export const groupScheduleSlotSchema = z.object({
-  group_id: z.string().uuid(),
-  slot_id: optionalSlotId,
-  weekday: z.preprocess(value => value === '' || value == null ? Number.NaN : value, z.coerce.number().int().min(0).max(6)),
-  start_time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
-  end_time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
-}).refine(value => value.start_time < value.end_time, { path: ['end_time'] });
+export const groupScheduleSlotSchema = z
+  .object({
+    group_id: z.string().uuid(),
+    slot_id: optionalSlotId,
+    weekday: z.preprocess(
+      value => (value === '' || value == null ? Number.NaN : value),
+      z.coerce.number().int().min(0).max(6),
+    ),
+    start_time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+    end_time: z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/),
+  })
+  .refine(value => value.start_time < value.end_time, { path: ['end_time'] });
 
 export type GroupScheduleSlotInput = z.infer<typeof groupScheduleSlotSchema>;
 
@@ -36,16 +49,47 @@ export function normalizeSetupStep(value: string | string[] | undefined): SetupS
   return step === 'schedule' || step === 'review' ? step : 'details';
 }
 
-export type SetupCatalogueNode = { id: string; owner_teacher_id: string | null; archived_at: string | null; parent_id: string | null; kind: string; name_ar: string; name_en: string };
-export type SetupCatalogueSubject = { id: string; owner_teacher_id: string | null; archived_at: string | null; name_ar: string; name_en: string };
-export type SetupCatalogueOffering = { id: string; owner_teacher_id: string | null; archived_at: string | null; node_id: string; subject_id: string };
-export type SetupCatalogueChoice = { id: string; subject_id: string; category_id: string; subject: string; context: string; label: string };
+export type SetupCatalogueNode = {
+  id: string;
+  owner_teacher_id: string | null;
+  archived_at: string | null;
+  parent_id: string | null;
+  kind: string;
+  name_ar: string;
+  name_en: string;
+};
+export type SetupCatalogueSubject = {
+  id: string;
+  owner_teacher_id: string | null;
+  archived_at: string | null;
+  name_ar: string;
+  name_en: string;
+};
+export type SetupCatalogueOffering = {
+  id: string;
+  owner_teacher_id: string | null;
+  archived_at: string | null;
+  node_id: string;
+  subject_id: string;
+};
+export type SetupCatalogueChoice = {
+  id: string;
+  subject_id: string;
+  category_id: string;
+  subject: string;
+  context: string;
+  label: string;
+};
 
 export function isRetainedCataloguePair(
   selected: { subject_id: string; category_id: string },
   retained: Pick<SetupCatalogueChoice, 'subject_id' | 'category_id'> | null,
 ): boolean {
-  return !!retained && selected.subject_id === retained.subject_id && selected.category_id === retained.category_id;
+  return (
+    !!retained &&
+    selected.subject_id === retained.subject_id &&
+    selected.category_id === retained.category_id
+  );
 }
 
 export function setupCatalogueChoices(
@@ -68,13 +112,24 @@ export function setupCatalogueChoices(
     return labels.filter(Boolean).join(' › ');
   };
 
-  return offerings.flatMap(offering => {
-    const subject = subjects.find(item => item.id === offering.subject_id);
-    const subjectLabel = subject ? name(subject) : '';
-    const context = contextFor(offering.node_id);
-    if (!subject || !subjectLabel || !context) return [];
-    return [{ id: offering.id, subject_id: subject.id, category_id: offering.node_id, subject: subjectLabel, context, label: `${subjectLabel} · ${context}` }];
-  }).sort((a, b) => a.label.localeCompare(b.label, ar ? 'ar' : 'en'));
+  return offerings
+    .flatMap(offering => {
+      const subject = subjects.find(item => item.id === offering.subject_id);
+      const subjectLabel = subject ? name(subject) : '';
+      const context = contextFor(offering.node_id);
+      if (!subject || !subjectLabel || !context) return [];
+      return [
+        {
+          id: offering.id,
+          subject_id: subject.id,
+          category_id: offering.node_id,
+          subject: subjectLabel,
+          context,
+          label: `${subjectLabel} · ${context}`,
+        },
+      ];
+    })
+    .sort((a, b) => a.label.localeCompare(b.label, ar ? 'ar' : 'en'));
 }
 
 export function groupDetailsFieldErrors(error: z.ZodError): Record<string, string> {

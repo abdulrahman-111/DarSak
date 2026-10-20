@@ -3,11 +3,20 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Globe2 } from 'lucide-react';
-import { discoverySearchParams, normalizeDiscoveryFilters, preserveTeacherSearch } from '@/features/platform/discovery-domain';
+import {
+  discoverySearchParams,
+  normalizeDiscoveryFilters,
+  preserveTeacherSearch,
+} from '@/features/platform/discovery-domain';
 import { switchLocaleReturnParams } from '@/features/auth/return-path';
 import type { Locale } from '@/i18n/config';
 
-export function LocaleSwitch({ otherLocale, label, shortLabel, ariaLabel }: {
+export function LocaleSwitch({
+  otherLocale,
+  label,
+  shortLabel,
+  ariaLabel,
+}: {
   otherLocale: Locale;
   label: string;
   shortLabel: string;
@@ -17,13 +26,18 @@ export function LocaleSwitch({ otherLocale, label, shortLabel, ariaLabel }: {
   const searchParams = useSearchParams();
   const pathWithoutLocale = (pathname ?? '').replace(/^\/(?:ar|en)(?=\/|$)/, '');
   const currentParams = new URLSearchParams(searchParams.toString());
-  const queryParams = pathWithoutLocale === '/teachers'
-    ? discoverySearchParams(normalizeDiscoveryFilters(currentParams))
-    : currentParams;
+  const queryParams =
+    pathWithoutLocale === '/teachers'
+      ? discoverySearchParams(normalizeDiscoveryFilters(currentParams))
+      : currentParams;
   if (pathWithoutLocale === '/teachers') {
     for (const [key, value] of preserveTeacherSearch(currentParams)) queryParams.set(key, value);
   }
-  const switchedParams = switchLocaleReturnParams(queryParams, otherLocale === 'ar' ? 'en' : 'ar', otherLocale);
+  const switchedParams = switchLocaleReturnParams(
+    queryParams,
+    otherLocale === 'ar' ? 'en' : 'ar',
+    otherLocale,
+  );
   const query = switchedParams.toString();
   const href = `/${otherLocale}${pathWithoutLocale}${query ? `?${query}` : ''}`;
 
@@ -35,7 +49,9 @@ export function LocaleSwitch({ otherLocale, label, shortLabel, ariaLabel }: {
       aria-label={ariaLabel}
       title={ariaLabel}
     >
-      <Globe2 size={16}/><span className="sm:hidden">{shortLabel}</span><span className="hidden sm:inline">{label}</span>
+      <Globe2 size={16} />
+      <span className="sm:hidden">{shortLabel}</span>
+      <span className="hidden sm:inline">{label}</span>
     </Link>
   );
 }

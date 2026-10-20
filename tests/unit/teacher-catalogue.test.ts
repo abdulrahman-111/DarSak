@@ -21,13 +21,18 @@ describe('teacher catalogue labels', () => {
   it('rejects both-empty names and reports that cross-field error on name_ar', () => {
     const result = catalogueLabelSchema.safeParse({ name_ar: '  ', name_en: '\n' });
     expect(result.success).toBe(false);
-    if (!result.success) expect(result.error.issues.map(issue => issue.path)).toContainEqual(['name_ar']);
+    if (!result.success)
+      expect(result.error.issues.map(issue => issue.path)).toContainEqual(['name_ar']);
   });
 
   it('accepts exactly 120 trimmed characters per language and rejects 121', () => {
     const atLimit = 'x'.repeat(120);
-    expect(catalogueLabelSchema.safeParse({ name_ar: atLimit, name_en: atLimit }).success).toBe(true);
-    expect(catalogueLabelSchema.safeParse({ name_ar: `${atLimit}x`, name_en: '' }).success).toBe(false);
+    expect(catalogueLabelSchema.safeParse({ name_ar: atLimit, name_en: atLimit }).success).toBe(
+      true,
+    );
+    expect(catalogueLabelSchema.safeParse({ name_ar: `${atLimit}x`, name_en: '' }).success).toBe(
+      false,
+    );
   });
 
   it('accepts only the custom teacher category kinds', () => {
@@ -37,7 +42,9 @@ describe('teacher catalogue labels', () => {
       name_en: 'Year one',
       kind: 'custom_year',
     });
-    expect(teacherCategorySchema.safeParse({ ...labels, kind: 'student_category' }).success).toBe(true);
+    expect(teacherCategorySchema.safeParse({ ...labels, kind: 'student_category' }).success).toBe(
+      true,
+    );
     expect(teacherCategorySchema.safeParse({ ...labels, kind: 'subject' }).success).toBe(false);
   });
 
@@ -54,24 +61,54 @@ describe('teacher catalogue labels', () => {
     const labelA = { name_ar: 'رياضيات', name_en: 'Math' };
     const labelB = { name_ar: ' رياضيات ', name_en: ' Math ' };
     expect(catalogueLabelSchema.parse(labelA)).toEqual(catalogueLabelSchema.parse(labelB));
-    expect(canSelectCatalogueRow({ id: 'a', owner_teacher_id: 'teacher-a', archived_at: null }, 'teacher-a')).toBe(true);
-    expect(canSelectCatalogueRow({ id: 'b', owner_teacher_id: 'teacher-b', archived_at: null }, 'teacher-a')).toBe(false);
+    expect(
+      canSelectCatalogueRow(
+        { id: 'a', owner_teacher_id: 'teacher-a', archived_at: null },
+        'teacher-a',
+      ),
+    ).toBe(true);
+    expect(
+      canSelectCatalogueRow(
+        { id: 'b', owner_teacher_id: 'teacher-b', archived_at: null },
+        'teacher-a',
+      ),
+    ).toBe(false);
   });
 });
 
 describe('catalogue row selection', () => {
   const teacherId = 'teacher-a';
   const rows = [
-    { name: 'shared active', row: { id: 'shared-active', owner_teacher_id: null, archived_at: null } },
-    { name: 'shared archived', row: { id: 'shared-archived', owner_teacher_id: null, archived_at: '2026-01-01' } },
-    { name: 'own active', row: { id: 'own-active', owner_teacher_id: teacherId, archived_at: null } },
-    { name: 'own archived', row: { id: 'own-archived', owner_teacher_id: teacherId, archived_at: '2026-01-01' } },
-    { name: 'foreign active', row: { id: 'foreign-active', owner_teacher_id: 'teacher-b', archived_at: null } },
-    { name: 'foreign archived', row: { id: 'foreign-archived', owner_teacher_id: 'teacher-b', archived_at: '2026-01-01' } },
+    {
+      name: 'shared active',
+      row: { id: 'shared-active', owner_teacher_id: null, archived_at: null },
+    },
+    {
+      name: 'shared archived',
+      row: { id: 'shared-archived', owner_teacher_id: null, archived_at: '2026-01-01' },
+    },
+    {
+      name: 'own active',
+      row: { id: 'own-active', owner_teacher_id: teacherId, archived_at: null },
+    },
+    {
+      name: 'own archived',
+      row: { id: 'own-archived', owner_teacher_id: teacherId, archived_at: '2026-01-01' },
+    },
+    {
+      name: 'foreign active',
+      row: { id: 'foreign-active', owner_teacher_id: 'teacher-b', archived_at: null },
+    },
+    {
+      name: 'foreign archived',
+      row: { id: 'foreign-archived', owner_teacher_id: 'teacher-b', archived_at: '2026-01-01' },
+    },
   ];
 
   it.each(rows)('checks both owner and archive state for $name', ({ row }) => {
-    expect(canSelectCatalogueRow(row, teacherId)).toBe(row.owner_teacher_id !== 'teacher-b' && row.archived_at === null);
+    expect(canSelectCatalogueRow(row, teacherId)).toBe(
+      row.owner_teacher_id !== 'teacher-b' && row.archived_at === null,
+    );
   });
 
   it('allows an archived shared or own row only when its ID is retained', () => {
@@ -87,7 +124,11 @@ describe('catalogue row selection', () => {
   });
 
   it('requires explicit ownership and archive values', () => {
-    expect(canSelectCatalogueRow({ id: 'missing-owner', archived_at: null } as never, teacherId)).toBe(false);
-    expect(canSelectCatalogueRow({ id: 'missing-archive', owner_teacher_id: null } as never, teacherId)).toBe(false);
+    expect(
+      canSelectCatalogueRow({ id: 'missing-owner', archived_at: null } as never, teacherId),
+    ).toBe(false);
+    expect(
+      canSelectCatalogueRow({ id: 'missing-archive', owner_teacher_id: null } as never, teacherId),
+    ).toBe(false);
   });
 });

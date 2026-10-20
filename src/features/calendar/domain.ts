@@ -21,12 +21,18 @@ export function parseCalendarDate(value: string | null): Date | null {
   const date = new Date(0);
   date.setUTCHours(0, 0, 0, 0);
   date.setUTCFullYear(year, month - 1, day);
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day ? date : null;
+  return date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+    ? date
+    : null;
 }
 
 export function validateCalendarRange(from: string | null, until: string | null) {
-  const start = parseCalendarDate(from), end = parseCalendarDate(until);
-  if (!start || !end || !from || !until) return { valid: false as const, reason: 'invalid' as const };
+  const start = parseCalendarDate(from),
+    end = parseCalendarDate(until);
+  if (!start || !end || !from || !until)
+    return { valid: false as const, reason: 'invalid' as const };
   const days = (end.getTime() - start.getTime()) / 86_400_000 + 1;
   if (days < 1) return { valid: false as const, reason: 'reversed' as const };
   if (days > MAX_CALENDAR_DAYS) return { valid: false as const, reason: 'too-long' as const };
@@ -34,7 +40,12 @@ export function validateCalendarRange(from: string | null, until: string | null)
 }
 
 export function cairoDateString(date: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(date);
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
   const part = (type: string) => parts.find(item => item.type === type)?.value ?? '';
   return `${part('year')}-${part('month')}-${part('day')}`;
 }
@@ -61,7 +72,8 @@ function escapeText(value: string): string {
 
 function foldLine(line: string): string {
   const result: string[] = [];
-  let current = '', bytes = 0;
+  let current = '',
+    bytes = 0;
   for (const character of line) {
     const size = new TextEncoder().encode(character).length;
     if (bytes + size > 75) {
@@ -80,12 +92,20 @@ function foldLine(line: string): string {
 function utcStamp(value: string): string {
   const timestamp = new Date(value);
   if (!Number.isFinite(timestamp.getTime())) throw new Error('Invalid calendar timestamp');
-  return timestamp.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z$/, 'Z');
+  return timestamp
+    .toISOString()
+    .replace(/[-:]/g, '')
+    .replace(/\.\d{3}Z$/, 'Z');
 }
 
 export function formatCalendarIcs(rows: CalendarLesson[], exportedAt: Date): string {
   const stamp = utcStamp(exportedAt.toISOString());
-  const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//DarSak//Lesson Calendar//EN', 'CALSCALE:GREGORIAN'];
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//DarSak//Lesson Calendar//EN',
+    'CALSCALE:GREGORIAN',
+  ];
   for (const lesson of rows) {
     lines.push(
       'BEGIN:VEVENT',

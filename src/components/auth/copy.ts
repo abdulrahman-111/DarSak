@@ -4,18 +4,23 @@ export const authCopy = {
   en: {
     createEyebrow: 'Create account',
     createTitle: 'Join DarSak',
-    createBody: 'Find a group that fits your education path, or bring your teaching practice into one organised workspace.',
+    createBody:
+      'Find a group that fits your education path, or bring your teaching practice into one organised workspace.',
     loginEyebrow: 'Welcome back',
     loginTitle: 'Continue your week.',
-    loginBody: 'Sign in to follow enrollment requests, upcoming lessons, and materials in one place.',
+    loginBody:
+      'Sign in to follow enrollment requests, upcoming lessons, and materials in one place.',
     joinAs: 'I am joining as',
     studentTitle: 'A student',
     studentBody: 'Find groups, request to join, and follow your timetable.',
-    studentNext: 'After sign-up, complete your learning profile before continuing to your student dashboard.',
+    studentNext:
+      'After sign-up, complete your learning profile before continuing to your student dashboard.',
     teacherTitle: 'A teacher',
     teacherBody: 'Create groups, manage enrollment, and share lesson materials.',
-    teacherNext: 'Teachers complete their experience, profile, and private CV before an administrator reviews the application.',
-    approval: 'Teacher accounts are reviewed by an administrator before groups can be published. You can prepare drafts in the meantime.',
+    teacherNext:
+      'Teachers complete their experience, profile, and private CV before an administrator reviews the application.',
+    approval:
+      'Teacher accounts are reviewed by an administrator before groups can be published. You can prepare drafts in the meantime.',
     passwordHint: 'At least 8 characters.',
     showPassword: 'Show password',
     hidePassword: 'Hide password',
@@ -33,21 +38,26 @@ export const authCopy = {
     forgotLink: 'Forgot password?',
     orDivider: 'or',
     googleContinue: 'Continue with Google',
-    googleRoleInvalid: 'Choose whether to join as a student or teacher before continuing with Google.',
-    googleSetupFailed: 'Your Google account was verified, but account setup did not finish. Continue with Google again; your selected role is preserved for this retry.',
-    googleRoleMismatch: 'This Google identity is already linked to your existing DarSak {role} account. No new teacher account was created and your role was not changed.',
+    googleRoleInvalid:
+      'Choose whether to join as a student or teacher before continuing with Google.',
+    googleSetupFailed:
+      'Your Google account was verified, but account setup did not finish. Continue with Google again; your selected role is preserved for this retry.',
+    googleRoleMismatch:
+      'This Google identity is already linked to your existing DarSak {role} account. No new teacher account was created and your role was not changed.',
     studentRole: 'student',
     teacherRole: 'teacher',
     adminRole: 'administrator',
     existingAccount: 'Open your existing account',
     reportProblem: 'Report a problem',
     chooseGoogleRoleTitle: 'Choose how you will use DarSak.',
-    chooseGoogleRoleBody: 'Your Google account is verified. Choose a student or teacher account to finish setup.',
+    chooseGoogleRoleBody:
+      'Your Google account is verified. Choose a student or teacher account to finish setup.',
     emailDeliveryFailure: 'We could not confirm that the email was sent. Please try again later.',
     linkInvalid: 'This link is invalid or has expired. Request a new one and try again.',
     forgotEyebrow: 'Password help',
     forgotTitle: 'Reset your password.',
-    forgotBody: 'Enter the email you registered with and we will send you a link to choose a new password.',
+    forgotBody:
+      'Enter the email you registered with and we will send you a link to choose a new password.',
     sendLink: 'Send reset link',
     sending: 'Sending…',
     backToLogin: 'Back to sign in',
@@ -67,7 +77,8 @@ export const authCopy = {
     checkBody: 'Enter the code from the latest email to verify your address.',
     checkBodyTo: 'Enter the code from the latest email to verify your address.',
     checkSentTo: 'For',
-    resendHint: 'Check your spam folder. Request another code if needed, then wait 60 seconds before requesting again. If you already verified your account, sign in instead.',
+    resendHint:
+      'Check your spam folder. Request another code if needed, then wait 60 seconds before requesting again. If you already verified your account, sign in instead.',
     codeLabel: 'Email verification code',
     verifyCode: 'Verify email',
     verifyingCode: 'Verifying…',
@@ -89,8 +100,10 @@ export const authCopy = {
     studentNext: 'بعد إنشاء الحساب، أكمل ملف التعلم للمتابعة إلى مساحة الطالب.',
     teacherTitle: 'مدرس',
     teacherBody: 'أنشئ مجموعات، وأدِر الطلبات، وشارك مواد الحصص.',
-    teacherNext: 'يكمل المدرسون بيانات الخبرة والملف والسيرة الذاتية الخاصة قبل مراجعة الطلب من المسؤول.',
-    approval: 'يراجع أحد المسؤولين حسابات المدرسين قبل نشر المجموعات، ويمكنك تجهيز المسودات في هذه الأثناء.',
+    teacherNext:
+      'يكمل المدرسون بيانات الخبرة والملف والسيرة الذاتية الخاصة قبل مراجعة الطلب من المسؤول.',
+    approval:
+      'يراجع أحد المسؤولين حسابات المدرسين قبل نشر المجموعات، ويمكنك تجهيز المسودات في هذه الأثناء.',
     passwordHint: '٨ أحرف على الأقل.',
     showPassword: 'إظهار كلمة المرور',
     hidePassword: 'إخفاء كلمة المرور',
@@ -109,8 +122,10 @@ export const authCopy = {
     orDivider: 'أو',
     googleContinue: 'المتابعة باستخدام جوجل',
     googleRoleInvalid: 'اختر التسجيل كطالب أو مدرس قبل المتابعة باستخدام جوجل.',
-    googleSetupFailed: 'تم التحقق من حساب جوجل، لكن لم يكتمل إعداد الحساب. تابع باستخدام جوجل مرة أخرى؛ سيبقى الدور الذي اخترته محفوظاً لهذه المحاولة.',
-    googleRoleMismatch: 'حساب جوجل هذا مرتبط بالفعل بحسابك الحالي كـ{role} في درسك. لم يُنشأ حساب مدرس جديد ولم يتغير دورك.',
+    googleSetupFailed:
+      'تم التحقق من حساب جوجل، لكن لم يكتمل إعداد الحساب. تابع باستخدام جوجل مرة أخرى؛ سيبقى الدور الذي اخترته محفوظاً لهذه المحاولة.',
+    googleRoleMismatch:
+      'حساب جوجل هذا مرتبط بالفعل بحسابك الحالي كـ{role} في درسك. لم يُنشأ حساب مدرس جديد ولم يتغير دورك.',
     studentRole: 'طالب',
     teacherRole: 'مدرس',
     adminRole: 'مسؤول',
@@ -142,7 +157,8 @@ export const authCopy = {
     checkBody: 'أدخل الرمز الوارد في أحدث رسالة للتحقق من بريدك الإلكتروني.',
     checkBodyTo: 'أدخل الرمز الوارد في أحدث رسالة للتحقق من بريدك الإلكتروني.',
     checkSentTo: 'للعنوان',
-    resendHint: 'تحقق من مجلد الرسائل غير المرغوب فيها. يمكنك طلب رمز آخر، ثم انتظر ٦٠ ثانية قبل الطلب مجددًا. إذا تحققت من حسابك بالفعل، فسجّل الدخول.',
+    resendHint:
+      'تحقق من مجلد الرسائل غير المرغوب فيها. يمكنك طلب رمز آخر، ثم انتظر ٦٠ ثانية قبل الطلب مجددًا. إذا تحققت من حسابك بالفعل، فسجّل الدخول.',
     codeLabel: 'رمز التحقق من البريد الإلكتروني',
     verifyCode: 'تحقق من البريد الإلكتروني',
     verifyingCode: 'جارٍ التحقق…',
