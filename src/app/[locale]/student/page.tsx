@@ -292,9 +292,11 @@ export default async function StudentDashboard({
                   ))}
                 </nav>
                 <p className="mt-3 text-xs leading-5 text-muted">
+                  {lessonDays.size > 0 &&
+                    (ar ? 'النقطة تعني وجود حصة. ' : 'A dot marks a lesson day. ')}
                   {ar
-                    ? 'النقطة تعني وجود حصة. اختر يومًا لعرض مواعيده بتوقيت القاهرة.'
-                    : 'A dot marks a lesson day. Choose a day to see its lessons in Cairo time.'}
+                    ? 'اختر يومًا لعرض مواعيده بتوقيت القاهرة.'
+                    : 'Choose a day to see its lessons in Cairo time.'}
                 </p>
               </section>
               <section className={studentCard}>
