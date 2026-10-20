@@ -163,7 +163,12 @@ export default async function StudentDashboard({
                   )}
                   <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/15 pt-4 text-xs text-white/80">
                     <span>
-                      {data.acceptedCount} {ar ? 'مجموعات مسجل بها' : 'enrolled classes'}
+                      {data.acceptedCount}{' '}
+                      {ar
+                        ? 'مجموعات مسجل بها'
+                        : data.acceptedCount === 1
+                          ? 'enrolled class'
+                          : 'enrolled classes'}
                     </span>
                     {data.pendingCount > 0 && (
                       <Link
@@ -171,7 +176,12 @@ export default async function StudentDashboard({
                         className="inline-flex items-center gap-1.5 underline underline-offset-4"
                       >
                         <Clock3 size={13} />
-                        {data.pendingCount} {ar ? 'طلبات قيد المراجعة' : 'requests awaiting review'}
+                        {data.pendingCount}{' '}
+                        {ar
+                          ? 'طلبات قيد المراجعة'
+                          : data.pendingCount === 1
+                            ? 'request awaiting review'
+                            : 'requests awaiting review'}
                       </Link>
                     )}
                   </div>
