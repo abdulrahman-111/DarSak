@@ -90,7 +90,14 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null, copy
   if (!groupResult.data) return { ...empty, catalogue };
 
   const group = groupResult.data;
-  const savedOfferingResult = await me.db.from('offerings').select('id,owner_teacher_id,archived_at,node_id,subject_id').eq('id', group.offering_id).maybeSingle();
+  const [savedOfferingResult, slotsResult, exclusionsResult, proposalSlotsResult] = await Promise.all([
+    me.db.from('offerings').select('id,owner_teacher_id,archived_at,node_id,subject_id').eq('id', group.offering_id).maybeSingle(),
+    me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id!).order('weekday').order('start_time'),
+    me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id!).order('local_date'),
+    proposalId && sourceGroupResult.data
+      ? me.db.from('group_schedule_slots').select('weekday,start_time,end_time').eq('group_id', proposalId).order('weekday').order('start_time')
+      : Promise.resolve({ data: null, error: null }),
+  ]);
   if (savedOfferingResult.error || !savedOfferingResult.data) return { ...empty, error: errorCopy(locale) };
   const savedOffering = savedOfferingResult.data as TeacherCatalogueOffering;
   if (savedOffering.owner_teacher_id !== null && savedOffering.owner_teacher_id !== me.id) return { ...empty, error: errorCopy(locale) };
@@ -133,14 +140,6 @@ export async function teacherGroupSetup(locale: Locale, id?: string | null, copy
   catalogue.retained = retained;
   catalogue.choices = setupCatalogueChoices(locale, catalogue.nodes, catalogue.subjects, catalogue.offerings);
   if (!catalogue.choices.some(choice => choice.id === retained.id)) catalogue.choices.push(retained);
-
-  const [slotsResult, exclusionsResult, proposalSlotsResult] = await Promise.all([
-    me.db.from('group_schedule_slots').select('id,group_id,weekday,start_time,end_time,timezone').eq('group_id', id!).order('weekday').order('start_time'),
-    me.db.from('group_lesson_exclusions').select('local_date').eq('group_id', id!).order('local_date'),
-    proposalId && sourceGroupResult.data
-      ? me.db.from('group_schedule_slots').select('weekday,start_time,end_time').eq('group_id', proposalId).order('weekday').order('start_time')
-      : Promise.resolve({ data: null, error: null }),
-  ]);
   if (slotsResult.error || exclusionsResult.error) return { ...empty, catalogue, error: errorCopy(locale) };
 
   const scheduleProposalError = copyScheduleFrom

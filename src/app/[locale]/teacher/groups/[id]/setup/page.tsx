@@ -28,10 +28,15 @@ export default async function TeacherGroupSetupPage({ params, searchParams }: { 
     return <><ScreenTitle eyebrow={ar ? 'إعداد التدريس' : 'Teaching setup'} title={ar ? 'إعداد المجموعة' : 'Group setup'} /><Panel><p role="alert" className="text-sm text-red-800">{data.error ?? (ar ? 'تعذر تحميل المجموعة.' : 'Could not load this group.')}</p></Panel></>;
   }
   if (data.group.status !== 'draft') notFound();
-  const reviewResult=await data.me.db.rpc('teacher_review_status',{p_teacher_id:data.me.id});
-  const reviewStatus=reviewResult.error?null:parseTeacherReviewStatus(reviewResult.data)?.status??null;
-
-  const learning=await groupLearningDetails(data.me.db,id);
+  const [reviewResult, learning] = await Promise.all([
+    step === 'review'
+      ? data.me.db.rpc('teacher_review_status',{p_teacher_id:data.me.id})
+      : Promise.resolve(null),
+    step === 'schedule'
+      ? Promise.resolve({ data: null, error: false })
+      : groupLearningDetails(data.me.db,id),
+  ]);
+  const reviewStatus=reviewResult&&!reviewResult.error?parseTeacherReviewStatus(reviewResult.data)?.status??null:null;
   return <UnsavedProfileProtection locale={locale} kind="group">
     <ScreenTitle eyebrow={ar ? 'مسودة مجموعة' : 'Group draft'} title={data.group.name} description={ar ? 'يمكنك العودة لإكمال إعداد مجموعتك في أي وقت.' : 'You can return to finish setting up your group at any time.'} action={<Status value={data.group.status} locale={locale} />} />
     <div className="mx-auto max-w-3xl">
