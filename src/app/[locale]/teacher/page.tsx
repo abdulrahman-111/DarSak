@@ -3,14 +3,23 @@ import Link from 'next/link';
 import {
   ArrowRight,
   ArrowUpRight,
+  BellRing,
   CalendarDays,
+  CalendarPlus,
+  ClipboardCheck,
   ClipboardList,
   Clock3,
+  Plus,
   UsersRound,
 } from 'lucide-react';
 import { ensureLocale } from '@/i18n/config';
 import { EnrollmentDecisionButtons } from '@/components/platform/actions';
-import { EmptyState, Status, cairoDate } from '@/components/platform/ui';
+import { EmptyState, Status } from '@/components/platform/ui';
+import {
+  lessonCountdown,
+  lessonDateTile,
+  lessonTimeRange,
+} from '@/components/platform/lesson-time';
 import { teacherOverview } from '@/features/teacher/data';
 import { requireViewer } from '@/components/platform/access';
 import { readTeacherAccessStatus } from '@/features/teacher-access/data';
@@ -19,16 +28,6 @@ function groupName(group: unknown): string | null {
   const candidate = Array.isArray(group) ? group[0] : group;
   if (!candidate || typeof candidate !== 'object' || !('name' in candidate)) return null;
   return typeof candidate.name === 'string' && candidate.name.trim() ? candidate.name : null;
-}
-
-function lessonTimeRange(startsAt: string, endsAt: string, locale: string) {
-  const language = locale === 'ar' ? 'ar-EG' : 'en-GB';
-  const format = new Intl.DateTimeFormat(language, {
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZone: 'Africa/Cairo',
-  });
-  return `${format.format(new Date(startsAt))} – ${format.format(new Date(endsAt))}`;
 }
 
 export default async function TeacherDashboard({
@@ -109,7 +108,14 @@ export default async function TeacherDashboard({
     (a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at),
   );
   const nextLesson = data.nextLesson;
-  const happeningNow = Boolean(nextLesson && Date.parse(nextLesson.starts_at) <= now.getTime());
+  const countdown = nextLesson
+    ? lessonCountdown(nextLesson.starts_at, nextLesson.ends_at, locale, now)
+    : null;
+  const happeningNow = countdown?.kind === 'live';
+  const todayIds = new Set(todayLessons.map(lesson => lesson.id));
+  const laterLessons = data.upcomingLessons
+    .filter(lesson => !todayIds.has(lesson.id) && lesson.id !== nextLesson?.id)
+    .slice(0, 4);
   const dateLabel = new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
     dateStyle: 'full',
     timeZone: 'Africa/Cairo',
@@ -125,18 +131,23 @@ export default async function TeacherDashboard({
         today: 'حصص اليوم',
         calendar: 'الحصص القادمة',
         next: 'حصتك القادمة',
-        live: 'الحصة جارية الآن',
         openWorkspace: 'افتح مساحة الحصة',
+        openNow: 'افتح الحصة الآن',
         noNext: 'لا توجد حصة مجدولة قادمة.',
         todayHeading: 'جدول اليوم',
         noToday: 'لا توجد حصص اليوم.',
         openLesson: 'افتح الحصة',
         attendance: 'الحضور',
         materials: 'المواد',
+        laterHeading: 'لاحقًا في جدولك',
         requestsHeading: 'طلبات تنتظر الرد',
+        requestsWaiting: (count: number) =>
+          count === 1 ? 'طلب واحد ينتظر ردك' : `${count} طلبات تنتظر ردك`,
+        review: 'راجع الطلبات',
         viewAll: 'عرض الكل',
         noRequests: 'لا توجد طلبات تنتظر المراجعة.',
         setupHeading: 'خطوات الإعداد',
+        setupIntro: 'أكمل هذه الخطوات ليجدك الطلاب وينضموا إلى مجموعاتك.',
         noTasks: 'اكتملت خطوات الإعداد الحالية.',
         task: {
           profile: 'أكمل ملفك العام',
@@ -156,20 +167,27 @@ export default async function TeacherDashboard({
         groups: 'Groups',
         requests: 'Enrollment requests',
         today: 'Today’s lessons',
-        calendar: 'Lesson calendar',
+        calendar: 'Upcoming lessons',
         next: 'Your next lesson',
-        live: 'Happening now',
         openWorkspace: 'Open lesson workspace',
+        openNow: 'Open lesson now',
         noNext: 'No upcoming lesson is scheduled.',
         todayHeading: 'Today’s agenda',
         noToday: 'No lessons are scheduled for today.',
         openLesson: 'Open lesson',
         attendance: 'Attendance',
         materials: 'Materials',
+        laterHeading: 'Later on your calendar',
         requestsHeading: 'Pending requests',
+        requestsWaiting: (count: number) =>
+          count === 1
+            ? '1 student is waiting for your reply'
+            : `${count} students are waiting for your reply`,
+        review: 'Review requests',
         viewAll: 'View all',
         noRequests: 'No enrollment requests are waiting for your review.',
         setupHeading: 'Setup checklist',
+        setupIntro: 'Finish these steps so students can find you and join your groups.',
         noTasks: 'Your current setup steps are complete.',
         task: {
           profile: 'Complete your public profile',
@@ -182,7 +200,10 @@ export default async function TeacherDashboard({
         retry: 'Try again',
       };
   const groupById = new Map(data.groups.map(group => [group.id, group.name]));
+  const lessonGroup = (lesson: { group: unknown; group_id: string }) =>
+    groupName(lesson.group) ?? groupById.get(lesson.group_id) ?? null;
   const setupTasks = data.setupTasks;
+  const pendingCount = data.counts.pendingRequests;
 
   return (
     <div className="screen-enter">
@@ -194,24 +215,23 @@ export default async function TeacherDashboard({
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{copy.intro}</p>
         </div>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
+          <Link
+            href={`/${locale}/teacher/lessons?new=1`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-teal/15 bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+          >
+            <CalendarPlus size={17} aria-hidden="true" />
+            {copy.addLesson}
+          </Link>
+          <Link
+            href={`/${locale}/teacher/groups/new`}
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-4 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+          >
+            <Plus size={17} aria-hidden="true" />
+            {copy.create}
+          </Link>
+        </div>
       </header>
-
-      <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <Link
-          href={`/${locale}/teacher/groups/new`}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-teal px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
-        >
-          <UsersRound size={18} aria-hidden="true" />
-          {copy.create}
-        </Link>
-        <Link
-          href={`/${locale}/teacher/lessons?new=1`}
-          className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-teal/15 bg-white px-4 py-3 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
-        >
-          <CalendarDays size={18} aria-hidden="true" />
-          {copy.addLesson}
-        </Link>
-      </div>
 
       {data.error ? (
         <section className="rounded-3xl border border-line bg-white p-5 shadow-sm">
@@ -227,6 +247,24 @@ export default async function TeacherDashboard({
         </section>
       ) : (
         <>
+          {pendingCount > 0 && (
+            <Link
+              href={`/${locale}/teacher/requests`}
+              className="student-card mb-6 flex min-h-14 items-center gap-3 rounded-2xl border border-orange/30 bg-orange/5 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            >
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-orange/10 text-orange-deep">
+                <BellRing size={17} aria-hidden="true" />
+              </span>
+              <span className="min-w-0 flex-1 font-semibold text-ink">
+                {copy.requestsWaiting(pendingCount)}
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1 font-bold text-orange-deep">
+                {copy.review}
+                <ArrowRight size={15} aria-hidden="true" className="rtl:rotate-180" />
+              </span>
+            </Link>
+          )}
+
           <section className="student-hero relative mb-6 overflow-hidden rounded-3xl bg-teal p-6 text-white sm:p-7">
             <div
               aria-hidden="true"
@@ -238,7 +276,7 @@ export default async function TeacherDashboard({
                   <span
                     className={`size-2 rounded-full ${happeningNow ? 'bg-emerald-300' : 'bg-white/70'}`}
                   />
-                  {happeningNow ? copy.live : copy.next}
+                  {happeningNow && countdown ? countdown.label : copy.next}
                 </p>
                 <Image
                   src="/brand/darsak/favicon.svg"
@@ -251,28 +289,44 @@ export default async function TeacherDashboard({
               {nextLesson ? (
                 <>
                   <p className="mt-5 text-sm text-white/75">
-                    {groupName(nextLesson.group) ??
-                      groupById.get(nextLesson.group_id) ??
-                      (ar ? 'مجموعتك' : 'Your group')}
+                    {lessonGroup(nextLesson) ?? (ar ? 'مجموعتك' : 'Your group')}
                   </p>
                   <h2 className="mt-2 break-words text-2xl font-bold sm:text-3xl">
                     {nextLesson.title}
                   </h2>
-                  <p className="mt-3 flex items-start gap-2 text-sm leading-6 text-white/85">
-                    <CalendarDays size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
-                    {cairoDate(nextLesson.starts_at, locale)}
-                  </p>
-                  <p className="mt-1 flex items-center gap-2 text-sm text-white/80">
-                    <Clock3 size={17} aria-hidden="true" />
-                    {lessonTimeRange(nextLesson.starts_at, nextLesson.ends_at, locale)}
-                  </p>
-                  <Link
-                    href={`/${locale}/teacher/lessons/${nextLesson.id}`}
-                    className="mt-5 inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-teal transition-colors hover:bg-cream"
-                  >
-                    {copy.openWorkspace}
-                    <ArrowRight size={17} aria-hidden="true" className="rtl:rotate-180" />
-                  </Link>
+                  <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-6 text-white/85">
+                    {countdown && !happeningNow && (
+                      <span
+                        className={`inline-flex min-h-8 items-center rounded-full px-3 text-xs font-bold ${countdown.kind === 'soon' ? 'bg-white text-teal' : 'bg-white/10 text-white'}`}
+                      >
+                        {countdown.label}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center gap-2">
+                      <CalendarDays size={17} className="shrink-0" aria-hidden="true" />
+                      {lessonDateTile(nextLesson.starts_at, locale).label}
+                    </span>
+                    <span className="inline-flex items-center gap-2">
+                      <Clock3 size={17} className="shrink-0" aria-hidden="true" />
+                      {lessonTimeRange(nextLesson.starts_at, nextLesson.ends_at, locale)}
+                    </span>
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-2">
+                    <Link
+                      href={`/${locale}/teacher/lessons/${nextLesson.id}`}
+                      className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-white px-5 text-sm font-bold text-teal transition-colors hover:bg-cream"
+                    >
+                      {happeningNow ? copy.openNow : copy.openWorkspace}
+                      <ArrowRight size={17} aria-hidden="true" className="rtl:rotate-180" />
+                    </Link>
+                    <Link
+                      href={`/${locale}/teacher/lessons/${nextLesson.id}#attendance`}
+                      className="inline-flex min-h-12 items-center gap-2 rounded-xl border border-white/25 px-4 text-sm font-bold text-white transition-colors hover:bg-white/10"
+                    >
+                      <ClipboardCheck size={17} aria-hidden="true" />
+                      {copy.attendance}
+                    </Link>
+                  </div>
                 </>
               ) : (
                 <>
@@ -294,6 +348,52 @@ export default async function TeacherDashboard({
             </div>
           </section>
 
+          {setupTasks.length > 0 && (
+            <section className="mb-6 min-w-0 rounded-2xl border border-orange/30 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h2 className="flex items-center gap-2 text-lg font-bold text-teal">
+                    {copy.setupHeading}
+                    <span className="rounded-full bg-orange/10 px-2 py-0.5 text-xs font-bold text-orange-deep">
+                      {setupTasks.length}
+                    </span>
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-muted">{copy.setupIntro}</p>
+                </div>
+              </div>
+              <ol className="grid gap-2 md:grid-cols-2">
+                {setupTasks.slice(0, 5).map((task, index) => (
+                  <li key={task.id}>
+                    <Link
+                      href={`/${locale}${task.href}`}
+                      className="flex min-h-14 items-center gap-3 rounded-xl border border-line px-3 py-2 text-sm text-teal transition-colors hover:border-teal/30 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                    >
+                      <span
+                        aria-hidden="true"
+                        className="grid size-7 shrink-0 place-items-center rounded-full bg-orange/10 text-xs font-bold text-orange-deep"
+                      >
+                        {new Intl.NumberFormat(ar ? 'ar-EG' : 'en-GB').format(index + 1)}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block font-semibold">{copy.task[task.id]}</span>
+                        {task.groupName && (
+                          <span className="mt-0.5 block truncate text-xs text-muted">
+                            {task.groupName}
+                          </span>
+                        )}
+                      </span>
+                      <ArrowRight
+                        size={16}
+                        className="shrink-0 text-muted rtl:rotate-180"
+                        aria-hidden="true"
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
+
           <div className="mb-6 grid grid-cols-2 gap-3 xl:grid-cols-4">
             {[
               {
@@ -305,10 +405,10 @@ export default async function TeacherDashboard({
               },
               {
                 label: copy.requests,
-                value: data.counts.pendingRequests,
+                value: pendingCount,
                 href: `/${locale}/teacher/requests`,
                 icon: ClipboardList,
-                attention: data.counts.pendingRequests > 0,
+                attention: pendingCount > 0,
               },
               {
                 label: copy.today,
@@ -340,7 +440,7 @@ export default async function TeacherDashboard({
                   <strong
                     className={`mt-1 block text-2xl font-bold leading-none ${attention ? 'text-orange' : 'text-teal'}`}
                   >
-                    {value}
+                    {new Intl.NumberFormat(ar ? 'ar-EG' : 'en-GB').format(value)}
                   </strong>
                 </span>
               </Link>
@@ -348,63 +448,6 @@ export default async function TeacherDashboard({
           </div>
 
           <div className="grid gap-5 xl:grid-cols-2">
-            {setupTasks.length > 0 && (
-              <>
-                <section
-                  className={`min-w-0 rounded-2xl border bg-white p-5 shadow-sm ${setupTasks.length ? 'border-orange/30 xl:col-span-2' : 'border-line'}`}
-                >
-                  <div className="mb-4 flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-bold text-teal">
-                      {copy.setupHeading}
-                      {setupTasks.length > 0 && (
-                        <span className="ms-2 rounded-full bg-orange/10 px-2 py-0.5 align-middle text-xs font-bold text-[#9a4212]">
-                          {setupTasks.length}
-                        </span>
-                      )}
-                    </h2>
-                    <Link
-                      href={`/${locale}/account/profile`}
-                      aria-label={ar ? 'تعديل الملف الشخصي' : 'Edit profile'}
-                      className="grid size-11 shrink-0 place-items-center rounded-xl text-teal hover:bg-cream"
-                    >
-                      <ArrowUpRight size={18} aria-hidden="true" />
-                    </Link>
-                  </div>
-                  {setupTasks.length ? (
-                    <ul className="grid gap-1">
-                      {setupTasks.slice(0, 5).map(task => (
-                        <li key={task.id}>
-                          <Link
-                            href={`/${locale}${task.href}`}
-                            className="flex min-h-12 items-center gap-3 rounded-xl px-2 py-2 text-sm text-teal hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
-                          >
-                            <span
-                              aria-hidden="true"
-                              className="size-2 shrink-0 rounded-full bg-orange"
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span className="block font-semibold">{copy.task[task.id]}</span>
-                              {task.groupName && (
-                                <span className="mt-0.5 block truncate text-xs text-muted">
-                                  {task.groupName}
-                                </span>
-                              )}
-                            </span>
-                            <ArrowUpRight
-                              size={16}
-                              className="shrink-0 text-muted"
-                              aria-hidden="true"
-                            />
-                          </Link>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <EmptyState>{copy.noTasks}</EmptyState>
-                  )}
-                </section>
-              </>
-            )}
             <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-bold text-teal">{copy.todayHeading}</h2>
@@ -418,53 +461,62 @@ export default async function TeacherDashboard({
               </div>
               {todayLessons.length ? (
                 <ul className="divide-y divide-line">
-                  {todayLessons.map(lesson => (
-                    <li key={lesson.id} className="py-3">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <span className="mt-1 grid size-10 shrink-0 place-items-center rounded-xl bg-teal/5 text-teal">
-                          <Clock3 size={17} aria-hidden="true" />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <Link
-                            href={`/${locale}/teacher/lessons/${lesson.id}`}
-                            className="block min-h-11 break-words py-1 text-sm font-bold text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  {todayLessons.map(lesson => {
+                    const state = lessonCountdown(lesson.starts_at, lesson.ends_at, locale, now);
+                    const group = lessonGroup(lesson);
+                    return (
+                      <li key={lesson.id} className="py-3">
+                        <div className="flex min-w-0 items-start gap-3">
+                          <span
+                            className={`mt-1 grid w-16 shrink-0 place-items-center rounded-xl px-1 py-2 text-xs font-bold ${state.kind === 'live' ? 'bg-teal text-white' : state.kind === 'ended' ? 'bg-cream text-muted' : 'bg-teal/5 text-teal'}`}
                           >
-                            {lesson.title}
-                          </Link>
-                          <p className="text-xs leading-5 text-muted">
-                            {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
-                            {(groupName(lesson.group) ?? groupById.get(lesson.group_id))
-                              ? ` · ${groupName(lesson.group) ?? groupById.get(lesson.group_id)}`
-                              : ''}
-                          </p>
-                          <div className="mt-1 flex flex-wrap gap-x-4">
+                            {new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              timeZone: 'Africa/Cairo',
+                            }).format(new Date(lesson.starts_at))}
+                          </span>
+                          <div className="min-w-0 flex-1">
                             <Link
                               href={`/${locale}/teacher/lessons/${lesson.id}`}
-                              className="inline-flex min-h-11 items-center text-xs font-semibold text-teal underline underline-offset-4"
+                              className="block min-h-11 break-words py-1 text-sm font-bold text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                             >
-                              {copy.openLesson}
+                              {lesson.title}
                             </Link>
-                            <Link
-                              href={`/${locale}/teacher/lessons/${lesson.id}#attendance`}
-                              className="inline-flex min-h-11 items-center text-xs font-semibold text-muted underline underline-offset-4"
-                            >
-                              {copy.attendance}
-                            </Link>
-                            <Link
-                              href={`/${locale}/teacher/lessons/${lesson.id}#materials`}
-                              className="inline-flex min-h-11 items-center text-xs font-semibold text-muted underline underline-offset-4"
-                            >
-                              {copy.materials}
-                            </Link>
+                            <p className="text-xs leading-5 text-muted">
+                              {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
+                              {group ? ` · ${group}` : ''}
+                              {lesson.status === 'scheduled' && state.kind !== 'ended'
+                                ? ` · ${state.label}`
+                                : ''}
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-x-4">
+                              <Link
+                                href={`/${locale}/teacher/lessons/${lesson.id}#attendance`}
+                                className="inline-flex min-h-11 items-center text-xs font-semibold text-teal underline underline-offset-4"
+                              >
+                                {copy.attendance}
+                              </Link>
+                              <Link
+                                href={`/${locale}/teacher/lessons/${lesson.id}#materials`}
+                                className="inline-flex min-h-11 items-center text-xs font-semibold text-muted underline underline-offset-4"
+                              >
+                                {copy.materials}
+                              </Link>
+                            </div>
                           </div>
+                          <Status value={lesson.status} locale={locale} />
                         </div>
-                        <Status value={lesson.status} locale={locale} />
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
-                <EmptyState>{copy.noToday}</EmptyState>
+                <EmptyState
+                  action={{ href: `/${locale}/teacher/lessons?new=1`, label: copy.addLesson }}
+                >
+                  {copy.noToday}
+                </EmptyState>
               )}
             </section>
 
@@ -506,6 +558,59 @@ export default async function TeacherDashboard({
                 <EmptyState>{copy.noRequests}</EmptyState>
               )}
             </section>
+
+            {laterLessons.length > 0 && (
+              <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm xl:col-span-2">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-bold text-teal">{copy.laterHeading}</h2>
+                  <Link
+                    href={`/${locale}/teacher/lessons`}
+                    className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
+                  >
+                    {copy.viewAll}
+                    <ArrowUpRight size={15} aria-hidden="true" />
+                  </Link>
+                </div>
+                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {laterLessons.map(lesson => {
+                    const tile = lessonDateTile(lesson.starts_at, locale);
+                    const group = lessonGroup(lesson);
+                    return (
+                      <li key={lesson.id}>
+                        <Link
+                          href={`/${locale}/teacher/lessons/${lesson.id}`}
+                          className="student-card flex h-full min-h-20 items-start gap-3 rounded-xl border border-line p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal"
+                          >
+                            <strong className="text-lg leading-none">{tile.day}</strong>
+                            <span className="mt-1 text-[11px] font-semibold text-muted">
+                              {tile.month}
+                            </span>
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block break-words text-sm font-bold text-teal">
+                              {lesson.title}
+                            </span>
+                            <span className="mt-1 block text-xs leading-5 text-muted">
+                              {tile.weekday} ·{' '}
+                              {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
+                            </span>
+                            {group && (
+                              <span className="block truncate text-xs leading-5 text-muted">
+                                {group}
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
           </div>
         </>
       )}
