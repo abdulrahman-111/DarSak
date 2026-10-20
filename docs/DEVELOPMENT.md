@@ -2,7 +2,7 @@
 
 ## Requirements
 
-Use Node.js 22 and npm. Docker is required for a fresh local Supabase stack. The app uses the configured Supabase project for authentication, database, and storage access. Follow the workspace's existing managed-service startup process; do not reset, recreate, or restart that environment as part of routine development.
+Use Node.js 24 (the version Vercel and CI use) and npm. Docker is required for a fresh local Supabase stack. The app uses the configured Supabase project for authentication, database, and storage access. Follow the workspace's existing managed-service startup process; do not reset, recreate, or restart that environment as part of routine development.
 
 For a fresh local backend, follow the [Supabase CLI local development guide](https://supabase.com/docs/guides/local-development/cli/getting-started).
 
