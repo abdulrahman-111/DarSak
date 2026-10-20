@@ -57,7 +57,7 @@ export default async function TeacherLessons({ params, searchParams }: { params:
       eyebrow={ar ? 'تقويم المعلم' : 'Teacher calendar'}
       title={copy.title}
       description={copy.description}
-      action={<Link href={statusHref({ new: 1, groupId: selectedGroup?.id })} className="inline-flex min-h-11 items-center rounded-xl bg-orange px-4 py-3 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal">{copy.add}</Link>}
+      action={<Link href={statusHref({ new: 1, groupId: selectedGroup?.id })} className="inline-flex min-h-11 items-center rounded-xl bg-orange px-4 py-3 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal hover:bg-orange-deep">{copy.add}</Link>}
     />
     {query.deleted === '1' && <Panel className="mb-4"><p role="status" className="text-sm font-semibold text-teal">{ar ? 'تم حذف الحصة.' : 'Lesson deleted.'}</p></Panel>}
     {routeError ? <Panel><p role="alert" className="text-sm text-red-800">{copy.failed}</p><Link href={base} className="mt-3 inline-flex min-h-11 items-center font-bold text-orange underline">{copy.retry}</Link></Panel> : <>

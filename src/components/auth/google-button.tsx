@@ -18,7 +18,7 @@ export function GoogleButton({ locale, next, signupRole }: { locale: AuthLocale;
       {next && <input type="hidden" name="next" value={next}/>}
       {signupRole && <input type="hidden" name="google_role" value={signupRole}/>}
       <button
-        className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[.9rem] border border-[#d8ccb8] bg-white px-5 text-base font-bold text-ink transition hover:bg-[#f6f0e4] disabled:cursor-wait disabled:opacity-60"
+        className="flex h-[52px] w-full items-center justify-center gap-3 rounded-[.9rem] border border-line-strong bg-white px-5 text-base font-bold text-ink transition hover:bg-cream disabled:cursor-wait disabled:opacity-60"
         disabled={pending}
         type="submit"
       >

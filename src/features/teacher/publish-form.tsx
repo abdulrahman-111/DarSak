@@ -155,7 +155,7 @@ export function PublishReviewForm({
       <input type="hidden" name="until" value={withRange ? range.until : ''}/>
       {(fromError || untilError) && <p role="alert" className="text-sm text-red-700">{t.rangeError}</p>}
       {state?.error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{state.error}</p>}
-      <button type="submit" disabled={pending || !approved || slots.length === 0 || !rangeIsValid || (withRange && !previewIsCurrent)} className="w-full rounded-xl bg-orange px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto">
+      <button type="submit" disabled={pending || !approved || slots.length === 0 || !rangeIsValid || (withRange && !previewIsCurrent)} className="w-full rounded-xl bg-orange px-5 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto hover:bg-orange-deep">
         {pending ? t.publishing : t.publish}
       </button>
     </form>

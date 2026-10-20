@@ -182,7 +182,7 @@ export function GenerationPreviewForm({ locale, groupId, savedExclusions, mode =
         {row.state === 'conflicting' && <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm"><span>{row.conflict_title || t.group}</span>{row.conflict_lesson_id && <Link href={`/${locale}/teacher/lessons/${row.conflict_lesson_id}`} className="font-bold text-teal underline">{t.openConflict}</Link>}</div>}
       </article>)}</div> : <p className="mt-4 text-sm text-muted">{t.noRows}</p>}
       {summary.conflicting > 0 && <p role="alert" className="mt-4 text-sm text-red-700">{t.blocked}</p>}
-      {mode === 'generate' && <button type="button" onClick={generate} disabled={isPending || !canGenerate} className="mt-4 rounded-xl bg-orange px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50">{isPending ? t.generating : t.confirm}</button>}
+      {mode === 'generate' && <button type="button" onClick={generate} disabled={isPending || !canGenerate} className="mt-4 rounded-xl bg-orange px-4 py-3 font-bold text-white disabled:cursor-not-allowed disabled:opacity-50 hover:bg-orange-deep">{isPending ? t.generating : t.confirm}</button>}
     </section>}
 
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">{error}</p>}

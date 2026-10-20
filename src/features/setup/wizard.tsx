@@ -231,7 +231,7 @@ export function SetupWizard({ locale, draft: initial, role, offerings, subjects,
     <nav className="flex flex-wrap gap-3" aria-label={ar?'التنقل':'Wizard controls'}>
       {(stage>1||review)&&<button type="button" disabled={busy} onClick={()=>{if(review){setReview(false);return;} navigateSave('back');}} className="min-h-12 rounded-xl border border-teal px-5 font-bold text-teal disabled:opacity-50">{c.back}</button>}
       {!review && <button type="button" disabled={busy} onClick={()=>navigateSave('next')} className="min-h-12 rounded-xl bg-teal px-5 font-bold text-white disabled:opacity-50">{busy?c.saving:c.next}</button>}
-      {review && <button type="button" disabled={busy} onClick={submit} className="min-h-12 rounded-xl bg-orange px-5 font-bold text-white disabled:opacity-50">{busy?c.saving:teacher?c.submit:c.finishSetup}</button>}
+      {review && <button type="button" disabled={busy} onClick={submit} className="min-h-12 rounded-xl bg-orange px-5 font-bold text-white disabled:opacity-50 hover:bg-orange-deep">{busy?c.saving:teacher?c.submit:c.finishSetup}</button>}
       <button type="button" disabled={busy} onClick={()=>navigateSave('exit')} className="min-h-12 rounded-xl border border-line px-5 font-bold text-ink disabled:opacity-50">{busy?c.saving:c.exit}</button>
     </nav>
   </div>;

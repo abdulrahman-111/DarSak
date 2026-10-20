@@ -56,47 +56,47 @@ export default async function GroupDetail({ params,searchParams }: { searchParam
   const canEnroll = detail.publiclyEligible && canRequest(enrollment?.status) && data.available_seats !== 0;
 
   return (
-    <div className="min-h-[72vh] bg-[#f6f0e4]">
+    <div className="min-h-[72vh] bg-cream">
       <section className="container py-10 md:py-16">
         <Link className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-orange" href={`/${locale}/teachers`}><BackArrow size={17}/>{c.back}</Link>
         <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
-          <article className="min-w-0 rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] p-6 md:p-9">
+          <article className="min-w-0 rounded-[1.4rem] border border-line bg-surface p-6 md:p-9">
             <div className="flex flex-wrap items-center gap-3">
               <span className="rounded-lg bg-[#d5ebe6] px-3 py-1.5 text-sm font-bold text-teal">{subject}</span>
               <span className="rounded-full bg-[#dfedd5] px-3 py-1.5 text-xs font-bold text-[#2c5620]">{c.published}</span>
             </div>
             <p className="mt-8 text-xs font-bold uppercase tracking-[.14em] text-orange">{c.detailEyebrow}</p>
             <h1 className="mt-3 text-4xl font-black leading-tight tracking-[-.03em] text-teal md:text-5xl">{data.name}</h1>
-            <p className="mt-5 max-w-3xl text-lg leading-8 text-[#4d473f]">{data.description || c.detailIntro}</p>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-ink-soft">{data.description || c.detailIntro}</p>
             <p className="mt-4 rounded-xl border border-line p-4 text-sm text-muted">{enrollment?.status === 'accepted' ? <Link href={`/${locale}/teachers/${data.teacher_id}`} className="inline-flex min-h-11 items-center font-bold text-teal underline">{locale === 'ar' ? 'عرض بيانات التواصل مع المعلم' : 'View teacher contact details'}</Link> : locale === 'ar' ? 'تظهر بيانات التواصل مع المعلم بعد قبول طلب انضمامك إلى إحدى مجموعاته.' : 'Teacher contact details become available after your enrollment in one of their groups is accepted.'}</p>
             {learning.error?<p role="alert" className="mt-4 text-sm text-red-800">{locale==='ar'?'تعذر تحميل تفاصيل التعلم. حدّث الصفحة وحاول مجددًا.':'Could not load learning details. Refresh and try again.'}</p>:<GroupLearningView locale={locale} details={learning.data}/>}
             {activeViewer && <AnnouncementView locale={locale} announcement={announcement} className="mt-6" />}
 
-            <div className="mt-6 rounded-xl bg-[#f6f0e4] p-4" aria-label={c.nextLesson}>
+            <div className="mt-6 rounded-xl bg-cream p-4" aria-label={c.nextLesson}>
               <p className="flex items-center gap-2 text-sm font-bold text-teal"><Image aria-hidden="true" src="/brand/darsak/next-session-time.svg" alt="" width={16} height={16}/>{c.nextLesson}</p>
               <p className="mt-2 text-sm text-muted">{nextLesson || c.noNextLesson}</p>
             </div>
 
             {canSharePublicGroup(detail.publiclyEligible, data.status) && <PublicGroupShare locale={locale} groupId={data.id}/>}
 
-            {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-[#e3d9c8] p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><Link href={`/${locale}/teachers/${detail.teacher.id}`} className="font-bold text-teal underline decoration-teal/30 underline-offset-2">{detail.teacher.full_name}</Link>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
+            {detail.teacher && <div className="mt-7 flex items-center gap-3 rounded-xl border border-line p-4"><span className="grid size-11 place-items-center rounded-xl bg-teal text-white"><UserRound size={20}/></span><div><p className="text-sm text-muted">{locale === 'ar' ? 'المدرس' : 'Teacher'}</p><Link href={`/${locale}/teachers/${detail.teacher.id}`} className="font-bold text-teal underline decoration-teal/30 underline-offset-2">{detail.teacher.full_name}</Link>{detail.teacher.headline && <p className="text-sm text-muted">{detail.teacher.headline}</p>}</div></div>}
 
             <div className="mt-9 border-t border-[#efe6d6] pt-7">
               <h2 className="text-xl font-bold text-teal">{c.arrangement}</h2>
               <dl className="mt-5 grid gap-4 sm:grid-cols-3">
-                <div className="rounded-xl bg-[#f6f0e4] p-4">
+                <div className="rounded-xl bg-cream p-4">
                   <dt className="flex items-center gap-2 text-sm text-muted"><BookOpen size={16}/>{c.subject}</dt>
                   <dd className="mt-2 font-bold text-ink">{subject}</dd>
                 </div>
-                <div className="rounded-xl bg-[#f6f0e4] p-4">
+                <div className="rounded-xl bg-cream p-4">
                   <dt className="flex items-center gap-2 text-sm text-muted"><MapPin size={16}/>{c.location}</dt>
                   <dd className="mt-2 font-bold text-ink">{data.location || c.unknownLocation}</dd>
                 </div>
-                <div className="rounded-xl bg-[#f6f0e4] p-4">
+                <div className="rounded-xl bg-cream p-4">
                   <dt className="flex items-center gap-2 text-sm text-muted"><Users size={16}/>{c.capacity}</dt>
                   <dd className="mt-2 font-bold text-ink">{data.capacity}</dd>
                 </div>
-                {data.offering?.node && <div className="rounded-xl bg-[#f6f0e4] p-4">
+                {data.offering?.node && <div className="rounded-xl bg-cream p-4">
                   <dt className="flex items-center gap-2 text-sm text-muted"><Image aria-hidden="true" src="/brand/darsak/academic-stage.svg" alt="" width={16} height={16}/>{c.context}</dt>
                   <dd className="mt-2 font-bold text-ink">{catalogueDisplayName(data.offering.node, locale)}</dd>
                 </div>}
@@ -106,7 +106,7 @@ export default async function GroupDetail({ params,searchParams }: { searchParam
             <div className="mt-8 border-t border-[#efe6d6] pt-7">
               <h2 className="flex items-center gap-2 text-xl font-bold text-teal"><CalendarDays size={20}/>{locale === 'ar' ? 'المواعيد الأسبوعية' : 'Weekly schedule'}</h2>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {detail.slots.length ? detail.slots.map(slot => <div key={slot.id} className="rounded-xl bg-[#f6f0e4] p-4"><p className="font-bold text-teal">{weekdays[locale][slot.weekday]}</p><p className="mt-1 text-sm text-muted">{slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)} · {locale === 'ar' ? 'توقيت القاهرة' : 'Cairo time'}</p></div>) : <p className="text-sm text-muted">{locale === 'ar' ? 'سيعلن المدرس المواعيد قريبًا.' : 'The teacher will publish the schedule soon.'}</p>}
+                {detail.slots.length ? detail.slots.map(slot => <div key={slot.id} className="rounded-xl bg-cream p-4"><p className="font-bold text-teal">{weekdays[locale][slot.weekday]}</p><p className="mt-1 text-sm text-muted">{slot.start_time.slice(0,5)}–{slot.end_time.slice(0,5)} · {locale === 'ar' ? 'توقيت القاهرة' : 'Cairo time'}</p></div>) : <p className="text-sm text-muted">{locale === 'ar' ? 'سيعلن المدرس المواعيد قريبًا.' : 'The teacher will publish the schedule soon.'}</p>}
               </div>
             </div>
             <div id="feedback"><GroupFeedbackSection db={requestViewer.db} locale={locale} groupId={id} isStudent={isStudent} offset={feedbackOffset}/></div>

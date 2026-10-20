@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { ActiveLink } from './active-link';
 import { StudentHeaderNavigation } from './student-header-navigation';
 import { Suspense } from 'react';
-import { Globe2, LogIn, LogOut, Menu, Search } from 'lucide-react';
+import { Globe2, LogOut, Menu, Search } from 'lucide-react';
 import { logoutAction } from '@/features/auth/actions';
 import { currentUser } from '@/features/platform/data';
 import { isConfigured } from '@/lib/supabase/server';
@@ -36,42 +36,43 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
   const navRole = activeRole ?? 'student';
 
   return <>
-    <header className="sticky top-0 z-30 border-b border-[#e3d9c8] bg-[#f6f0e4]/95 backdrop-blur-lg">
+    <header className="sticky top-0 z-30 border-b border-line bg-cream/95 backdrop-blur-lg">
       <div className="container relative flex min-h-16 flex-nowrap items-center gap-1 py-2 md:gap-5">
         <Link href={homeHref} className="flex min-w-0 shrink items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" aria-label={`${t.brand} · ${t.home}`}>
           <Image src={locale === 'ar' ? '/brand/darsak/the-header-logo-arabic.svg' : '/brand/darsak/english-header-lockup.svg'} alt={t.brand} width={180} height={44} priority className="h-9 w-auto max-w-[90px] object-contain sm:h-11 sm:max-w-[min(45vw,180px)]" />
         </Link>
 
-        <StudentHeaderNavigation locale={locale} enabled={activeRole !== null} role={navRole}><nav className="hidden items-center gap-6 text-sm font-bold text-[#4d473f] lg:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
+        <StudentHeaderNavigation locale={locale} enabled={activeRole !== null} role={navRole}><nav className="hidden items-center gap-6 text-sm font-bold text-ink-soft lg:flex" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
           {showDiscovery && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/teachers`}>{t.discover}</ActiveLink>}
-          {!me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</ActiveLink>}
+          {/* A call to action, not a section: it never shows as the current page (it used to light up on every /register page). */}
+          {!me && <Link className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" href={`/${locale}/register?role=teacher`}>{t.teachOnDarsak}</Link>}
           {activeRole && <ActiveLink exact className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={dashboardHref}>{t.dashboard}</ActiveLink>}
           {me && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={`/${locale}/account`}>{t.account}</ActiveLink>}
           {reportsHref && <ActiveLink className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange" activeClassName="text-orange underline underline-offset-4" href={reportsHref}>{reportsLabel}</ActiveLink>}
         </nav></StudentHeaderNavigation>
 
         <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
-          <Suspense fallback={<span aria-hidden="true" className="grid size-11 place-items-center rounded-xl border border-[#d8ccb8] text-teal"><Globe2 size={16}/></span>}>
+          <Suspense fallback={<span aria-hidden="true" className="grid size-11 place-items-center rounded-xl border border-line-strong text-teal"><Globe2 size={16}/></span>}>
             <LocaleSwitch otherLocale={otherLocale} label={locale === 'ar' ? 'English' : 'العربية'} shortLabel={locale === 'ar' ? 'EN' : 'عربي'} ariaLabel={locale === 'ar' ? 'Switch language to English' : 'تغيير اللغة إلى العربية'} />
           </Suspense>
           {!activeRole && <details className="relative lg:hidden">
-            <summary aria-label={locale === 'ar' ? 'القائمة' : 'Menu'} className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border border-[#d8ccb8] text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden"><Menu size={17} aria-hidden="true" /></summary>
+            <summary aria-label={locale === 'ar' ? 'القائمة' : 'Menu'} className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border border-line-strong text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden"><Menu size={17} aria-hidden="true" /></summary>
             <nav className="absolute end-0 top-[calc(100%+0.5rem)] z-40 grid min-w-48 gap-1 rounded-2xl border border-line bg-white p-2 shadow-lg" aria-label={locale === 'ar' ? 'التنقل الرئيسي' : 'Primary navigation'}>
               {me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={dashboardHref}>{t.dashboard}</Link>}
               {showDiscovery && <Link className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/teachers`}><Search size={16} aria-hidden="true" />{t.discover}</Link>}
-              {!me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/register?role=teacher`}>{t.teacherRole}</Link>}
+              {!me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/register?role=teacher`}>{t.teachOnDarsak}</Link>}
               {me && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={`/${locale}/account`}>{t.account}</Link>}
               {reportsHref && <Link className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream" href={reportsHref}>{reportsLabel}</Link>}
             </nav>
           </details>}
           {me ? (
             <form action={logoutAction} data-confirm-unsaved-navigation>
-              <button aria-label={t.logout} title={t.logout} className="grid size-11 place-items-center rounded-xl border border-[#d8ccb8] text-sm font-bold text-teal transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:inline-flex sm:h-11 sm:w-auto sm:min-w-0 sm:items-center sm:gap-2 sm:px-3"><LogOut size={17} aria-hidden="true" className="sm:hidden"/><span className="sr-only sm:not-sr-only">{t.logout}</span></button>
+              <button aria-label={t.logout} title={t.logout} className="grid size-11 place-items-center rounded-xl border border-line-strong text-sm font-bold text-teal transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:inline-flex sm:h-11 sm:w-auto sm:min-w-0 sm:items-center sm:gap-2 sm:px-3"><LogOut size={17} aria-hidden="true" className="sm:hidden"/><span className="sr-only sm:not-sr-only">{t.logout}</span></button>
             </form>
           ) : (
             <>
-              <Link aria-label={t.login} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-1.5 text-xs font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:min-w-0 sm:px-2 sm:text-sm" href={`/${locale}/login`}><LogIn size={17} aria-hidden="true" className="sm:hidden"/><span className="hidden sm:inline">{t.login}</span><span className="sr-only sm:hidden">{t.login}</span></Link>
-              <Link aria-label={t.register} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-orange px-2 text-xs font-bold text-white transition-colors hover:bg-[#c4561a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:px-4 sm:text-sm" href={`/${locale}/register`}><span className="sm:hidden">{locale === 'ar' ? 'ابدأ' : 'Join'}</span><span className="hidden sm:inline">{t.register}</span></Link>
+              <Link aria-label={t.login} className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-1.5 text-xs font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:min-w-0 sm:px-2 sm:text-sm" href={`/${locale}/login`}><span className="sm:hidden">{locale === 'ar' ? 'دخول' : 'Log in'}</span><span className="hidden sm:inline">{t.login}</span></Link>
+              <Link aria-label={t.register} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-orange px-2 text-xs font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:px-4 sm:text-sm" href={`/${locale}/register`}><span className="sm:hidden">{locale === 'ar' ? 'ابدأ' : 'Join'}</span><span className="hidden sm:inline">{t.register}</span></Link>
             </>
           )}
         </div>

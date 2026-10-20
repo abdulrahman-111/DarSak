@@ -4,7 +4,7 @@ import { useActionState, useState } from 'react';
 import { saveStudentLearningProfile } from './student-profile-actions';
 
 type Values = { full_name: string; age_range: string; education_year: string; interests_text: string; learning_goal: string; school_name: string };
-const control = 'mt-2 min-h-12 w-full rounded-xl border border-[#d8ccb8] bg-white px-4 py-3 text-ink outline-none focus:border-teal focus:ring-2 focus:ring-teal/15';
+const control = 'mt-2 min-h-12 w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-ink outline-none focus:border-teal focus:ring-2 focus:ring-teal/15';
 
 export function StudentProfileForm({ locale, initial, updatedAt }: { locale: 'en' | 'ar'; initial: Values; updatedAt: string }) {
   const ar = locale === 'ar';
@@ -46,6 +46,6 @@ export function StudentProfileForm({ locale, initial, updatedAt }: { locale: 'en
     <label className="block text-sm font-bold text-ink">{labels.school}
       <input className={control} name="school_name" maxLength={160} value={values.school_name} onChange={update('school_name')} aria-invalid={!!errors.school_name}/>{fieldError('school_name')}<span className="mt-1 block text-xs font-normal text-muted">{labels.schoolHint}</span>
     </label>
-    <button disabled={pending} type="submit" className="min-h-12 rounded-xl bg-orange px-5 py-3 font-bold text-white transition hover:bg-[#c4561a] disabled:cursor-wait disabled:opacity-60">{pending ? labels.saving : labels.save}</button>
+    <button disabled={pending} type="submit" className="min-h-12 rounded-xl bg-orange px-5 py-3 font-bold text-white transition hover:bg-orange-deep disabled:cursor-wait disabled:opacity-60">{pending ? labels.saving : labels.save}</button>
   </form>;
 }

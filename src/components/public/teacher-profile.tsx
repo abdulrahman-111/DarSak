@@ -74,10 +74,10 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
   const hasContact = !!(contactLinks.phone || contactLinks.whatsapp || contactLinks.email);
   const city = details ? localizedProfileText(details.city, lang) : '';
 
-  return <div className="min-h-[70vh] bg-[#f6f0e4]" dir={ar ? 'rtl' : 'ltr'}>
+  return <div className="min-h-[70vh] bg-cream" dir={ar ? 'rtl' : 'ltr'}>
     <section className="container py-10 md:py-16">
       <Link href={`/${locale}/teachers`} className="mb-7 inline-flex font-bold text-orange">{backLabel}</Link>
-      <article className={`mx-auto overflow-hidden [overflow-wrap:anywhere] [word-break:normal] rounded-[1.4rem] border border-[#e3d9c8] bg-[#fffdf8] shadow-[0_12px_35px_rgba(6,59,59,.05)] ${layout}`}>
+      <article className={`mx-auto overflow-hidden [overflow-wrap:anywhere] [word-break:normal] rounded-[1.4rem] border border-line bg-surface shadow-[0_12px_35px_rgba(6,59,59,.05)] ${layout}`}>
         {view.coverUrl && <div className="h-36 bg-cover bg-center sm:h-52" role="img" aria-label={ar ? 'غلاف ملف المعلم' : 'Teacher profile cover'} style={{ backgroundImage: `url("${view.coverUrl}")` }} />}
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <TeacherAvatarImage src={view.avatarUrl} name={view.teacher.full_name} size="size-32"/>
@@ -103,12 +103,12 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
                 const years = entryYears(entry, lang);
                 return <li key={entry.id} className={`min-w-0 rounded-xl p-4 ${theme.surface}`}>
                   {entryTitle && <h3 className={`font-bold ${theme.accent}`}>{entryTitle}</h3>}
-                  {organization && <p className="mt-1 text-sm font-medium text-[#4d473f]">{organization}</p>}
+                  {organization && <p className="mt-1 text-sm font-medium text-ink-soft">{organization}</p>}
                   {years && <p className="mt-1 text-xs text-muted">{years}</p>}
-                  {description && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-[#4d473f]">{description}</p>}
+                  {description && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-ink-soft">{description}</p>}
                 </li>;
               })}
-            </ul> : <p className="mt-3 whitespace-pre-wrap leading-8 text-[#4d473f]">{localizedProfileText(section.value, lang)}</p>}
+            </ul> : <p className="mt-3 whitespace-pre-wrap leading-8 text-ink-soft">{localizedProfileText(section.value, lang)}</p>}
           </section>;
         })}
 

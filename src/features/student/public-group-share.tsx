@@ -46,9 +46,9 @@ export function PublicGroupShare({ locale, groupId }: { locale: Locale; groupId:
   };
 
   const feedbackText = feedback === 'copied' ? copy.copied : feedback === 'shared' ? copy.shared : feedback === 'manual' ? copy.manual : feedback === 'error' ? copy.error : '';
-  return <section className="mt-6 rounded-xl border border-[#e3d9c8] bg-[#f6f0e4] p-4 text-[#29251f]" aria-labelledby="share-public-group">
+  return <section className="mt-6 rounded-xl border border-line bg-cream p-4 text-[#29251f]" aria-labelledby="share-public-group">
     <h3 id="share-public-group" className="text-sm font-bold text-teal">{copy.label}</h3>
-    <p className="mt-2 text-sm leading-6 text-[#4d473f]">{copy.helper}</p>
+    <p className="mt-2 text-sm leading-6 text-ink-soft">{copy.helper}</p>
     <label className="sr-only" htmlFor="public-group-share-url">{copy.label}</label>
     <input id="public-group-share-url" ref={input} readOnly value={url} title={url || undefined} onFocus={event => event.currentTarget.select()} dir="ltr" className="mt-2 block min-h-11 w-full min-w-0 rounded-lg border border-[#b8aa95] bg-white px-3 py-2 text-left font-mono text-sm text-[#29251f] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"/>
     <div className="mt-3 flex flex-wrap gap-2">

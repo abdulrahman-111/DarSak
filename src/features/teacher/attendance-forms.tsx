@@ -28,7 +28,7 @@ function AttendanceRowForm({ locale, lessonId, row, readOnly }: { locale: Locale
         <option value="">{ar ? 'مسح العلامة' : 'Clear mark'}</option>
         {(Object.keys(labels[locale]) as AttendanceStatus[]).map(status => <option key={status} value={status}>{labels[locale][status]}</option>)}
       </select>
-      <button disabled={readOnly || pending} className="min-h-11 rounded-xl bg-orange px-4 py-2 text-sm font-bold text-white disabled:opacity-50">{pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ' : 'Save')}</button>
+      <button disabled={readOnly || pending} className="min-h-11 rounded-xl bg-orange px-4 py-2 text-sm font-bold text-white disabled:opacity-50 hover:bg-orange-deep">{pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : (ar ? 'حفظ' : 'Save')}</button>
     </div>
     {state?.error && <p role="alert" className="text-sm text-red-700 sm:col-span-2">{state.error}</p>}
     {state?.success && <p role="status" className="text-sm text-teal sm:col-span-2">{state.success}</p>}

@@ -57,7 +57,7 @@ export function CopyLessonForm({
         <input name="ends_local" type="datetime-local" required className={control} />
       </label>
     </div>
-    <button disabled={pending || !groups.length} className="rounded-xl bg-orange px-4 py-3 font-bold text-white disabled:opacity-50">
+    <button disabled={pending || !groups.length} className="rounded-xl bg-orange px-4 py-3 font-bold text-white disabled:opacity-50 hover:bg-orange-deep">
       {pending ? (ar ? 'جارٍ النسخ…' : 'Copying…') : (ar ? 'نسخ الحصة' : 'Copy lesson')}
     </button>
     {state?.error && <p role="alert" className="text-sm text-red-700">{state.error}</p>}
