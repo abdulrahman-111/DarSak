@@ -27,7 +27,7 @@ export default async function AdminEducation({ params }: { params: Promise<{ loc
       />
       {nodes.error || subjects.error || offerings.error ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل الدليل التعليمي. حدّث الصفحة وحاول مرة أخرى.'
               : 'Could not load the education catalogue. Refresh and try again.'}

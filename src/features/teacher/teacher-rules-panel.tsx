@@ -85,7 +85,7 @@ export function TeacherRulesPanel({
             <span>{text.acceptance}</span>
           </label>
           {error && (
-            <p role="alert" className="mt-2 text-sm font-bold text-red-800">
+            <p role="alert" className="mt-2 text-sm font-bold text-danger">
               {text.required}
             </p>
           )}

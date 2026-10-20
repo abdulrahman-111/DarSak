@@ -27,7 +27,7 @@ export function DuplicateGroupForm({ locale, groupId }: { locale: Locale; groupI
         {pending ? (ar ? 'جارٍ النسخ…' : 'Duplicating…') : ar ? 'نسخ المجموعة' : 'Duplicate group'}
       </button>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -94,7 +94,7 @@ export function CopyLessonForm({
         {pending ? (ar ? 'جارٍ النسخ…' : 'Copying…') : ar ? 'نسخ الحصة' : 'Copy lesson'}
       </button>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -159,7 +159,7 @@ export function LessonShortcutStatusControls({
           name="status"
           value="cancelled"
           disabled={pending}
-          className="rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700"
+          className="rounded-xl border border-danger/30 px-3 py-2 text-sm font-bold text-danger"
         >
           {pending ? '…' : ar ? 'إلغاء الحصة' : 'Cancel lesson'}
         </button>
@@ -175,7 +175,7 @@ export function LessonShortcutStatusControls({
         </button>
       )}
       {state?.error && (
-        <p role="alert" className="w-full text-sm text-red-700">
+        <p role="alert" className="w-full text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -209,11 +209,11 @@ export function DeleteLessonMaterialButton({
   };
   return (
     <form action={action} onSubmit={confirmDelete} onReset={event => event.preventDefault()}>
-      <button disabled={pending} className="text-sm font-bold text-red-700 underline">
+      <button disabled={pending} className="text-sm font-bold text-danger underline">
         {pending ? '…' : ar ? 'حذف' : 'Delete'}
       </button>
       {state?.error && (
-        <p role="alert" className="mt-1 text-xs text-red-700">
+        <p role="alert" className="mt-1 text-xs text-danger">
           {state.error}
         </p>
       )}

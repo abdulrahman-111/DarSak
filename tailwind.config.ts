@@ -16,6 +16,9 @@ export default {
         muted: '#6b6358',
         line: '#e3d9c8',
         'line-strong': '#d8ccb8',
+        mint: '#d5ebe6',
+        success: { DEFAULT: '#2c5620', soft: '#dfedd5' },
+        danger: { DEFAULT: '#9b2c1f', soft: '#f6e1dc' },
       },
       boxShadow: {
         card: '0 16px 45px rgba(14, 74, 75, 0.08)',

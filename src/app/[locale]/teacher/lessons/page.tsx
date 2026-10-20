@@ -172,7 +172,7 @@ export default async function TeacherLessons({
       )}
       {routeError ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.failed}
           </p>
           <Link
@@ -216,7 +216,7 @@ export default async function TeacherLessons({
                     <p className="mb-3 text-xs text-muted">{copy.groupLimit}</p>
                   )}
                   {query.groupId && !selectedGroup && (
-                    <p role="alert" className="mb-4 text-sm text-red-700">
+                    <p role="alert" className="mb-4 text-sm text-danger">
                       {copy.invalidGroup}
                     </p>
                   )}

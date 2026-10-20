@@ -16,7 +16,7 @@ export default async function AccountSetupPage({
   const locale = ensureLocale(raw);
   const unavailable = (
     <AccountPageFrame>
-      <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
+      <p role="alert" className="rounded-xl bg-danger-soft p-4 text-danger">
         {locale === 'ar'
           ? 'تعذر تحميل الإعداد المحفوظ. حاول مجدداً.'
           : 'We could not load your saved setup. Please try again.'}

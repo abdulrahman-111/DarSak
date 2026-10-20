@@ -67,7 +67,7 @@ export default async function TeacherProfilePage({
         )}
         {onboardingError && (
           <Panel className="mb-5">
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {ar
                 ? 'تعذر التحقق من خطوات إعداد الحساب. أكمل بيانات الملف ثم حدّث الصفحة أو افتح طلب الاعتماد.'
                 : 'Could not check your account setup steps. Complete your profile, then refresh or open the application page.'}
@@ -76,7 +76,7 @@ export default async function TeacherProfilePage({
         )}
         {data.error || !data.values ? (
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {data.error ?? (ar ? 'تعذر تحميل الملف الشخصي.' : 'Could not load your profile.')}
             </p>
           </Panel>

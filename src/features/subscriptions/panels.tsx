@@ -51,7 +51,7 @@ export function TeacherPlanPanel({
         <h2 className="text-xl font-black text-teal">
           {ar ? 'الخطة والاستخدام' : 'Teaching plan and usage'}
         </h2>
-        <p role="alert" className="mt-3 text-sm text-red-800">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {ar
             ? 'تعذر تحميل حالة الخطة والاستخدام. حدّث الصفحة وحاول مرة أخرى.'
             : 'Could not load plan and usage. Refresh and try again.'}
@@ -184,7 +184,7 @@ function AssignmentForm({
         </p>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm font-semibold text-red-800">
+        <p role="alert" className="text-sm font-semibold text-danger">
           {state.error}
         </p>
       )}
@@ -220,7 +220,7 @@ export function AdminTeacherPlanPanel({
     <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
       <h2 className="text-xl font-black text-teal">{ar ? 'الخطة والاستخدام' : 'Plan and usage'}</h2>
       {error || !status ? (
-        <p role="alert" className="mt-3 text-sm text-red-800">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {ar
             ? 'تعذر تحميل بيانات الخطة. حدّث الصفحة وحاول مرة أخرى.'
             : 'Could not load plan details. Refresh and try again.'}

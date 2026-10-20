@@ -102,7 +102,7 @@ export function CatalogueLabelEditor({
       {fieldError(name) && (
         <p
           id={`catalogue-${row?.id ?? 'new'}-${kind}-${name}-error`}
-          className="mt-1 text-sm text-red-700"
+          className="mt-1 text-sm text-danger"
         >
           {locale === 'ar'
             ? 'أدخل اسماً لا يتجاوز ١٢٠ حرفاً في لغة واحدة على الأقل.'
@@ -150,7 +150,7 @@ export function CatalogueLabelEditor({
       {labelField('name_ar', t.nameAr)}
       {labelField('name_en', t.nameEn)}
       {state?.error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -199,7 +199,7 @@ export function CatalogueArchiveButton({
         {pending ? t.working : archived ? t.restore : t.archive}
       </button>
       {state?.error && (
-        <span role="alert" className="text-sm text-red-800">
+        <span role="alert" className="text-sm text-danger">
           {state.error}
         </span>
       )}

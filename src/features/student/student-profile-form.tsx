@@ -105,7 +105,7 @@ export function StudentProfileForm({
       };
   const fieldError = (field: string) =>
     errors[field] ? (
-      <span className="mt-1 block text-sm font-normal text-red-700">{labels.required}</span>
+      <span className="mt-1 block text-sm font-normal text-danger">{labels.required}</span>
     ) : null;
   return (
     <form

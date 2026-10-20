@@ -44,7 +44,7 @@ export default async function StudentDashboard({
       />
       {data.error ? (
         <section className={studentCard}>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل مساحة التعلم. حدّث الصفحة للمحاولة مجددًا.'
               : 'Could not load your learning space. Refresh to try again.'}

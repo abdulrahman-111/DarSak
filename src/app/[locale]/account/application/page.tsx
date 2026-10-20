@@ -40,7 +40,7 @@ export default async function TeacherApplicationPage({
         />
         {onboardingError && (
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {ar
                 ? 'تعذر التحقق من خطوات إعداد حسابك. راجع القائمة أدناه وحدّث الصفحة بعد الحفظ.'
                 : 'Could not check your account setup steps. Review the checklist below and refresh after saving.'}
@@ -49,7 +49,7 @@ export default async function TeacherApplicationPage({
         )}
         {data.error === 'download' && (
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {ar
                 ? 'تعذر إنشاء رابط تنزيل آمن لملفك.'
                 : 'Could not create a secure download link for your CV.'}

@@ -33,7 +33,7 @@ export function TeacherApplicationForm({
     'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
   const fieldError = (name: string) =>
     state?.fieldErrors?.[name] ? (
-      <p className="mt-1 text-sm text-red-800">
+      <p className="mt-1 text-sm text-danger">
         {ar ? 'يرجى التحقق من هذه القيمة.' : 'Please check this value.'}
       </p>
     ) : null;
@@ -194,7 +194,7 @@ export function TeacherApplicationForm({
         {fieldError('attested')}
       </fieldset>
       {state?.error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {state.error}
         </p>
       )}

@@ -42,7 +42,7 @@ export function AccessDecision({ locale, requestId }: { locale: string; requestI
         {pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : ar ? 'رفض' : 'Decline'}
       </button>
       {state?.error && (
-        <p role="alert" className="basis-full text-sm text-red-800">
+        <p role="alert" className="basis-full text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -148,7 +148,7 @@ export function FeePolicyForm({
         {pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : ar ? 'حفظ السياسة' : 'Save policy'}
       </button>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}

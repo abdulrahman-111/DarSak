@@ -85,7 +85,7 @@ export function AdminForm({
         {pending ? t.working : button || t.save}
       </button>
       {state?.error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {state.error}
         </p>
       )}

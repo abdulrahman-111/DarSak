@@ -444,7 +444,7 @@ export function SetupWizard({
           className={inputClass}
           {...attrs}
         />
-        {fieldErrors.includes(id) && <small className="text-red-800">{c.invalid}</small>}
+        {fieldErrors.includes(id) && <small className="text-danger">{c.invalid}</small>}
       </label>
     );
   };
@@ -466,7 +466,7 @@ export function SetupWizard({
           className={`${inputClass} min-h-28`}
           {...attrs}
         />
-        {fieldErrors.includes(id) && <small className="text-red-800">{c.invalid}</small>}
+        {fieldErrors.includes(id) && <small className="text-danger">{c.invalid}</small>}
       </label>
     );
   };
@@ -589,7 +589,7 @@ export function SetupWizard({
                   list.filter((_, index) => index !== i),
                 )
               }
-              className="text-sm font-bold text-red-800 underline"
+              className="text-sm font-bold text-danger underline"
             >
               {c.remove}
             </button>
@@ -609,7 +609,7 @@ export function SetupWizard({
 
   if (loadError || !draft)
     return (
-      <p role="alert" className="rounded-xl bg-red-50 p-4 text-red-800">
+      <p role="alert" className="rounded-xl bg-danger-soft p-4 text-danger">
         {c.loadingError}
       </p>
     );
@@ -665,7 +665,7 @@ export function SetupWizard({
                     }
                   />
                   {fieldErrors.includes('languages') && (
-                    <small className="text-red-800">{c.invalid}</small>
+                    <small className="text-danger">{c.invalid}</small>
                   )}
                 </label>
               </>
@@ -698,7 +698,7 @@ export function SetupWizard({
                   id="experience_or_qualification"
                   tabIndex={-1}
                   role={fieldErrors.includes('experience_or_qualification') ? 'alert' : undefined}
-                  className={`text-sm ${fieldErrors.includes('experience_or_qualification') ? 'text-red-800' : 'text-muted'}`}
+                  className={`text-sm ${fieldErrors.includes('experience_or_qualification') ? 'text-danger' : 'text-muted'}`}
                 >
                   {c.experienceOrQualification}
                 </p>
@@ -740,7 +740,7 @@ export function SetupWizard({
                   </div>
                 )}
                 {fieldErrors.includes('offering_ids') && (
-                  <p className="text-sm text-red-800">{c.invalid}</p>
+                  <p className="text-sm text-danger">{c.invalid}</p>
                 )}
                 <div className="mt-5 grid gap-3 rounded-xl border border-line p-3 sm:grid-cols-[1fr_1fr_auto]">
                   <label className="text-sm font-bold">
@@ -803,7 +803,7 @@ export function SetupWizard({
                   </button>
                 </div>
                 {subjectCreateError && (
-                  <p role="alert" className="text-sm text-red-800">
+                  <p role="alert" className="text-sm text-danger">
                     {subjectCreateError}
                   </p>
                 )}
@@ -813,7 +813,7 @@ export function SetupWizard({
                   </p>
                 )}
                 {offeringError && (
-                  <p role="alert" className="mt-2 text-sm text-red-800">
+                  <p role="alert" className="mt-2 text-sm text-danger">
                     {offeringError}
                   </p>
                 )}
@@ -841,7 +841,7 @@ export function SetupWizard({
                   />
                   <p className="mt-1 text-sm text-muted">{c.cvHint}</p>
                   {fieldErrors.includes('verification-cv_url') && (
-                    <small className="text-red-800">{c.invalidCv}</small>
+                    <small className="text-danger">{c.invalidCv}</small>
                   )}
                 </div>
                 <div id="verification-links" tabIndex={-1}>
@@ -863,7 +863,7 @@ export function SetupWizard({
                     />
                   ))}
                   {fieldErrors.includes('verification-links') && (
-                    <p className="text-sm text-red-800">{c.invalid}</p>
+                    <p className="text-sm text-danger">{c.invalid}</p>
                   )}
                 </div>
                 <label className="flex items-start gap-3 rounded-xl bg-orange/10 p-3">
@@ -877,7 +877,7 @@ export function SetupWizard({
                   <span>{c.attestation} *</span>
                 </label>
                 {fieldErrors.includes('attested') && (
-                  <p className="text-sm text-red-800">{c.invalid}</p>
+                  <p className="text-sm text-danger">{c.invalid}</p>
                 )}
               </>
             )}
@@ -900,7 +900,7 @@ export function SetupWizard({
                     ))}
                   </select>
                   {fieldErrors.includes('age_range') && (
-                    <small className="text-red-800">{c.invalid}</small>
+                    <small className="text-danger">{c.invalid}</small>
                   )}
                 </label>
                 {field(c.school, ['about', 'school_name'], 'text', { maxLength: 160 }, true)}
@@ -924,7 +924,7 @@ export function SetupWizard({
                     {ar ? 'مثال: العلوم، الرسم، كرة القدم' : 'Example: science, drawing, football'}
                   </span>
                   {fieldErrors.includes('learning-interests') && (
-                    <small className="text-red-800">{c.invalid}</small>
+                    <small className="text-danger">{c.invalid}</small>
                   )}
                 </label>
                 {textarea(c.goal, ['learning', 'learning_goal'], {
@@ -1026,7 +1026,7 @@ export function SetupWizard({
         </section>
       )}
       {(error || (completionError && completionError !== 'teacher-rules')) && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-danger">
           {error || completionError}
         </p>
       )}

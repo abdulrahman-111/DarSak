@@ -27,7 +27,7 @@ export async function StudentAttendanceStatus({
     <Panel className="mb-6">
       <h2 className="font-black text-teal">{ar ? 'حضورك' : 'Your attendance'}</h2>
       {result.error ? (
-        <p role="alert" className="mt-2 text-sm text-red-800">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {ar ? 'تعذر تحميل حالة الحضور.' : 'Could not load your attendance status.'}
         </p>
       ) : (

@@ -12,7 +12,7 @@ function Feedback({
   state: { error?: string; ok?: boolean } | null;
 }) {
   return state?.error ? (
-    <p role="alert" className="text-sm text-red-700">
+    <p role="alert" className="text-sm text-danger">
       {state.error}
     </p>
   ) : state?.ok ? (

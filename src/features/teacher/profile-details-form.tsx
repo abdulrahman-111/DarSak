@@ -240,7 +240,7 @@ function localizedField(
               {left} {language === 'ar' ? 'حرف متبقٍ' : 'characters left'}
             </p>
             {invalid && (
-              <p id={errorId} className="mt-1 text-sm text-red-700">
+              <p id={errorId} className="mt-1 text-sm text-danger">
                 {errorMessage(path)}
               </p>
             )}
@@ -306,7 +306,7 @@ export function TeacherProfileDetailsForm({
   };
   const errorDescription = (path: string, id: string, fallback: string = t.fieldError) =>
     errorFor(path) ? (
-      <p id={id} className="mt-1 text-sm text-red-700">
+      <p id={id} className="mt-1 text-sm text-danger">
         {fieldErrorMessage(path) ?? fallback}
       </p>
     ) : null;
@@ -575,7 +575,7 @@ export function TeacherProfileDetailsForm({
               </button>
             </div>
             {errorFor(kind) && (
-              <p id={`profile-${kind}-error`} className="text-sm text-red-700">
+              <p id={`profile-${kind}-error`} className="text-sm text-danger">
                 {t.fieldError}
               </p>
             )}
@@ -777,7 +777,7 @@ export function TeacherProfileDetailsForm({
           </h3>
           <p className="text-sm text-muted">{t.sectionOrder}</p>
           {errorFor('section_order') && (
-            <p id="profile-section-order-error" className="text-sm text-red-700">
+            <p id="profile-section-order-error" className="text-sm text-danger">
               {t.fieldError}
             </p>
           )}
@@ -838,7 +838,7 @@ export function TeacherProfileDetailsForm({
         </section>
 
         {state?.error && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
             {state.error.includes('changed while') || state.error.includes('تغير ملفك')
               ? t.reloadError
               : state.fieldErrors

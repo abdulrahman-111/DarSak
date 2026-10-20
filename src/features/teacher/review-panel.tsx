@@ -23,7 +23,7 @@ export function TeacherReviewPanel({
   if (error || !status)
     return (
       <Panel className="mb-6">
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {fallback}
         </p>
       </Panel>
@@ -120,9 +120,9 @@ export function TeacherReviewPanel({
         status.decline_reason &&
         applicationStatus !== 'changes_requested' &&
         applicationStatus !== 'declined' && (
-          <div className="mt-4 rounded-xl bg-red-50 p-4">
-            <h3 className="text-sm font-bold text-red-900">{copy.reason}</h3>
-            <p className="mt-1 whitespace-pre-wrap text-sm text-red-900">{status.decline_reason}</p>
+          <div className="mt-4 rounded-xl bg-danger-soft p-4">
+            <h3 className="text-sm font-bold text-danger">{copy.reason}</h3>
+            <p className="mt-1 whitespace-pre-wrap text-sm text-danger">{status.decline_reason}</p>
           </div>
         )}
       <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">

@@ -84,7 +84,7 @@ export default async function ReportsPage({
       <div className="container max-w-3xl py-8">
         <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} />
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.denied}
           </p>
         </Panel>
@@ -145,7 +145,7 @@ export default async function ReportsPage({
       </div>
       {failed ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.loadError}
           </p>
         </Panel>

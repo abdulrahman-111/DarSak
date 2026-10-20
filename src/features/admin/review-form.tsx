@@ -84,12 +84,12 @@ export function ReviewDecisionForm({
         {t.reasonHint}
       </p>
       {reasonError && (
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {locale === 'ar' ? 'سبب الرفض مطلوب.' : 'A decline reason is required.'}
         </p>
       )}
       {(state?.fieldError || state?.error) && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {state.fieldError || state.error}
         </p>
       )}
@@ -111,7 +111,7 @@ export function ReviewDecisionForm({
           name="decision"
           value="declined"
           disabled={pending}
-          className="rounded-xl bg-red-700 px-5 py-3 font-bold text-white disabled:opacity-50"
+          className="rounded-xl bg-danger px-5 py-3 font-bold text-white disabled:opacity-50"
         >
           {pending ? t.working : t.decline}
         </button>

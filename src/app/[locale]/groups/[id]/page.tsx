@@ -94,7 +94,7 @@ export default async function GroupDetail({
         <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
           <article className="min-w-0 rounded-[1.4rem] border border-line bg-surface p-6 md:p-9">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="rounded-lg bg-[#d5ebe6] px-3 py-1.5 text-sm font-bold text-teal">
+              <span className="rounded-lg bg-mint px-3 py-1.5 text-sm font-bold text-teal">
                 {subject}
               </span>
               <span className="rounded-full bg-[#dfedd5] px-3 py-1.5 text-xs font-bold text-[#2c5620]">
@@ -127,7 +127,7 @@ export default async function GroupDetail({
               )}
             </p>
             {learning.error ? (
-              <p role="alert" className="mt-4 text-sm text-red-800">
+              <p role="alert" className="mt-4 text-sm text-danger">
                 {locale === 'ar'
                   ? 'تعذر تحميل تفاصيل التعلم. حدّث الصفحة وحاول مجددًا.'
                   : 'Could not load learning details. Refresh and try again.'}

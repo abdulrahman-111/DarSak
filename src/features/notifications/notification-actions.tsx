@@ -23,7 +23,7 @@ export function NotificationSubmit({
         {busy ? pending : children}
       </button>
       {state?.error && (
-        <span role="alert" className="text-xs text-red-800">
+        <span role="alert" className="text-xs text-danger">
           {state.error}
         </span>
       )}

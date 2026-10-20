@@ -168,7 +168,7 @@ export default async function AdminUsers({
       </Panel>
       {profiles.error || metadata.error ? (
         <Panel>
-          <p role="alert" className="text-red-800">
+          <p role="alert" className="text-danger">
             {copy.error}
           </p>
         </Panel>

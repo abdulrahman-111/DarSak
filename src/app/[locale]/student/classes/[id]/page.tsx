@@ -127,7 +127,7 @@ export default async function StudentClassPage({
       </nav>
       {data.error ? (
         <section className={studentCard}>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل هذا القسم بالكامل. حدّث الصفحة للمحاولة مجددًا.'
               : 'This section could not be fully loaded. Refresh to try again.'}

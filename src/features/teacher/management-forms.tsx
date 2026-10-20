@@ -11,7 +11,7 @@ import {
 
 function Result({ state }: { state: ManagementActionState }) {
   return state?.error ? (
-    <p role="alert" className="w-full text-sm text-red-700">
+    <p role="alert" className="w-full text-sm text-danger">
       {state.error}
     </p>
   ) : state?.success ? (
@@ -76,7 +76,7 @@ export function DeleteUnusedTeacherGroupForm({
     <form action={action} onSubmit={confirm} className="grid justify-items-start gap-2">
       <button
         disabled={pending}
-        className="rounded-xl border border-red-300 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-50"
+        className="rounded-xl border border-danger/30 px-4 py-2.5 text-sm font-bold text-danger disabled:opacity-50"
       >
         {pending ? '…' : ar ? 'حذف مجموعة غير مستخدمة' : 'Delete unused group'}
       </button>
@@ -113,7 +113,7 @@ export function DeleteManualTeacherLessonForm({
     <form action={action} onSubmit={confirm} className="grid justify-items-start gap-2">
       <button
         disabled={pending}
-        className="rounded-xl border border-red-300 px-4 py-2.5 text-sm font-bold text-red-700 disabled:opacity-50"
+        className="rounded-xl border border-danger/30 px-4 py-2.5 text-sm font-bold text-danger disabled:opacity-50"
       >
         {pending ? '…' : ar ? 'حذف الحصة اليدوية' : 'Delete manual lesson'}
       </button>

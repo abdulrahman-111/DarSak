@@ -18,7 +18,7 @@ export function TeacherAccessPanel({
     return (
       <Panel className={compact ? 'mb-4' : ''}>
         <h2 className="font-black text-teal">{ar ? 'صلاحية التدريس' : 'Teaching access'}</h2>
-        <p role="alert" className="mt-2 text-sm text-red-800">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {ar
             ? 'تعذر تحميل حالة صلاحية التدريس. حدّث الصفحة وحاول مرة أخرى.'
             : 'Could not load teaching access. Refresh and try again.'}

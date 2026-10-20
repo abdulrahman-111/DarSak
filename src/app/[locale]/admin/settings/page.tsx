@@ -40,7 +40,7 @@ export default async function AdminSettings({ params }: { params: Promise<{ loca
         <div className="grid gap-4">
           {settings.error ? (
             <Panel>
-              <p role="alert" className="text-sm text-red-800">
+              <p role="alert" className="text-sm text-danger">
                 {ar
                   ? 'تعذر تحميل الإعدادات. حدّث الصفحة وحاول مرة أخرى.'
                   : 'Could not load settings. Refresh and try again.'}

@@ -109,7 +109,7 @@ export function FeedbackForm({
               : 'Save'}
       </button>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}

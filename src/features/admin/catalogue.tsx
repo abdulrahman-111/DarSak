@@ -125,9 +125,7 @@ export function CatalogueEditor({
                         fields={section.fields(row as never)}
                       />
                       <details className="mt-5 border-t border-line pt-4">
-                        <summary className="cursor-pointer text-sm text-red-700">
-                          {t.remove}
-                        </summary>
+                        <summary className="cursor-pointer text-sm text-danger">{t.remove}</summary>
                         <p className="my-3 text-sm text-muted">{t.deleteHelp}</p>
                         <AdminForm
                           locale={locale}

@@ -17,7 +17,7 @@ export function TeacherApplicationPanel({
   if (data.error === 'unavailable' || !data.application)
     return (
       <Panel>
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {ar
             ? 'تعذر تحميل طلب المعلم. حدّث الصفحة وحاول مرة أخرى.'
             : 'Could not load your application. Refresh and try again.'}
@@ -196,7 +196,7 @@ function CvLink({ locale, url }: { locale: Locale; url: string | null }) {
             : 'Download CV (link valid for one minute)'}
         </a>
       ) : (
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {ar ? 'تعذر إنشاء رابط تنزيل آمن.' : 'Could not create a secure download link.'}
         </p>
       )}

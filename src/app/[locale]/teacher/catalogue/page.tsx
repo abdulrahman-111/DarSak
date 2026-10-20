@@ -65,7 +65,7 @@ export default async function TeacherCataloguePage({
       <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />
       {data.error ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.load}
           </p>
         </Panel>
@@ -90,7 +90,7 @@ export default async function TeacherCataloguePage({
                           {catalogueDisplayName(subject, locale)}
                         </h3>
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${subject.archived_at ? 'bg-orange/10 text-orange' : 'bg-green-100 text-green-800'}`}
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${subject.archived_at ? 'bg-orange/10 text-orange' : 'bg-success-soft text-success'}`}
                         >
                           {subject.archived_at ? copy.archived : copy.active}
                         </span>
@@ -129,7 +129,7 @@ export default async function TeacherCataloguePage({
                           {catalogueDisplayName(category, locale)}
                         </h3>
                         <span
-                          className={`rounded-full px-3 py-1 text-xs font-bold ${category.archived_at ? 'bg-orange/10 text-orange' : 'bg-green-100 text-green-800'}`}
+                          className={`rounded-full px-3 py-1 text-xs font-bold ${category.archived_at ? 'bg-orange/10 text-orange' : 'bg-success-soft text-success'}`}
                         >
                           {category.archived_at ? copy.archived : copy.active}
                         </span>

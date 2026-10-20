@@ -219,7 +219,7 @@ export default async function TeacherGroupDetail({
             <p className="mt-1 text-sm text-muted">{copy.scheduleEffect}</p>
           )}
           {slots.error ? (
-            <p role="alert" className="my-5 text-sm text-red-700">
+            <p role="alert" className="my-5 text-sm text-danger">
               {copy.slotError}
             </p>
           ) : currentGroup.status === 'archived' ? (
@@ -260,7 +260,7 @@ export default async function TeacherGroupDetail({
         <Panel className="mt-6">
           <h2 className="mb-4 text-xl font-black text-teal">{copy.generation}</h2>
           {exclusions.error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {copy.exclusionsError}
             </p>
           ) : (
@@ -279,7 +279,7 @@ export default async function TeacherGroupDetail({
           <h2 className="mb-4 text-xl font-black text-teal">{copy.lessons}</h2>
           {lessonsFailed ? (
             <>
-              <p role="alert" className="text-sm text-red-700">
+              <p role="alert" className="text-sm text-danger">
                 {copy.lessonsError}
               </p>
               <a
@@ -333,7 +333,7 @@ export default async function TeacherGroupDetail({
             </div>
           </div>
           {students.error ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {copy.studentsError}
             </p>
           ) : (

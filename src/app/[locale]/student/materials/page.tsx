@@ -147,7 +147,7 @@ export default async function StudentMaterials({
         lessons &&
         (lessons.error ? (
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {copy.lessonsError}
             </p>
             <a
@@ -278,7 +278,7 @@ export default async function StudentMaterials({
           </Panel>
           {resources.error ? (
             <Panel>
-              <p role="alert" className="text-sm text-red-800">
+              <p role="alert" className="text-sm text-danger">
                 {copy.resourcesError}
               </p>
               <a

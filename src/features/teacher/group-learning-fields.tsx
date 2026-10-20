@@ -99,7 +99,7 @@ export function GroupLearningFields({
             className="w-full rounded-xl border border-line bg-cream p-3"
           />
           {errorFor(f.name) && (
-            <span id={`learning-${f.name}-error`} className="font-normal text-red-800">
+            <span id={`learning-${f.name}-error`} className="font-normal text-danger">
               {errorFor(f.name)}
             </span>
           )}
@@ -137,7 +137,7 @@ export function GroupLearningFields({
             <option value="hybrid">{modes[3]}</option>
           </select>
           {errorFor('delivery_mode') && (
-            <p id="learning-delivery_mode-error" className="mt-1 text-sm text-red-800">
+            <p id="learning-delivery_mode-error" className="mt-1 text-sm text-danger">
               {errorFor('delivery_mode')}
             </p>
           )}
@@ -162,7 +162,7 @@ export function GroupLearningFields({
               className="mt-2 min-h-11 w-full rounded-xl border border-line bg-cream p-3"
             />
             {errorFor('fee_egp') && (
-              <p id="learning-fee_egp-error" className="mt-1 text-sm text-red-800">
+              <p id="learning-fee_egp-error" className="mt-1 text-sm text-danger">
                 {errorFor('fee_egp')}
               </p>
             )}
@@ -189,7 +189,7 @@ export function GroupLearningFields({
               ))}
             </select>
             {errorFor('fee_basis') && (
-              <p id="learning-fee_basis-error" className="mt-1 text-sm text-red-800">
+              <p id="learning-fee_basis-error" className="mt-1 text-sm text-danger">
                 {errorFor('fee_basis')}
               </p>
             )}
@@ -212,7 +212,7 @@ export function GroupLearningFields({
           className="w-full rounded-xl border border-line bg-cream p-3"
         />
         {errorFor('fee_includes') && (
-          <span id="learning-fee_includes-error" className="font-normal text-red-800">
+          <span id="learning-fee_includes-error" className="font-normal text-danger">
             {errorFor('fee_includes')}
           </span>
         )}

@@ -73,14 +73,14 @@ export function RouteError({ area, retry }: { area: RouteArea; retry: () => void
     });
   return (
     <section className="container py-16" role="alert">
-      <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-red-50 p-6">
+      <div className="mx-auto max-w-3xl rounded-2xl border border-danger/30 bg-danger-soft p-6">
         {area === 'page' ? (
           <>
-            <h1 className="text-xl font-bold leading-snug text-red-900">{text}</h1>
-            <p className="mt-2 text-sm leading-6 text-red-800">{t.pageHint}</p>
+            <h1 className="text-xl font-bold leading-snug text-danger">{text}</h1>
+            <p className="mt-2 text-sm leading-6 text-danger">{t.pageHint}</p>
           </>
         ) : (
-          <p className="text-sm text-red-800">{text}</p>
+          <p className="text-sm text-danger">{text}</p>
         )}
         <button
           type="button"
