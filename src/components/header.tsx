@@ -47,6 +47,27 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
     ? await unreadNotificationCount((await getRequestViewer()).db)
     : null;
   const navRole = activeRole ?? 'student';
+  const localeSwitch = (compact: boolean) => (
+    <Suspense
+      fallback={
+        <span
+          aria-hidden="true"
+          className="grid size-11 place-items-center rounded-xl border border-line-strong text-teal"
+        >
+          <Globe2 size={16} />
+        </span>
+      }
+    >
+      <LocaleSwitch
+        otherLocale={otherLocale}
+        label={locale === 'ar' ? 'English' : 'العربية'}
+        shortLabel={
+          compact ? (locale === 'ar' ? 'EN' : 'عربي') : locale === 'ar' ? 'English' : 'العربية'
+        }
+        ariaLabel={locale === 'ar' ? 'Switch language to English' : 'تغيير اللغة إلى العربية'}
+      />
+    </Suspense>
+  );
 
   return (
     <>
@@ -67,7 +88,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
               width={180}
               height={44}
               priority
-              className="h-9 w-auto max-w-[90px] object-contain sm:h-11 sm:max-w-[min(45vw,180px)]"
+              className="h-9 w-auto max-w-[118px] object-contain sm:h-11 sm:max-w-[min(45vw,180px)]"
             />
           </Link>
 
@@ -126,27 +147,9 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
           </StudentHeaderNavigation>
 
           <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
-            <Suspense
-              fallback={
-                <span
-                  aria-hidden="true"
-                  className="grid size-11 place-items-center rounded-xl border border-line-strong text-teal"
-                >
-                  <Globe2 size={16} />
-                </span>
-              }
-            >
-              <LocaleSwitch
-                otherLocale={otherLocale}
-                label={locale === 'ar' ? 'English' : 'العربية'}
-                shortLabel={locale === 'ar' ? 'EN' : 'عربي'}
-                ariaLabel={
-                  locale === 'ar' ? 'Switch language to English' : 'تغيير اللغة إلى العربية'
-                }
-              />
-            </Suspense>
+            <span className={me ? 'contents' : 'hidden sm:contents'}>{localeSwitch(true)}</span>
             {!activeRole && (
-              <details className="relative lg:hidden">
+              <details className={`relative lg:hidden ${me ? '' : 'order-last'}`}>
                 <summary
                   aria-label={locale === 'ar' ? 'القائمة' : 'Menu'}
                   className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border border-line-strong text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden"
@@ -198,6 +201,11 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                       {reportsLabel}
                     </Link>
                   )}
+                  {!me && (
+                    <div className="mt-1 border-t border-line pt-2 sm:hidden [&_a]:w-full [&_a]:justify-start [&_a]:border-0 [&_a]:px-3 [&_a]:text-sm">
+                      {localeSwitch(false)}
+                    </div>
+                  )}
                 </nav>
               </details>
             )}
@@ -215,8 +223,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
             ) : (
               <>
                 <Link
-                  aria-label={t.login}
-                  className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-xl px-1.5 text-xs font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:min-w-0 sm:px-2 sm:text-sm"
+                  className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-bold text-teal transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                   href={`/${locale}/login`}
                 >
                   <span className="sm:hidden">{locale === 'ar' ? 'دخول' : 'Log in'}</span>
@@ -224,7 +231,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                 </Link>
                 <Link
                   aria-label={t.register}
-                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-orange px-2 text-xs font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:px-4 sm:text-sm"
+                  className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl bg-orange px-3 text-sm font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:px-4 sm:text-sm"
                   href={`/${locale}/register`}
                 >
                   <span className="sm:hidden">{locale === 'ar' ? 'ابدأ' : 'Join'}</span>

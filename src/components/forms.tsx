@@ -11,7 +11,7 @@ const input =
   'mt-2 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-none ring-orange focus:ring-2';
 function Feedback({ state }: { state: any }) {
   return state?.error ? (
-    <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+    <p role="alert" className="mt-3 rounded-xl bg-danger-soft p-3 text-sm text-danger">
       {state.error}
     </p>
   ) : null;
@@ -147,7 +147,7 @@ export function JoinButton({
       >
         {pending ? t.loading : t.apply}
       </button>
-      {state?.error && <p className="mt-2 text-sm text-red-600">{state.error}</p>}
+      {state?.error && <p className="mt-2 text-sm text-danger">{state.error}</p>}
     </form>
   );
 }
@@ -204,7 +204,7 @@ export function GroupForm({
         {pending ? t.loading : t.save}
       </button>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-600">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}

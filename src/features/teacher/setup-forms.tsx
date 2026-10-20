@@ -325,7 +325,7 @@ export function GroupDetailsForm({
                 className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-cream p-3"
               />
               {fieldError('name') && (
-                <p id="group-name-error" className="mt-1 text-sm text-red-700">
+                <p id="group-name-error" className="mt-1 text-sm text-danger">
                   {fieldMessage('name')}
                 </p>
               )}
@@ -349,7 +349,7 @@ export function GroupDetailsForm({
                 className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
               />
               {fieldError('description') && (
-                <p id="group-description-error" className="mt-1 text-sm text-red-700">
+                <p id="group-description-error" className="mt-1 text-sm text-danger">
                   {fieldMessage('description')}
                 </p>
               )}
@@ -394,7 +394,7 @@ export function GroupDetailsForm({
                 <option value="__new__">{t.newSubject}</option>
               </select>
               {fieldError('subject_id') && (
-                <p id="group-subject_id-error" className="mt-1 text-sm text-red-700">
+                <p id="group-subject_id-error" className="mt-1 text-sm text-danger">
                   {fieldMessage('subject_id')}
                 </p>
               )}
@@ -452,7 +452,7 @@ export function GroupDetailsForm({
                 <option value="__new__">{t.newCategory}</option>
               </select>
               {fieldError('category_id') && (
-                <p id="group-category_id-error" className="mt-1 text-sm text-red-700">
+                <p id="group-category_id-error" className="mt-1 text-sm text-danger">
                   {fieldMessage('category_id')}
                 </p>
               )}
@@ -493,7 +493,7 @@ export function GroupDetailsForm({
                 />
                 <p className="mt-1 text-sm text-muted">{t.capacityHint}</p>
                 {fieldError('capacity') && (
-                  <p id="group-capacity-error" className="mt-1 text-sm text-red-700">
+                  <p id="group-capacity-error" className="mt-1 text-sm text-danger">
                     {fieldMessage('capacity')}
                   </p>
                 )}
@@ -516,7 +516,7 @@ export function GroupDetailsForm({
                   className="mt-2 block min-h-11 w-full rounded-xl border border-line bg-cream p-3"
                 />
                 {fieldError('location') && (
-                  <p id="group-location-error" className="mt-1 text-sm text-red-700">
+                  <p id="group-location-error" className="mt-1 text-sm text-danger">
                     {fieldMessage('location')}
                   </p>
                 )}
@@ -531,7 +531,7 @@ export function GroupDetailsForm({
             />
           )}
           {state?.error && (
-            <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+            <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
               {state.error}
             </p>
           )}
@@ -539,7 +539,7 @@ export function GroupDetailsForm({
             <p
               role="status"
               aria-live="polite"
-              className="rounded-xl bg-green-50 p-3 text-sm text-teal"
+              className="rounded-xl bg-success-soft p-3 text-sm text-teal"
             >
               {state.success}
             </p>
@@ -836,7 +836,7 @@ function ScheduleSlotEditor({
           invalid={state?.fieldErrors}
         />
         {state?.error && (
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {state.error}
           </p>
         )}
@@ -859,7 +859,7 @@ function ScheduleSlotEditor({
         <button
           type="submit"
           disabled={pending || deletePending}
-          className="rounded-xl px-3 py-2 text-sm font-bold text-red-700 disabled:cursor-wait disabled:opacity-50"
+          className="rounded-xl px-3 py-2 text-sm font-bold text-danger disabled:cursor-wait disabled:opacity-50"
         >
           {deletePending ? t.removing : t.remove}
         </button>
@@ -898,7 +898,7 @@ function AddScheduleSlotForm({ locale, groupId }: { locale: Locale; groupId: str
         invalid={state?.fieldErrors}
       />
       {state?.error && (
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -956,7 +956,7 @@ function ProposedScheduleSlotForm({
           invalid={state?.fieldErrors}
         />
         {state?.error && (
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {state.error}
           </p>
         )}
@@ -1005,7 +1005,7 @@ export function WeeklyScheduleStepForm({
         </p>
       </div>
       {scheduleProposalError && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {scheduleProposalError || t.proposalError}
         </p>
       )}
@@ -1097,7 +1097,7 @@ function ScheduleSlotsEditor({
   return (
     <section className="grid gap-4">
       {deleteState?.error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {deleteState.error}
         </p>
       )}
@@ -1105,7 +1105,7 @@ function ScheduleSlotsEditor({
         <p
           role="status"
           aria-live="polite"
-          className="rounded-xl bg-green-50 p-3 text-sm text-teal"
+          className="rounded-xl bg-success-soft p-3 text-sm text-teal"
         >
           {deleteState.success}
         </p>

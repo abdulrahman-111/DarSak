@@ -108,7 +108,7 @@ export default async function AdminReports({
       </nav>
       {failed ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.error}
           </p>
           <Link

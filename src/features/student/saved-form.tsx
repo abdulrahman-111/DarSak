@@ -37,10 +37,7 @@ export function SavedGroupForm({
               : 'Save for later'}
       </button>
       {state?.error && (
-        <p
-          role="alert"
-          className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-red-700"
-        >
+        <p role="alert" className="rounded-lg bg-white px-3 py-2 text-sm font-semibold text-danger">
           {state.error}
         </p>
       )}

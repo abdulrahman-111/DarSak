@@ -61,7 +61,7 @@ export default async function NotificationsPage({
         />
         {!page ? (
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {ar
                 ? 'تعذر تحميل الإشعارات. حدّث الصفحة وحاول مرة أخرى.'
                 : 'Could not load notifications. Refresh and try again.'}

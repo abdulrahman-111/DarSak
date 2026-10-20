@@ -44,7 +44,7 @@ export default async function TeacherGroupSetupPage({
           title={ar ? 'إعداد المجموعة' : 'Group setup'}
         />
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {data.error ?? (ar ? 'تعذر تحميل المجموعة.' : 'Could not load this group.')}
           </p>
         </Panel>
@@ -111,7 +111,7 @@ export default async function TeacherGroupSetupPage({
               copyScheduleFrom={proposalSourceId}
             />
           ) : learning.error ? (
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {ar
                 ? 'تعذر تحميل تفاصيل التعلم، لذا لا يمكن متابعة المراجعة بأمان. حدّث الصفحة.'
                 : 'Learning details could not be loaded, so review cannot continue safely. Refresh the page.'}

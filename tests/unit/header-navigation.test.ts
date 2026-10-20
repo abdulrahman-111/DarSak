@@ -127,7 +127,7 @@ describe('global Reports navigation', () => {
       mocks.pathname = pathname;
       const html = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
       expect(html).not.toContain(
-        'class="hidden items-center gap-6 text-sm font-bold text-[#4d473f] lg:flex"',
+        'class="hidden items-center gap-6 text-sm font-bold text-ink-soft lg:flex"',
       );
       expect(html).toContain('data-mobile-workspace-nav="true"');
     }

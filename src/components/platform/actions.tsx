@@ -12,6 +12,7 @@ export function EnrollmentDecisionButtons({
   id: string;
   status: string;
 }) {
+  const ar = locale === 'ar';
   const [state, dispatch, pending] = useActionState(
     async (_previous: { error?: string; ok?: boolean } | null, formData: FormData) =>
       decideEnrollment(
@@ -21,40 +22,53 @@ export function EnrollmentDecisionButtons({
       ),
     null,
   );
+  // Declining or removing notifies the student and is hard to undo, so ask first. Accepting stays one tap.
+  const confirmDecision = (event: React.FormEvent<HTMLFormElement>) => {
+    const submitter = (event.nativeEvent as SubmitEvent).submitter;
+    if (!(submitter instanceof HTMLButtonElement)) return;
+    const prompt =
+      submitter.value === 'removed'
+        ? ar
+          ? 'هل تريد إزالة هذا الطالب من المجموعة؟ سيفقد الوصول إلى الحصص والمواد.'
+          : 'Remove this student from the group? They will lose access to its lessons and materials.'
+        : submitter.value === 'rejected'
+          ? ar
+            ? 'هل تريد رفض طلب الانضمام هذا؟'
+            : 'Decline this enrollment request?'
+          : null;
+    if (prompt && !window.confirm(prompt)) event.preventDefault();
+  };
+  const danger =
+    'min-h-11 rounded-xl border border-danger/30 bg-white px-3 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
   return (
-    <form action={dispatch} className="mt-3 flex flex-wrap gap-2">
+    <form
+      action={dispatch}
+      onSubmit={confirmDecision}
+      className="mt-3 flex flex-wrap gap-2"
+      aria-busy={pending}
+    >
       {status === 'pending' && (
         <>
           <button
             name="decision"
             value="accepted"
             disabled={pending}
-            className="min-h-11 rounded-xl bg-teal px-3 py-2 text-sm font-bold text-white"
+            className="min-h-11 rounded-xl bg-teal px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
           >
-            {locale === 'ar' ? 'قبول' : 'Accept'}
+            {pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : ar ? 'قبول' : 'Accept'}
           </button>
-          <button
-            name="decision"
-            value="rejected"
-            disabled={pending}
-            className="min-h-11 rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700"
-          >
-            {locale === 'ar' ? 'رفض' : 'Decline'}
+          <button name="decision" value="rejected" disabled={pending} className={danger}>
+            {ar ? 'رفض' : 'Decline'}
           </button>
         </>
       )}
       {status === 'accepted' && (
-        <button
-          name="decision"
-          value="removed"
-          disabled={pending}
-          className="min-h-11 rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700"
-        >
-          {locale === 'ar' ? 'إزالة الطالب' : 'Remove student'}
+        <button name="decision" value="removed" disabled={pending} className={danger}>
+          {pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : ar ? 'إزالة الطالب' : 'Remove student'}
         </button>
       )}
       {state?.error && (
-        <p role="alert" className="w-full text-sm text-red-700">
+        <p role="alert" className="w-full text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -65,7 +79,7 @@ export function EnrollmentDecisionButtons({
 const field = 'mt-1 w-full rounded-xl border border-line bg-cream px-3 py-2.5';
 function Result({ state }: { state: { error?: string; success?: string } | null }) {
   return state?.error ? (
-    <p role="alert" className="text-sm text-red-700">
+    <p role="alert" className="text-sm text-danger">
       {state.error}
     </p>
   ) : state?.success ? (
@@ -154,7 +168,7 @@ export function LessonStatusControls({
           name="status"
           value="cancelled"
           disabled={pending}
-          className="rounded-xl border border-red-300 px-3 py-2 text-sm font-bold text-red-700"
+          className="rounded-xl border border-danger/30 px-3 py-2 text-sm font-bold text-danger"
         >
           {locale === 'ar' ? 'إلغاء الحصة' : 'Cancel lesson'}
         </button>
@@ -170,7 +184,7 @@ export function LessonStatusControls({
         </button>
       )}
       {state?.error && (
-        <p role="alert" className="w-full text-sm text-red-700">
+        <p role="alert" className="w-full text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -193,11 +207,11 @@ export function DeleteMaterialButton({
   );
   return (
     <form action={action}>
-      <button disabled={pending} className="text-sm font-bold text-red-700 underline">
+      <button disabled={pending} className="text-sm font-bold text-danger underline">
         {pending ? '…' : locale === 'ar' ? 'حذف' : 'Delete'}
       </button>
       {state?.error && (
-        <p role="alert" className="mt-1 text-xs text-red-700">
+        <p role="alert" className="mt-1 text-xs text-danger">
           {state.error}
         </p>
       )}

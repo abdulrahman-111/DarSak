@@ -75,7 +75,7 @@ function AttendanceRowForm({
         </button>
       </div>
       {state?.error && (
-        <p role="alert" className="text-sm text-red-700 sm:col-span-2">
+        <p role="alert" className="text-sm text-danger sm:col-span-2">
           {state.error}
         </p>
       )}

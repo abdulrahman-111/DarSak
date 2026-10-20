@@ -28,6 +28,7 @@ export function EnrollmentForm({
       {kind === 'request' ? (
         <button
           type="submit"
+          data-request-action
           disabled={pending}
           className="rounded-2xl bg-orange px-5 py-3 font-bold text-white disabled:opacity-50 hover:bg-orange-deep"
         >
@@ -56,7 +57,7 @@ export function EnrollmentForm({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-xl bg-red-700 px-4 py-2 font-bold text-white disabled:opacity-50"
+              className="rounded-xl bg-danger px-4 py-2 font-bold text-white disabled:opacity-50"
             >
               {pending ? t.saving : t.confirmCancelButton}
             </button>
@@ -72,7 +73,7 @@ export function EnrollmentForm({
         </div>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -109,7 +110,7 @@ export function DownloadForm({ locale, id }: { locale: Locale; id: string }) {
         </div>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm text-red-700">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}

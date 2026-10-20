@@ -2,6 +2,7 @@ import { groupLearningDetails } from '@/features/teacher/group-learning-data';
 import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import { GroupFeedbackSection } from '@/features/feedback/group-section';
 import Link from 'next/link';
+import { GroupRequestBar } from '@/features/groups/request-bar';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import {
@@ -80,6 +81,8 @@ export default async function GroupDetail({
   const isStudent = me?.profile?.role === 'student' && me.profile.status === 'active';
   const canEnroll =
     detail.publiclyEligible && canRequest(enrollment?.status) && data.available_seats !== 0;
+  // Phones only: keep the next step reachable when it is an actual action (guest sign-in, or a request the student can make).
+  const showRequestBar = !me || (isStudent && canEnroll);
 
   return (
     <div className="min-h-[72vh] bg-cream">
@@ -94,7 +97,7 @@ export default async function GroupDetail({
         <div className="grid grid-cols-1 gap-7 lg:grid-cols-[minmax(0,1fr)_23rem]">
           <article className="min-w-0 rounded-[1.4rem] border border-line bg-surface p-6 md:p-9">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="rounded-lg bg-[#d5ebe6] px-3 py-1.5 text-sm font-bold text-teal">
+              <span className="rounded-lg bg-mint px-3 py-1.5 text-sm font-bold text-teal">
                 {subject}
               </span>
               <span className="rounded-full bg-[#dfedd5] px-3 py-1.5 text-xs font-bold text-[#2c5620]">
@@ -127,7 +130,7 @@ export default async function GroupDetail({
               )}
             </p>
             {learning.error ? (
-              <p role="alert" className="mt-4 text-sm text-red-800">
+              <p role="alert" className="mt-4 text-sm text-danger">
                 {locale === 'ar'
                   ? 'تعذر تحميل تفاصيل التعلم. حدّث الصفحة وحاول مجددًا.'
                   : 'Could not load learning details. Refresh and try again.'}
@@ -257,7 +260,10 @@ export default async function GroupDetail({
             </div>
           </article>
 
-          <aside className="h-fit rounded-[1.4rem] bg-teal p-6 text-cream lg:sticky lg:top-24">
+          <aside
+            id="request-panel"
+            className="h-fit scroll-mt-24 rounded-[1.4rem] bg-teal p-6 text-cream lg:sticky lg:top-24"
+          >
             <h2 className="text-2xl font-black">{c.requestTitle}</h2>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.requestBody}</p>
             {data.available_seats !== undefined && (
@@ -312,6 +318,7 @@ export default async function GroupDetail({
                   <p className="rounded-xl bg-white/10 p-3 text-sm">{c.studentOnlyEnrollment}</p>
                 ) : (
                   <Link
+                    data-request-action
                     className="block rounded-xl bg-cream px-5 py-3 text-center font-bold text-teal transition hover:bg-white"
                     href={`/${locale}/login?next=/${locale}/groups/${id}`}
                   >
@@ -324,6 +331,26 @@ export default async function GroupDetail({
             </div>
           </aside>
         </div>
+        {showRequestBar && (
+          <>
+            <div aria-hidden="true" className="h-20 lg:hidden" />
+            <GroupRequestBar
+              targetId="request-panel"
+              label={
+                isStudent
+                  ? locale === 'ar'
+                    ? 'اطلب الانضمام'
+                    : 'Request a place'
+                  : c.signInToRequest
+              }
+              detail={
+                data.available_seats !== undefined && data.available_seats !== null
+                  ? `${c.availableSeats}: ${data.available_seats}`
+                  : undefined
+              }
+            />
+          </>
+        )}
       </section>
     </div>
   );

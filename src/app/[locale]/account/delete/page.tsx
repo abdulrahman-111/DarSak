@@ -62,7 +62,7 @@ export default async function AccountPage({
       <section className="container max-w-3xl py-14">
         <AccountBackLink locale={locale} />
         <h1 className="text-3xl font-black">{c.title}</h1>
-        <p className="mt-5 text-red-700">{c.unavailable}</p>
+        <p className="mt-5 text-danger">{c.unavailable}</p>
       </section>
     );
   const jar = await cookies();
@@ -79,12 +79,12 @@ export default async function AccountPage({
       <h1 className="mt-3 text-3xl font-black">{c.title}</h1>
       <p className="mt-5 text-muted">{c.intro}</p>
       {query.error === 'reauth' && (
-        <p role="alert" className="mt-4 text-red-700">
+        <p role="alert" className="mt-4 text-danger">
           {c.googleError}
         </p>
       )}
       {query.error === 'unavailable' && (
-        <p role="alert" className="mt-4 text-red-700">
+        <p role="alert" className="mt-4 text-danger">
           {c.unavailable}
         </p>
       )}

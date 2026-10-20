@@ -178,7 +178,7 @@ export default async function AdminEmailPage({
       </Panel>
       {error ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل حالة البريد. حدّث الصفحة وحاول مرة أخرى.'
               : 'Could not load email status. Refresh and try again.'}

@@ -39,7 +39,7 @@ function CvDownload({ locale, teacherId }: { locale: string; teacherId: string }
         </a>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm text-red-800">
+        <p role="alert" className="text-sm text-danger">
           {state.error}
         </p>
       )}
@@ -84,7 +84,7 @@ export function RequestApplicationChangesForm({
           : 'Explain what the teacher should update before resubmitting.'}
       </p>
       {state?.error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {state.error}
         </p>
       )}

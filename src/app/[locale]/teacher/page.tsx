@@ -1,6 +1,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, CalendarDays, Clock3, UsersRound } from 'lucide-react';
+import {
+  ArrowRight,
+  ArrowUpRight,
+  CalendarDays,
+  ClipboardList,
+  Clock3,
+  UsersRound,
+} from 'lucide-react';
 import { ensureLocale } from '@/i18n/config';
 import { EnrollmentDecisionButtons } from '@/components/platform/actions';
 import { EmptyState, Status, cairoDate } from '@/components/platform/ui';
@@ -46,7 +53,7 @@ export default async function TeacherDashboard({
           </h1>
         </header>
         <section className="rounded-3xl border border-line bg-white p-5 shadow-sm">
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل لوحة التدريس. حدّث الصفحة أو راجع إعدادات الوصول من حسابك.'
               : 'Could not load teaching access. Refresh or review access settings in your account.'}
@@ -208,7 +215,7 @@ export default async function TeacherDashboard({
 
       {data.error ? (
         <section className="rounded-3xl border border-line bg-white p-5 shadow-sm">
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.failed}
           </p>
           <Link
@@ -294,37 +301,45 @@ export default async function TeacherDashboard({
                 value: data.counts.groups,
                 href: `/${locale}/teacher/groups`,
                 icon: UsersRound,
+                attention: false,
               },
               {
                 label: copy.requests,
                 value: data.counts.pendingRequests,
                 href: `/${locale}/teacher/requests`,
-                icon: ArrowUpRight,
+                icon: ClipboardList,
+                attention: data.counts.pendingRequests > 0,
               },
               {
                 label: copy.today,
                 value: data.counts.todayLessons,
                 href: `/${locale}/teacher/lessons`,
                 icon: CalendarDays,
+                attention: false,
               },
               {
                 label: copy.calendar,
                 value: data.counts.upcomingLessons,
                 href: `/${locale}/teacher/lessons`,
                 icon: Clock3,
+                attention: false,
               },
-            ].map(({ label, value, href, icon: Icon }) => (
+            ].map(({ label, value, href, icon: Icon, attention }) => (
               <Link
                 key={label}
                 href={href}
-                className="student-card flex min-h-24 items-center gap-3 rounded-2xl border border-line bg-white p-4 shadow-sm"
+                className={`student-card flex min-h-24 items-center gap-3 rounded-2xl border bg-white p-4 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange ${attention ? 'border-orange/40 ring-1 ring-orange/15' : 'border-line'}`}
               >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-teal/5 text-teal">
+                <span
+                  className={`grid size-10 shrink-0 place-items-center rounded-xl ${attention ? 'bg-orange/10 text-orange' : 'bg-teal/5 text-teal'}`}
+                >
                   <Icon size={19} aria-hidden="true" />
                 </span>
                 <span className="min-w-0">
                   <span className="block text-xs leading-5 text-muted">{label}</span>
-                  <strong className="mt-1 block text-2xl font-bold leading-none text-teal">
+                  <strong
+                    className={`mt-1 block text-2xl font-bold leading-none ${attention ? 'text-orange' : 'text-teal'}`}
+                  >
                     {value}
                   </strong>
                 </span>
@@ -333,6 +348,63 @@ export default async function TeacherDashboard({
           </div>
 
           <div className="grid gap-5 xl:grid-cols-2">
+            {setupTasks.length > 0 && (
+              <>
+                <section
+                  className={`min-w-0 rounded-2xl border bg-white p-5 shadow-sm ${setupTasks.length ? 'border-orange/30 xl:col-span-2' : 'border-line'}`}
+                >
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <h2 className="text-lg font-bold text-teal">
+                      {copy.setupHeading}
+                      {setupTasks.length > 0 && (
+                        <span className="ms-2 rounded-full bg-orange/10 px-2 py-0.5 align-middle text-xs font-bold text-[#9a4212]">
+                          {setupTasks.length}
+                        </span>
+                      )}
+                    </h2>
+                    <Link
+                      href={`/${locale}/account/profile`}
+                      aria-label={ar ? 'تعديل الملف الشخصي' : 'Edit profile'}
+                      className="grid size-11 shrink-0 place-items-center rounded-xl text-teal hover:bg-cream"
+                    >
+                      <ArrowUpRight size={18} aria-hidden="true" />
+                    </Link>
+                  </div>
+                  {setupTasks.length ? (
+                    <ul className="grid gap-1">
+                      {setupTasks.slice(0, 5).map(task => (
+                        <li key={task.id}>
+                          <Link
+                            href={`/${locale}${task.href}`}
+                            className="flex min-h-12 items-center gap-3 rounded-xl px-2 py-2 text-sm text-teal hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                          >
+                            <span
+                              aria-hidden="true"
+                              className="size-2 shrink-0 rounded-full bg-orange"
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-semibold">{copy.task[task.id]}</span>
+                              {task.groupName && (
+                                <span className="mt-0.5 block truncate text-xs text-muted">
+                                  {task.groupName}
+                                </span>
+                              )}
+                            </span>
+                            <ArrowUpRight
+                              size={16}
+                              className="shrink-0 text-muted"
+                              aria-hidden="true"
+                            />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <EmptyState>{copy.noTasks}</EmptyState>
+                  )}
+                </section>
+              </>
+            )}
             <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-bold text-teal">{copy.todayHeading}</h2>
@@ -432,51 +504,6 @@ export default async function TeacherDashboard({
                 </div>
               ) : (
                 <EmptyState>{copy.noRequests}</EmptyState>
-              )}
-            </section>
-
-            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-teal">{copy.setupHeading}</h2>
-                <Link
-                  href={`/${locale}/account/profile`}
-                  aria-label={ar ? 'تعديل الملف الشخصي' : 'Edit profile'}
-                  className="grid size-11 shrink-0 place-items-center rounded-xl text-teal hover:bg-cream"
-                >
-                  <ArrowUpRight size={18} aria-hidden="true" />
-                </Link>
-              </div>
-              {setupTasks.length ? (
-                <ul className="grid gap-1">
-                  {setupTasks.slice(0, 5).map(task => (
-                    <li key={task.id}>
-                      <Link
-                        href={`/${locale}${task.href}`}
-                        className="flex min-h-12 items-center gap-3 rounded-xl px-2 py-2 text-sm text-teal hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
-                      >
-                        <span
-                          aria-hidden="true"
-                          className="size-2 shrink-0 rounded-full bg-orange"
-                        />
-                        <span className="min-w-0 flex-1">
-                          <span className="block font-semibold">{copy.task[task.id]}</span>
-                          {task.groupName && (
-                            <span className="mt-0.5 block truncate text-xs text-muted">
-                              {task.groupName}
-                            </span>
-                          )}
-                        </span>
-                        <ArrowUpRight
-                          size={16}
-                          className="shrink-0 text-muted"
-                          aria-hidden="true"
-                        />
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <EmptyState>{copy.noTasks}</EmptyState>
               )}
             </section>
           </div>

@@ -1,13 +1,6 @@
-import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
-import {
-  Metric,
-  Panel,
-  QuickAction,
-  ScreenTitle,
-  UnavailableMetric,
-} from '@/components/platform/ui';
+import { Metric, ScreenTitle, UnavailableMetric } from '@/components/platform/ui';
 
 export default async function AdminOverview({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: raw } = await params,
@@ -85,51 +78,42 @@ export default async function AdminOverview({ params }: { params: Promise<{ loca
     { label: t.groups, result: groups, href: `/${locale}/admin/groups` },
     { label: t.enrollments, result: enrollments, href: `/${locale}/admin/groups` },
   ];
+  const attention = stats.slice(0, 2),
+    platform = stats.slice(2);
+  const render = (item: (typeof stats)[number], tone: 'default' | 'attention') =>
+    item.result.error || item.result.count === null ? (
+      <UnavailableMetric
+        key={item.label}
+        label={item.label}
+        message={t.error}
+        href={`/${locale}/admin?retry=1`}
+        retry={t.retry}
+      />
+    ) : (
+      <Metric
+        key={item.label}
+        href={item.href}
+        label={item.label}
+        value={item.result.count}
+        tone={tone}
+      />
+    );
+  // Work queues first (highlighted when non-empty), then platform totals. The sidebar already covers the other admin areas.
   return (
     <>
       <ScreenTitle eyebrow={t.eyebrow} title={t.title} description={t.description} />
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
-        <QuickAction href={`/${locale}/admin/teachers`}>{t.queue}</QuickAction>
-        <QuickAction href={`/${locale}/admin/reports`}>{t.reportsLink}</QuickAction>
-        <QuickAction href={`/${locale}/admin/users`}>{t.users}</QuickAction>
-        <QuickAction href={`/${locale}/admin/groups`}>{t.groupsLink}</QuickAction>
-        <QuickAction href={`/${locale}/admin/education`}>{t.catalogue}</QuickAction>
-        <QuickAction href={`/${locale}/admin/settings`}>{t.settings}</QuickAction>
+      <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-muted">
+        {ar ? 'بانتظارك' : 'Needs your attention'}
+      </h2>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {attention.map(item => render(item, 'attention'))}
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {stats.map(item =>
-          item.result.error || item.result.count === null ? (
-            <UnavailableMetric
-              key={item.label}
-              label={item.label}
-              message={t.error}
-              href={`/${locale}/admin?retry=1`}
-              retry={t.retry}
-            />
-          ) : (
-            <Link key={item.label} href={item.href}>
-              <Metric label={item.label} value={item.result.count} />
-            </Link>
-          ),
-        )}
+      <h2 className="mb-3 mt-8 text-sm font-bold uppercase tracking-wider text-muted">
+        {ar ? 'المنصة' : 'Platform'}
+      </h2>
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {platform.map(item => render(item, 'default'))}
       </div>
-      <Panel className="mt-6">
-        <h2 className="text-xl font-black text-teal">{t.intro}</h2>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <Link
-            href={`/${locale}/admin/teachers`}
-            className="inline-flex rounded-xl bg-teal px-5 py-3 font-bold text-white"
-          >
-            {t.queue}
-          </Link>
-          <Link
-            href={`/${locale}/admin/reports`}
-            className="inline-flex rounded-xl border border-line px-5 py-3 font-bold text-teal"
-          >
-            {t.reportsLink}
-          </Link>
-        </div>
-      </Panel>
     </>
   );
 }

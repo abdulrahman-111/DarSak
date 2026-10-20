@@ -319,9 +319,7 @@ export function GenerationPreviewForm({
             {isPending ? t.previewing : t.preview}
           </button>
         </form>
-        {!rangeValid && from && until && (
-          <p className="mt-2 text-sm text-red-700">{t.rangeError}</p>
-        )}
+        {!rangeValid && from && until && <p className="mt-2 text-sm text-danger">{t.rangeError}</p>}
       </section>
 
       <section
@@ -371,7 +369,7 @@ export function GenerationPreviewForm({
                     setEditDates(current => current.filter(value => value !== date));
                     invalidate();
                   }}
-                  className="text-sm font-bold text-red-700 underline"
+                  className="text-sm font-bold text-danger underline"
                 >
                   {locale === 'ar' ? 'إزالة' : 'Remove'}
                 </button>
@@ -413,7 +411,7 @@ export function GenerationPreviewForm({
               {rows.map((row, index) => (
                 <article
                   key={`${row.slot_id}:${row.local_date}:${index}`}
-                  className={`rounded-xl border p-4 ${row.state === 'conflicting' ? 'border-red-200 bg-red-50' : 'border-line bg-white'}`}
+                  className={`rounded-xl border p-4 ${row.state === 'conflicting' ? 'border-danger/30 bg-danger-soft' : 'border-line bg-white'}`}
                 >
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -447,7 +445,7 @@ export function GenerationPreviewForm({
             <p className="mt-4 text-sm text-muted">{t.noRows}</p>
           )}
           {summary.conflicting > 0 && (
-            <p role="alert" className="mt-4 text-sm text-red-700">
+            <p role="alert" className="mt-4 text-sm text-danger">
               {t.blocked}
             </p>
           )}
@@ -465,7 +463,7 @@ export function GenerationPreviewForm({
       )}
 
       {error && (
-        <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {error}
         </p>
       )}

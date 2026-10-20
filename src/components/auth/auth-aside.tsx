@@ -2,6 +2,7 @@ import Image from 'next/image';
 import { CalendarDays, Clock3, ShieldCheck } from 'lucide-react';
 import { authCopy, type AuthLocale } from './copy';
 
+// Supporting context for sign-in/sign-up. On phones it sat below the form as dead scroll, so it only shows from md up.
 export function AuthAside({ locale }: { locale: AuthLocale }) {
   const copy = authCopy[locale];
   const benefits = [
@@ -11,7 +12,7 @@ export function AuthAside({ locale }: { locale: AuthLocale }) {
   ] as const;
 
   return (
-    <aside className="rounded-[1.4rem] bg-teal p-7 text-cream md:p-9">
+    <aside className="hidden rounded-[1.4rem] bg-teal p-7 text-cream md:block md:p-9">
       <Image
         src="/brand/darsak/favicon.svg"
         alt=""
@@ -26,7 +27,7 @@ export function AuthAside({ locale }: { locale: AuthLocale }) {
       <div className="mt-8 space-y-6">
         {benefits.map(([Icon, text]) => (
           <div key={text} className="flex gap-3 border-t border-[#3d6f6f] pt-5">
-            <Icon className="mt-0.5 flex-none text-[#8fd1b5]" size={20} />
+            <Icon aria-hidden="true" className="mt-0.5 flex-none text-[#8fd1b5]" size={20} />
             <p className="leading-6 text-[#d8e9e5]">{text}</p>
           </div>
         ))}

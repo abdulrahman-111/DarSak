@@ -200,7 +200,7 @@ export default async function TeacherLesson({
               <h2 className="text-xl font-black text-teal">{copy.copyLesson}</h2>
               <p className="mt-2 text-sm text-muted">{copy.copyHint}</p>
               {groups.error ? (
-                <p role="alert" className="mt-4 text-sm text-red-700">
+                <p role="alert" className="mt-4 text-sm text-danger">
                   {ar ? 'تعذر تحميل مجموعاتك.' : 'Could not load your groups.'}
                 </p>
               ) : (
@@ -218,7 +218,7 @@ export default async function TeacherLesson({
           </div>
           <p className="mt-2 text-sm text-muted">{copy.privateHint}</p>
           {materials.error ? (
-            <p role="alert" className="mt-4 text-sm text-red-700">
+            <p role="alert" className="mt-4 text-sm text-danger">
               {copy.materialsError}
             </p>
           ) : (
@@ -290,7 +290,7 @@ export default async function TeacherLesson({
             </p>
           )}
           {!attendance ? (
-            <p role="alert" className="text-sm text-red-700">
+            <p role="alert" className="text-sm text-danger">
               {copy.attendanceError}
             </p>
           ) : (

@@ -143,7 +143,7 @@ export function TeacherAvatarEditor({
           </form>
         )}
         {removeState?.error && (
-          <p role="alert" className="mt-2 text-sm text-red-700">
+          <p role="alert" className="mt-2 text-sm text-danger">
             {removeState.error}
           </p>
         )}
@@ -277,7 +277,7 @@ export function TeacherProfileForm({
           </p>
         )}
         {error && (
-          <p id={`${id}-error`} className="mt-1 text-sm text-red-700">
+          <p id={`${id}-error`} className="mt-1 text-sm text-danger">
             {error}
           </p>
         )}
@@ -346,7 +346,7 @@ export function TeacherProfileForm({
               className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
             />
             {fieldError('full_name') && (
-              <p id="profile-full-name-error" className="mt-1 text-sm text-red-700">
+              <p id="profile-full-name-error" className="mt-1 text-sm text-danger">
                 {errorText('full_name')}
               </p>
             )}
@@ -368,7 +368,7 @@ export function TeacherProfileForm({
               className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
             />
             {fieldError('headline') && (
-              <p id="profile-headline-error" className="mt-1 text-sm text-red-700">
+              <p id="profile-headline-error" className="mt-1 text-sm text-danger">
                 {errorText('headline')}
               </p>
             )}
@@ -420,7 +420,7 @@ export function TeacherProfileForm({
             </p>
           )}
           {fieldError('offering_ids') && (
-            <p id="profile-specialization-error" className="mt-2 text-sm text-red-700">
+            <p id="profile-specialization-error" className="mt-2 text-sm text-danger">
               {errorText('offering_ids')}
             </p>
           )}
@@ -446,7 +446,7 @@ export function TeacherProfileForm({
         </section>
 
         {state?.error && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
             {state.error}
           </p>
         )}
@@ -522,12 +522,12 @@ export function TeacherProfileForm({
           </p>
         )}
         {pairState?.fieldErrors && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-danger">
             {t.pairError}
           </p>
         )}
         {pairState?.error && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
             {pairState.error}
           </p>
         )}

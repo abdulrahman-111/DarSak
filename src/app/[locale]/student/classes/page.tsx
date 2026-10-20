@@ -41,7 +41,7 @@ export default async function StudentClasses({
         action={
           <Link
             href={`/${locale}/teachers`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-bold text-teal"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
           >
             {ar ? 'اكتشف مجموعة' : 'Find a class'}
             <ArrowUpRight size={16} />
@@ -57,7 +57,7 @@ export default async function StudentClasses({
       )}
       {data.error ? (
         <section className={studentCard}>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل مجموعاتك. حدّث الصفحة للمحاولة مجددًا.'
               : 'Could not load your classes. Refresh to try again.'}

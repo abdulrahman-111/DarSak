@@ -216,7 +216,7 @@ export function PublishReviewForm({
             ))}
           </ul>
         ) : (
-          <p role="alert" className="mt-3 text-sm text-red-700">
+          <p role="alert" className="mt-3 text-sm text-danger">
             {t.noSlots}
           </p>
         )}
@@ -267,7 +267,7 @@ export function PublishReviewForm({
               onPreviewValidityChange={setPreview}
             />
             {(fromError || untilError || (range.from && range.until && !rangeIsValid)) && (
-              <p role="alert" className="mt-3 text-sm text-red-700">
+              <p role="alert" className="mt-3 text-sm text-danger">
                 {t.rangeError}
               </p>
             )}
@@ -279,12 +279,12 @@ export function PublishReviewForm({
         <input type="hidden" name="from" value={withRange ? range.from : ''} />
         <input type="hidden" name="until" value={withRange ? range.until : ''} />
         {(fromError || untilError) && (
-          <p role="alert" className="text-sm text-red-700">
+          <p role="alert" className="text-sm text-danger">
             {t.rangeError}
           </p>
         )}
         {state?.error && (
-          <p role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-800">
+          <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
             {state.error}
           </p>
         )}

@@ -59,7 +59,7 @@ export default async function TeacherGroups({
         action={
           <Link
             href={`/${locale}/teacher/groups/new`}
-            className="rounded-xl bg-teal px-5 py-3 font-bold text-white"
+            className="inline-flex min-h-11 items-center rounded-xl bg-teal px-5 font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
           >
             {ar ? 'إنشاء مجموعة' : 'Create group'}
           </Link>
@@ -74,7 +74,7 @@ export default async function TeacherGroups({
       )}
       {failed ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل مجموعاتك. حدّث الصفحة وحاول مرة أخرى.'
               : 'Could not load your groups. Refresh and try again.'}
@@ -110,31 +110,38 @@ export default async function TeacherGroups({
               return (
                 <article
                   key={group.id}
-                  className="rounded-[1.5rem] border border-line bg-white p-5"
+                  className="student-card rounded-2xl border border-line bg-white p-5 shadow-sm"
                 >
                   <Link
                     href={href}
                     className="block rounded-xl hover:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                   >
                     <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-sm font-bold text-orange">
-                          {subject
-                            ? catalogueDisplayName(
+                      <div className="min-w-0">
+                        {subject &&
+                          catalogueDisplayName(
+                            { name_ar: subject.name_ar ?? '', name_en: subject.name_en ?? '' },
+                            locale,
+                          ) && (
+                            <p className="text-sm font-bold text-orange">
+                              {catalogueDisplayName(
                                 { name_ar: subject.name_ar ?? '', name_en: subject.name_en ?? '' },
                                 locale,
-                              ) || '—'
-                            : '—'}
-                        </p>
-                        <h2 className="mt-1 text-xl font-black text-teal">{group.name}</h2>
+                              )}
+                            </p>
+                          )}
+                        <h2 className="mt-1 break-words text-xl font-bold text-teal [overflow-wrap:anywhere]">
+                          {group.name}
+                        </h2>
                       </div>
                       <Status value={group.status} locale={locale} />
                     </div>
-                    <p className="mt-3 line-clamp-2 text-sm text-muted">
-                      {group.description || '—'}
-                    </p>
+                    {group.description && (
+                      <p className="mt-3 line-clamp-2 text-sm text-muted">{group.description}</p>
+                    )}
                     <p className="mt-4 text-sm text-muted">
-                      {group.location || '—'} · {ar ? 'السعة' : 'Capacity'} {group.capacity}
+                      {group.location ? `${group.location} · ` : ''}
+                      {ar ? 'السعة' : 'Capacity'} {group.capacity}
                     </p>
                     <p className="mt-4 text-sm font-bold text-teal">
                       {group.status === 'draft'
@@ -161,8 +168,16 @@ export default async function TeacherGroups({
               );
             })
           ) : (
-            <EmptyState>
-              {ar ? 'لم تنشئ أي مجموعة بعد.' : 'You have not created any groups yet.'}
+            <EmptyState
+              title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
+              action={{
+                href: `/${locale}/teacher/groups/new`,
+                label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
+              }}
+            >
+              {ar
+                ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
+                : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
             </EmptyState>
           )}
         </div>

@@ -32,7 +32,7 @@ export default async function NewTeacherGroupPage({
         <GroupSetupSteps locale={locale} current="details" />
         <Panel>
           {data.error ? (
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {data.error}
             </p>
           ) : (

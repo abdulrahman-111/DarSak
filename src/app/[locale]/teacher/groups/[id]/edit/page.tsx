@@ -29,7 +29,7 @@ export default async function EditPublishedGroupPage({
           title={ar ? 'تعديل المجموعة المنشورة' : 'Edit published group'}
         />
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {data.error ?? (ar ? 'تعذر تحميل المجموعة.' : 'Could not load this group.')}
           </p>
         </Panel>

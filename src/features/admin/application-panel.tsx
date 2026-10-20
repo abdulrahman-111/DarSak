@@ -198,7 +198,7 @@ export function TeacherApplicationPanel({
         <p className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-950">{words.changes}</p>
       )}
       {application.status === 'submitted' && !ready && (
-        <p role="alert" className="mt-3 rounded-xl bg-red-50 p-3 text-sm text-red-800">
+        <p role="alert" className="mt-3 rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {words.unavailable}
         </p>
       )}

@@ -49,7 +49,7 @@ export default async function SavedGroupsPage({
       <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.intro} />
       {data.error ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {copy.error}
           </p>
         </Panel>

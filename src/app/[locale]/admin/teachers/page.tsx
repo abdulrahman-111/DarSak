@@ -123,7 +123,7 @@ export default async function AdminTeacherReviews({
       </Panel>
       {result.error ? (
         <Panel>
-          <p role="alert" className="text-red-800">
+          <p role="alert" className="text-danger">
             {text.error}
           </p>
         </Panel>

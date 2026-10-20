@@ -109,7 +109,7 @@ export default async function AdminTeacherReviewDetail({
           }
         />
         <Panel>
-          <p role="alert" className="text-red-800">
+          <p role="alert" className="text-danger">
             {copy.error}
           </p>
           <form
@@ -285,7 +285,7 @@ export default async function AdminTeacherReviewDetail({
       />
       {failed ? (
         <Panel className="mb-5">
-          <p role="alert" className="text-red-800">
+          <p role="alert" className="text-danger">
             {text.error}
           </p>
         </Panel>
@@ -326,9 +326,9 @@ export default async function AdminTeacherReviewDetail({
               </div>
             </dl>
             {review?.status === 'declined' && review.decline_reason && (
-              <div className="mt-4 rounded-xl bg-red-50 p-4">
-                <h3 className="font-bold text-red-900">{ar ? 'سبب الرفض' : 'Decline reason'}</h3>
-                <p className="mt-2 whitespace-pre-wrap text-sm text-red-900">
+              <div className="mt-4 rounded-xl bg-danger-soft p-4">
+                <h3 className="font-bold text-danger">{ar ? 'سبب الرفض' : 'Decline reason'}</h3>
+                <p className="mt-2 whitespace-pre-wrap text-sm text-danger">
                   {review.decline_reason}
                 </p>
               </div>

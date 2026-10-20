@@ -51,7 +51,7 @@ export async function GroupFeedbackSection({
       </p>
 
       {published.error || !page ? (
-        <p role="alert" className="mt-3 text-sm text-red-800">
+        <p role="alert" className="mt-3 text-sm text-danger">
           {ar ? 'تعذر تحميل الآراء. حدّث الصفحة.' : 'Could not load feedback. Refresh the page.'}
         </p>
       ) : (

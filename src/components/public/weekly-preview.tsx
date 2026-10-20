@@ -2,11 +2,12 @@ import Image from 'next/image';
 import { publicCopy, type PublicLocale } from './copy';
 
 const blocks = [
-  { column: '1', row: '2 / span 2', kind: 'chemistry', tone: 'bg-[#dfedd5] text-[#2c5620]' },
-  { column: '1', row: '5 / span 2', kind: 'maths', tone: 'bg-[#d5ebe6] text-[#0d4a4b]' },
-  { column: '2', row: '4 / span 2', kind: 'physics', tone: 'bg-[#dde5f4] text-[#1e3c78]' },
-  { column: '3', row: '2 / span 2', kind: 'chemistry', tone: 'bg-[#dfedd5] text-[#2c5620]' },
-  { column: '4', row: '5 / span 2', kind: 'maths', tone: 'bg-[#d5ebe6] text-[#0d4a4b]' },
+  // Rows are hour slots starting at 4 pm, so the grid has no empty leading rows.
+  { column: '1', row: '1 / span 2', kind: 'chemistry', tone: 'bg-success-soft text-success' },
+  { column: '1', row: '4 / span 2', kind: 'maths', tone: 'bg-mint text-teal' },
+  { column: '2', row: '3 / span 2', kind: 'physics', tone: 'bg-[#dde5f4] text-[#1e3c78]' },
+  { column: '3', row: '1 / span 2', kind: 'chemistry', tone: 'bg-success-soft text-success' },
+  { column: '4', row: '4 / span 2', kind: 'maths', tone: 'bg-mint text-teal' },
 ] as const;
 
 export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
@@ -15,7 +16,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
   const days = ar ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'] : ['SUN', 'MON', 'TUE', 'WED', 'THU'];
   const subjects = ar
     ? { chemistry: 'كيمياء ٤:٠٠ م', maths: 'رياضيات ٦:٠٠ م', physics: 'فيزياء ٥:٠٠ م' }
-    : { chemistry: 'Chemistry 4:00', maths: 'Maths 6:00', physics: 'Physics 5:00' };
+    : { chemistry: 'Chemistry 4:00 pm', maths: 'Maths 6:00 pm', physics: 'Physics 5:00 pm' };
 
   return (
     <div className="landing-preview relative pb-10" aria-label={c.thisWeek}>
@@ -31,7 +32,7 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
         <div className="mb-2 grid grid-cols-5 gap-1.5 text-[10px] font-bold text-muted sm:text-xs">
           {days.map(day => <span key={day}>{day}</span>)}
         </div>
-        <div className="grid grid-cols-5 grid-rows-[repeat(8,2rem)] gap-1.5 bg-[repeating-linear-gradient(to_bottom,transparent_0_37px,#efe6d6_37px_38px)] sm:grid-rows-[repeat(8,2.125rem)]">
+        <div className="grid grid-cols-5 grid-rows-[repeat(6,2rem)] gap-1.5 bg-[repeating-linear-gradient(to_bottom,transparent_0_37px,#efe6d6_37px_38px)] sm:grid-rows-[repeat(6,2.125rem)]">
           {blocks.map((block, index) => (
             <div
               key={`${block.kind}-${index}`}
@@ -41,8 +42,8 @@ export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
               {subjects[block.kind]}
             </div>
           ))}
-          <div className="col-start-5 row-start-3 row-end-6 rounded-lg border-2 border-dashed border-orange p-1.5 text-[10px] font-bold leading-tight text-[#83390c] sm:p-2 sm:text-xs">
-            {ar ? 'موعد معدّل · أدب' : 'Rescheduled · Literature'}
+          <div className="col-start-5 row-start-2 row-end-5 min-w-0 overflow-hidden rounded-lg border-2 border-dashed border-orange bg-orange/5 p-1.5 text-[10px] font-bold leading-tight text-[#83390c] sm:p-2 sm:text-xs">
+            <span className="block">{ar ? 'موعد معدّل' : 'Moved'}</span><span className="mt-0.5 hidden font-semibold sm:block">{ar ? 'أدب' : 'Literature'}</span>
           </div>
         </div>
       </div>

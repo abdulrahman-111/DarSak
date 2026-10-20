@@ -41,7 +41,7 @@ export default async function StudentProfilePage({
         <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />
         {onboardingError && (
           <Panel className="mx-auto mb-5 max-w-2xl">
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {ar
                 ? 'تعذر التحقق من اكتمال إعداد حسابك. حدّث الصفحة بعد إكمال ملف التعلم.'
                 : 'Could not check whether account setup is complete. Refresh after completing your learning profile.'}

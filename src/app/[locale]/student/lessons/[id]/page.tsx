@@ -48,7 +48,7 @@ export default async function StudentLesson({
       )}
       {data.error ? (
         <Panel>
-          <p role="alert" className="text-sm text-red-800">
+          <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذّر تحميل موارد الحصة. حدّث الصفحة وحاول مرة أخرى.'
               : 'Could not load lesson resources. Refresh and try again.'}

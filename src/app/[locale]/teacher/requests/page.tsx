@@ -59,7 +59,7 @@ export default async function TeacherRequests({
             groups={data.groups}
           />
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {copy.failed}
             </p>
             <Link
@@ -85,7 +85,7 @@ export default async function TeacherRequests({
                 <Panel key={row.enrollment_id} className="min-w-0">
                   <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
-                      <h2 className="break-words font-black text-teal [overflow-wrap:anywhere]">
+                      <h2 className="break-words font-bold text-teal [overflow-wrap:anywhere]">
                         {row.full_name}
                       </h2>
                       <p className="mt-1 break-words text-sm text-muted [overflow-wrap:anywhere]">
@@ -105,7 +105,25 @@ export default async function TeacherRequests({
               ))}
             </div>
           ) : (
-            <EmptyState>{copy.empty}</EmptyState>
+            <EmptyState
+              title={copy.empty}
+              action={
+                data.query || data.groupId
+                  ? undefined
+                  : {
+                      href: `/${locale}/teacher/groups`,
+                      label: ar ? 'افتح مجموعاتك' : 'Open your groups',
+                    }
+              }
+            >
+              {data.query || data.groupId
+                ? ar
+                  ? 'جرّب بحثًا أوسع أو امسح عامل التصفية.'
+                  : 'Try a broader search or clear the group filter.'
+                : ar
+                  ? 'تظهر هنا طلبات الطلاب على مجموعاتك المنشورة.'
+                  : 'Requests appear here when students ask to join your published groups.'}
+            </EmptyState>
           )}
           <StudentPagination
             locale={locale}

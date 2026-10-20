@@ -15,10 +15,10 @@ export function AccountDeletionForm({
 }) {
   const [state, action, pending] = useActionState(deleteAccount.bind(null, locale), null);
   return (
-    <div className="mt-8 space-y-6 rounded-3xl border border-red-200 bg-red-50 p-6">
+    <div className="mt-8 space-y-6 rounded-3xl border border-danger/30 bg-danger-soft p-6">
       {state?.state === 'pending' ? (
         <>
-          <p role="status" className="rounded-xl bg-white p-3 text-sm text-red-800">
+          <p role="status" className="rounded-xl bg-white p-3 text-sm text-danger">
             {text.pending}
           </p>
           <AccountDeletionRetry locale={locale} text={text} />
@@ -27,12 +27,12 @@ export function AccountDeletionForm({
         <>
           {googleReady && (
             <form action={action} className="space-y-4">
-              <p className="font-bold text-red-900">{text.googleReady}</p>
-              <label className="flex items-start gap-3 text-sm text-red-950">
+              <p className="font-bold text-danger">{text.googleReady}</p>
+              <label className="flex items-start gap-3 text-sm text-danger">
                 <input className="mt-1 size-4" type="checkbox" name="acknowledged" required />
                 <span>{text.acknowledge}</span>
               </label>
-              <label className="block text-sm font-bold text-red-950">
+              <label className="block text-sm font-bold text-danger">
                 {text.typeDelete}
                 <input
                   className={input}
@@ -44,19 +44,19 @@ export function AccountDeletionForm({
               </label>
               <button
                 disabled={pending}
-                className="rounded-2xl bg-red-700 px-5 py-3 font-bold text-white disabled:opacity-50"
+                className="rounded-2xl bg-danger px-5 py-3 font-bold text-white disabled:opacity-50"
               >
                 {pending ? text.working : text.delete}
               </button>
               {state?.error && (
-                <p role="alert" className="rounded-xl bg-white p-3 text-sm text-red-800">
+                <p role="alert" className="rounded-xl bg-white p-3 text-sm text-danger">
                   {state.error}
                 </p>
               )}
             </form>
           )}
           <form action={action} className="space-y-4">
-            <label className="block text-sm font-bold text-red-950">
+            <label className="block text-sm font-bold text-danger">
               {text.password}
               <input
                 className={input}
@@ -66,11 +66,11 @@ export function AccountDeletionForm({
                 required
               />
             </label>
-            <label className="flex items-start gap-3 text-sm text-red-950">
+            <label className="flex items-start gap-3 text-sm text-danger">
               <input className="mt-1 size-4" type="checkbox" name="acknowledged" required />
               <span>{text.acknowledge}</span>
             </label>
-            <label className="block text-sm font-bold text-red-950">
+            <label className="block text-sm font-bold text-danger">
               {text.typeDelete}
               <input
                 className={input}
@@ -83,18 +83,18 @@ export function AccountDeletionForm({
             <Turnstile locale={locale === 'ar' ? 'ar' : 'en'} resetSignal={state} />
             <button
               disabled={pending}
-              className="rounded-2xl bg-red-700 px-5 py-3 font-bold text-white disabled:opacity-50"
+              className="rounded-2xl bg-danger px-5 py-3 font-bold text-white disabled:opacity-50"
             >
               {pending ? text.working : text.delete}
             </button>
             {state?.error && (
-              <p role="alert" className="rounded-xl bg-white p-3 text-sm text-red-800">
+              <p role="alert" className="rounded-xl bg-white p-3 text-sm text-danger">
                 {state.error}
               </p>
             )}
           </form>
           <form action={startGoogleDeletion.bind(null, locale)}>
-            <button className="rounded-2xl border border-red-300 bg-white px-5 py-3 font-bold text-red-900">
+            <button className="rounded-2xl border border-danger/30 bg-white px-5 py-3 font-bold text-danger">
               {googleReady ? text.verifyGoogleAgain : text.verifyGoogle}
             </button>
           </form>
@@ -126,7 +126,7 @@ export function AccountDeletionRetry({
         </p>
       )}
       {state?.error && (
-        <p role="alert" className="mt-3 text-red-700">
+        <p role="alert" className="mt-3 text-danger">
           {state.error}
         </p>
       )}

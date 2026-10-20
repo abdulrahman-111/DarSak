@@ -108,7 +108,7 @@ export function AnnouncementForm({
         </p>
       )}
       {state?.error && (
-        <p role="alert" className="text-sm font-semibold text-red-700">
+        <p role="alert" className="text-sm font-semibold text-danger">
           {state.error}
         </p>
       )}
