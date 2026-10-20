@@ -1,5 +1,6 @@
 import Link from 'next/link';
 
+// One heading scale for every workspace (student, teacher, admin) so screens feel like one product.
 export function ScreenTitle({
   eyebrow,
   title,
@@ -12,18 +13,16 @@ export function ScreenTitle({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="mb-5 flex min-w-0 flex-wrap items-end justify-between gap-3 md:mb-7 md:gap-4">
+    <header className="mb-6 flex min-w-0 flex-wrap items-end justify-between gap-3 md:gap-4">
       <div className="min-w-0">
         {eyebrow && (
-          <p className="mb-1 text-xs font-black uppercase tracking-[.18em] text-orange md:mb-2">
-            {eyebrow}
-          </p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{eyebrow}</p>
         )}
-        <h1 className="break-words text-2xl font-black tracking-tight text-teal [overflow-wrap:anywhere] md:text-5xl">
+        <h1 className="break-words text-2xl font-bold tracking-tight text-teal [overflow-wrap:anywhere] sm:text-3xl">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-2xl break-words text-sm text-muted [overflow-wrap:anywhere] md:mt-3 md:text-base">
+          <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted [overflow-wrap:anywhere]">
             {description}
           </p>
         )}
@@ -44,27 +43,48 @@ export function Panel({
   return (
     <section
       id={id}
-      className={`min-w-0 rounded-[1.5rem] border border-line bg-white p-5 shadow-[0_12px_35px_rgba(6,59,59,.05)] ${className}`}
+      className={`min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm ${className}`}
     >
       {children}
     </section>
   );
 }
+
+type MetricTone = 'default' | 'attention';
 export function Metric({
   label,
   value,
   hint,
+  href,
+  tone = 'default',
 }: {
   label: string;
   value: number | string;
   hint?: string;
+  href?: string;
+  tone?: MetricTone;
 }) {
+  const attention = tone === 'attention' && Number(value) > 0;
+  const body = (
+    <>
+      <p className="text-sm leading-5 text-muted">{label}</p>
+      <p
+        className={`mt-2 text-3xl font-bold leading-none ${attention ? 'text-orange' : 'text-teal'}`}
+      >
+        {value}
+      </p>
+      {hint && <p className="mt-2 text-xs text-orange">{hint}</p>}
+    </>
+  );
+  const frame = `block min-w-0 rounded-2xl border bg-white p-5 shadow-sm ${attention ? 'border-orange/40 ring-1 ring-orange/15' : 'border-line'}`;
+  if (!href) return <section className={frame}>{body}</section>;
   return (
-    <Panel>
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 text-3xl font-black text-teal">{value}</p>
-      {hint && <p className="mt-1 text-xs text-orange">{hint}</p>}
-    </Panel>
+    <Link
+      href={href}
+      className={`${frame} student-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange`}
+    >
+      {body}
+    </Link>
   );
 }
 export function UnavailableMetric({
@@ -81,12 +101,12 @@ export function UnavailableMetric({
   return (
     <Panel>
       <p className="text-sm text-muted">{label}</p>
-      <p role="alert" className="mt-2 text-sm text-red-800">
+      <p role="alert" className="mt-2 text-sm text-danger">
         {message}
       </p>
       <a
         href={href}
-        className="mt-3 inline-flex font-bold text-orange underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+        className="mt-3 inline-flex min-h-11 items-center font-bold text-orange underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
       >
         {retry}
       </a>
@@ -103,12 +123,57 @@ export function QuickAction({ href, children }: { href: string; children: React.
     </Link>
   );
 }
-export function EmptyState({ children }: { children: React.ReactNode }) {
+
+// Empty states should explain what will appear and, where possible, offer the next step.
+export function EmptyState({
+  children,
+  title,
+  action,
+}: {
+  children: React.ReactNode;
+  title?: string;
+  action?: { href: string; label: string };
+}) {
   return (
-    <div className="rounded-2xl border border-dashed border-line px-5 py-10 text-center text-muted">
-      {children}
+    <div className="rounded-2xl border border-dashed border-line-strong bg-surface px-5 py-8 text-center">
+      {title && <p className="font-bold text-teal">{title}</p>}
+      <div className={`mx-auto max-w-md text-sm leading-6 text-muted ${title ? 'mt-1' : ''}`}>
+        {children}
+      </div>
+      {action && (
+        <Link
+          href={action.href}
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal px-4 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+        >
+          {action.label}
+        </Link>
+      )}
     </div>
   );
+}
+
+// Status tones: success = done/positive, danger = refused/stopped, attention = waiting on someone, info = planned, neutral = inactive.
+const statusTones = {
+  success: 'bg-success-soft text-success',
+  danger: 'bg-danger-soft text-danger',
+  attention: 'bg-orange/10 text-[#9a4212]',
+  info: 'bg-mint text-teal',
+  neutral: 'bg-[#eee7da] text-ink-soft',
+} as const;
+const statusDots = {
+  success: 'bg-success',
+  danger: 'bg-danger',
+  attention: 'bg-orange',
+  info: 'bg-teal',
+  neutral: 'bg-muted',
+} as const;
+export function statusTone(value: string): keyof typeof statusTones {
+  if (['accepted', 'approved', 'published', 'completed', 'active', 'resolved'].includes(value))
+    return 'success';
+  if (['rejected', 'declined', 'removed', 'suspended'].includes(value)) return 'danger';
+  if (['pending', 'requested', 'open', 'operator_sync'].includes(value)) return 'attention';
+  if (value === 'scheduled') return 'info';
+  return 'neutral';
 }
 export function Status({ value, locale }: { value: string; locale: string }) {
   const ar = locale === 'ar';
@@ -132,13 +197,12 @@ export function Status({ value, locale }: { value: string; locale: string }) {
     active: ['Active', 'نشط'],
     suspended: ['Suspended', 'موقوف'],
   };
-  const tone = ['accepted', 'approved', 'published', 'completed', 'active'].includes(value)
-    ? 'bg-green-100 text-green-800'
-    : ['rejected', 'declined', 'removed', 'suspended'].includes(value)
-      ? 'bg-red-100 text-red-800'
-      : 'bg-orange/10 text-orange';
+  const tone = statusTone(value);
   return (
-    <span className={`inline-flex rounded-full px-3 py-1 text-xs font-bold ${tone}`}>
+    <span
+      className={`inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${statusTones[tone]}`}
+    >
+      <span aria-hidden="true" className={`size-1.5 rounded-full ${statusDots[tone]}`} />
       {labels[value]?.[ar ? 1 : 0] || value}
     </span>
   );
@@ -157,7 +221,7 @@ export function RowLink({
   return (
     <Link
       href={href}
-      className="flex min-h-11 min-w-0 items-center gap-4 rounded-2xl border border-line p-4 transition-colors hover:border-orange/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+      className="flex min-h-11 min-w-0 items-center gap-4 rounded-2xl border border-line bg-white p-4 transition-colors hover:border-orange/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
     >
       <span className="min-w-0 flex-1">
         <strong className="block break-words text-teal [overflow-wrap:anywhere]">{title}</strong>

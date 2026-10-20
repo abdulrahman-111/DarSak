@@ -47,6 +47,18 @@ a {
   outline: 3px solid var(--orange);
   outline-offset: 3px;
 }
+/* Disabled and in-flight controls must look unavailable; many forms rely on this instead of per-button classes. */
+button:disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+button:disabled:hover {
+  transform: none;
+}
+form[aria-busy='true'] {
+  cursor: progress;
+}
 .container {
   width: min(1180px, calc(100% - 32px));
   margin-inline: auto;

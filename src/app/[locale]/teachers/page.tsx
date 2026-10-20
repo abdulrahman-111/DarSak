@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Search, SlidersHorizontal } from 'lucide-react';
+import { ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
 import {
   catalogue,
@@ -109,6 +109,8 @@ export default async function Teachers({
     filters.query,
     teacherSearch,
   ].filter(Boolean).length;
+  // Keep the filter panel open whenever a filter inside it is applied, so people can see what narrows their results.
+  const panelFilterCount = activeFilterCount - (filters.query ? 1 : 0);
   const retryUrl = urlFor(locale, filters, filters.page, teacherSearch);
   const retryHref = `${retryUrl}${retryUrl.includes('?') ? '&' : '?'}retry=1`;
 
@@ -154,7 +156,7 @@ export default async function Teachers({
                 />
               </label>
               <button
-                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal px-4 font-bold text-white transition hover:bg-teal sm:px-5"
+                className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-teal px-4 font-bold text-white transition hover:bg-teal/90 sm:px-5"
                 type="submit"
               >
                 <Search aria-hidden="true" size={17} />
@@ -170,7 +172,10 @@ export default async function Teachers({
               )}
             </div>
             <div className="mt-2">
-              <details className="rounded-xl border border-line px-3 py-2 md:border-0 md:px-0 md:py-0">
+              <details
+                open={panelFilterCount > 0}
+                className="group rounded-xl border border-line px-3 py-2 md:border-0 md:px-0 md:py-0"
+              >
                 <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
                   <SlidersHorizontal aria-hidden="true" size={17} />
                   {locale === 'ar' ? 'تصفية النتائج' : 'More filters'}
@@ -179,9 +184,11 @@ export default async function Teachers({
                       {activeFilterCount} {locale === 'ar' ? 'نشط' : 'active'}
                     </span>
                   )}
-                  <span aria-hidden="true" className="ms-auto">
-                    ⌄
-                  </span>
+                  <ChevronDown
+                    aria-hidden="true"
+                    size={18}
+                    className="ms-auto text-muted transition-transform group-open:rotate-180"
+                  />
                 </summary>
                 <div className="pt-2 md:pt-0">
                   <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -294,7 +301,7 @@ export default async function Teachers({
                 : 'Preview a small sample of groups and teachers. Register as a student to explore all teachers and groups.'}
             </p>
             <Link
-              className="inline-flex min-h-11 items-center rounded-xl bg-orange px-5 font-bold text-white hover:bg-orange-deep"
+              className="inline-flex min-h-11 items-center rounded-xl bg-orange px-5 font-bold text-white transition-colors hover:bg-orange-deep"
               href={`/${locale}/register?role=student`}
             >
               {locale === 'ar' ? 'سجّل كطالب' : 'Register as a student'}
@@ -303,9 +310,12 @@ export default async function Teachers({
         )}
 
         {error ? (
-          <div className="rounded-xl bg-red-50 p-4 text-red-700">
+          <div className="rounded-[1.15rem] border border-danger/20 bg-danger-soft p-5 text-danger">
             <p role="alert">{t.error}</p>
-            <a href={retryHref} className="mt-3 inline-flex font-bold underline">
+            <a
+              href={retryHref}
+              className="mt-3 inline-flex min-h-11 items-center font-bold underline"
+            >
               {c.retry}
             </a>
           </div>

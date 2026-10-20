@@ -8,7 +8,7 @@ export function SetupCard({ t }: { t: Record<string, string> }) {
   return (
     <div className="rounded-3xl border border-orange/30 bg-orange/10 p-6">
       <h2 className="text-xl font-bold">{t.setupTitle}</h2>
-      <p className="mt-2 text-muted">{t.setupText}</p>
+      <p className="mt-2 break-words text-muted [overflow-wrap:anywhere]">{t.setupText}</p>
       <code className="mt-4 block rounded-xl bg-white/70 p-3 text-sm">.env.local</code>
     </div>
   );
@@ -71,7 +71,7 @@ export function GroupCard({
   return (
     <article className="group relative flex h-full flex-col rounded-[1.15rem] border border-line bg-surface p-5 transition duration-200 hover:-translate-y-1 hover:border-[#cdbfa6] hover:shadow-[0_18px_36px_-24px_rgba(14,74,75,.55)]">
       <div className="flex items-center justify-between gap-3">
-        <span className="rounded-lg bg-[#d5ebe6] px-2.5 py-1 text-xs font-bold text-teal">
+        <span className="rounded-lg bg-mint px-2.5 py-1 text-xs font-bold text-teal">
           {subject || t.groups}
         </span>
         <span className="rounded-full bg-[#dfedd5] px-2.5 py-1 text-xs font-bold text-[#2c5620]">

@@ -59,7 +59,7 @@ export default async function TeacherStudents({
             groups={data.groups}
           />
           <Panel>
-            <p role="alert" className="text-sm text-red-800">
+            <p role="alert" className="text-sm text-danger">
               {copy.failed}
             </p>
             <Link
@@ -110,7 +110,17 @@ export default async function TeacherStudents({
               </div>
             </Panel>
           ) : (
-            <EmptyState>{copy.empty}</EmptyState>
+            <EmptyState
+              title={copy.empty}
+              action={{
+                href: `/${locale}/teacher/requests`,
+                label: ar ? 'راجع طلبات الانضمام' : 'Review enrollment requests',
+              }}
+            >
+              {ar
+                ? 'يظهر الطلاب هنا بعد قبول طلبات انضمامهم.'
+                : 'Students appear here once you accept their enrollment requests.'}
+            </EmptyState>
           )}
           <StudentPagination
             locale={locale}

@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
 import { publicGroups } from '@/features/platform/data';
 import { getRequestViewer } from '@/features/platform/request-viewer';
@@ -45,7 +45,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
 
   return (
     <div className="bg-cream">
-      <section className="container grid gap-12 py-14 md:grid-cols-[1.05fr_.95fr] md:items-center md:py-20 lg:gap-16">
+      <section className="container grid gap-10 py-10 md:grid-cols-[1.05fr_.95fr] md:items-center md:py-20 lg:gap-16">
         <div className="landing-intro">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-teal">
             <Image
@@ -59,7 +59,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             {c.eyebrow}
           </p>
           <h1
-            className={`mt-6 max-w-3xl text-5xl font-black ${locale === 'ar' ? 'leading-[1.18]' : 'leading-[1.02]'} tracking-[-.04em] text-teal md:text-6xl lg:text-7xl`}
+            className={`mt-5 max-w-3xl text-[2.6rem] font-black sm:text-5xl ${locale === 'ar' ? 'leading-[1.18]' : 'leading-[1.02]'} tracking-[-.04em] text-teal md:text-6xl lg:text-7xl`}
           >
             {c.heroTitle}
           </h1>
@@ -79,29 +79,20 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
               {c.teach}
             </Link>
           </div>
+          <ul aria-label={c.highlights} className="mt-8 flex flex-wrap gap-2">
+            {c.subjectRange.map((item, index) => (
+              <li
+                key={item}
+                className="inline-flex min-h-9 items-center gap-2 rounded-full border border-line bg-surface px-3 text-sm font-semibold text-teal"
+              >
+                <Image aria-hidden="true" src={subjectIcons[index]} alt="" width={18} height={18} />
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
         <WeeklyPreview locale={locale} />
       </section>
-
-      <div
-        role="group"
-        aria-label={c.highlights}
-        className="border-y border-line bg-surface py-3.5"
-      >
-        <div className="container flex flex-wrap justify-center gap-x-7 gap-y-2 text-sm font-bold text-teal sm:justify-between sm:text-base">
-          {c.subjectRange.map((item, index) => (
-            <span key={item} className="flex items-center gap-7">
-              <span className="inline-flex items-center gap-2">
-                <Image aria-hidden="true" src={subjectIcons[index]} alt="" width={20} height={20} />
-                {item}
-              </span>
-              {index < c.subjectRange.length - 1 && (
-                <span aria-hidden="true" className="size-1.5 rounded-full bg-orange" />
-              )}
-            </span>
-          ))}
-        </div>
-      </div>
 
       <section id="highlights" className="container scroll-mt-40 py-16 md:scroll-mt-24 md:py-20">
         <div className="max-w-2xl">
@@ -125,7 +116,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
                     >
                       <span
                         aria-hidden="true"
-                        className="grid size-11 place-items-center rounded-xl bg-[#d5ebe6]"
+                        className="grid size-11 place-items-center rounded-xl bg-mint"
                       >
                         <Image src={icon} alt="" width={24} height={24} />
                       </span>
@@ -223,13 +214,17 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             </div>
             <p className="mt-3 text-sm leading-6 text-[#cfe3de]">{c.approvalNote}</p>
           </div>
-          <div className="grid content-center gap-4 sm:grid-cols-2">
+          <div className="grid content-start gap-x-6 sm:grid-cols-2 md:pt-10">
             {c.teacherFeatures.map(feature => (
               <div
                 key={feature}
-                className="flex items-center gap-3 border-t border-[#3d6f6f] py-4 font-bold"
+                className="flex items-start gap-3 border-t border-[#3d6f6f] py-4 font-bold"
               >
-                <CheckCircle2 className="text-[#8fd1b5]" size={20} />
+                <CheckCircle2
+                  aria-hidden="true"
+                  className="mt-0.5 shrink-0 text-[#8fd1b5]"
+                  size={20}
+                />
                 {feature}
               </div>
             ))}
@@ -243,9 +238,14 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
         </h2>
         <div className="mt-6 divide-y divide-line rounded-[1.15rem] border border-line bg-surface px-5 sm:px-7">
           {c.faq.map(([question, answer]) => (
-            <details key={question} className="group py-5">
-              <summary className="cursor-pointer text-base font-bold text-teal marker:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+            <details key={question} className="group py-3">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-base font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
                 {question}
+                <ChevronDown
+                  aria-hidden="true"
+                  size={20}
+                  className="shrink-0 text-orange transition-transform group-open:rotate-180"
+                />
               </summary>
               <p className="mt-3 max-w-3xl text-sm leading-7 text-ink-soft">{answer}</p>
             </details>
