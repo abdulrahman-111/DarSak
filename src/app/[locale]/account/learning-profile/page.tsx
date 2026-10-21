@@ -5,6 +5,8 @@ import { studentLearningProfile } from '@/features/student/data';
 import { StudentProfileForm } from '@/features/student/student-profile-form';
 import { AccountBackLink } from '@/features/account/account-back-link';
 import { AccountPageFrame } from '@/features/account/account-page-frame';
+import { MatchingPreferencesForm } from '@/features/student-matching/preferences-form';
+import { studentMatchingPreferences } from '@/features/student-matching/data';
 
 export default async function StudentProfilePage({
   params,
@@ -18,7 +20,10 @@ export default async function StudentProfilePage({
   const ar = locale === 'ar';
   const onboardingError = query.onboarding_error === 'load';
   const me = await requireViewer(locale, 'student');
-  const { profile } = await studentLearningProfile({ db: me.db, id: me.id, fullName: me.fullName });
+  const [{ profile }, matchingPreferences] = await Promise.all([
+    studentLearningProfile({ db: me.db, id: me.id, fullName: me.fullName }),
+    studentMatchingPreferences(locale),
+  ]);
   const copy = ar
     ? {
         title: 'أكمل ملف التعلم',
@@ -64,6 +69,29 @@ export default async function StudentProfilePage({
             />
           ) : (
             <EmptyState>{copy.error}</EmptyState>
+          )}
+        </Panel>
+        <Panel className="mx-auto mt-6 max-w-2xl" id="matching-preferences">
+          <h2 className="text-xl font-bold text-teal">
+            {ar ? 'تفضيلات اقتراحات المجموعات' : 'Group suggestion preferences'}
+          </h2>
+          <p className="mb-4 mt-2 text-sm leading-6 text-muted">
+            {ar
+              ? 'هذه التفضيلات اختيارية ومستقلة عن ملف التعلم المطلوب. اختر أيامك المفضلة لتظهر ضمن أسباب اقتراح بعض المجموعات.'
+              : 'These preferences are optional and separate from your required learning profile. Choose preferred days to include them as a reason for some group suggestions.'}
+          </p>
+          {matchingPreferences.error || !matchingPreferences.preferences ? (
+            <p role="alert" className="text-sm text-danger">
+              {ar
+                ? 'تعذر تحميل تفضيلات الأيام. حدّث الصفحة وحاول مرة أخرى.'
+                : 'Could not load day preferences. Refresh and try again.'}
+            </p>
+          ) : (
+            <MatchingPreferencesForm
+              locale={locale}
+              preferredWeekdays={matchingPreferences.preferences.preferredWeekdays}
+              updatedAt={matchingPreferences.preferences.updatedAt}
+            />
           )}
         </Panel>
       </>

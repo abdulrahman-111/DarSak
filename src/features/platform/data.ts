@@ -33,7 +33,7 @@ export async function publicTeacherSample(limit = 3) {
     .limit(limit);
   return { data: (data ?? []) as PublicTeacherChoice[], error };
 }
-function mapDiscoverGroup(group: DiscoverGroupRow): Group {
+export function mapDiscoverGroup(group: DiscoverGroupRow): Group {
   return {
     id: group.id,
     teacher_id: group.teacher_id,
