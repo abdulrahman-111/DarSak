@@ -117,6 +117,7 @@ export async function saveStudentLearningProfile(
 
   for (const language of ['en', 'ar'] as const) {
     revalidatePath(`/${language}/student`);
+    revalidatePath(`/${language}/student/recommendations`);
     revalidatePath(`/${language}/account/learning-profile`);
   }
   redirect(`/${locale}/student`);

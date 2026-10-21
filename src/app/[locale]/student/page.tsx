@@ -187,19 +187,28 @@ export default async function StudentDashboard({
                 </div>
               </section>
               <section className="min-w-0">
-                <div className="mb-4 flex min-w-0 items-center justify-between gap-3">
+                <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
                   <h2 className="min-w-0 break-words text-lg font-bold text-teal [overflow-wrap:anywhere]">
                     {ar ? 'مجموعاتي' : 'My classes'}
                   </h2>
-                  {data.acceptedCount > 0 && (
+                  <div className="flex shrink-0 flex-wrap items-center gap-3">
                     <Link
-                      href={`/${locale}/student/classes`}
-                      className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
+                      href={`/${locale}/student/recommendations`}
+                      className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
                     >
-                      {ar ? 'عرض الكل' : 'View all'}
+                      {ar ? 'اقتراحات المجموعات' : 'Group suggestions'}
                       <ArrowUpRight size={15} />
                     </Link>
-                  )}
+                    {data.acceptedCount > 0 && (
+                      <Link
+                        href={`/${locale}/student/classes`}
+                        className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
+                      >
+                        {ar ? 'عرض الكل' : 'View all'}
+                        <ArrowUpRight size={15} />
+                      </Link>
+                    )}
+                  </div>
                 </div>
                 {data.classes.length ? (
                   <div className="grid min-w-0 gap-4 sm:grid-cols-2">

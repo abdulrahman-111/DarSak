@@ -16,6 +16,7 @@ import {
   GraduationCap,
   LibraryBig,
   MessageSquareText,
+  Sparkles,
 } from 'lucide-react';
 import { ActiveLink } from '@/components/active-link';
 import type { PlatformRole } from './access';
@@ -72,6 +73,10 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
     { href: `/${locale}/student/bookings`, label: ar ? 'الحجوزات الفردية' : 'One-off bookings' },
     { href: `/${locale}/student/materials`, label: ar ? 'مكتبة التعلم' : 'Learning library' },
     { href: `/${locale}/teachers`, label: ar ? 'اكتشف' : 'Explore' },
+    {
+      href: `/${locale}/student/recommendations`,
+      label: ar ? 'اقتراحات المجموعات' : 'Group suggestions',
+    },
     { href: `/${locale}/student/saved`, label: ar ? 'المحفوظات' : 'Saved groups' },
     notifications,
     { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
@@ -89,6 +94,7 @@ function itemLabel(item: NavItem, unreadCount: number | null, locale: string, ro
     materials: FolderOpen,
     teachers: Compass,
     saved: Bookmark,
+    recommendations: Sparkles,
     notifications: Bell,
     account: UserRound,
     reports: Flag,
