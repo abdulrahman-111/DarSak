@@ -24,6 +24,7 @@ describe('mobile workspace navigation model', () => {
       'Explore',
     ]);
     expect(student.secondary.map(item => item.href)).toEqual([
+      '/en/student/bookings',
       '/en/student/materials',
       '/en/student/saved',
       '/en/notifications',
@@ -37,6 +38,7 @@ describe('mobile workspace navigation model', () => {
       'Requests',
     ]);
     expect(teacher.secondary.map(item => item.href)).toEqual([
+      '/en/teacher/bookings',
       '/en/teacher/students',
       '/en/teacher/catalogue',
       '/en/teacher/feedback',

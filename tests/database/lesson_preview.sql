@@ -62,6 +62,12 @@ begin
      or not has_function_privilege('authenticated','dars_private.teacher_has_access(uuid)','EXECUTE') then
     raise exception 'private eligibility predicate grants are incorrect';
   end if;
+  if not has_function_privilege('authenticated','dars_private.can_read_booking_slot(uuid)'::regprocedure,'EXECUTE')
+     or has_function_privilege('anon','dars_private.can_read_booking_slot(uuid)'::regprocedure,'EXECUTE')
+     or not has_function_privilege('authenticated','dars_private.can_read_booking_request(uuid)'::regprocedure,'EXECUTE')
+     or has_function_privilege('anon','dars_private.can_read_booking_request(uuid)'::regprocedure,'EXECUTE') then
+    raise exception 'booking RLS helper grants are incorrect';
+  end if;
   if exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
     where n.nspname='dars_private' and c.relkind in ('r','p','v','m','f')
       and (has_table_privilege('anon',c.oid,'SELECT') or has_table_privilege('anon',c.oid,'INSERT') or has_table_privilege('anon',c.oid,'UPDATE') or has_table_privilege('anon',c.oid,'DELETE')
@@ -69,7 +75,12 @@ begin
     raise exception 'private table or view privileges are exposed';
   end if;
   if exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-    where n.nspname='dars_private' and p.proname<>'teacher_has_access'
+    where n.nspname='dars_private'
+      and p.oid not in (
+        'dars_private.teacher_has_access(uuid)'::regprocedure,
+        'dars_private.can_read_booking_slot(uuid)'::regprocedure,
+        'dars_private.can_read_booking_request(uuid)'::regprocedure
+      )
       and (has_function_privilege('anon',p.oid,'EXECUTE') or has_function_privilege('authenticated',p.oid,'EXECUTE'))) then
     raise exception 'an unexpected private function is directly executable';
   end if;

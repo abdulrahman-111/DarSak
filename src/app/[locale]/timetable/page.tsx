@@ -53,6 +53,7 @@ export default async function Timetable({
   const copy = ar
     ? {
         title: 'جدولي الدراسي',
+        bookings: 'عرض الحجوزات الفردية',
         intro: 'مواعيد حصصك حسب التاريخ والمجموعة، بتوقيت القاهرة.',
         prev: 'السابق',
         next: 'التالي',
@@ -84,6 +85,7 @@ export default async function Timetable({
       }
     : {
         title: 'My timetable',
+        bookings: 'View one-off bookings',
         intro: 'Browse your dated lessons by week, day and class. All times use Cairo time.',
         prev: 'Prev',
         next: 'Next',
@@ -132,7 +134,19 @@ export default async function Timetable({
 
   return (
     <PlatformShell locale={locale} role="student" name={me.fullName} unreadCount={unreadCount}>
-      <ScreenTitle eyebrow={copy.timezone} title={copy.title} description={copy.intro} />
+      <ScreenTitle
+        eyebrow={copy.timezone}
+        title={copy.title}
+        description={copy.intro}
+        action={
+          <Link
+            href={`/${locale}/student/bookings`}
+            className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+          >
+            {copy.bookings}
+          </Link>
+        }
+      />
       {data.error ? (
         <Panel>
           <p role="alert" className="text-sm text-danger">

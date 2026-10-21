@@ -9,7 +9,8 @@ export type NotificationKind =
   | 'teacher_review_requested'
   | 'teacher_review_decision'
   | 'teacher_fee_announcement'
-  | 'enrollment_accepted';
+  | 'enrollment_accepted'
+  | 'booking_updated';
 export type NotificationRow = {
   id: string;
   kind: NotificationKind;
@@ -29,6 +30,7 @@ const KINDS = new Set<NotificationKind>([
   'teacher_review_decision',
   'teacher_fee_announcement',
   'enrollment_accepted',
+  'booking_updated',
 ]);
 
 export function parseNotificationsPage(value: unknown): NotificationsPage | null {
@@ -86,6 +88,7 @@ export function notificationHref(
 ): string | null {
   if (locale !== 'en' && locale !== 'ar') return null;
   if (role === 'student') {
+    if (kind === 'booking_updated') return `/${locale}/student/bookings`;
     if (kind === 'enrollment_accepted') {
       const value = id(payload, 'group_id');
       return value
@@ -106,6 +109,7 @@ export function notificationHref(
     const value = id(payload, 'group_id');
     return value ? `/${locale}/teacher/requests?group_id=${value}` : `/${locale}/teacher/requests`;
   }
+  if (role === 'teacher' && kind === 'booking_updated') return `/${locale}/teacher/bookings`;
   if (role === 'admin' && kind === 'teacher_review_requested') {
     const value = id(payload, 'teacher_id');
     return value ? `/${locale}/admin/teachers/${value}` : `/${locale}/admin/teachers`;
@@ -187,6 +191,38 @@ export function notificationSummary(
     if (typeof announcement !== 'string' || !announcement.trim() || announcement.length > 1000)
       return ar ? 'تحديث جديد عن صلاحية التدريس.' : 'A new teaching access update.';
     return `${announcement.slice(0, 1000)}${when ? (ar ? ` يبدأ في ${when} بتوقيت القاهرة.` : ` Effective ${when} Africa/Cairo.`) : ''}`;
+  }
+  if (kind === 'booking_updated') {
+    const status = payload.status;
+    const group = text(payload, 'group_name', ar ? 'المجموعة' : 'the group');
+    const whenRaw = payload.starts_at;
+    const when =
+      typeof whenRaw === 'string' && Number.isFinite(Date.parse(whenRaw))
+        ? new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+            timeZone: 'Africa/Cairo',
+          }).format(new Date(whenRaw))
+        : '';
+    const actor = text(payload, ar ? 'student_name' : 'student_name', ar ? 'طالب' : 'A student');
+    if (status === 'pending')
+      return ar
+        ? `${actor} طلب حجز موعد فردي في ${group}${when ? ` يوم ${when}` : ''}.`
+        : `${actor} requested a one-off booking for ${group}${when ? ` on ${when}` : ''}.`;
+    const labels: Record<string, [string, string]> = {
+      accepted: ['تم قبول طلب الموعد الفردي', 'Your one-off booking was accepted'],
+      declined: ['تم رفض طلب الموعد الفردي', 'Your one-off booking was declined'],
+      withdrawn: ['أُلغي طلب الموعد الفردي', 'The one-off booking request was withdrawn'],
+      cancelled: ['أُلغي الموعد الفردي', 'The one-off booking was cancelled'],
+    };
+    const label = typeof status === 'string' ? labels[status] : undefined;
+    return label
+      ? ar
+        ? `${label[0]}: ${group}${when ? ` — ${when}` : ''}`
+        : `${label[1]}: ${group}${when ? ` — ${when}` : ''}`
+      : ar
+        ? `تحديث على موعد فردي في ${group}.`
+        : `There is an update to a one-off booking for ${group}.`;
   }
   return null;
 }

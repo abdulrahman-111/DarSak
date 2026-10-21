@@ -55,6 +55,7 @@ fixtures=(
   tests/database/student_schedule_overlap.sql
   tests/database/group_pinned_announcements.sql
   tests/database/lesson_attendance.sql
+  tests/database/booking_requests.sql
   tests/database/calendar_lesson_export.sql
   tests/database/user_notifications.sql
   tests/database/enrollment_accepted_notification.sql

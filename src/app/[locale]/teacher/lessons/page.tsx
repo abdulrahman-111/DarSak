@@ -67,6 +67,7 @@ export default async function TeacherLessons({
         title: 'الحصص',
         description: 'نظّم حصصك وافتح مساحة الحصة لمراجعة التفاصيل والمواد.',
         add: 'إضافة حصة',
+        bookings: 'عرض الحجوزات الفردية',
         group: 'المجموعة',
         choose: '— اختر مجموعة —',
         select: 'تطبيق',
@@ -101,6 +102,7 @@ export default async function TeacherLessons({
         description:
           'Plan your lessons and open a lesson workspace to review its details and materials.',
         add: 'Add lesson',
+        bookings: 'View one-off bookings',
         group: 'Group',
         choose: '— Choose a group —',
         select: 'Apply',
@@ -155,12 +157,20 @@ export default async function TeacherLessons({
         title={copy.title}
         description={copy.description}
         action={
-          <Link
-            href={statusHref({ new: 1, groupId: selectedGroup?.id })}
-            className="inline-flex min-h-11 items-center rounded-xl bg-orange px-4 py-3 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal hover:bg-orange-deep"
-          >
-            {copy.add}
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link
+              href={statusHref({ new: 1, groupId: selectedGroup?.id })}
+              className="inline-flex min-h-11 items-center rounded-xl bg-orange px-4 py-3 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal hover:bg-orange-deep"
+            >
+              {copy.add}
+            </Link>
+            <Link
+              href={`/${locale}/teacher/bookings`}
+              className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            >
+              {copy.bookings}
+            </Link>
+          </div>
         }
       />
       {query.deleted === '1' && (
