@@ -80,4 +80,30 @@ describe('booking views', () => {
     expect(html).not.toContain('Accept');
     expect(html).not.toContain('Decline');
   });
+
+  it('labels private proposals and lets teachers cancel an accepted proposal from its request', () => {
+    const html = renderToStaticMarkup(
+      createElement(BookingList, {
+        locale: 'en',
+        rows: [{ ...row, status: 'accepted', source: 'student_proposed' }],
+        teacher: true,
+        empty: 'None',
+        now: '2026-10-21T00:00:00Z',
+      }),
+    );
+    expect(html).toContain('Private student suggestion');
+    expect(html).toContain('Cancel time');
+  });
+
+  it('shows the published-time source on booking requests', () => {
+    const html = renderToStaticMarkup(
+      createElement(BookingList, {
+        locale: 'ar',
+        rows: [{ ...row, source: 'teacher_published' }],
+        empty: 'None',
+        now: '2026-10-21T00:00:00Z',
+      }),
+    );
+    expect(html).toContain('موعد منشور من المعلم');
+  });
 });

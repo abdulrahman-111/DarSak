@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useRef } from 'react';
-import { isActivePath } from './navigation-domain';
+import { isActivePath, isWorkspaceItemActive } from './navigation-domain';
 
 export function MobileNavigationSummary({
   items,
@@ -85,16 +85,18 @@ export function ActiveLink({
   className = '',
   activeClassName = '',
   exact = false,
+  activePaths,
   children,
 }: {
   href: string;
   className?: string;
   activeClassName?: string;
   exact?: boolean;
+  activePaths?: string[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const active = isActivePath(pathname, href, exact);
+  const active = isWorkspaceItemActive(pathname, { href, activePaths }, exact);
   return (
     <Link
       href={href}

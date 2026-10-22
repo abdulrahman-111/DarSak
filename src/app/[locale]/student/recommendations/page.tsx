@@ -84,7 +84,7 @@ export default async function StudentRecommendationsPage({
         <>
           <div className="grid gap-4 md:grid-cols-2">
             {result.groups.map(({ group, reasonCodes }) => (
-              <div key={group.id} className="min-w-0">
+              <div key={group.id} className="flex min-w-0 flex-col">
                 {reasonCodes.length > 0 && (
                   <div className="mb-2" aria-label={copy.reasonHeading}>
                     <ul className="flex flex-wrap gap-2">
@@ -99,7 +99,9 @@ export default async function StudentRecommendationsPage({
                     </ul>
                   </div>
                 )}
-                <GroupCard group={group} locale={locale} t={dictionary} />
+                <div className="min-h-0 flex-1">
+                  <GroupCard group={group} locale={locale} t={dictionary} />
+                </div>
               </div>
             ))}
           </div>

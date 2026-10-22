@@ -13,7 +13,12 @@ vi.mock('@/components/platform/access', () => ({
 vi.mock('@/features/teacher/data', () => ({ teacherViewer: mocks.teacherViewer }));
 vi.mock('next/cache', () => ({ revalidatePath: mocks.revalidatePath }));
 
-import { cancelBookingSlot, publishBookingSlot, requestBooking } from '@/features/bookings/actions';
+import {
+  cancelBookingSlot,
+  proposeBookingTime,
+  publishBookingSlot,
+  requestBooking,
+} from '@/features/bookings/actions';
 const id = 'a2c4888a-7630-4e7b-aabc-66310e5a5bc9';
 const goodForm = (fields: Record<string, string>) => {
   const form = new FormData();
@@ -83,5 +88,48 @@ describe('booking actions', () => {
     );
     expect(result?.error).toContain('4 hours');
     expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('converts Cairo proposal times and calls the private proposal RPC', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: null });
+    mocks.getRequestViewer.mockResolvedValue({
+      db: { rpc },
+      user: { id },
+      profile: { id, role: 'student', status: 'active' },
+    });
+    const result = await proposeBookingTime(
+      'en',
+      null,
+      goodForm({
+        group_id: id,
+        starts_local: '2026-10-22T10:00',
+        ends_local: '2026-10-22T11:00',
+      }),
+    );
+    expect(result?.success).toContain('waiting for the teacher');
+    expect(rpc).toHaveBeenCalledWith('propose_booking_time', {
+      p_group_id: id,
+      p_starts_at: expect.any(String),
+      p_ends_at: expect.any(String),
+    });
+  });
+
+  it('localizes the stable pending proposal cap error', async () => {
+    const rpc = vi.fn().mockResolvedValue({ error: { message: 'proposal limit reached' } });
+    mocks.getRequestViewer.mockResolvedValue({
+      db: { rpc },
+      user: { id },
+      profile: { id, role: 'student', status: 'active' },
+    });
+    const result = await proposeBookingTime(
+      'ar',
+      null,
+      goodForm({
+        group_id: id,
+        starts_local: '2026-10-22T10:00',
+        ends_local: '2026-10-22T11:00',
+      }),
+    );
+    expect(result?.error).toContain('٢٠');
   });
 });

@@ -89,11 +89,14 @@ export async function studentBookingData(
   locale: Locale,
   requestPageInput: unknown,
   availablePageInput: unknown,
+  proposalGroupQueryInput: unknown = '',
 ) {
   const me = await student(locale);
   const requestPage = normalizeBookingPage(requestPageInput);
   const availablePage = normalizeBookingPage(availablePageInput);
-  const [requestsResult, slotsResult] = await Promise.all([
+  const proposalGroupQuery =
+    typeof proposalGroupQueryInput === 'string' ? proposalGroupQueryInput.trim().slice(0, 80) : '';
+  const [requestsResult, slotsResult, groupsResult] = await Promise.all([
     me.db.rpc('booking_page', {
       p_scope: 'student',
       p_offset: (requestPage - 1) * BOOKING_PAGE_SIZE,
@@ -103,9 +106,29 @@ export async function studentBookingData(
       p_offset: (availablePage - 1) * BOOKING_PAGE_SIZE,
       p_limit: BOOKING_PAGE_SIZE,
     }),
+    me.db.rpc('student_booking_group_choices', {
+      p_query: proposalGroupQuery,
+      p_selected: null,
+    }),
   ]);
   let requests = requestsResult.error ? null : parseBookingPage(requestsResult.data);
   let slots = slotsResult.error ? null : parseBookingSlots(slotsResult.data);
+  const groups =
+    groupsResult.error || !Array.isArray(groupsResult.data)
+      ? null
+      : groupsResult.data
+          .filter(
+            (row): row is { id: string; name: string; teacher_name: string } =>
+              !!row &&
+              typeof row === 'object' &&
+              typeof row.id === 'string' &&
+              /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+                row.id,
+              ) &&
+              typeof row.name === 'string' &&
+              typeof row.teacher_name === 'string',
+          )
+          .slice(0, 50);
   let actualRequestPage = requests ? clampPage(requestPage, requests.total) : 1;
   let actualAvailablePage = slots ? clampPage(availablePage, slots.total) : 1;
   if (requests && actualRequestPage !== requestPage) {
@@ -132,6 +155,8 @@ export async function studentBookingData(
     availableTotal: slots?.total ?? 0,
     availablePage: actualAvailablePage,
     availablePageCount: bookingPageCount(slots?.total ?? 0),
-    error: !requests || !slots,
+    proposalGroups: groups ?? [],
+    proposalGroupQuery,
+    error: !requests || !slots || !groups,
   };
 }

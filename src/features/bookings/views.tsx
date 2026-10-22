@@ -127,6 +127,15 @@ export function BookingList({
               <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-bold">
                 {statusLabel(booking.status, locale)}
               </span>
+              <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-bold">
+                {booking.source === 'student_proposed'
+                  ? ar
+                    ? 'اقتراح خاص من الطالب'
+                    : 'Private student suggestion'
+                  : ar
+                    ? 'موعد منشور من المعلم'
+                    : 'Teacher-published time'}
+              </span>
             </div>
             <p className="mt-1 text-sm text-muted">
               {teacher
@@ -146,11 +155,29 @@ export function BookingList({
             </Link>
           </div>
           {teacher ? (
-            allowDecision &&
-            booking.status === 'pending' &&
-            Date.parse(booking.starts_at) > Date.parse(now) ? (
-              <BookingDecisionForms locale={locale} booking={booking} />
-            ) : null
+            <div className="grid justify-items-start gap-2">
+              {allowDecision &&
+              booking.status === 'pending' &&
+              Date.parse(booking.starts_at) > Date.parse(now) ? (
+                <BookingDecisionForms locale={locale} booking={booking} />
+              ) : null}
+              {booking.source === 'student_proposed' &&
+              booking.status === 'accepted' &&
+              Date.parse(booking.starts_at) > Date.parse(now) ? (
+                <CancelSlotForm
+                  locale={locale}
+                  slot={{
+                    id: booking.slot_id,
+                    group_id: booking.group_id,
+                    group_name: booking.group_name,
+                    teacher_name: booking.teacher_name,
+                    starts_at: booking.starts_at,
+                    ends_at: booking.ends_at,
+                    status: 'open',
+                  }}
+                />
+              ) : null}
+            </div>
           ) : ['pending', 'accepted'].includes(booking.status) &&
             Date.parse(booking.starts_at) > Date.parse(now) ? (
             <CancelMyBookingForm locale={locale} booking={booking} />

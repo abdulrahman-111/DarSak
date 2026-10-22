@@ -133,6 +133,74 @@ export async function requestBooking(
   };
 }
 
+export async function proposeBookingTime(
+  locale: Locale,
+  _state: BookingActionState,
+  form: FormData,
+): Promise<BookingActionState> {
+  if (locale !== 'en' && locale !== 'ar') return fail('en');
+  const groupId = String(form.get('group_id') ?? '');
+  const startsLocal = String(form.get('starts_local') ?? '');
+  const endsLocal = String(form.get('ends_local') ?? '');
+  if (!idSchema.safeParse(groupId).success)
+    return {
+      error: copy(locale, 'Choose one of your accepted groups.', 'اختر إحدى مجموعاتك المقبولة.'),
+    };
+  let startsAt: string, endsAt: string;
+  try {
+    startsAt = cairoDateTimeToUtc(startsLocal);
+    endsAt = cairoDateTimeToUtc(endsLocal);
+  } catch {
+    return {
+      error: copy(
+        locale,
+        'Choose a clear Cairo date and time.',
+        'اختر تاريخًا ووقتًا واضحين بتوقيت القاهرة.',
+      ),
+    };
+  }
+  const duration = Date.parse(endsAt) - Date.parse(startsAt);
+  if (
+    startsAt <= new Date().toISOString() ||
+    duration <= 0 ||
+    duration > 4 * 60 * 60 * 1000 ||
+    Date.parse(startsAt) > Date.now() + 365 * 86400000
+  )
+    return {
+      error: copy(
+        locale,
+        'Choose a future time within the next year, lasting up to 4 hours.',
+        'اختر موعدًا قادمًا خلال السنة القادمة ومدته حتى ٤ ساعات.',
+      ),
+    };
+  const me = await verifiedStudent(locale);
+  if (!me) return fail(locale);
+  const { error } = await me.db.rpc('propose_booking_time', {
+    p_group_id: groupId,
+    p_starts_at: startsAt,
+    p_ends_at: endsAt,
+  });
+  if (error) {
+    if (error.message?.includes('proposal limit reached'))
+      return {
+        error: copy(
+          locale,
+          'You have 20 pending time proposals. Wait for a teacher to respond before suggesting another.',
+          'لديك ٢٠ اقتراحًا معلقًا. انتظر رد المعلم قبل اقتراح موعد آخر.',
+        ),
+      };
+    return fail(locale);
+  }
+  refresh();
+  return {
+    success: copy(
+      locale,
+      'Your time was suggested; waiting for the teacher.',
+      'تم اقتراح موعدك؛ بانتظار رد المعلم.',
+    ),
+  };
+}
+
 export async function decideBooking(
   locale: Locale,
   requestId: string,
