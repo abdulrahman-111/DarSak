@@ -106,7 +106,12 @@ export default async function TeacherAssignmentDetailPage({
               : 'Submissions could not be loaded. Refresh to try again.'}
           </p>
         ) : (
-          <TeacherSubmissionRows locale={locale} submissions={data.rows} readOnly={readOnly} />
+          <TeacherSubmissionRows
+            locale={locale}
+            submissions={data.rows}
+            readOnly={readOnly}
+            hasDeadline={assignment.due_at !== null}
+          />
         )}
         <StudentPagination
           locale={locale}

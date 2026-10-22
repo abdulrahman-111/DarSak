@@ -269,10 +269,12 @@ export function TeacherSubmissionRows({
   locale,
   submissions,
   readOnly,
+  hasDeadline,
 }: {
   locale: Locale;
   submissions: TeacherAssignmentSubmission[];
   readOnly: boolean;
+  hasDeadline: boolean;
 }) {
   const ar = locale === 'ar';
   return submissions.length ? (
@@ -298,7 +300,17 @@ export function TeacherSubmissionRows({
                 </p>
               </div>
               <p className="text-sm font-semibold text-muted">
-                {row.is_late ? (ar ? 'متأخر' : 'Late') : ar ? 'في الموعد' : 'On time'}
+                {!hasDeadline
+                  ? ar
+                    ? 'بلا موعد نهائي · تم التسليم'
+                    : 'No deadline · Submitted'
+                  : row.is_late
+                    ? ar
+                      ? 'متأخر'
+                      : 'Late'
+                    : ar
+                      ? 'في الموعد'
+                      : 'On time'}
               </p>
             </div>
             <ExternalLink href={row.url} label={row.url} />

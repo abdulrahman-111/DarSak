@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { cairoDateTimeToUtc } from '@/lib/domain';
-import type { Assignment } from '@/features/assignments/domain';
+import type { Assignment, TeacherAssignmentSubmission } from '@/features/assignments/domain';
 
 vi.mock('@/features/assignments/actions', () => ({
   archiveGroupAssignmentAction: async () => null,
@@ -11,7 +11,11 @@ vi.mock('@/features/assignments/actions', () => ({
 }));
 
 import { cairoDateTimeLocal } from '@/features/assignments/forms';
-import { StudentAssignments, TeacherAssignmentList } from '@/features/assignments/views';
+import {
+  StudentAssignments,
+  TeacherAssignmentList,
+  TeacherSubmissionRows,
+} from '@/features/assignments/views';
 
 const ownAssignment: Assignment = {
   id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
@@ -34,6 +38,21 @@ const ownAssignment: Assignment = {
     teacher_feedback: 'Please label your diagram.',
     feedback_at: '2026-10-22T11:30:00.000Z',
   },
+};
+
+const teacherSubmission: TeacherAssignmentSubmission = {
+  id: 'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
+  student_id: 'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  student_name: 'Student Example',
+  enrollment_status: 'accepted',
+  url: 'https://example.com/work',
+  student_note: '',
+  first_submitted_at: '2026-10-22T11:00:00.000Z',
+  last_submitted_at: '2026-10-22T11:00:00.000Z',
+  revision: 1,
+  is_late: false,
+  teacher_feedback: null,
+  feedback_at: null,
 };
 
 describe('assignment UI', () => {
@@ -77,5 +96,39 @@ describe('assignment UI', () => {
     const ids = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);
     expect(new Set(ids).size).toBe(ids.length);
     expect(html).toContain('Save changes');
+  });
+
+  it('labels submissions without a deadline as submitted, while keeping on-time for dated assignments', () => {
+    const noDeadline = renderToStaticMarkup(
+      <TeacherSubmissionRows
+        locale="en"
+        submissions={[teacherSubmission]}
+        readOnly={false}
+        hasDeadline={false}
+      />,
+    );
+    expect(noDeadline).toContain('No deadline · Submitted');
+    expect(noDeadline).not.toContain('On time');
+
+    const noDeadlineArabic = renderToStaticMarkup(
+      <TeacherSubmissionRows
+        locale="ar"
+        submissions={[teacherSubmission]}
+        readOnly={false}
+        hasDeadline={false}
+      />,
+    );
+    expect(noDeadlineArabic).toContain('بلا موعد نهائي · تم التسليم');
+    expect(noDeadlineArabic).not.toContain('في الموعد');
+
+    const datedAssignment = renderToStaticMarkup(
+      <TeacherSubmissionRows
+        locale="en"
+        submissions={[teacherSubmission]}
+        readOnly={false}
+        hasDeadline
+      />,
+    );
+    expect(datedAssignment).toContain('On time');
   });
 });
