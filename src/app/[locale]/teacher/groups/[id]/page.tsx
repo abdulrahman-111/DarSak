@@ -155,6 +155,12 @@ export default async function TeacherGroupDetail({
           <div className="grid justify-items-end gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <Status value={currentGroup.status} locale={locale} />
+              <Link
+                href={`/${locale}/teacher/groups/${id}/assignments`}
+                className="inline-flex min-h-11 items-center rounded-xl border border-line px-4 py-3 font-bold text-teal"
+              >
+                {ar ? 'الواجبات' : 'Assignments'}
+              </Link>
               {currentGroup.status === 'published' && (
                 <Link
                   href={`/${locale}/teacher/groups/${id}/edit`}
