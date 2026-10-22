@@ -19,7 +19,7 @@ import {
   UsersRound,
   X,
 } from 'lucide-react';
-import { isActivePath } from './navigation-domain';
+import { isActivePath, isWorkspaceItemActive } from './navigation-domain';
 import {
   mobileWorkspaceNavigation,
   type MobileWorkspaceRole,
@@ -120,7 +120,7 @@ export function MobileWorkspaceNavigation({
     };
   }, [open]);
 
-  const activeSecondary = secondary.some(item => isActivePath(pathname, item.href));
+  const activeSecondary = secondary.some(item => isWorkspaceItemActive(pathname, item));
 
   return (
     <nav
@@ -184,7 +184,7 @@ export function MobileWorkspaceNavigation({
       <div className="grid grid-cols-5 gap-0 px-1 pt-1">
         {primary.map(item => {
           const Icon = primaryIcons[item.icon];
-          const active = isActivePath(pathname, item.href, item.href === `/${locale}/${role}`);
+          const active = isWorkspaceItemActive(pathname, item, item.href === `/${locale}/${role}`);
           return (
             <Link
               key={item.href}

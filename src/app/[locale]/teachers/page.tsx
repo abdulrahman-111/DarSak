@@ -128,6 +128,16 @@ export default async function Teachers({
             <p className="mt-2 max-w-2xl text-sm leading-6 text-ink-soft md:mt-3 md:text-base md:leading-7">
               {fullDiscovery ? c.browseBody : c.browsePreviewBody}
             </p>
+            {fullDiscovery && (
+              <Link
+                className="mt-3 inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-bold text-orange hover:bg-orange/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                href={`/${locale}/student/recommendations`}
+              >
+                {locale === 'ar'
+                  ? 'اقتراحات المجموعات المناسبة لك'
+                  : 'See groups recommended for you'}
+              </Link>
+            )}
           </div>
           {!error && fullDiscovery && (
             <p className="font-bold text-muted" aria-live="polite">

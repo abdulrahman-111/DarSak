@@ -40,6 +40,15 @@ describe('booking domain', () => {
     const parsedStudentPage = parseBookingPage({ rows: [studentRpcRow], total: 1 });
     expect(parsedStudentPage?.rows[0]).toMatchObject({ id: uuid, status: 'pending' });
     expect(parsedStudentPage?.rows[0]).not.toHaveProperty('student_name');
+    const proposal = parseBookingPage({
+      rows: [{ ...studentRpcRow, source: 'student_proposed' }],
+      total: 1,
+    });
+    expect(proposal?.rows[0]).toMatchObject({
+      source: 'student_proposed',
+      status: 'pending',
+    });
+    expect(parseBookingPage({ rows: [{ ...row, source: 'unexpected' }], total: 1 })).toBeNull();
     expect(
       parseBookingPage({ rows: [{ ...row, id: 'javascript:alert(1)' }], total: 1 }),
     ).toBeNull();

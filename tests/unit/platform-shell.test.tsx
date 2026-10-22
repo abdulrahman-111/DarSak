@@ -30,9 +30,9 @@ describe('role navigation shell', () => {
       </PlatformShell>,
     );
 
-    expect(html).not.toContain('<details');
+    expect(html).toContain('<details');
     expect(html).toContain('lg:block');
-    expect(html).toContain('Teaching home');
+    expect(html).toContain('Home');
     expect(html).toContain('A Very Long Teacher Name');
     expect(html).toContain('class="mt-5 hidden gap-2 pb-2 lg:grid"');
     expect(html).toContain('aria-label="Teacher navigation"');
@@ -55,7 +55,7 @@ describe('role navigation shell', () => {
       </PlatformShell>,
     );
     expect(admin).toContain('href="/ar/admin/teachers"');
-    expect(admin).toContain('طلبات المعلمين');
+    expect(admin).toContain('المعلمون');
 
     mocks.pathname = '/ar/student/saved';
     const student = renderToStaticMarkup(
@@ -108,5 +108,26 @@ describe('role navigation shell', () => {
     expect(admin).toContain('الإبلاغ عن مشكلة');
     expect(admin).toContain('href="/ar/admin/reports"');
     expect(admin).toContain('البلاغات');
+  });
+
+  it('shows four desktop primary links and a keyboard-operable More disclosure with secondary routes', () => {
+    mocks.pathname = '/en/teacher/students';
+    const html = renderToStaticMarkup(
+      <PlatformShell locale="en" role="teacher" name="Teacher" unreadCount={5}>
+        <main>Students</main>
+      </PlatformShell>,
+    );
+
+    expect(html.match(/data-workspace-primary="true"/g)).toHaveLength(4);
+    expect(html).toContain('<details open=""');
+    expect(html).toContain('<summary');
+    expect(html).not.toContain('<summary aria-current="page"');
+    expect(html).toContain('min-h-11 cursor-pointer');
+    expect(html).toContain('href="/en/teacher/students"');
+    expect(html).toContain('href="/en/teacher/feedback"');
+    expect(html).toContain('href="/en/notifications"');
+    expect(html).toContain('aria-label="5 unread"');
+    expect(html).toContain('<svg');
+    expect(html).not.toContain('href="/en/teacher/bookings"');
   });
 });

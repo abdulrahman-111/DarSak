@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isActivePath } from '../../src/components/navigation-domain';
+import { isActivePath, isWorkspaceItemActive } from '../../src/components/navigation-domain';
 import { platformNavigation } from '@/components/platform/shell';
 
 describe('navigation active route matching', () => {
@@ -15,6 +15,27 @@ describe('navigation active route matching', () => {
 
   it('ignores query strings while matching the route', () => {
     expect(isActivePath('/en/register', '/en/register?role=teacher')).toBe(true);
+  });
+
+  it('marks contextual routes active on their parent navigation item', () => {
+    expect(
+      isWorkspaceItemActive('/en/student/recommendations', {
+        href: '/en/teachers',
+        activePaths: ['/en/student/recommendations'],
+      }),
+    ).toBe(true);
+    expect(
+      isWorkspaceItemActive('/en/student/bookings', {
+        href: '/en/timetable',
+        activePaths: ['/en/student/bookings'],
+      }),
+    ).toBe(true);
+    expect(
+      isWorkspaceItemActive('/en/student/booking-history', {
+        href: '/en/timetable',
+        activePaths: ['/en/student/bookings'],
+      }),
+    ).toBe(false);
   });
 });
 
@@ -38,11 +59,10 @@ describe('account and workspace navigation', () => {
   it('orders teacher tasks around teaching work with direct calendar and enrollment labels', () => {
     const teacher = platformNavigation('en', 'teacher');
     expect(teacher.map(item => item.label)).toEqual([
-      'Teaching home',
+      'Home',
       'Groups',
-      'Lesson calendar',
-      'One-off bookings',
-      'Enrollment requests',
+      'Calendar',
+      'Requests',
       'Students',
       'Subjects & categories',
       'Feedback',
@@ -54,7 +74,6 @@ describe('account and workspace navigation', () => {
       '/en/teacher',
       '/en/teacher/groups',
       '/en/teacher/lessons',
-      '/en/teacher/bookings',
       '/en/teacher/requests',
       '/en/teacher/students',
       '/en/teacher/catalogue',
@@ -62,6 +81,50 @@ describe('account and workspace navigation', () => {
       '/en/notifications',
       '/en/account',
       '/en/reports',
+    ]);
+    expect(teacher.filter(item => item.primary).map(item => item.label)).toEqual([
+      'Home',
+      'Groups',
+      'Calendar',
+      'Requests',
+    ]);
+    expect(teacher.map(item => item.href)).not.toContain('/en/teacher/bookings');
+  });
+
+  it('keeps bookings and group suggestions out of global links and maps them to their parent item', () => {
+    const student = platformNavigation('en', 'student');
+    const teacher = platformNavigation('ar', 'teacher');
+    expect(student.map(item => item.href)).not.toContain('/en/student/bookings');
+    expect(student.map(item => item.href)).not.toContain('/en/student/recommendations');
+    expect(student.find(item => item.href === '/en/timetable')?.activePaths).toContain(
+      '/en/student/bookings',
+    );
+    expect(student.find(item => item.href === '/en/teachers')?.activePaths).toContain(
+      '/en/student/recommendations',
+    );
+    expect(teacher.find(item => item.href === '/ar/teacher/lessons')?.activePaths).toContain(
+      '/ar/teacher/bookings',
+    );
+  });
+
+  it('provides four primary links and keeps all admin operations available as secondary links', () => {
+    const admin = platformNavigation('ar', 'admin');
+    expect(admin.filter(item => item.primary).map(item => item.label)).toEqual([
+      'الرئيسية',
+      'المعلمون',
+      'البلاغات',
+      'الأشخاص',
+    ]);
+    expect(admin.filter(item => !item.primary).map(item => item.href)).toEqual([
+      '/ar/admin/email',
+      '/ar/admin/education',
+      '/ar/admin/groups',
+      '/ar/admin/health',
+      '/ar/admin/feedback',
+      '/ar/admin/settings',
+      '/ar/account',
+      '/ar/reports',
+      '/ar/notifications',
     ]);
   });
 });

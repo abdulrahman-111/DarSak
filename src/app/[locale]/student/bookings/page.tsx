@@ -4,18 +4,28 @@ import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { StudentPagination } from '@/features/student/pagination';
 import { studentBookingData } from '@/features/bookings/data';
 import { BookingList, SlotList } from '@/features/bookings/views';
+import { StudentBookingProposalForm } from '@/features/bookings/forms';
 
 export default async function StudentBookings({
   params,
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ requests_page?: string; available_page?: string }>;
+  searchParams: Promise<{
+    requests_page?: string;
+    available_page?: string;
+    proposal_group_q?: string;
+  }>;
 }) {
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw),
     ar = locale === 'ar';
-  const data = await studentBookingData(locale, query.requests_page, query.available_page);
+  const data = await studentBookingData(
+    locale,
+    query.requests_page,
+    query.available_page,
+    query.proposal_group_q,
+  );
   const now = new Date().toISOString();
   const labels = ar
     ? { previous: 'السابق', next: 'التالي', page: 'صفحة' }
@@ -27,8 +37,8 @@ export default async function StudentBookings({
         title={ar ? 'الحجوزات' : 'Bookings'}
         description={
           ar
-            ? 'اطلب موعدًا فرديًا من الأوقات المتاحة لمجموعاتك. تبقى هذه المواعيد منفصلة عن حصص المجموعة المعتادة.'
-            : 'Request a one-off appointment from times offered for your groups. These stay separate from regular group lessons.'
+            ? 'اختر موعدًا نشره المعلم أو اقترح موعدًا آخر؛ يؤكد المعلم كل موعد. تبقى المواعيد الفردية منفصلة عن حصص المجموعة المعتادة.'
+            : 'Choose a teacher’s published time or suggest another time. Your teacher confirms each appointment. These stay separate from regular group lessons.'
         }
       />
       {data.error && (
@@ -44,12 +54,12 @@ export default async function StudentBookings({
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 className="text-xl font-black text-teal">
-              {ar ? 'أوقات متاحة' : 'Available one-off times'}
+              {ar ? 'اختر موعدًا منشورًا' : 'Choose a published time'}
             </h2>
             <p className="mt-1 text-sm text-muted">
               {ar
-                ? 'تظهر فقط أوقات مجموعاتك التي قُبلت فيها.'
-                : 'Only times for groups that accepted your enrollment appear here.'}
+                ? 'اختر من الأوقات التي نشرها معلمو مجموعاتك المقبولة.'
+                : 'Choose from times published by teachers of your accepted groups.'}
             </p>
           </div>
           <Link href={`/${locale}/timetable`} className="font-semibold text-orange underline">
@@ -73,6 +83,25 @@ export default async function StudentBookings({
           labels={labels}
           preserve={{ requests_page: data.requestPage }}
         />
+      </section>
+      <section className="mb-8">
+        <div className="mb-3">
+          <h2 className="text-xl font-black text-teal">
+            {ar ? 'اقترح موعدًا آخر' : 'Suggest another time'}
+          </h2>
+          <p className="mt-1 text-sm text-muted">
+            {ar
+              ? 'اقترح وقتًا خاصًا لمعلم إحدى مجموعاتك المقبولة.'
+              : 'Suggest a private time to the teacher of one of your accepted groups.'}
+          </p>
+        </div>
+        <Panel>
+          <StudentBookingProposalForm
+            locale={locale}
+            groups={data.proposalGroups}
+            query={data.proposalGroupQuery}
+          />
+        </Panel>
       </section>
       <section>
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">

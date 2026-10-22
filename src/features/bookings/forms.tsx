@@ -8,6 +8,7 @@ import {
   cancelMyBooking,
   decideBooking,
   publishBookingSlot,
+  proposeBookingTime,
   requestBooking,
   type BookingActionState,
 } from './actions';
@@ -24,7 +25,7 @@ function Result({ state }: { state: BookingActionState }) {
   ) : null;
 }
 const button =
-  'min-h-10 rounded-xl border border-teal/25 px-3 py-2 text-sm font-bold text-teal disabled:opacity-50';
+  'min-h-11 rounded-xl border border-teal/25 px-3 py-2 text-sm font-bold text-teal disabled:opacity-50';
 
 export function PublishBookingSlotForm({
   locale,
@@ -36,14 +37,14 @@ export function PublishBookingSlotForm({
   const ar = locale === 'ar';
   const [state, action, pending] = useActionState(publishBookingSlot.bind(null, locale), null);
   return (
-    <form action={action} className="grid gap-3 sm:grid-cols-2">
-      <label className="grid gap-1 text-sm font-semibold">
+    <form action={action} className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+      <label className="grid min-w-0 gap-1 text-sm font-semibold">
         {ar ? 'المجموعة المنشورة' : 'Published group'}
         <select
           name="group_id"
           required
           defaultValue=""
-          className="min-h-11 rounded-xl border border-line bg-white px-3"
+          className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
         >
           <option value="" disabled>
             {ar ? 'اختر مجموعة' : 'Choose a group'}
@@ -55,22 +56,22 @@ export function PublishBookingSlotForm({
           ))}
         </select>
       </label>
-      <label className="grid gap-1 text-sm font-semibold">
+      <label className="grid min-w-0 gap-1 text-sm font-semibold">
         {ar ? 'يبدأ بتوقيت القاهرة' : 'Starts (Cairo time)'}
         <input
           required
           type="datetime-local"
           name="starts_local"
-          className="min-h-11 rounded-xl border border-line bg-white px-3"
+          className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
         />
       </label>
-      <label className="grid gap-1 text-sm font-semibold">
+      <label className="grid min-w-0 gap-1 text-sm font-semibold">
         {ar ? 'ينتهي بتوقيت القاهرة' : 'Ends (Cairo time)'}
         <input
           required
           type="datetime-local"
           name="ends_local"
-          className="min-h-11 rounded-xl border border-line bg-white px-3"
+          className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
         />
       </label>
       <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
@@ -121,6 +122,98 @@ export function StudentSlotRequestForm({ locale, slot }: { locale: Locale; slot:
   );
 }
 
+export function StudentBookingProposalForm({
+  locale,
+  groups,
+  query,
+}: {
+  locale: Locale;
+  groups: { id: string; name: string; teacher_name: string }[];
+  query: string;
+}) {
+  const ar = locale === 'ar';
+  const [state, action, pending] = useActionState(proposeBookingTime.bind(null, locale), null);
+  return (
+    <div className="grid gap-3">
+      <form method="get" className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+        <label className="grid min-w-0 gap-1 text-sm font-semibold">
+          {ar ? 'ابحث في مجموعاتك المقبولة' : 'Search your accepted groups'}
+          <input
+            type="search"
+            name="proposal_group_q"
+            defaultValue={query}
+            maxLength={80}
+            className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
+          />
+        </label>
+        <button className="min-h-11 self-end rounded-xl border border-teal/25 px-4 py-2 font-bold text-teal">
+          {ar ? 'بحث' : 'Search'}
+        </button>
+      </form>
+      <form
+        action={action}
+        className="grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]"
+      >
+        <label className="grid min-w-0 gap-1 text-sm font-semibold sm:col-span-2">
+          {ar ? 'المجموعة' : 'Group'}
+          <select
+            name="group_id"
+            required
+            defaultValue=""
+            className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
+          >
+            <option value="" disabled>
+              {ar ? 'اختر مجموعة مقبولة' : 'Choose an accepted group'}
+            </option>
+            {groups.map(group => (
+              <option key={group.id} value={group.id}>
+                {group.name} · {group.teacher_name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid min-w-0 gap-1 text-sm font-semibold">
+          {ar ? 'يبدأ بتوقيت القاهرة' : 'Starts (Cairo time)'}
+          <input
+            required
+            type="datetime-local"
+            name="starts_local"
+            className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
+          />
+        </label>
+        <label className="grid min-w-0 gap-1 text-sm font-semibold">
+          {ar ? 'ينتهي بتوقيت القاهرة' : 'Ends (Cairo time)'}
+          <input
+            required
+            type="datetime-local"
+            name="ends_local"
+            className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3"
+          />
+        </label>
+        <p className="text-sm text-muted sm:col-span-2">
+          {ar
+            ? 'هذا اقتراح خاص للمعلم. لن يحجز الوقت قبل قبول المعلم، ولن يضيف حصة إلى جدول المجموعة.'
+            : 'This is a private suggestion to the teacher. It does not reserve the time unless accepted, and it will not add a regular group lesson.'}
+        </p>
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
+          <button
+            disabled={pending || !groups.length}
+            className="min-h-11 rounded-xl bg-orange px-4 py-2 font-bold text-white disabled:opacity-50"
+          >
+            {pending ? '…' : ar ? 'اقتراح الموعد' : 'Propose time'}
+          </button>
+          <Result state={state} />
+          {!groups.length && (
+            <p className="text-sm text-muted">
+              {ar ? 'لا توجد مجموعات مقبولة مطابقة.' : 'No matching accepted groups.'}
+            </p>
+          )}
+        </div>
+      </form>
+    </div>
+  );
+}
+
 export function BookingDecisionForms({ locale, booking }: { locale: Locale; booking: BookingRow }) {
   const ar = locale === 'ar';
   const [acceptState, accept, accepting] = useActionState(
@@ -136,7 +229,7 @@ export function BookingDecisionForms({ locale, booking }: { locale: Locale; book
       <form action={accept}>
         <button
           disabled={accepting}
-          className="min-h-10 rounded-xl bg-teal px-3 py-2 text-sm font-bold text-white"
+          className="min-h-11 rounded-xl bg-teal px-3 py-2 text-sm font-bold text-white"
         >
           {ar ? 'قبول' : 'Accept'}
         </button>

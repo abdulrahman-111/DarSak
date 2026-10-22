@@ -15,6 +15,7 @@ export type BookingRow = {
   starts_at: string;
   ends_at: string;
   status: 'pending' | 'accepted' | 'declined' | 'withdrawn' | 'cancelled';
+  source?: 'teacher_published' | 'student_proposed';
 };
 export type BookingSlotRow = {
   id: string;
@@ -78,6 +79,9 @@ export function parseBookingPage(value: unknown): BookingPage | null {
       !UUID.test(row.slot_id) ||
       typeof row.status !== 'string' ||
       !STATUSES.has(row.status) ||
+      (row.source !== undefined &&
+        row.source !== 'teacher_published' &&
+        row.source !== 'student_proposed') ||
       ('student_name' in row && row.student_name !== null && typeof row.student_name !== 'string')
     )
       return null;
@@ -93,6 +97,7 @@ export function parseBookingPage(value: unknown): BookingPage | null {
       starts_at: row.starts_at as string,
       ends_at: row.ends_at as string,
       status: row.status as BookingRow['status'],
+      source: row.source === 'student_proposed' ? 'student_proposed' : 'teacher_published',
     });
   }
   return { rows, total: data.total as number };

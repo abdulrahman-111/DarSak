@@ -104,4 +104,41 @@ describe('notifications domain', () => {
       ),
     ).toContain('تبدأ الرسوم قريباً');
   });
+
+  it('renders booking summaries from the actual group, time, student, and source payload', () => {
+    const payload = {
+      status: 'pending',
+      group_name: 'Algebra group',
+      starts_at: '2026-10-22T10:00:00Z',
+      student_name: 'Nadia',
+      source: 'student_proposed',
+    };
+    const page = parseNotificationsPage({
+      rows: [
+        {
+          id: uuid,
+          kind: 'booking_updated',
+          payload,
+          created_at: '2026-10-21T12:00:00Z',
+          read_at: null,
+        },
+      ],
+      total: 1,
+      unread: 1,
+    });
+    expect(page?.rows[0].payload).toEqual(payload);
+    const pending = notificationSummary('booking_updated', page!.rows[0].payload, 'en')!;
+    expect(pending).toContain('Nadia');
+    expect(pending).toContain('Algebra group');
+    expect(pending).toContain('22 Oct 2026, 13:00');
+    expect(pending).not.toContain('A student');
+
+    const accepted = { ...payload, status: 'accepted' };
+    const english = notificationSummary('booking_updated', accepted, 'en')!;
+    const arabic = notificationSummary('booking_updated', accepted, 'ar')!;
+    expect(english).toContain('Algebra group');
+    expect(english).toContain('22 Oct 2026, 13:00');
+    expect(arabic).toContain('Algebra group');
+    expect(arabic).toContain('٢٢');
+  });
 });
