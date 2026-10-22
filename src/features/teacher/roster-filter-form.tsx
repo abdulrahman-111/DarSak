@@ -18,12 +18,14 @@ export function TeacherRosterFilterForm({
   query,
   groupId,
   groups,
+  view,
 }: {
   locale: string;
   path: 'requests' | 'students';
   query: string;
   groupId: string | null;
   groups: GroupChoice[];
+  view?: 'requests' | 'waiting';
 }) {
   const ar = locale === 'ar';
   return (
@@ -42,6 +44,7 @@ export function TeacherRosterFilterForm({
           className="min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line px-3 text-base font-normal text-ink"
         />
       </label>
+      {view === 'waiting' && <input type="hidden" name="view" value="waiting" />}
       <label className="grid min-w-0 gap-1 text-sm font-bold text-teal">
         {ar ? 'المجموعة' : 'Group'}
         <select
@@ -65,7 +68,7 @@ export function TeacherRosterFilterForm({
           {ar ? 'بحث' : 'Search'}
         </button>
         <Link
-          href={`/${locale}/teacher/${path}`}
+          href={`/${locale}/teacher/${path}${view === 'waiting' ? '?view=waiting' : ''}`}
           className="inline-flex min-h-11 w-full min-w-0 items-center justify-center rounded-xl border-2 border-teal px-3 font-bold text-teal sm:w-auto sm:px-5"
         >
           {ar ? 'مسح' : 'Clear'}

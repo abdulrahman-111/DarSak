@@ -141,4 +141,35 @@ describe('notifications domain', () => {
     expect(arabic).toContain('Algebra group');
     expect(arabic).toContain('٢٢');
   });
+
+  it('parses and routes a student waitlist promotion with a review-only message', () => {
+    const payload = {
+      waitlist_id: uuid,
+      enrollment_id: uuid,
+      group_id: uuid,
+      group_name: 'Algebra group',
+    };
+    const page = parseNotificationsPage({
+      rows: [
+        {
+          id: uuid,
+          kind: 'waitlist_promoted',
+          payload,
+          created_at: '2026-10-22T12:00:00Z',
+          read_at: null,
+        },
+      ],
+      total: 1,
+      unread: 1,
+    });
+    expect(page?.rows[0].kind).toBe('waitlist_promoted');
+    expect(notificationHref('student', 'waitlist_promoted', payload, 'en')).toBe(
+      '/en/student/classes',
+    );
+    expect(notificationHref('teacher', 'waitlist_promoted', payload, 'en')).toBeNull();
+    expect(notificationSummary('waitlist_promoted', payload, 'en')).toBe(
+      'Your waitlist entry for Algebra group is now an enrollment request awaiting review. A place is not confirmed.',
+    );
+    expect(notificationSummary('waitlist_promoted', payload, 'ar')).toContain('لم يتأكد المقعد');
+  });
 });

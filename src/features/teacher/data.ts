@@ -13,6 +13,12 @@ import {
 import { normalizeRosterFilters } from './roster-filters';
 import { measuredServerRead } from '@/lib/server-read-diagnostics';
 import { roleHome } from '@/components/platform/access';
+import {
+  normalizeWaitlistPage,
+  parseTeacherWaitlistPage,
+  waitlistPageOffset,
+  type TeacherWaitlistEntry,
+} from '@/features/student/waitlist-domain';
 
 export async function teacherIdentity(locale: Locale) {
   const { db, user, profile } = await getRequestViewer();
@@ -72,7 +78,7 @@ async function teacherFilteredEnrollmentPage(
   groupId: unknown,
 ) {
   const filters = normalizeRosterFilters(query, groupId);
-  const requested = normalizeTeacherPage(requestedPage);
+  const requested = normalizeWaitlistPage(requestedPage);
   const [pageResult, groupsResult] = await Promise.all([
     me.db.rpc('teacher_enrollment_search', {
       p_status: status,
@@ -507,6 +513,120 @@ export async function teacherRequests(
   const me = await teacherIdentity(locale);
   const page = await teacherFilteredEnrollmentPage(me, 'pending', requestedPage, query, groupId);
   return { me, requests: page.rows, ...page };
+}
+
+export async function teacherWaitlist(
+  locale: Locale,
+  requestedPage: unknown = 1,
+  query: unknown = '',
+  groupId: unknown = '',
+) {
+  const me = await teacherIdentity(locale);
+  const filters = normalizeRosterFilters(query, groupId);
+  const requested = normalizeTeacherPage(requestedPage);
+  const [groupsResult, pageResult] = await Promise.all([
+    me.db.rpc('teacher_group_choices', {
+      p_query: filters.query,
+      p_selected: filters.groupId,
+    }),
+    me.db.rpc('teacher_waitlist_page', {
+      p_query: filters.query,
+      p_group_id: filters.groupId,
+      p_offset: waitlistPageOffset(requested),
+      p_limit: TEACHER_PAGE_SIZE,
+    }),
+  ]);
+  const groups = groupsResult.data as TeacherGroupChoice[] | null;
+  const parsed = pageResult.error ? null : parseTeacherWaitlistPage(pageResult.data);
+  if (groupsResult.error || !Array.isArray(groups) || !parsed) {
+    return {
+      me,
+      rows: [] as TeacherWaitlistEntry[],
+      total: 0,
+      page: 1,
+      pageCount: 1,
+      query: filters.query,
+      groupId: filters.groupId,
+      groups: Array.isArray(groups) ? groups : [],
+      error: groupsResult.error ??
+        pageResult.error ?? { message: 'Invalid waitlist page response.' },
+    };
+  }
+  const pageCount = Math.min(teacherPageCount(parsed.total), 50_001);
+  const page = clampTeacherPage(requested, parsed.total);
+  if (page === requested) {
+    return {
+      me,
+      ...parsed,
+      page,
+      pageCount,
+      query: filters.query,
+      groupId: filters.groupId,
+      groups,
+      error: null,
+    };
+  }
+  const retry = await me.db.rpc('teacher_waitlist_page', {
+    p_query: filters.query,
+    p_group_id: filters.groupId,
+    p_offset: waitlistPageOffset(page),
+    p_limit: TEACHER_PAGE_SIZE,
+  });
+  const latest = retry.error ? null : parseTeacherWaitlistPage(retry.data);
+  if (!latest)
+    return {
+      me,
+      rows: [] as TeacherWaitlistEntry[],
+      total: parsed.total,
+      page,
+      pageCount,
+      query: filters.query,
+      groupId: filters.groupId,
+      groups,
+      error: retry.error ?? { message: 'Invalid waitlist page response.' },
+    };
+  const latestPage = clampTeacherPage(page, latest.total);
+  if (latestPage !== page) {
+    const finalResult = await me.db.rpc('teacher_waitlist_page', {
+      p_query: filters.query,
+      p_group_id: filters.groupId,
+      p_offset: waitlistPageOffset(latestPage),
+      p_limit: TEACHER_PAGE_SIZE,
+    });
+    const finalPayload = finalResult.error ? null : parseTeacherWaitlistPage(finalResult.data);
+    if (!finalPayload)
+      return {
+        me,
+        rows: [] as TeacherWaitlistEntry[],
+        total: latest.total,
+        page: latestPage,
+        pageCount: Math.min(teacherPageCount(latest.total), 50_001),
+        query: filters.query,
+        groupId: filters.groupId,
+        groups,
+        error: finalResult.error ?? { message: 'Invalid waitlist page response.' },
+      };
+    return {
+      me,
+      ...finalPayload,
+      page: latestPage,
+      pageCount: Math.min(teacherPageCount(finalPayload.total), 50_001),
+      query: filters.query,
+      groupId: filters.groupId,
+      groups,
+      error: null,
+    };
+  }
+  return {
+    me,
+    ...latest,
+    page,
+    pageCount: Math.min(teacherPageCount(latest.total), 50_001),
+    query: filters.query,
+    groupId: filters.groupId,
+    groups,
+    error: null,
+  };
 }
 
 export async function teacherStudents(

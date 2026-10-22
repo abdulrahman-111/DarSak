@@ -10,6 +10,7 @@ export type NotificationKind =
   | 'teacher_review_decision'
   | 'teacher_fee_announcement'
   | 'enrollment_accepted'
+  | 'waitlist_promoted'
   | 'booking_updated';
 export type NotificationRow = {
   id: string;
@@ -30,6 +31,7 @@ const KINDS = new Set<NotificationKind>([
   'teacher_review_decision',
   'teacher_fee_announcement',
   'enrollment_accepted',
+  'waitlist_promoted',
   'booking_updated',
 ]);
 
@@ -89,6 +91,7 @@ export function notificationHref(
   if (locale !== 'en' && locale !== 'ar') return null;
   if (role === 'student') {
     if (kind === 'booking_updated') return `/${locale}/student/bookings`;
+    if (kind === 'waitlist_promoted') return `/${locale}/student/classes`;
     if (kind === 'enrollment_accepted') {
       const value = id(payload, 'group_id');
       return value
@@ -165,6 +168,10 @@ export function notificationSummary(
     return ar
       ? `تم قبولك! افتح ${text(payload, 'group_name', 'مجموعتك')} للتواصل مع معلمك والاستعداد لأول حصة.`
       : `You're accepted! Open ${text(payload, 'group_name', 'your group')} to contact your teacher and prepare for your first lesson.`;
+  if (kind === 'waitlist_promoted')
+    return ar
+      ? `أصبح إدخالك في قائمة الانتظار طلب انضمام إلى ${text(payload, 'group_name', 'المجموعة')} بانتظار المراجعة. لم يتأكد المقعد بعد.`
+      : `Your waitlist entry for ${text(payload, 'group_name', 'the group')} is now an enrollment request awaiting review. A place is not confirmed.`;
   if (kind === 'teacher_review_requested')
     return ar
       ? `${text(payload, 'teacher_name', 'معلم')} طلب مراجعة حسابه`

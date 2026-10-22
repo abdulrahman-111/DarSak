@@ -20,6 +20,7 @@ import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
 import { canRequest } from '@/features/student/domain';
 import { EnrollmentForm } from '@/features/student/forms';
+import { WaitlistJoinForm, WaitlistWithdrawForm } from '@/features/student/waitlist-forms';
 import { canSharePublicGroup } from '@/features/student/share-domain';
 import { PublicGroupShare } from '@/features/student/public-group-share';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
@@ -61,11 +62,20 @@ export default async function GroupDetail({
   const me = requestViewer.user
     ? { user: requestViewer.user, profile: requestViewer.profile }
     : null;
-  const [announcement, enrollment, saved, learning] = await Promise.all([
+  const [announcement, enrollment, saved, learning, waitlistEntry] = await Promise.all([
     activeViewer ? groupAnnouncement(requestViewer.db, id) : Promise.resolve(null),
     me?.profile?.role === 'student' ? enrollmentForGroup(id) : Promise.resolve(null),
     activeViewer && me?.profile?.role === 'student' ? savedGroupStatus(id) : Promise.resolve(false),
     groupLearningDetails(requestViewer.db, id),
+    me?.profile?.role === 'student'
+      ? requestViewer.db
+          .from('waitlist_entries')
+          .select('id,status')
+          .eq('group_id', id)
+          .eq('student_id', requestViewer.user!.id)
+          .maybeSingle()
+          .then(result => result.data as { id: string; status: string } | null)
+      : Promise.resolve(null),
   ]);
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject
@@ -82,7 +92,14 @@ export default async function GroupDetail({
   const canEnroll =
     detail.publiclyEligible && canRequest(enrollment?.status) && data.available_seats !== 0;
   // Phones only: keep the next step reachable when it is an actual action (guest sign-in, or a request the student can make).
-  const showRequestBar = !me || (isStudent && canEnroll);
+  const canJoinWaitlist =
+    isStudent &&
+    canRequest(enrollment?.status) &&
+    detail.publiclyEligible &&
+    data.available_seats === 0 &&
+    waitlistEntry?.status !== 'waiting';
+  const showRequestBar =
+    !me || (isStudent && (canEnroll || canJoinWaitlist) && waitlistEntry?.status !== 'waiting');
 
   return (
     <div className="min-h-[72vh] bg-cream">
@@ -323,6 +340,21 @@ export default async function GroupDetail({
                   <p className="rounded-xl bg-white/10 p-3 text-sm">{c.acceptedEnrollment}</p>
                   <EnrollmentForm locale={locale} id={enrollment.id} kind="cancel" />
                 </>
+              ) : isStudent && waitlistEntry?.status === 'waiting' ? (
+                <>
+                  <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">
+                    {locale === 'ar'
+                      ? 'أنت في قائمة الانتظار. عند توفر مقعد، قد ينقل المعلم إدخالك إلى طلب انضمام للمراجعة. لا يُحجز مقعد حتى يراجع المعلم الطلب ويقبله.'
+                      : 'You are on the waitlist. If a seat opens, the teacher may move your entry to an enrollment request for review. A place is not reserved unless the teacher reviews and accepts it.'}{' '}
+                    <Link
+                      className="font-bold underline"
+                      href={`/${locale}/student/classes#waitlist-history`}
+                    >
+                      {locale === 'ar' ? 'سجل قائمة الانتظار' : 'Waitlist history'}
+                    </Link>
+                  </p>
+                  <WaitlistWithdrawForm locale={locale} entryId={waitlistEntry.id} />
+                </>
               ) : isStudent && canEnroll ? (
                 <>
                   {enrollment?.status === 'rejected' && (
@@ -339,9 +371,13 @@ export default async function GroupDetail({
                   {c.notPublished}
                 </p>
               ) : isStudent && data.available_seats === 0 ? (
-                <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">
-                  {c.fullEnrollment}
-                </p>
+                detail.publiclyEligible ? (
+                  <WaitlistJoinForm locale={locale} groupId={id} />
+                ) : (
+                  <p role="status" className="rounded-xl bg-white/10 p-3 text-sm">
+                    {c.fullEnrollment}
+                  </p>
+                )
               ) : !isStudent ? (
                 me ? (
                   <p className="rounded-xl bg-white/10 p-3 text-sm">{c.studentOnlyEnrollment}</p>
@@ -367,9 +403,13 @@ export default async function GroupDetail({
               targetId="request-panel"
               label={
                 isStudent
-                  ? locale === 'ar'
-                    ? 'اطلب الانضمام'
-                    : 'Request a place'
+                  ? canJoinWaitlist
+                    ? locale === 'ar'
+                      ? 'انضم إلى قائمة الانتظار'
+                      : 'Join waitlist'
+                    : locale === 'ar'
+                      ? 'اطلب الانضمام'
+                      : 'Request a place'
                   : c.signInToRequest
               }
               detail={

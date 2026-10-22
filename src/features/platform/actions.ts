@@ -86,6 +86,18 @@ function rpcFeedback(
       'This group is no longer accepting enrollment requests. Refresh to check its current status.',
       'لم تعد هذه المجموعة تستقبل طلبات الانضمام. حدّث الصفحة للتحقق من حالتها الحالية.',
     );
+  if (action === 'request' && raw.includes('withdraw from waitlist first'))
+    return localized(
+      locale,
+      'You are on the waitlist. Leave it before sending an enrollment request.',
+      'أنت في قائمة الانتظار. غادرها أولاً قبل إرسال طلب انضمام.',
+    );
+  if (action === 'request' && raw.includes('group full'))
+    return localized(
+      locale,
+      'This group is full. Join the waitlist if you want to request review when a place opens.',
+      'المجموعة ممتلئة. انضم إلى قائمة الانتظار إذا رغبت في طلب المراجعة عند توفر مقعد.',
+    );
   if (action === 'decision' && raw.includes('full'))
     return localized(
       locale,

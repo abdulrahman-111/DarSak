@@ -16,6 +16,12 @@ import { readCountedPage } from '@/lib/supabase/counted-page';
 import { roleHome } from '@/components/platform/access';
 import { cairoDateKey } from '@/features/teacher/dashboard-domain';
 import { cairoDayBounds, cairoWeekBounds, timetableDayDates } from './timetable-domain';
+import {
+  parseStudentWaitlistPage,
+  normalizeWaitlistPage,
+  waitlistPageOffset,
+  type StudentWaitlistEntry,
+} from './waitlist-domain';
 export type Named = { id: string; name_ar: string; name_en: string; parent_id?: string | null };
 export type Teacher = { id: string; full_name: string; headline: string; bio: string };
 export type Group = {
@@ -340,6 +346,29 @@ export async function studentClasses(locale: Locale, pageInput: unknown = 1) {
     result = await fetch(page);
   }
   return { enrollments: result.rows, page, total: result.total, pageCount, error: result.error };
+}
+export async function studentWaitlist(locale: Locale, pageInput: unknown = 1) {
+  const me = await student(locale);
+  const requested = normalizeWaitlistPage(pageInput);
+  const fetch = async (page: number) => {
+    const { data, error } = await me.db.rpc('student_waitlist_page', {
+      p_offset: waitlistPageOffset(page),
+      p_limit: STUDENT_PAGE_SIZE,
+    });
+    const payload = error ? null : parseStudentWaitlistPage(data);
+    return payload
+      ? { ...payload, error: false }
+      : { rows: [] as StudentWaitlistEntry[], total: 0, error: true };
+  };
+  let page = requested;
+  let result = await fetch(page);
+  let pageCount = Math.min(studentPageCount(result.total), 50_001);
+  if (!result.error && page > pageCount) {
+    page = pageCount;
+    result = await fetch(page);
+    pageCount = Math.min(studentPageCount(result.total), 50_001);
+  }
+  return { ...result, page, pageCount };
 }
 export async function studentLessons(locale: Locale, pageInput: unknown = 1) {
   const me = await student(locale);
