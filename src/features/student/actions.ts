@@ -34,7 +34,24 @@ export async function enrollmentAction(
           me.db.rpc('request_enrollment', { p_group_id: id }),
         )
       : await me.db.rpc('cancel_enrollment', { p_enrollment_id: id });
-  if (error) return { error: t.failed };
+  if (error) {
+    const message = error.message.toLowerCase();
+    if (kind === 'request' && message.includes('withdraw from waitlist first'))
+      return {
+        error:
+          locale === 'ar'
+            ? 'أنت في قائمة الانتظار. غادرها أولاً قبل إرسال طلب انضمام.'
+            : 'You are on the waitlist. Leave it before sending an enrollment request.',
+      };
+    if (kind === 'request' && message.includes('group full'))
+      return {
+        error:
+          locale === 'ar'
+            ? 'المجموعة ممتلئة. انضم إلى قائمة الانتظار إذا رغبت في طلب المراجعة عند توفر مقعد.'
+            : 'This group is full. Join the waitlist if you want to request review when a place opens.',
+      };
+    return { error: t.failed };
+  }
   if (kind === 'request')
     after(async () => {
       try {

@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { ArrowUpRight, BookOpen, Clock3 } from 'lucide-react';
 import { ensureLocale } from '@/i18n/config';
-import { studentClasses } from '@/features/student/data';
+import { studentClasses, studentWaitlist } from '@/features/student/data';
 import { EnrollmentForm } from '@/features/student/forms';
+import { WaitlistWithdrawForm } from '@/features/student/waitlist-forms';
 import { EnrollmentProgress } from '@/features/student/enrollment-progress';
 import { Status } from '@/components/platform/ui';
 import { StudentPagination } from '@/features/student/pagination';
@@ -17,13 +18,16 @@ export default async function StudentClasses({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams?: Promise<{ page?: string; cancelled?: string }>;
+  searchParams?: Promise<{ page?: string; waitlist_page?: string; cancelled?: string }>;
 }) {
   const { locale: raw } = await params,
     locale = ensureLocale(raw),
     ar = locale === 'ar',
     search = await searchParams,
-    data = await studentClasses(locale, search?.page);
+    [data, waitlist] = await Promise.all([
+      studentClasses(locale, search?.page),
+      studentWaitlist(locale, search?.waitlist_page),
+    ]);
   const accepted = data.enrollments.filter(e => e.status === 'accepted'),
     requests = data.enrollments.filter(e => e.status !== 'accepted');
   const labels = ar
@@ -57,13 +61,95 @@ export default async function StudentClasses({
         </p>
       )}
       {data.error ? (
-        <section className={studentCard}>
-          <p role="alert" className="text-sm text-danger">
-            {ar
-              ? 'تعذر تحميل مجموعاتك. حدّث الصفحة للمحاولة مجددًا.'
-              : 'Could not load your classes. Refresh to try again.'}
-          </p>
-        </section>
+        <>
+          <section className={studentCard}>
+            <p role="alert" className="text-sm text-danger">
+              {ar
+                ? 'تعذر تحميل مجموعاتك. حدّث الصفحة للمحاولة مجددًا.'
+                : 'Could not load your classes. Refresh to try again.'}
+            </p>
+          </section>
+          <section id="waitlist-history" className="mt-10 scroll-mt-8">
+            <h2 className="mb-4 flex items-center gap-2 font-bold text-teal">
+              <Clock3 size={18} />
+              {ar ? 'سجل قائمة الانتظار' : 'Waitlist history'}
+            </h2>
+            {waitlist.error ? (
+              <p role="alert" className={studentCard}>
+                {ar
+                  ? 'تعذّر تحميل سجل قائمة الانتظار. حدّث الصفحة للمحاولة مجددًا.'
+                  : 'Could not load waitlist history. Refresh to try again.'}
+              </p>
+            ) : (
+              <>
+                {waitlist.rows.length ? (
+                  <div className="grid gap-3">
+                    {waitlist.rows.map(entry => {
+                      const label = ar
+                        ? (
+                            {
+                              waiting: 'في قائمة الانتظار',
+                              promoted: 'نُقل إلى طلب انضمام',
+                              withdrawn: 'غادر القائمة',
+                              closed: 'أُغلقت القائمة',
+                            } as Record<string, string>
+                          )[entry.status]
+                        : (
+                            {
+                              waiting: 'Waiting',
+                              promoted: 'Moved to enrollment request',
+                              withdrawn: 'Withdrawn',
+                              closed: 'Closed',
+                            } as Record<string, string>
+                          )[entry.status];
+                      return (
+                        <article key={entry.id} className={studentCard}>
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <h3 className="break-words font-bold text-teal">
+                                {entry.group_name || (ar ? 'مجموعة تعليمية' : 'Learning group')}
+                              </h3>
+                              <p className="mt-1 text-sm text-muted">
+                                {entry.teacher_name ||
+                                  (ar ? 'المعلم غير متاح' : 'Teacher unavailable')}
+                              </p>
+                            </div>
+                            <span className="rounded-full bg-mint px-3 py-1.5 text-xs font-bold text-teal">
+                              {label}
+                            </span>
+                          </div>
+                          {entry.status === 'waiting' && (
+                            <div className="mt-3">
+                              <p className="mb-3 text-sm text-muted">
+                                {ar
+                                  ? 'لا يُحجز مقعد حتى يراجع المعلم طلب الانضمام ويقبله.'
+                                  : 'A place is not reserved unless the teacher reviews and accepts an enrollment request.'}
+                              </p>
+                              <WaitlistWithdrawForm locale={locale} entryId={entry.id} />
+                            </div>
+                          )}
+                        </article>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className={studentCard}>
+                    {ar ? 'لا توجد إدخالات في قائمة الانتظار.' : 'You have no waitlist entries.'}
+                  </p>
+                )}
+                <StudentPagination
+                  locale={locale}
+                  href={`/${locale}/student/classes`}
+                  page={waitlist.page}
+                  pageCount={waitlist.pageCount}
+                  pageParam="waitlist_page"
+                  preserve={{ page: data.page }}
+                  labels={labels}
+                />
+              </>
+            )}
+          </section>
+        </>
       ) : (
         <>
           {!!accepted.length && (
@@ -158,7 +244,7 @@ export default async function StudentClasses({
               </div>
             </section>
           )}
-          {!data.enrollments.length && (
+          {!data.enrollments.length && !waitlist.total && (
             <StudentEmpty
               title={ar ? 'ابدأ بمجموعتك الأولى' : 'Find your first learning group'}
               description={
@@ -177,7 +263,107 @@ export default async function StudentClasses({
             page={data.page}
             pageCount={data.pageCount}
             labels={labels}
+            preserve={{ waitlist_page: search?.waitlist_page }}
           />
+          <section id="waitlist-history" className="mt-10 scroll-mt-8">
+            <h2 className="mb-4 flex items-center gap-2 font-bold text-teal">
+              <Clock3 size={18} />
+              {ar ? 'سجل قائمة الانتظار' : 'Waitlist history'}
+            </h2>
+            {waitlist.error ? (
+              <section className={studentCard}>
+                <p role="alert" className="text-sm text-danger">
+                  {ar
+                    ? 'تعذّر تحميل سجل قائمة الانتظار. حدّث الصفحة للمحاولة مجددًا.'
+                    : 'Could not load waitlist history. Refresh to try again.'}
+                </p>
+                <Link
+                  href={`/${locale}/student/classes?${new URLSearchParams({
+                    ...(search?.page ? { page: search.page } : {}),
+                    ...(search?.waitlist_page ? { waitlist_page: search.waitlist_page } : {}),
+                  })}`}
+                  className="mt-3 inline-flex min-h-11 items-center font-bold text-orange underline"
+                >
+                  {ar ? 'إعادة المحاولة' : 'Try again'}
+                </Link>
+              </section>
+            ) : waitlist.rows.length ? (
+              <div className="grid gap-3">
+                {waitlist.rows.map(entry => {
+                  const stateLabel = ar
+                    ? (
+                        {
+                          waiting: 'في قائمة الانتظار',
+                          promoted: 'نُقل إلى طلب انضمام',
+                          withdrawn: 'غادر القائمة',
+                          closed: 'أُغلقت القائمة',
+                        } as Record<string, string>
+                      )[entry.status]
+                    : (
+                        {
+                          waiting: 'Waiting',
+                          promoted: 'Moved to enrollment request',
+                          withdrawn: 'Withdrawn',
+                          closed: 'Closed',
+                        } as Record<string, string>
+                      )[entry.status];
+                  return (
+                    <article key={entry.id} className={studentCard}>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <h3 className="break-words font-bold text-teal">
+                            {entry.group_name || (ar ? 'مجموعة تعليمية' : 'Learning group')}
+                          </h3>
+                          <p className="mt-1 text-sm text-muted">
+                            {ar ? 'المعلم: ' : 'Teacher: '}
+                            {entry.teacher_name || (ar ? 'غير متاح' : 'Unavailable')}
+                          </p>
+                          <p className="mt-1 text-xs text-muted">
+                            {new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', {
+                              dateStyle: 'medium',
+                            }).format(new Date(entry.created_at))}
+                          </p>
+                        </div>
+                        <span className="shrink-0 rounded-full bg-mint px-3 py-1.5 text-xs font-bold text-teal">
+                          {stateLabel}
+                        </span>
+                      </div>
+                      {entry.status === 'waiting' && (
+                        <div className="mt-4">
+                          <p className="mb-3 text-sm text-muted">
+                            {ar
+                              ? 'عند توفر مقعد، قد ينقل المعلم إدخالك إلى طلب انضمام للمراجعة. لا يؤكد ذلك حجز مقعد.'
+                              : 'If a seat opens, the teacher may move your entry to an enrollment request for review. This does not reserve a place.'}
+                          </p>
+                          <WaitlistWithdrawForm locale={locale} entryId={entry.id} />
+                        </div>
+                      )}
+                      {entry.status === 'promoted' && (
+                        <p role="status" className="mt-3 text-sm text-muted">
+                          {ar
+                            ? 'تم نقل الإدخال إلى مراجعة طلب الانضمام. راجع حالة طلبك أعلاه لمعرفة القرار الحالي.'
+                            : 'This entry moved to enrollment review. Check your request above for its current status.'}
+                        </p>
+                      )}
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className={studentCard}>
+                {ar ? 'لا توجد إدخالات في قائمة الانتظار.' : 'You have no waitlist entries.'}
+              </p>
+            )}
+            <StudentPagination
+              locale={locale}
+              href={`/${locale}/student/classes`}
+              page={waitlist.page}
+              pageCount={waitlist.pageCount}
+              pageParam="waitlist_page"
+              preserve={{ page: data.page }}
+              labels={labels}
+            />
+          </section>
         </>
       )}
     </div>

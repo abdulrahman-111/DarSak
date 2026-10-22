@@ -58,12 +58,19 @@ describe('public group detail independent reads', () => {
     for (const mock of Object.values(mocks)) mock.mockReset();
   });
 
-  it('starts learning, announcement, enrollment, and saved-status reads together for an active student', async () => {
+  it('starts learning, announcement, enrollment, saved-status, and waitlist reads together for an active student', async () => {
     const pending = deferred<unknown>();
     const saved = deferred<unknown>();
     const announcement = deferred<unknown>();
     const learning = deferred<unknown>();
     const started = new Set<string>();
+    const waitlistQuery = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      maybeSingle: vi.fn(() => Promise.resolve({ data: null, error: null })),
+    };
+    waitlistQuery.select.mockReturnValue(waitlistQuery);
+    waitlistQuery.eq.mockReturnValue(waitlistQuery);
     mocks.classDetail.mockResolvedValue({
       group: {
         id: 'group-1',
@@ -84,7 +91,12 @@ describe('public group detail independent reads', () => {
     mocks.viewer.mockResolvedValue({
       user: { id: 'student-1' },
       profile: { role: 'student', status: 'active' },
-      db: {},
+      db: {
+        from: vi.fn(() => {
+          started.add('waitlist');
+          return waitlistQuery;
+        }),
+      },
     });
     mocks.enrollment.mockImplementation(() => {
       started.add('enrollment');
@@ -105,7 +117,9 @@ describe('public group detail independent reads', () => {
 
     const result = GroupDetail({ params: Promise.resolve({ locale: 'en', id: 'group-1' }) });
     for (let i = 0; i < 8; i++) await Promise.resolve();
-    expect(started).toEqual(new Set(['announcement', 'enrollment', 'saved', 'learning']));
+    expect(started).toEqual(
+      new Set(['announcement', 'enrollment', 'saved', 'learning', 'waitlist']),
+    );
 
     pending.resolve({ status: null });
     saved.resolve(false);
