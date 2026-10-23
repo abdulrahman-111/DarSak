@@ -57,7 +57,7 @@ Copy the local Supabase URL and public key into `.env.local`, generate the recov
 
 ## Contributing and project status
 
-See [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), the [roadmap](docs/ROADMAP.md), and [starter issue proposals](docs/STARTER_ISSUES.md). The [release checklist](docs/RELEASING.md) and [draft 0.1.0 notes](docs/releases/0.1.0.md) track preparation for a first public release; draft notes do not imply a published release.
+See [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), the [roadmap](docs/ROADMAP.md), and [starter issues](docs/STARTER_ISSUES.md). See [adoption evidence](docs/ADOPTION.md) and the [pilot guide](docs/pilot/README.md) for maintainer-reported university use and privacy-preserving feedback collection. See the [0.1.0 release notes](docs/releases/0.1.0.md), [screenshots](docs/SCREENSHOTS.md), and [release checklist](docs/RELEASING.md). Published versions are listed on the [Releases page](https://github.com/abdulrahman-111/DarSak/releases).
 
 ## License
 

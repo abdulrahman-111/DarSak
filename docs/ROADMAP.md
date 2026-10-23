@@ -2,7 +2,7 @@
 
 This is a maintenance roadmap, not a promise of delivery dates. Discuss larger changes in an issue before implementation.
 
-## Before the first public release
+## Release maintenance and remaining verification
 
 - Keep formatting, lint, typecheck, unit tests, production build, and disposable-database checks passing.
 - Verify the fresh-clone setup and optional demo data with a developer who has no access to the maintainer's environment.
