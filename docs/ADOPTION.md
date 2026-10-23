@@ -2,12 +2,12 @@
 
 ## Maintainer-reported university use
 
-On 23 October 2026, the maintainer reported that teachers and students at their university use DarSak and provided the approximate counts below. Participant names are intentionally not published.
+As reported by the maintainer on 23 October 2026, DarSak serves 30+ teachers and 200+ students at their university, all for free, supporting the teaching and learning process through tools for managing groups, lessons, schedules, and educational resources. Participant names are intentionally not published.
 
 | Cohort   | Maintainer's estimate | Source                                        |
 | -------- | --------------------- | --------------------------------------------- |
-| Teachers | About 20              | Maintainer report; not independently measured |
-| Students | About 200             | Maintainer report; not independently measured |
+| Teachers | 30+                   | Maintainer report; not independently measured |
+| Students | 200+                  | Maintainer report; not independently measured |
 
 These are estimates of the reported university user community. They have not been classified as registered accounts, active users, or recently returning users. The reporting date above is not a first-use date or a measured activity window.
 
@@ -25,7 +25,7 @@ These are estimates of the reported university user community. They have not bee
 | Demo/test account exclusion                         | Not yet verified for the estimates; demo, test, administrator, and automated accounts must be excluded from future measured teacher/student totals   |
 | Independent developer deployment                    | Not yet documented; [setup verification issue #76](https://github.com/abdulrahman-111/DarSak/issues/76) remains the invitation for an outside report |
 
-Do not present approximately 220 reported participants as 220 active users, 220 verified accounts, or a measured retention figure. Leave unknown values blank in the [aggregate-results sheet](pilot/aggregate-results.csv); do not put these estimates into its active-user columns.
+Do not present the reported community counts as measured active-user totals, verified account counts, or a measured retention figure. Leave unknown values blank in the [aggregate-results sheet](pilot/aggregate-results.csv); do not put these estimates into its active-user columns.
 
 ## Teacher feedback
 
