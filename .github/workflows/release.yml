@@ -1,0 +1,60 @@
+name: Publish release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish tagged release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Verify release metadata
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          version="${RELEASE_TAG#v}"
+          test "$(node -p "require('./package.json').version")" = "$version"
+          git merge-base --is-ancestor HEAD origin/main
+          test -s "docs/releases/$version.md"
+          if grep -q 'Status: preparation only' "docs/releases/$version.md"; then
+            echo 'Release notes are still a preparation draft.' >&2
+            exit 1
+          fi
+      - name: Require passing CI for the tagged commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$GITHUB_SHA&event=push&per_page=1" --jq '.workflow_runs[0].conclusion')"
+          if [ "$conclusion" != success ]; then
+            echo 'The tagged commit must have a successful main-branch CI run before publication.' >&2
+            exit 1
+          fi
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "DarSak $RELEASE_TAG" \
+            --notes-file "docs/releases/${RELEASE_TAG#v}.md"

@@ -1,8 +1,8 @@
 # Starter issue proposals
 
-These are ready-to-adapt issue descriptions, not claims that issues or contributions already exist. A maintainer can publish them after checking for duplicates and confirming scope. Ask to take an issue before starting overlapping work.
+These starter issues are published and open to contributors. Comment on an issue before starting overlapping work. Their existence does not imply an outside contribution has already occurred.
 
-## 1. Verify setup from a fresh clone
+## 1. Verify setup from a fresh clone — [#76](https://github.com/abdulrahman-111/DarSak/issues/76)
 
 **Suggested labels:** documentation, good first issue
 
@@ -12,7 +12,7 @@ These are ready-to-adapt issue descriptions, not claims that issues or contribut
 
 **Acceptance:** A pull request fixes every missing or unclear step encountered and includes the commands run, results, and remaining limitations. No maintainer credentials or existing workspace scripts are used.
 
-## 2. Review Arabic and English enrollment messages
+## 2. Review Arabic and English enrollment messages — [#77](https://github.com/abdulrahman-111/DarSak/issues/77)
 
 **Suggested labels:** translation, good first issue
 
@@ -22,7 +22,7 @@ These are ready-to-adapt issue descriptions, not claims that issues or contribut
 
 **Acceptance:** Translation keys stay aligned, both languages convey the same state, screenshots show the changed messages, and relevant checks pass.
 
-## 3. Audit keyboard use in the group discovery filters
+## 3. Audit keyboard use in the group discovery filters — [#78](https://github.com/abdulrahman-111/DarSak/issues/78)
 
 **Suggested labels:** accessibility, good first issue
 

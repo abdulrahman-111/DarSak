@@ -31,9 +31,9 @@
 
 - [x] 1. Reproduce `tests/unit/bookings-actions.test.ts`; freeze and restore its clock, verify Cairo UTC conversion and expired-time rejection, then run the suite.
 - [x] 2. Add `LICENSE`, `THIRD_PARTY_NOTICES.md`, `CONTRIBUTING.md`, `SECURITY.md`, `.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md`, `docs/ROADMAP.md`, and `docs/STARTER_ISSUES.md`; link them in README.
-- [ ] 3. Rewrite `docs/DEVELOPMENT.md` and extend `docs/DEPLOYMENT.md` with fresh local and separately owned hosted-backend instructions. Add opt-in `supabase/demo.sql`, synthetic login accounts, and a documented local-only invocation. Verify migrations and demo setup on separate ports.
-- [ ] 4. Add `docs/releases/0.1.0.md` and `docs/RELEASING.md` with limitations, release checks, and screenshot guidance. Record actual validation and outstanding pilot work.
-- [ ] 5. Run formatting, lint, typecheck, all unit tests, production build, and available fresh-backend checks. Review the final diff, commit, and open a draft PR for review.
+- [x] 3. Rewrite `docs/DEVELOPMENT.md` and extend `docs/DEPLOYMENT.md` with fresh local and separately owned hosted-backend instructions. Add opt-in `supabase/demo.sql`, synthetic login accounts, and a documented local-only invocation. Verify migrations and demo setup on separate ports.
+- [x] 4. Add `docs/releases/0.1.0.md` and `docs/RELEASING.md` with limitations, release checks, and screenshot guidance. Record actual validation and outstanding pilot work.
+- [x] 5. Run formatting, lint, typecheck, all unit tests, production build, and available fresh-backend checks. Review the final diff, commit, and open a draft PR for review.
 
 ## Execution record
 
@@ -46,3 +46,5 @@
 
 - CI verified fresh migrations, pgTAP, and all 56 database fixtures. Its first demo load exposed the CLI's prepared-statement limitation for multi-command SQL files. Switched the demo invocation to `psql` with `ON_ERROR_STOP=1`, matching the existing fixture tooling; the SQL transaction remains atomic.
 - Captured Arabic/English desktop/mobile landing screenshots from the verified local production build, with no backend connection. Authenticated workflow screenshots remain pending.
+
+Follow-up: the user authorized merger and publication. PR #75 was merged after both jobs passed. Three starter issues were published, and a separate slim-image backend/fresh app clone completed synthetic API and browser checks; authenticated screenshots and release publication are tracked in the first-public-release plan. No existing backend or production email settings were changed.
