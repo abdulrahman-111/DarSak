@@ -102,7 +102,7 @@ jobs:
           fi
 
       - name: Load optional synthetic demo
-        run: supabase db query --local --file supabase/demo.sql
+        run: psql postgresql://postgres:postgres@127.0.0.1:54322/postgres --no-psqlrc --set ON_ERROR_STOP=1 --file supabase/demo.sql
 
       - name: Demo sign-in and access smoke test
         run: node tests/integration/demo.mjs

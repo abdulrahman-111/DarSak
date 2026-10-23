@@ -43,3 +43,6 @@
 - Ruling: retain the current optional Gmail worker implementation and document its maintainer-specific sender/recipient dependency. Independent deployments must disable it until adapted; Auth SMTP remains independently configurable. Cost: app notification email is not turnkey for independent operators.
 - Ruling: prepare a draft release and starter issue descriptions rather than publish a stable release before fresh-backend verification and screenshots. Cost: first-release publication and issue triage remain maintainer follow-up.
 - Local fresh-stack attempt failed during PostgreSQL image extraction with `no space left on device`. No existing backend was reset or restarted. Fresh migrations, fixture, and demo sign-in checks are delegated to the PR's disposable GitHub Actions backend.
+
+- CI verified fresh migrations, pgTAP, and all 56 database fixtures. Its first demo load exposed the CLI's prepared-statement limitation for multi-command SQL files. Switched the demo invocation to `psql` with `ON_ERROR_STOP=1`, matching the existing fixture tooling; the SQL transaction remains atomic.
+- Captured Arabic/English desktop/mobile landing screenshots from the verified local production build, with no backend connection. Authenticated workflow screenshots remain pending.

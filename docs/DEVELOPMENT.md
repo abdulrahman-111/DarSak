@@ -5,7 +5,7 @@
 - Node.js 24 and npm (matching CI and `package.json`).
 - Git and a Docker-compatible runtime for a local Supabase backend. Allocate the resources recommended by the [Supabase local development guide](https://supabase.com/docs/guides/local-development/cli/getting-started).
 - Supabase CLI 2.120.0 or later for the commands below. Install it using the official guide and check `supabase --version`. CI currently uses the latest CLI.
-- PostgreSQL's `psql` client if running the database fixture shell script.
+- PostgreSQL's `psql` client for the optional demo and database fixture shell script.
 
 The default path uses a backend on your own machine. No maintainer credentials, linked project, Supabase account, or existing workspace startup scripts are required. If your workspace already has a managed backend, leave it running; use a separate clone, a unique `project_id`, and free ports in `supabase/config.toml` for disposable verification.
 
@@ -57,7 +57,7 @@ Sign out and back in, then use the administrator interface to review teacher app
 On a fresh, disposable local stack, run:
 
 ```sh
-supabase db query --local --file supabase/demo.sql
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres --no-psqlrc --set ON_ERROR_STOP=1 --file supabase/demo.sql
 node tests/integration/demo.mjs
 ```
 

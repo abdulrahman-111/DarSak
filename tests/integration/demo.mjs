@@ -74,6 +74,20 @@ for (const role of ['teacher', 'student', 'admin']) {
     await request('/auth/v1/logout', session.access_token, {});
   }
 }
-const privateNotes = await request(`/rest/v1/lesson_materials?lesson_id=eq.${lessonId}&select=id`);
-assert.deepEqual(privateNotes, [], 'Anonymous visitors cannot read demo lesson materials');
+const privateResponse = await fetch(
+  new URL(`/rest/v1/lesson_materials?lesson_id=eq.${lessonId}&select=id`, origin),
+  {
+    headers: { apikey: key, Authorization: `Bearer ${key}` },
+    signal: AbortSignal.timeout(15000),
+  },
+);
+if (privateResponse.ok) {
+  assert.deepEqual(
+    await privateResponse.json(),
+    [],
+    'Anonymous visitors cannot read demo lesson materials',
+  );
+} else {
+  assert([401, 403].includes(privateResponse.status), 'Expected anonymous access to be denied');
+}
 console.log('PASS: anonymous visitors cannot read private demo resources');

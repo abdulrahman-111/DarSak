@@ -1,5 +1,5 @@
 -- OPT-IN LOCAL DEMO ONLY. Known public passwords: never use on a hosted project.
--- Run: supabase db query --local --file supabase/demo.sql
+-- Run: psql postgresql://postgres:postgres@127.0.0.1:54322/postgres --no-psqlrc --set ON_ERROR_STOP=1 --file supabase/demo.sql
 -- Standard seed.sql intentionally contains no login accounts.
 begin;
 set local search_path = public, extensions;
@@ -33,7 +33,7 @@ reset role;
 select set_config('request.jwt.claim.sub', 'de000000-0000-4000-8000-000000000003', true);
 -- Treat this synthetic teacher as a legacy application fixture, then use the
 -- canonical administrator review RPC so review state and approval stay synced.
-update public.teacher_applications set legacy_approved = true
+update public.teacher_applications set legacy_approved = true, status = 'approved', reviewed_at = now(), reviewed_by = 'de000000-0000-4000-8000-000000000003'
 where teacher_id = 'de000000-0000-4000-8000-000000000001';
 select public.admin_decide_teacher_review(teacher_id, request_id, 'approved', null)
 from public.teacher_review_state where teacher_id = 'de000000-0000-4000-8000-000000000001';
