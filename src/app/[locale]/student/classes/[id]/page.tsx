@@ -8,6 +8,7 @@ import {
   GraduationCap,
   UserRound,
   Activity,
+  ClipboardList,
 } from 'lucide-react';
 import { ensureLocale } from '@/i18n/config';
 import { studentClassWorkspace } from '@/features/student/class-workspace-data';
@@ -26,6 +27,7 @@ import { feeLabel } from '@/features/teacher/group-learning-domain';
 import { AnnouncementView } from '@/features/groups/announcement-view';
 import { GroupFeedbackSection } from '@/features/feedback/group-section';
 import { StudentTeacherContactCard } from '@/features/student/teacher-contact-card';
+import { StudentAssignments } from '@/features/assignments/views';
 
 export default async function StudentClassPage({
   params,
@@ -49,6 +51,7 @@ export default async function StudentClassPage({
         overview: 'نظرة عامة',
         lessons: 'الحصص',
         materials: 'المواد',
+        assignments: 'الواجبات',
         teacher: 'المعلم والتواصل',
         progress: 'الحضور والتقييم',
       }
@@ -56,6 +59,7 @@ export default async function StudentClassPage({
         overview: 'Overview',
         lessons: 'Lessons',
         materials: 'Materials',
+        assignments: 'Assignments',
         teacher: 'Teacher & contact',
         progress: 'Attendance & feedback',
       };
@@ -63,6 +67,7 @@ export default async function StudentClassPage({
     overview: GraduationCap,
     lessons: CalendarDays,
     materials: FolderOpen,
+    assignments: ClipboardList,
     teacher: UserRound,
     progress: Activity,
   };
@@ -455,6 +460,33 @@ export default async function StudentClassPage({
                 pageCount={data.pageCount}
                 labels={labels}
                 preserve={{ view: 'materials', q: query.q }}
+              />
+            </section>
+          )}
+          {view === 'assignments' && (
+            <section className="grid min-w-0 gap-4">
+              <div>
+                <h2 className="text-lg font-bold text-teal">
+                  {ar ? 'واجبات مجموعتك' : 'Class assignments'}
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {ar
+                    ? 'تظهر الواجبات النشطة لجميع الطلاب المقبولين. لا يرى رابطك وملاحظتك وتعليقات المعلم الخاصة إلا أنت ومعلمك.'
+                    : 'Active assignments are available to all accepted students. Only you and your teacher can see your submitted link, note, and private feedback.'}
+                </p>
+              </div>
+              <StudentAssignments
+                locale={locale}
+                assignments={data.assignments}
+                groupStatus={group.status}
+              />
+              <StudentPagination
+                locale={locale}
+                href={base}
+                page={data.page}
+                pageCount={data.pageCount}
+                labels={labels}
+                preserve={{ view: 'assignments' }}
               />
             </section>
           )}

@@ -1,5 +1,12 @@
 import type { GroupLearningDetails } from '@/features/teacher/group-learning-domain';
-export const CLASS_VIEWS = ['overview', 'lessons', 'materials', 'teacher', 'progress'] as const;
+export const CLASS_VIEWS = [
+  'overview',
+  'lessons',
+  'materials',
+  'assignments',
+  'teacher',
+  'progress',
+] as const;
 export type ClassView = (typeof CLASS_VIEWS)[number];
 export function classView(value: unknown): ClassView {
   return CLASS_VIEWS.includes(value as ClassView) ? (value as ClassView) : 'overview';

@@ -5,6 +5,7 @@ import { classPage, classLessonView, classView, parseClassDetail } from './class
 import type { StudentResource } from './resource-domain';
 import { studentPageCount } from './pagination-domain';
 import { readCountedPage } from '@/lib/supabase/counted-page';
+import { getStudentAssignmentPage } from '@/features/assignments/data';
 
 export async function studentClassWorkspace(
   locale: Locale,
@@ -37,6 +38,7 @@ export async function studentClassWorkspace(
       : Promise.resolve(null);
   let lessons: Lesson[] = [],
     resources: StudentResource[] = [],
+    assignments: Awaited<ReturnType<typeof getStudentAssignmentPage>>['rows'] = [],
     page = requestedPage,
     total = 0,
     error = false;
@@ -74,6 +76,12 @@ export async function studentClassWorkspace(
     if (!result.error && page !== requestedPage) result = await fetch(page);
     resources = (result.data as { rows?: StudentResource[] } | null)?.rows ?? [];
     error = !!result.error || payload?.total == null;
+  } else if (view === 'assignments') {
+    const result = await getStudentAssignmentPage(locale, id, requestedPage);
+    assignments = result.rows;
+    page = result.page;
+    total = result.total;
+    error = !!result.error;
   }
   const [next, slots, contacts, announcement, attendance] = await Promise.all([
     nextPromise,
@@ -118,6 +126,7 @@ export async function studentClassWorkspace(
     lessonView,
     lessons,
     resources,
+    assignments,
     page,
     total,
     pageCount: studentPageCount(total),
