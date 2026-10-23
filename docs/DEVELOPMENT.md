@@ -2,47 +2,107 @@
 
 ## Requirements
 
-Use Node.js 24 (the version Vercel and CI use) and npm. Docker is required for a fresh local Supabase stack. The app uses the configured Supabase project for authentication, database, and storage access. Follow the workspace's existing managed-service startup process; do not reset, recreate, or restart that environment as part of routine development.
+- Node.js 24 and npm (matching CI and `package.json`).
+- Git and a Docker-compatible runtime for a local Supabase backend. Allocate the resources recommended by the [Supabase local development guide](https://supabase.com/docs/guides/local-development/cli/getting-started).
+- Supabase CLI 2.120.0 or later for the commands below. Install it using the official guide and check `supabase --version`. CI currently uses the latest CLI.
+- PostgreSQL's `psql` client for the optional demo and database fixture shell script.
 
-For a fresh local backend, follow the [Supabase CLI local development guide](https://supabase.com/docs/guides/local-development/cli/getting-started).
+The default path uses a backend on your own machine. No maintainer credentials, linked project, Supabase account, or existing workspace startup scripts are required. If your workspace already has a managed backend, leave it running; use a separate clone, a unique `project_id`, and free ports in `supabase/config.toml` for disposable verification.
 
-## Local setup
+## Start from a fresh clone
 
 ```sh
+git clone https://github.com/abdulrahman-111/DarSak.git
+cd DarSak
 npm ci
+supabase start
+supabase status
 cp .env.example .env.local
+```
+
+`supabase start` creates a local stack, applies `supabase/migrations/` in order, and loads the starter education catalogue from `supabase/seed.sql`. The first start downloads Docker images and may take several minutes. If default ports 54320–54326 are occupied, change the corresponding ports and `project_id` in your disposable clone's config before starting it. Do not run `supabase init`; the repository already has its configuration and migration history.
+
+Use the URL and public key shown by `supabase status` to edit `.env.local`:
+
+```dotenv
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=replace-with-local-publishable-or-legacy-anon-key
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=false
+AUTH_RECOVERY_SECRET=replace-with-a-random-secret
+```
+
+Generate the recovery secret with `node -e "console.log(require('node:crypto').randomBytes(32).toString('hex'))"`. Copy the output into `.env.local`. This file is ignored by Git. The Supabase public/publishable key (or local legacy `anon` key) goes in the public variable; the service-role key never does. Leave Turnstile and optional worker secrets blank for this basic local walkthrough.
+
+```sh
 npm run dev
 ```
 
-Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` in `.env.local` to the values for your development environment. `NEXT_PUBLIC_SITE_URL` should be `http://localhost:3000` locally. Open `http://localhost:3000`.
+Open [English](http://localhost:3000/en) or [Arabic](http://localhost:3000/ar). Restart Next.js after changing environment variables.
 
-The first six variables in `.env.example` cover the browser-facing Supabase connection, canonical app URL, optional Turnstile site key, Google sign-in toggle, and recovery-proof secret. Optional server-only values are documented in [Deployment](DEPLOYMENT.md). Never put a service-role key or other server secret in a `NEXT_PUBLIC_*` variable.
+## Accounts and local email
 
-Categorical `server_read` and `server_request_error` warnings appear only in Vercel runtime logs; they do not create database-backed counters. Read warnings are emitted for failed critical reads or reads taking at least two seconds; request errors include only the route type. They omit request and record details. Server durations help locate slow loaders but do not measure browser load metrics such as LCP. These diagnostics do not include browser real-user monitoring. Vercel Hobby runtime logs have short retention, so use them for recent diagnosis rather than long-term monitoring.
+Email confirmation stays enabled. Register a student or teacher, then open the local email inbox shown by `supabase status` (normally [http://127.0.0.1:54324](http://127.0.0.1:54324)) and enter the code from the confirmation email. Teacher accounts require administrator approval before publishing groups.
 
-## Useful commands
+For an administrator on your own backend, register an account, obtain its UUID from local Studio's Auth users view, and use the bootstrap tool:
 
-- `npm run dev` — start the development server.
-- `npm run lint` — run ESLint.
-- `npm run typecheck` — check TypeScript types.
-- `npm test` — run unit tests.
-- `npm run build` — create a production build.
-- `npm run start` — serve a built app locally.
+```sh
+SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SERVICE_ROLE_KEY='replace-with-local-service-role-key' node scripts/bootstrap-admin.mjs 'registered-user-uuid'
+```
 
-The API integration script at `tests/integration/api.mjs` requires a local Supabase API and local API keys, and refuses non-local hosts. Run it only against an isolated test project:
+Sign out and back in, then use the administrator interface to review teacher applications. This bootstrap promotes only the specified existing profile.
+
+## Optional synthetic demo
+
+On a fresh, disposable local stack, run:
+
+```sh
+psql postgresql://postgres:postgres@127.0.0.1:54322/postgres --no-psqlrc --set ON_ERROR_STOP=1 --file supabase/demo.sql
+node tests/integration/demo.mjs
+```
+
+This opt-in transaction creates three confirmed synthetic accounts, an approved synthetic legacy teacher, a published mathematics group, an accepted student enrollment, a lesson tomorrow at 16:00 Cairo time, and a resource link. It leaves ordinary signup confirmation enabled. All three accounts use the public password `DarSak-local-demo-2026!`:
+
+| Role          | Email                  |
+| ------------- | ---------------------- |
+| Teacher       | `teacher@demo.invalid` |
+| Student       | `student@demo.invalid` |
+| Administrator | `admin@demo.invalid`   |
+
+Sign in through the app, visit the teacher group and student timetable, open the resource link, and switch languages. Use separate browser profiles for simultaneous roles. These accounts are for local exploration and screenshots only; never load them on a hosted instance or expose this stack publicly. The seed is intentionally one-shot: a repeated run fails atomically rather than overwriting edited accounts. To rebuild only your disposable stack, run `supabase db reset --local`, then load the demo again. A reset erases its existing local data.
+
+## Verify changes
+
+```sh
+npm run format:check
+npm run lint
+npm run typecheck
+npm test
+npm run build
+supabase test db
+SUPABASE_DB_URL=postgresql://postgres:postgres@127.0.0.1:54322/postgres ./tests/database/run.sh
+```
+
+Use the ports for your own stack. Database fixtures mutate data inside test transactions; run them only on a disposable database. CI starts its own fresh stack, runs the pgTAP contracts and fixture script, then loads the optional demo and verifies all three logins and lesson-material access.
+
+The broader API integration script in `tests/integration/api.mjs` refuses non-local hosts and requires its own isolated backend with email confirmation disabled. Its configuration differs from the app walkthrough above; do not change the app or production confirmation settings to satisfy that fixture. It also expects a `psql` client and current migrations. Read its fixture setup before use.
 
 ```sh
 SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_ANON_KEY='replace-with-local-anon-key' SUPABASE_SERVICE_ROLE_KEY='replace-with-local-service-role-key' node tests/integration/api.mjs
 ```
 
-That fixture expects email confirmation to be disabled locally so it can sign up test accounts. The application itself requires signup confirmation enabled; never change production confirmation settings to satisfy the fixture.
+## Database changes and troubleshooting
 
-Database fixtures in `tests/database/` also modify data and should run only on a disposable test database with the current migrations applied:
+Create new migrations with `supabase migration new descriptive_name`. Verify the full sequence with `supabase db reset --local` only on a disposable stack. Never reset a managed, shared, or production project. Apply reviewed changes to an independently owned hosted project using [Deployment](DEPLOYMENT.md).
 
-```sh
-SUPABASE_DB_URL='replace-with-disposable-local-postgres-url' ./tests/database/run.sh
-```
+- **Docker cannot start:** check the Docker runtime and available resources; inspect the exact CLI error before restarting services.
+- **Ports in use:** stop only your own disposable stack or use separate ports and `project_id` in a separate clone.
+- **Empty discovery list:** the base seed contains catalogue entries only. Publish a group through an approved teacher or load the optional demo on a fresh local stack.
+- **Confirmation email absent:** use the local inbox, check the Auth container logs, and confirm the app URL/key target that stack.
+- **Login or resource access fails:** verify the public key, URL, migrations, confirmation state, and current role. A service-role key is not a browser workaround.
 
-## Database changes
+Stop your own local stack with `supabase stop` when finished; this normally retains its data. See [Architecture](ARCHITECTURE.md) for code organization and [Contributing](../CONTRIBUTING.md) for review expectations.
 
-Migrations in `supabase/migrations/` are ordered and form the database change history. Review the migration sequence and its data impact before applying changes to a shared or production project. Use a disposable local database for reset-based testing; never run a database reset against the configured managed project. See [Deployment](DEPLOYMENT.md) for release guidance.
+## Runtime diagnostics
+
+Categorical `server_read` and `server_request_error` warnings appear in Vercel runtime logs. Failed critical reads or reads taking at least two seconds emit warnings; request errors include only route type. They omit request and record details. These server timings do not measure browser metrics such as LCP, and there are no database-backed diagnostic counters or browser real-user monitoring. Hosting log retention depends on your plan.
