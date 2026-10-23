@@ -101,6 +101,12 @@ jobs:
             exit 1
           fi
 
+      - name: Load optional synthetic demo
+        run: supabase db query --local --file supabase/demo.sql
+
+      - name: Demo sign-in and access smoke test
+        run: node tests/integration/demo.mjs
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup

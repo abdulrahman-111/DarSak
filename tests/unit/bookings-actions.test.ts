@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   getRequestViewer: vi.fn(),
@@ -29,7 +29,11 @@ const goodForm = (fields: Record<string, string>) => {
 describe('booking actions', () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    // Keep future-time fixtures independent of the day CI runs.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date('2026-10-21T12:00:00Z'));
   });
+  afterEach(() => vi.useRealTimers());
 
   it('does not issue a student booking mutation for an unverified or nonstudent actor', async () => {
     const rpc = vi.fn();
@@ -109,8 +113,8 @@ describe('booking actions', () => {
     expect(result?.success).toContain('waiting for the teacher');
     expect(rpc).toHaveBeenCalledWith('propose_booking_time', {
       p_group_id: id,
-      p_starts_at: expect.any(String),
-      p_ends_at: expect.any(String),
+      p_starts_at: '2026-10-22T07:00:00.000Z',
+      p_ends_at: '2026-10-22T08:00:00.000Z',
     });
   });
 
@@ -131,5 +135,26 @@ describe('booking actions', () => {
       }),
     );
     expect(result?.error).toContain('٢٠');
+  });
+
+  it('rejects a proposal after its start time has passed without calling the database', async () => {
+    vi.setSystemTime(new Date('2026-10-23T12:00:00Z'));
+    const rpc = vi.fn();
+    mocks.getRequestViewer.mockResolvedValue({
+      db: { rpc },
+      user: { id },
+      profile: { id, role: 'student', status: 'active' },
+    });
+    const result = await proposeBookingTime(
+      'en',
+      null,
+      goodForm({
+        group_id: id,
+        starts_local: '2026-10-22T10:00',
+        ends_local: '2026-10-22T11:00',
+      }),
+    );
+    expect(result?.error).toContain('future time');
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

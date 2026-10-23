@@ -14,15 +14,18 @@ DarSak uses Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase Auth, Postg
 
 ## Get started
 
-Use Node.js 24 (the version Vercel and CI use) and connect the app to the configured Supabase project. Copy `.env.example` to `.env.local`, then set the Supabase URL and publishable key for your development environment. Docker is required for a fresh local Supabase stack.
+Use Node.js 24, npm, Docker, and the Supabase CLI. Run a backend on your own machine; no maintainer credentials are needed.
 
 ```sh
+git clone https://github.com/abdulrahman-111/DarSak.git
+cd DarSak
 npm ci
+supabase start
+supabase status
 cp .env.example .env.local
-npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Keep server-only credentials out of `NEXT_PUBLIC_*` variables. See [Development](docs/DEVELOPMENT.md) before changing Supabase or applying migrations.
+Copy the local Supabase URL and public key into `.env.local`, generate the recovery secret, then run `npm run dev`. Follow [Development](docs/DEVELOPMENT.md) for complete configuration, email confirmation, optional synthetic demo accounts, and verification. Follow [Deployment](docs/DEPLOYMENT.md) to use your own hosted backend.
 
 ## Commands
 
@@ -51,3 +54,11 @@ Open [http://localhost:3000](http://localhost:3000). Keep server-only credential
 - `supabase/migrations/` — ordered database migrations; `supabase/functions/` — Edge Functions; `supabase/templates/` — Auth email templates.
 - `scripts/` — maintenance scripts, including administrator setup.
 - `tests/` — unit, database, and API integration coverage.
+
+## Contributing and project status
+
+See [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), the [roadmap](docs/ROADMAP.md), and [starter issue proposals](docs/STARTER_ISSUES.md). The [release checklist](docs/RELEASING.md) and [draft 0.1.0 notes](docs/releases/0.1.0.md) track preparation for a first public release; draft notes do not imply a published release.
+
+## License
+
+DarSak's original code and documentation use the [MIT License](LICENSE). Bundled fonts and dependencies retain their own licenses; see [third-party notices](THIRD_PARTY_NOTICES.md).
