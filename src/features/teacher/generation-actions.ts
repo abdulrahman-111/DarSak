@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { scheduleGoogleMeetSync } from '@/features/meet/after-sync';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 import { idSchema, type Locale } from '@/features/student/domain';
@@ -176,6 +177,7 @@ export async function confirmLessonGeneration(
               'تعذر إنشاء الحصص. حدّث المعاينة وراجع أي تعارضات.',
             ),
     };
+  scheduleGoogleMeetSync(auth.db);
   revalidateGroup(locale, groupId);
   return { generated: data ?? 0 };
 }

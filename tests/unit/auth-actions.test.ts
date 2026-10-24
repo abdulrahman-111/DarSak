@@ -108,8 +108,10 @@ describe('auth actions', () => {
       .mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
     isConfiguredMock.mockReturnValue(true);
     requestOriginMock.value = 'https://dars.example';
+    vi.stubEnv('APP_ENV', 'local');
+    vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'local');
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://dars.example');
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://db.example');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:54321');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'public-key');
   });
   afterEach(() => vi.unstubAllEnvs());

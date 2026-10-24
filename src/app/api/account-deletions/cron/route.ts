@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { validCronAuthorization } from '@/app/api/email/cron/auth';
+import { assertStagingBackend, isExternalWorkerEnabled } from '@/lib/deployment-environment';
 
 export const runtime = 'nodejs';
 export const maxDuration = 40;
@@ -9,8 +10,22 @@ const headers = {
 };
 
 export async function GET(request: NextRequest) {
-  if (!validCronAuthorization(request.headers.get('authorization'), process.env.CRON_SECRET)) {
+  const staging = !isExternalWorkerEnabled();
+  const cronSecret = process.env.CRON_SECRET;
+  if (staging && !cronSecret) {
+    return Response.json(
+      { state: 'disabled', claimed: 0, completed: 0, pending: 0 },
+      { status: 200, headers },
+    );
+  }
+  if (!validCronAuthorization(request.headers.get('authorization'), cronSecret)) {
     return Response.json({ error: 'unauthorized' }, { status: 401, headers });
+  }
+  if (staging) {
+    return Response.json(
+      { state: 'disabled', claimed: 0, completed: 0, pending: 0 },
+      { status: 200, headers },
+    );
   }
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -22,6 +37,7 @@ export async function GET(request: NextRequest) {
     );
   }
   try {
+    assertStagingBackend(supabaseUrl);
     const response = await fetch(`${supabaseUrl.replace(/\/$/, '')}/functions/v1/delete-account`, {
       method: 'POST',
       headers: {

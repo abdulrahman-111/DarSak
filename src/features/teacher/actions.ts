@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { scheduleGoogleMeetSync } from '@/features/meet/after-sync';
 import { createClient } from '@/lib/supabase/server';
 import { logActionFailure } from '@/lib/action-diagnostics';
 import { idSchema, type Locale } from '@/features/student/domain';
@@ -154,6 +155,7 @@ export async function setLessonStatus(locale: Locale, lessonId: string, status: 
   });
   if (error) logActionFailure('lesson_status.save', startedAt, error, 'DB_ERROR');
   if (!error) {
+    scheduleGoogleMeetSync(me.db);
     revalidatePath(`/${locale}/teacher/lessons/${lessonId}`);
     revalidateStudentWorkspace();
     revalidateTeacherWorkspace();

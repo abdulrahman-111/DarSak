@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { scheduleGoogleMeetSync } from '@/features/meet/after-sync';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
@@ -140,6 +141,7 @@ export async function copyLesson(
   if (error || !idSchema.safeParse(newLessonId).success) {
     return { error: shortcutMutationMessage(locale, error?.message ?? 'missing lesson ID') };
   }
+  scheduleGoogleMeetSync(me.db);
 
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/teacher/lessons`);

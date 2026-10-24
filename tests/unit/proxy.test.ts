@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('server-only', () => ({}));
 import { NextRequest, NextResponse } from 'next/server';
 
 const { createServerClientMock, localizeMock } = vi.hoisted(() => ({
@@ -20,7 +21,9 @@ function localizedResponse(request: NextRequest) {
 describe('proxy auth and localization', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'https://db.example');
+    vi.stubEnv('APP_ENV', 'local');
+    vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'local');
+    vi.stubEnv('NEXT_PUBLIC_SUPABASE_URL', 'http://127.0.0.1:54321');
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'public-key');
     localizeMock.mockImplementation(localizedResponse);
   });

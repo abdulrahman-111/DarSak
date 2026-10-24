@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { scheduleGoogleMeetSync } from '@/features/meet/after-sync';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
@@ -144,6 +145,7 @@ export async function cancelTeacherGroup(
   if ('error' in me) return { error: me.error };
   const { data, error } = await me.db.rpc('cancel_teacher_group', { p_group_id: groupId });
   if (error) return { error: managementError(locale, error.message) };
+  scheduleGoogleMeetSync(me.db);
   refreshManagement(locale, groupId);
   const count = Number(data) || 0;
   return {
@@ -194,6 +196,7 @@ export async function deleteManualTeacherLesson(
   if ('error' in me) return { error: me.error };
   const { error } = await me.db.rpc('delete_manual_teacher_lesson', { p_lesson_id: lessonId });
   if (error) return { error: managementError(locale, error.message) };
+  scheduleGoogleMeetSync(me.db);
   refreshManagement(locale, groupId, lessonId);
   redirect(`/${locale}/teacher/lessons?deleted=1`);
 }

@@ -9,6 +9,9 @@ import { createClient } from '@/lib/supabase/server';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
 import { AnnouncementView } from '@/features/groups/announcement-view';
 import { StudentAttendanceStatus } from '@/features/student/attendance-status';
+import { isGoogleMeetPilotEnabled } from '@/features/meet/config';
+import { readLessonMeeting } from '@/features/meet/data';
+import { StudentMeetingCard } from '@/features/meet/views';
 
 export default async function StudentLesson({
   params,
@@ -22,6 +25,10 @@ export default async function StudentLesson({
   if (!data) notFound();
   const db = await createClient();
   const announcement = await groupAnnouncement(db, data.lesson.group_id);
+  const meeting =
+    isGoogleMeetPilotEnabled() && data.lesson.status === 'scheduled'
+      ? (await readLessonMeeting(id)).data
+      : null;
   return (
     <>
       <Link
@@ -38,6 +45,7 @@ export default async function StudentLesson({
       />
       <AnnouncementView locale={locale} announcement={announcement} className="mb-6" />
       <StudentAttendanceStatus db={db} locale={locale} lessonId={id} />
+      {meeting && <StudentMeetingCard locale={locale} meeting={meeting} />}
       {data.lesson.notes && (
         <Panel className="mb-6">
           <h2 className="font-black text-teal">{ar ? 'ملاحظات الحصة' : 'Lesson notes'}</h2>

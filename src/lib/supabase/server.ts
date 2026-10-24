@@ -2,9 +2,11 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { isConfigured, requireSupabaseConfig } from './config';
 import { PASSWORD_RECOVERY_COOKIE, verifyRecoveryProof } from '@/features/auth/recovery-proof';
+import { assertStagingBackend } from '@/lib/deployment-environment';
 export { isConfigured } from './config';
 export async function createClient() {
   const { url, key } = requireSupabaseConfig();
+  assertStagingBackend(url);
   const cookieStore = await cookies();
   return createServerClient(url, key, {
     cookies: {

@@ -12,6 +12,13 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
     viewer.role === 'teacher'
       ? [
           {
+            href: 'integrations',
+            title: ar ? 'التكاملات' : 'Integrations',
+            body: ar
+              ? 'إدارة ربط Google Meet واجتماعات حصصك.'
+              : 'Manage Google Meet connection and lesson meetings.',
+          },
+          {
             href: 'profile',
             title: ar ? 'الملف الشخصي' : 'Profile',
             body: ar

@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+vi.mock('server-only', () => ({}));
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PLAN_ENFORCEMENT_DEFAULT_ENABLED, TEACHER_PLANS } from '@/features/subscriptions/plans';
