@@ -22,6 +22,7 @@ fixtures=(
   tests/database/foundation.sql
   tests/database/auth_role_fallback.sql
   tests/database/google_teacher_signup.sql
+  tests/database/google_meet.sql
   tests/database/student_learning_profile.sql
   tests/database/student_group_recommendations.sql
   tests/database/account_setup_drafts.sql

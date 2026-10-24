@@ -12,6 +12,9 @@ import {
 } from '@/features/teacher/shortcuts-forms';
 import { DeleteManualTeacherLessonForm } from '@/features/teacher/management-forms';
 import { AttendanceRoster } from '@/features/teacher/attendance-forms';
+import { getGoogleMeetConfig, isGoogleMeetPilotEnabled } from '@/features/meet/config';
+import { readLessonMeeting } from '@/features/meet/data';
+import { TeacherMeetingCard } from '@/features/meet/views';
 import {
   attendancePageCount as getAttendancePageCount,
   attendancePageHref,
@@ -63,6 +66,11 @@ export default async function TeacherLesson({
     teacherAttendancePage(me.db, id, (requestedPage - 1) * 20),
   ]);
   const archived = group.status === 'archived';
+  const meetEnabled = isGoogleMeetPilotEnabled();
+  const meeting =
+    meetEnabled && !archived && lesson.status === 'scheduled'
+      ? (await readLessonMeeting(id)).data
+      : null;
   const attendancePageCount = requestedAttendance
     ? getAttendancePageCount(requestedAttendance.total)
     : 1;
@@ -161,6 +169,16 @@ export default async function TeacherLesson({
         description={cairoDate(lesson.starts_at, locale)}
         action={<Status value={lesson.status} locale={locale} />}
       />
+      {meeting && (
+        <TeacherMeetingCard
+          locale={locale}
+          lessonId={id}
+          meeting={meeting}
+          enabled={meetEnabled}
+          oauthEnabled={getGoogleMeetConfig() !== null}
+          canManage={!archived && future && approval.data?.approved === true}
+        />
+      )}
       <div className="grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
         <div className="grid content-start gap-6">
           <Panel>

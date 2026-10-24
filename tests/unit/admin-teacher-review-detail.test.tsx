@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+vi.mock('server-only', () => ({}));
 import { renderToStaticMarkup } from 'react-dom/server';
 
 const { requireViewerMock, notFoundMock } = vi.hoisted(() => ({

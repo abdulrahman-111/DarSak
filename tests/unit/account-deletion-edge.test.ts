@@ -1,13 +1,18 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 vi.mock('@/lib/supabase/config', () => ({
-  requireSupabaseConfig: () => ({ url: 'https://project.example', key: 'publishable' }),
+  requireSupabaseConfig: () => ({ url: 'http://127.0.0.1:54321', key: 'publishable' }),
 }));
 import { callDeletionEdge } from '@/features/account/edge';
 
 describe('account deletion Edge client', () => {
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+  });
   it('preserves a pending state even when Edge returns a non-2xx cleanup warning', async () => {
+    vi.stubEnv('APP_ENV', 'local');
+    vi.stubEnv('NEXT_PUBLIC_APP_ENV', 'local');
     vi.stubGlobal(
       'fetch',
       vi.fn(

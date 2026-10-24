@@ -1,5 +1,6 @@
 import 'server-only';
 import { requireSupabaseConfig } from '@/lib/supabase/config';
+import { assertStagingBackend } from '@/lib/deployment-environment';
 
 export type DeletionStatus = {
   state: 'available' | 'pending' | 'completed' | 'unavailable';
@@ -14,6 +15,7 @@ export async function callDeletionEdge<T>(
   body: Record<string, unknown>,
 ): Promise<EdgeResult<T>> {
   const { url, key } = requireSupabaseConfig();
+  assertStagingBackend(url);
   try {
     const response = await fetch(`${url}/functions/v1/delete-account`, {
       method: 'POST',

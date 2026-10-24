@@ -25,11 +25,18 @@ afterEach(() => vi.unstubAllEnvs());
 describe('transactional email boundaries', () => {
   it('does not enable production delivery when any required private setting is absent', () => {
     expect(
-      emailConfig({ VERCEL_ENV: 'production', NEXT_PUBLIC_SITE_URL: 'https://dars.example' }),
+      emailConfig({
+        APP_ENV: 'production',
+        NEXT_PUBLIC_APP_ENV: 'production',
+        VERCEL_ENV: 'production',
+        NEXT_PUBLIC_SITE_URL: 'https://darsak-platform.vercel.app',
+      }),
     ).toBeNull();
     expect(
       emailConfig({
         VERCEL_ENV: 'production',
+        APP_ENV: 'production',
+        NEXT_PUBLIC_APP_ENV: 'production',
         NEXT_PUBLIC_SITE_URL: 'https://localhost',
         GMAIL_APP_PASSWORD: 'x',
         SUPABASE_SERVICE_ROLE_KEY: 'y',
@@ -39,12 +46,35 @@ describe('transactional email boundaries', () => {
     expect(
       emailConfig({
         VERCEL_ENV: 'development',
+        APP_ENV: 'development',
+        NEXT_PUBLIC_APP_ENV: 'development',
         NEXT_PUBLIC_SITE_URL: 'https://dars.example',
         GMAIL_APP_PASSWORD: 'x',
         SUPABASE_SERVICE_ROLE_KEY: 'y',
         NEXT_PUBLIC_SUPABASE_URL: 'https://db.example',
       }),
     ).toBeNull();
+  });
+
+  it('keeps email delivery disabled in staging and requires explicit production markers', () => {
+    const secrets = {
+      VERCEL_ENV: 'production',
+      NEXT_PUBLIC_SITE_URL: 'https://darsak-platform.vercel.app',
+      GMAIL_APP_PASSWORD: 'x',
+      SUPABASE_SERVICE_ROLE_KEY: 'y',
+      NEXT_PUBLIC_SUPABASE_URL: 'https://ubrvjjibibqaiomrvwbd.supabase.co',
+      SUPABASE_EXPECTED_PROJECT_REF: 'ubrvjjibibqaiomrvwbd',
+    };
+    expect(
+      emailConfig({ ...secrets, APP_ENV: 'staging', NEXT_PUBLIC_APP_ENV: 'staging' }),
+    ).toBeNull();
+    expect(emailConfig({ ...secrets, APP_ENV: 'production' })).toBeNull();
+    expect(
+      emailConfig({ ...secrets, APP_ENV: 'production', NEXT_PUBLIC_APP_ENV: 'production' }),
+    ).toEqual({
+      origin: 'https://darsak-platform.vercel.app',
+      appPassword: 'x',
+    });
   });
 
   it('returns not_configured before constructing a claim client outside production', async () => {

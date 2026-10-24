@@ -18,6 +18,7 @@ import { authCopy } from '@/components/auth/copy';
 import { resolveSetupDestination } from '@/features/setup/destination';
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import { getSupabaseConfig } from '@/lib/supabase/config';
+import { assertStagingBackend } from '@/lib/deployment-environment';
 import { PASSWORD_RECOVERY_COOKIE } from './recovery-proof';
 
 /** Non-secret fields echoed back on error so the reset form can repopulate them. Passwords are never included. */
@@ -417,6 +418,7 @@ export async function changePasswordAction(
   const config = getSupabaseConfig();
   if (!config || !user.email)
     return { error: authCopy[locale as Locale].passwordVerificationFailed };
+  assertStagingBackend(config.url);
   const verifier = createSupabaseClient(config.url, config.key, {
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   });

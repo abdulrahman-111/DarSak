@@ -3,9 +3,11 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { type NextRequest } from 'next/server';
 import { getSupabaseConfig } from '@/lib/supabase/config';
 import { routing } from '@/i18n/routing';
+import { assertStagingBackend } from '@/lib/deployment-environment';
 const localize = createMiddleware(routing);
 export async function proxy(request: NextRequest) {
   const config = getSupabaseConfig();
+  if (config) assertStagingBackend(config.url);
   const updates: { name: string; value: string; options: CookieOptions }[] = [];
   if (config) {
     const db = createServerClient(config.url, config.key, {

@@ -2,6 +2,7 @@
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { flushEmailOutbox } from '@/features/email/worker';
+import { scheduleGoogleMeetSync } from '@/features/meet/after-sync';
 import { createClient } from '@/lib/supabase/server';
 import { groupSchema, slotSchema, lessonSchema, profileSchema } from '@/lib/domain';
 import { submitProblemReport } from '@/features/reports/actions';
@@ -201,6 +202,7 @@ export async function generateLessons(
   const denied = await accessError(locale, db);
   if (denied) return { error: denied };
   const r = await db.rpc('generate_lessons', { p_group_id: groupId, p_from: from, p_until: until });
+  if (!r.error) scheduleGoogleMeetSync(db);
   revalidatePath(`/${locale}/teacher/lessons`);
   return result(r.error);
 }
@@ -225,6 +227,7 @@ export async function saveLesson(locale: string, _previous: unknown, formData: F
     p_notes: p.data.notes,
     p_lesson_id: p.data.lessonId || null,
   });
+  if (!r.error) scheduleGoogleMeetSync(db);
   if (!r.error)
     for (const currentLocale of ['en', 'ar']) {
       revalidatePath(`/${currentLocale}/teacher/lessons`);
