@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { isConfigured } from '@/lib/supabase/server';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { unreadNotificationCount } from '@/features/notifications/data';
+import { readTeacherAccessStatus } from '@/features/teacher-access/data';
 import { PlatformShell } from './shell';
 import type { PlatformRole } from './access';
 
@@ -23,9 +24,18 @@ export async function OptionalWorkspaceLayout({
   }
 
   const role = profile.role as PlatformRole;
-  const unreadCount = await unreadNotificationCount(db);
+  const [unreadCount, teachingAccess] = await Promise.all([
+    unreadNotificationCount(db),
+    role === 'teacher' ? readTeacherAccessStatus(db).catch(() => null) : Promise.resolve(null),
+  ]);
   return (
-    <PlatformShell locale={locale} role={role} name={profile.full_name} unreadCount={unreadCount}>
+    <PlatformShell
+      locale={locale}
+      role={role}
+      name={profile.full_name}
+      unreadCount={unreadCount}
+      canTeach={!!teachingAccess?.status?.has_access && !teachingAccess.error}
+    >
       {children}
     </PlatformShell>
   );
