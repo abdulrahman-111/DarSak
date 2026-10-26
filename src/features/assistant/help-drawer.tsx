@@ -17,6 +17,7 @@ export function HelpDrawer({
   const dialogId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
+  const [available, setAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -28,8 +29,20 @@ export function HelpDrawer({
     document.body.style.overflow = 'hidden';
     dialog.querySelector<HTMLButtonElement>('[data-dialog-close]')?.focus();
 
+    const controller = new AbortController();
+    setAvailable(null);
+    fetch('/api/assistant', { signal: controller.signal })
+      .then(response => (response.ok ? response.json() : null))
+      .then(result => {
+        if (!controller.signal.aborted) setAvailable(result?.available === true);
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setAvailable(false);
+      });
+
     return () => {
       if (dialog.open) dialog.close();
+      controller.abort();
       document.body.style.overflow = previousOverflow;
       trigger?.focus();
     };
@@ -47,7 +60,7 @@ export function HelpDrawer({
         className="inline-flex min-h-11 items-center gap-2 rounded-full border border-ink/15 bg-white px-4 py-2 text-sm font-bold text-ink shadow-sm transition-colors hover:border-teal hover:text-teal focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
       >
         <span aria-hidden="true">?</span>
-        {ar ? 'المساعدة' : 'Help'}
+        {ar ? 'سند · المساعدة' : 'Sanad · Help'}
       </button>
 
       <dialog
@@ -65,7 +78,7 @@ export function HelpDrawer({
           <header className="flex items-start justify-between gap-4 border-b border-ink/10 px-5 py-4 sm:px-6">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-teal">
-                {ar ? 'مساعدة درسك' : 'DarSak help'}
+                {ar ? 'سند · مساعدة درسك' : 'Sanad · DarSak help'}
               </p>
               <h2 id="guided-help-title" className="mt-1 text-xl font-bold text-ink">
                 {ar ? 'المساعدة الموجّهة' : 'Guided platform help'}
@@ -82,7 +95,7 @@ export function HelpDrawer({
             </button>
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
-            <GuidedHelp locale={locale} access={access} />
+            <GuidedHelp locale={locale} access={access} available={available} open={open} />
           </div>
         </div>
       </dialog>
