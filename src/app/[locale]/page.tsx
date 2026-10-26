@@ -128,6 +128,55 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             </div>
           </div>
         ))}
+        <div className="mt-6 grid gap-3 lg:grid-cols-2">
+          {c.moreFeatures.map(([title, items]) => (
+            <details
+              key={title}
+              className="group rounded-[1rem] border border-line bg-surface px-5"
+            >
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+                <span>
+                  {locale === 'ar'
+                    ? `استكشف المزيد ${title}`
+                    : `Explore more ${title.toLowerCase()}`}
+                </span>
+                <ChevronDown
+                  aria-hidden="true"
+                  size={19}
+                  className="shrink-0 text-orange transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <ul className="grid gap-2 border-t border-line py-4 text-sm leading-6 text-ink-soft sm:grid-cols-2">
+                {items.map(item => (
+                  <li key={item} className="flex items-start gap-2">
+                    <CheckCircle2
+                      aria-hidden="true"
+                      size={16}
+                      className="mt-1 shrink-0 text-teal"
+                    />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      <section className="container pb-16 md:pb-20" aria-labelledby="pilot-title">
+        <div className="rounded-[1.15rem] border border-line bg-surface p-5 sm:p-7">
+          <h2 id="pilot-title" className="text-xl font-black text-teal">
+            {c.pilotTitle}
+          </h2>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-ink-soft">{c.pilotBody}</p>
+          <ul className="mt-4 grid gap-2 text-sm leading-6 text-ink sm:grid-cols-2">
+            {c.pilotItems.map(item => (
+              <li key={item} className="rounded-lg bg-cream px-4 py-3">
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       <section

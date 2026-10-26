@@ -158,6 +158,11 @@ form[aria-busy='true'] {
     transition: none;
     transform: none;
   }
+  .sanad-launcher,
+  .sanad-launcher:hover {
+    transition: none;
+    transform: none;
+  }
   a:hover,
   button:hover,
   summary:hover {
@@ -217,6 +222,13 @@ form[aria-busy='true'] {
 .mobile-workspace-nav {
   padding-bottom: env(safe-area-inset-bottom);
 }
+.sanad-launcher {
+  inset-inline-end: 24px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+}
+main#main-content {
+  padding-block-end: 5rem;
+}
 .group-request-bar {
   bottom: 0;
   padding-bottom: calc(0.75rem + env(safe-area-inset-bottom));
@@ -230,6 +242,19 @@ a {
   touch-action: manipulation;
 }
 @media (max-width: 1023px) {
+  body:has(.group-request-bar[aria-hidden='false']) .sanad-launcher {
+    bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  body:has([data-mobile-workspace-nav]) .sanad-launcher {
+    bottom: calc(88px + env(safe-area-inset-bottom));
+  }
+  body:has([data-mobile-workspace-nav]):has(.group-request-bar[aria-hidden='false'])
+    .sanad-launcher {
+    bottom: calc(168px + env(safe-area-inset-bottom));
+  }
+  .sanad-launcher {
+    inset-inline-end: 16px;
+  }
   body:has([data-mobile-workspace-nav]) {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }

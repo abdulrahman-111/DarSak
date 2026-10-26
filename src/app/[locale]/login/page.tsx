@@ -36,7 +36,7 @@ export default async function Login({
   return (
     <div className="bg-cream">
       <div className="container grid min-h-[calc(100vh-9rem)] gap-8 py-10 md:grid-cols-[minmax(0,1fr)_minmax(19rem,.72fr)] md:items-center md:py-16">
-        <section className="flex items-center">
+        <section className="flex min-w-0 items-center">
           <div className="w-full max-w-xl rounded-[1.4rem] border border-line bg-surface p-6 sm:p-9">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">
               {copy.loginEyebrow}

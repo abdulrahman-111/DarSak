@@ -3,7 +3,11 @@ import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { PlatformShell } from '@/components/platform/shell';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
-import { markAllNotificationsRead, markNotificationRead } from '@/features/notifications/actions';
+import {
+  markAllNotificationsRead,
+  markNotificationRead,
+  openNotification,
+} from '@/features/notifications/actions';
 import { NotificationSubmit } from '@/features/notifications/notification-actions';
 import {
   notificationHref,
@@ -102,14 +106,22 @@ export default async function NotificationsPage({
                           </time>
                         </div>
                         <div className="flex shrink-0 flex-wrap gap-2">
-                          {href && (
+                          {href && row.read_at ? (
                             <Link
                               href={href}
-                              className="rounded-lg bg-teal px-3 py-2 text-sm font-bold text-white"
+                              className="inline-flex min-h-11 items-center rounded-lg bg-teal px-3 py-2 text-sm font-bold text-white"
                             >
                               {ar ? 'فتح' : 'Open'}
                             </Link>
-                          )}
+                          ) : href ? (
+                            <NotificationSubmit
+                              action={openNotification.bind(null, locale, row.id)}
+                              pending={ar ? 'جارٍ الفتح…' : 'Opening…'}
+                              variant="primary"
+                            >
+                              {ar ? 'فتح' : 'Open'}
+                            </NotificationSubmit>
+                          ) : null}
                           {!row.read_at && (
                             <NotificationSubmit
                               action={markNotificationRead.bind(null, locale, row.id)}
