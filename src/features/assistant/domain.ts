@@ -27,6 +27,56 @@ export const groupDraftSchema = z
 
 export type GroupDraft = z.infer<typeof groupDraftSchema>;
 
+export const assistantChatMessageSchema = z
+  .object({
+    role: z.enum(['user', 'assistant']),
+    text: z.string().min(1).max(2000),
+  })
+  .strict();
+
+const chatRequestSchema = z
+  .object({
+    mode: z.literal('chat'),
+    locale: z.enum(['en', 'ar']),
+    acknowledged: z.literal(true),
+    messages: z.array(assistantChatMessageSchema).min(1).max(8),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.messages.at(-1)?.role !== 'user') {
+      context.addIssue({
+        code: 'custom',
+        path: ['messages'],
+        message: 'Last message must be from the user.',
+      });
+    }
+    if (value.messages.reduce((total, message) => total + message.text.length, 0) > 8000) {
+      context.addIssue({
+        code: 'custom',
+        path: ['messages'],
+        message: 'Message history is too long.',
+      });
+    }
+  });
+
+export const assistantRequestSchema = z.discriminatedUnion('mode', [
+  chatRequestSchema,
+  z
+    .object({
+      mode: z.literal('group_draft'),
+      acknowledged: z.literal(true),
+      ...groupDraftInputSchema.shape,
+    })
+    .strict(),
+]);
+
+export type AssistantRequest = z.infer<typeof assistantRequestSchema>;
+export type AssistantSuccess =
+  { ok: true; mode: 'chat'; text: string } | { ok: true; mode: 'group_draft'; draft: GroupDraft };
+export type AssistantErrorCode =
+  'invalid_input' | 'unauthenticated' | 'unavailable' | 'rate_limited' | 'provider_unavailable';
+export const assistantChatTextSchema = z.string().trim().min(1).max(6000);
+
 export type GroupDraftResult =
   | { ok: true; source: 'provider'; draft: GroupDraft }
   | { ok: false; code: 'invalid_input' | 'unauthorized' | 'unavailable' };
