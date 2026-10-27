@@ -45,7 +45,7 @@ export const publicCopy = {
     pilotTitle: 'Limited pilots',
     pilotBody: 'Some features are being tested with restricted access and are not available to every account.',
     pilotItems: [
-      'Sanad study assistant: limited preview for adult testers.',
+      'SanDak study assistant: limited preview for adult testers.',
       'Google Meet lesson setup: a pilot that requires Google account connection and setup.',
     ],
     approvalNote: 'Teachers review every enrollment request. A teacher account must be approved before its groups can be published.',
@@ -167,7 +167,7 @@ export const publicCopy = {
     pilotTitle: 'تجارب محدودة',
     pilotBody: 'يجري اختبار بعض الميزات بإتاحة مقيّدة، وهي غير متاحة لكل الحسابات.',
     pilotItems: [
-      'مساعد سند الدراسي: معاينة محدودة للمختبرين البالغين.',
+      'مساعد سندك الدراسي: معاينة محدودة للمختبرين البالغين.',
       'إعداد حصص Google Meet: تجربة تتطلب ربط حساب Google وإكمال الإعداد.',
     ],
     approvalNote: 'يراجع المعلم كل طلب انضمام، ويوافق فريق درسك على حسابه قبل نشر مجموعاته.',

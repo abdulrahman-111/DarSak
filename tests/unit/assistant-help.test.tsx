@@ -12,7 +12,7 @@ function markup(element: React.ReactElement) {
 }
 
 describe('guided help UI', () => {
-  it('keeps local help available in English and Arabic and adds a Sanad tab', () => {
+  it('keeps local help available in English and Arabic and adds a SanDak tab', () => {
     const en = markup(
       createElement(GuidedHelp, {
         locale: 'en',
@@ -28,7 +28,7 @@ describe('guided help UI', () => {
 
     expect(en).toContain('These local guidance topics run on this device and do not use live AI.');
     expect(en).toContain('What would you like help with?');
-    expect(en).toContain('Sanad');
+    expect(en).toContain('SanDak');
     expect(ar).toContain('هذه إرشادات محلية وقوالب موجّهة. لا تستخدم ذكاءً اصطناعيًا مباشرًا.');
     expect(ar).toContain('ما الذي تريد المساعدة فيه؟');
   });
@@ -81,7 +81,7 @@ describe('guided help UI', () => {
     );
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('<dialog');
-    expect(html).toContain('aria-label="فتح سند"');
+    expect(html).toContain('aria-label="فتح سندك"');
     expect(html).toContain('disabled=""');
     expect(html).toContain('aria-busy="true"');
     expect(html).toContain('sanad-launcher');
@@ -95,15 +95,15 @@ describe('guided help UI', () => {
     expect(html).toContain('href="/en/register"');
     expect(html).toContain('For account help, sign in first');
     expect(html).not.toContain('href="/en/reports"');
-    expect(html).not.toContain('Sanad</button>');
+    expect(html).not.toContain('SanDak</button>');
     expect(html).not.toContain('guided-help-question');
   });
 
-  it('shows localized Sanad chat fallback without rendering model HTML or links', () => {
+  it('shows localized SanDak chat fallback without rendering model HTML or links', () => {
     const en = markup(createElement(ChatPanel, { locale: 'en', available: false, active: true }));
     const ar = markup(createElement(ChatPanel, { locale: 'ar', available: false, active: true }));
     expect(en).toContain('Live help is unavailable right now. You can use local guidance.');
-    expect(en).toContain('I&#x27;m Sanad, DarSak&#x27;s assistant.');
+    expect(en).toContain('I&#x27;m SanDak, DarSak&#x27;s assistant.');
     expect(ar).toContain('المساعدة المباشرة غير متاحة الآن');
     expect(en).not.toContain('<a ');
     expect(en).not.toContain('<form');

@@ -80,8 +80,8 @@ function HelpDrawerPanel({
         aria-expanded={open}
         aria-busy={!ready}
         aria-controls={dialogId}
-        aria-label={ar ? 'فتح سند' : 'Open Sanad'}
-        title={ar ? 'فتح سند · المساعدة' : 'Open Sanad · Help'}
+        aria-label={ar ? 'فتح سندك' : 'Open SanDak'}
+        title={ar ? 'فتح سندك · المساعدة' : 'Open SanDak · Help'}
         disabled={!ready}
         onClick={() => setOpen(true)}
         className="sanad-launcher fixed z-30 inline-flex size-14 items-center justify-center rounded-full border border-teal/15 bg-teal text-cream shadow-lg transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-teal/95 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange disabled:cursor-wait disabled:opacity-60"
@@ -93,7 +93,7 @@ function HelpDrawerPanel({
         ref={dialogRef}
         id={dialogId}
         dir={ar ? 'rtl' : 'ltr'}
-        aria-label={ar ? 'مساعدة سند' : 'Sanad help'}
+        aria-label={ar ? 'مساعدة سندك' : 'SanDak help'}
         onClose={() => setOpen(false)}
         onClick={event => {
           if (event.target instanceof HTMLElement && event.target.closest('a')) setOpen(false);
@@ -105,7 +105,7 @@ function HelpDrawerPanel({
             <header className="flex items-start justify-between gap-4 border-b border-ink/10 px-5 py-4 sm:px-6">
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-teal">
-                  {ar ? 'سند · مساعدة درسك' : 'Sanad · DarSak help'}
+                  {ar ? 'سندك · مساعدة درسك' : 'SanDak · DarSak help'}
                 </p>
                 <h2 className="mt-1 text-xl font-bold text-ink">
                   {ar ? 'المساعدة الموجّهة' : 'Guided platform help'}
@@ -144,7 +144,7 @@ export function GuestHelp({ locale }: { locale: AssistantLocale }): React.JSX.El
   ];
 
   return (
-    <section className="space-y-4" aria-label={ar ? 'مساعدة سند' : 'Sanad help'}>
+    <section className="space-y-4" aria-label={ar ? 'مساعدة سندك' : 'SanDak help'}>
       <p className="text-sm leading-6 text-ink/75">
         {ar
           ? 'يمكنك تصفح المساعدة العامة، أو تسجيل الدخول للوصول إلى الإرشادات المناسبة لحسابك.'
