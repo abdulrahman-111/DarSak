@@ -1,8 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { WorkspaceNavigationSidebar } from '@/components/workspace-navigation-sidebar';
-import { HelpDrawer } from '@/features/assistant/help-drawer';
-import type { AssistantLocale, AssistantRole } from '@/features/assistant/domain';
 import type { PlatformRole } from './access';
 
 export type NavItem = {
@@ -134,11 +132,6 @@ export function PlatformShell({
   children: React.ReactNode;
 }) {
   const ar = locale === 'ar';
-  const assistantLocale: AssistantLocale = ar ? 'ar' : 'en';
-  const access: { role: AssistantRole; canTeach: boolean } = {
-    role,
-    canTeach: role === 'teacher' && canTeach,
-  };
   const items = platformNavigation(locale, role);
   return (
     <div className="container grid grid-cols-1 gap-3 py-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:py-8">
@@ -183,12 +176,7 @@ export function PlatformShell({
           <span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span>
         </div>
       </aside>
-      <div className="min-w-0">
-        <div className="mb-3 flex justify-end">
-          <HelpDrawer locale={assistantLocale} access={access} />
-        </div>
-        {children}
-      </div>
+      <div className="min-w-0">{children}</div>
     </div>
   );
 }

@@ -7,10 +7,12 @@ export function NotificationSubmit({
   children,
   pending,
   action,
+  variant = 'secondary',
 }: {
   children: string;
   pending: string;
   action: (state: NotificationActionState, formData: FormData) => Promise<NotificationActionState>;
+  variant?: 'primary' | 'secondary';
 }) {
   const [state, formAction, busy] = useActionState(action, null);
   return (
@@ -18,7 +20,7 @@ export function NotificationSubmit({
       <button
         type="submit"
         disabled={busy}
-        className="rounded-lg border border-teal px-3 py-2 text-sm font-bold text-teal disabled:opacity-60"
+        className={`min-h-11 rounded-lg px-3 py-2 text-sm font-bold disabled:opacity-60 ${variant === 'primary' ? 'bg-teal text-white' : 'border border-teal text-teal'}`}
       >
         {busy ? pending : children}
       </button>

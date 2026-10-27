@@ -63,7 +63,7 @@ describe('optional workspace layout', () => {
     expect(mocks.readTeacherAccessStatus).toHaveBeenCalledWith({});
   });
 
-  it('shows teacher-only group guidance when cached teaching access is active', async () => {
+  it('uses the same viewer database for the cached teaching access read', async () => {
     mocks.getRequestViewer.mockResolvedValue({
       db: { kind: 'teacher-db' },
       user: { id: 'teacher-id' },
@@ -81,7 +81,7 @@ describe('optional workspace layout', () => {
       }),
     );
 
-    expect(html).toContain('Create and manage groups');
+    expect(html).toContain('Content');
     expect(mocks.readTeacherAccessStatus).toHaveBeenCalledWith({ kind: 'teacher-db' });
   });
 
@@ -101,7 +101,7 @@ describe('optional workspace layout', () => {
     );
 
     expect(html).toContain('Dashboard');
-    expect(html).not.toContain('Create and manage groups');
+    expect(mocks.readTeacherAccessStatus).toHaveBeenCalledWith({ kind: 'teacher-db' });
   });
 
   it.each([

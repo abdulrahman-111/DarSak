@@ -34,7 +34,7 @@ export function GuidedHelp({
   const shownTopics = matches === null || matches.length === 0 ? topics : matches;
 
   return (
-    <section className="space-y-5" aria-label={ar ? 'مساعدة سند' : 'Sanad help'}>
+    <section className="space-y-5" aria-label={ar ? 'مساعدة سندك' : 'SanDak help'}>
       <div role="tablist" aria-label={ar ? 'نوع المساعدة' : 'Help type'} className="flex gap-2">
         <button
           type="button"
@@ -43,7 +43,7 @@ export function GuidedHelp({
           onClick={() => setTab('chat')}
           className="min-h-11 rounded-full border px-4 py-2 text-sm font-bold"
         >
-          {ar ? 'سند' : 'Sanad'}
+          {ar ? 'سندك' : 'SanDak'}
         </button>
         <button
           type="button"

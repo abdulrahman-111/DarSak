@@ -53,7 +53,7 @@ export function ChatPanel({
   const t = ar
     ? {
         intro:
-          'أنا سند، مساعد درسك. اسأل عن المنصة أو اطلب شرحًا دراسيًا أو أمثلة أو مساعدة في التخطيط.',
+          'أنا سندك، مساعد درسك. اسأل عن المنصة أو اطلب شرحًا دراسيًا أو أمثلة أو مساعدة في التخطيط.',
         unavailable: 'المساعدة المباشرة غير متاحة الآن. يمكنك استخدام الإرشادات المحلية.',
         consent:
           'أؤكد أن عمري 18 عامًا أو أكثر. سيُرسل نص رسالتي إلى Google، وقد تراجع Google المحتوى أو تستخدمه لتحسين خدماتها. لن أرسل معلومات شخصية أو خاصة.',
@@ -70,7 +70,7 @@ export function ChatPanel({
       }
     : {
         intro:
-          "I'm Sanad, DarSak's assistant. Ask about the platform, request a study explanation or examples, or get help planning.",
+          "I'm SanDak, DarSak's assistant. Ask about the platform, request a study explanation or examples, or get help planning.",
         unavailable: 'Live help is unavailable right now. You can use local guidance.',
         consent:
           'I confirm I am 18 or older. My message text will be sent to Google, which may review or use it to improve its services. I will not send personal or private information.',
@@ -156,7 +156,7 @@ export function ChatPanel({
   }
 
   return (
-    <section className="grid gap-4" aria-label={ar ? 'محادثة سند' : 'Sanad chat'}>
+    <section className="grid gap-4" aria-label={ar ? 'محادثة سندك' : 'SanDak chat'}>
       <p className="text-sm leading-6 text-ink/75">{t.intro}</p>
       {available !== true ? (
         <p className="rounded-xl bg-mint/50 px-3 py-2 text-sm leading-6 text-ink/75" role="status">

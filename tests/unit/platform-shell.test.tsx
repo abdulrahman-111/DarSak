@@ -36,6 +36,7 @@ describe('role navigation shell', () => {
     expect(html).toContain('A Very Long Teacher Name');
     expect(html).toContain('class="mt-5 hidden gap-2 pb-2 lg:grid"');
     expect(html).toContain('aria-label="Teacher navigation"');
+    expect(html).not.toContain('aria-haspopup="dialog"');
   });
 
   it('shows the active nested page in the compact menu for each role and locale', () => {

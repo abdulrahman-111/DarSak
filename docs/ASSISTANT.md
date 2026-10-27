@@ -1,6 +1,6 @@
-# Sanad (سند): DarSak assistant pilot
+# SanDak (سندك): DarSak assistant pilot
 
-The protected staging pilot includes real Gemini-powered English/Arabic study and platform chat, plus optional teacher group-writing drafts. Sanad means a source of support. Authored local platform guidance and a clearly labelled local group template remain available independently of the provider. The live DarSak site is unchanged.
+The protected staging pilot includes real Gemini-powered English/Arabic study and platform chat, plus optional teacher group-writing drafts. SanDak is DarSak's study and teaching helper. Authored local platform guidance and a clearly labelled local group template remain available independently of the provider. The live DarSak site is unchanged.
 
 Help topics follow the signed-in role and link only to existing DarSak routes. Destination authorization remains enforced by existing routes and database rules. Model output is rendered as plain text. Drafts stay in browser memory until a teacher explicitly applies the four displayed fields and separately saves the ordinary group form. A preview never publishes a group or changes enrollment.
 
