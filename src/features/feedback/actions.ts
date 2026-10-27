@@ -10,17 +10,29 @@ import {
 export type FeedbackState = { error?: string; success?: string; version?: number } | null;
 export async function feedbackAction(
   locale: string,
-  kind: 'save' | 'withdraw' | 'reply' | 'moderate',
+  kind: 'save' | 'withdraw' | 'reply',
   id: string,
   _state: FeedbackState,
   form: FormData,
 ): Promise<FeedbackState> {
-  const ar = locale === 'ar',
-    version = Number(form.get('version'));
+  const ar = locale === 'ar';
+  if (kind !== 'save' && kind !== 'withdraw' && kind !== 'reply')
+    return { error: ar ? 'الإجراء غير صالح.' : 'Invalid feedback action.' };
+  const version = Number(form.get('version'));
   if (!idSchema.safeParse(id).success || !Number.isSafeInteger(version) || version < 0)
     return { error: ar ? 'حدّث الصفحة وحاول مجددًا.' : 'Refresh the page and try again.' };
   const db = await createClient();
-  let r;
+  const { data: identity } = await db.auth.getUser();
+  if (!identity.user) return { error: ar ? 'سجّل الدخول مجددًا.' : 'Sign in again.' };
+  const { data: actor, error: actorError } = await db
+    .from('profiles')
+    .select('role,status')
+    .eq('id', identity.user.id)
+    .maybeSingle();
+  const allowedRole = kind === 'reply' ? 'teacher' : 'student';
+  if (actorError || actor?.status !== 'active' || actor.role !== allowedRole)
+    return { error: ar ? 'لا تملك صلاحية هذا الإجراء.' : 'You are not allowed to do this.' };
+  let r: { data: unknown; error: { code?: string } | null } | null = null;
   if (kind === 'save') {
     const parsed = feedbackInput.safeParse(Object.fromEntries(form));
     if (!parsed.success)
@@ -43,13 +55,7 @@ export async function feedbackAction(
       p_reply: String(form.get('reply') ?? ''),
       p_expected_version: version,
     });
-  else
-    r = await db.rpc('moderate_group_feedback', {
-      p_id: id,
-      p_decision: String(form.get('decision') ?? ''),
-      p_note: String(form.get('admin_note') ?? ''),
-      p_expected_version: version,
-    });
+  if (!r) return { error: ar ? 'الإجراء غير صالح.' : 'Invalid feedback action.' };
   if (r.error)
     return {
       error:
@@ -65,7 +71,6 @@ export async function feedbackAction(
   revalidateTeacherWorkspace();
   for (const l of ['en', 'ar']) {
     revalidatePath(`/${l}/groups`, 'layout');
-    revalidatePath(`/${l}/admin/feedback`);
     revalidatePath(`/${l}/teacher/feedback`);
   }
   return {

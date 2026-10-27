@@ -16,7 +16,6 @@ import { unreadNotificationCount } from '@/features/notifications/data';
 import type { PlatformRole } from './platform/access';
 
 export function globalReportsHref(locale: string, activeRole: string | null) {
-  if (activeRole === 'admin') return `/${locale}/admin/reports`;
   if (activeRole === 'student' || activeRole === 'teacher') return `/${locale}/reports`;
   return null;
 }
@@ -26,22 +25,12 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
   const otherLocale = locale === 'ar' ? 'en' : 'ar';
   const role = me?.profile?.role;
   const activeRole: PlatformRole | null =
-    me?.profile?.status === 'active' &&
-    (role === 'teacher' || role === 'admin' || role === 'student')
-      ? role
-      : null;
+    me?.profile?.status === 'active' && (role === 'teacher' || role === 'student') ? role : null;
   const dashboardHref = activeRole ? `/${locale}/${activeRole}` : `/${locale}/dashboard`;
   const homeHref = activeRole ? dashboardHref : `/${locale}`;
   const reportsHref = globalReportsHref(locale, activeRole);
   const showDiscovery = shouldShowDiscoveryNavigation(activeRole);
-  const reportsLabel =
-    activeRole === 'admin'
-      ? locale === 'ar'
-        ? 'البلاغات'
-        : 'Reports'
-      : locale === 'ar'
-        ? 'الإبلاغ عن مشكلة'
-        : 'Report a problem';
+  const reportsLabel = locale === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report a problem';
   const workspaceItems = activeRole ? platformNavigation(locale, activeRole) : [];
   const unreadCount = activeRole
     ? await unreadNotificationCount((await getRequestViewer()).db)

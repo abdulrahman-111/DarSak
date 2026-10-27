@@ -12,6 +12,8 @@ DarSak is a bilingual learning platform for students and teachers. Students can 
 
 DarSak uses Next.js 16, React 19, TypeScript, Tailwind CSS, Supabase Auth, Postgres and Storage, and Vercel for hosting and scheduled jobs.
 
+The administrator portal is a separate Next.js application in [`apps/admin`](apps/admin/README.md), deployed at [darsak-admin-portal.vercel.app](https://darsak-admin-portal.vercel.app). It shares the live Supabase project with the main site and has its own Vercel project, login session, and production deployment settings.
+
 ## Get started
 
 Use Node.js 24, npm, Docker, and the Supabase CLI. Run a backend on your own machine; no maintainer credentials are needed.
@@ -35,6 +37,8 @@ Copy the local Supabase URL and public key into `.env.local`, generate the recov
 - `npm run lint` runs ESLint.
 - `npm run format` formats the code with Prettier; `npm run format:check` (run in CI) fails on unformatted files.
 - `npm run typecheck` checks TypeScript types.
+- `npm run build:admin` and `npm run typecheck:admin` build and check the administrator portal.
+- `npm run boundaries` checks that the admin application stays within its intended source boundaries.
 - `npm test` runs the Vitest suite.
 
 ## Project guides
@@ -42,11 +46,13 @@ Copy the local Supabase URL and public key into `.env.local`, generate the recov
 - [Development](docs/DEVELOPMENT.md) — local setup, environment variables, and contributor commands.
 - [Architecture](docs/ARCHITECTURE.md) — app structure, data flow, and key integrations.
 - [Deployment](docs/DEPLOYMENT.md) — hosting, Supabase configuration, migrations, and scheduled workers.
+- [Administrator portal](apps/admin/README.md) — separate production-only Vercel application setup and operations.
 - [Archived project records](docs/archive/README.md) — historical proposals, plans, and validation notes.
 
 ## Repository layout
 
 - `src/app/` — localized routes, layouts, and API endpoints.
+- `apps/admin/` — separate administrator portal, with its own dependencies, routes, and environment configuration.
 - `src/features/` — feature-specific data access, domain logic, actions, and UI.
 - `src/components/` — shared interface components.
 - `src/lib/` — shared libraries, including Supabase clients.

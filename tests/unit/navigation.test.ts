@@ -40,10 +40,9 @@ describe('navigation active route matching', () => {
 });
 
 describe('account and workspace navigation', () => {
-  it('keeps personal settings under Account while leaving admin management in the admin workspace', () => {
+  it('keeps personal settings under Account and excludes administrator routes', () => {
     const teacher = platformNavigation('en', 'teacher').map(item => item.href);
     const student = platformNavigation('ar', 'student').map(item => item.href);
-    const admin = platformNavigation('en', 'admin').map(item => item.href);
 
     expect(teacher).toContain('/en/account');
     expect(teacher).not.toContain('/en/teacher/profile');
@@ -51,9 +50,7 @@ describe('account and workspace navigation', () => {
     expect(teacher).not.toContain('/en/teacher/access');
     expect(student).toContain('/ar/account');
     expect(student).not.toContain('/ar/student/profile');
-    expect(admin).toContain('/en/admin/users');
-    expect(admin).toContain('/en/admin/teachers');
-    expect(admin).toContain('/en/account');
+    expect([...teacher, ...student].some(path => path.includes('/admin'))).toBe(false);
   });
 
   it('orders teacher tasks around teaching work with direct calendar and enrollment labels', () => {
@@ -105,26 +102,5 @@ describe('account and workspace navigation', () => {
     expect(teacher.find(item => item.href === '/ar/teacher/lessons')?.activePaths).toContain(
       '/ar/teacher/bookings',
     );
-  });
-
-  it('provides four primary links and keeps all admin operations available as secondary links', () => {
-    const admin = platformNavigation('ar', 'admin');
-    expect(admin.filter(item => item.primary).map(item => item.label)).toEqual([
-      'الرئيسية',
-      'المعلمون',
-      'البلاغات',
-      'الأشخاص',
-    ]);
-    expect(admin.filter(item => !item.primary).map(item => item.href)).toEqual([
-      '/ar/admin/email',
-      '/ar/admin/education',
-      '/ar/admin/groups',
-      '/ar/admin/health',
-      '/ar/admin/feedback',
-      '/ar/admin/settings',
-      '/ar/account',
-      '/ar/reports',
-      '/ar/notifications',
-    ]);
   });
 });

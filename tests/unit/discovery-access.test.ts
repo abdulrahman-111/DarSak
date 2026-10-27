@@ -11,7 +11,6 @@ describe('role-specific discovery access', () => {
     expect(canUseFullDiscovery('student')).toBe(true);
     expect(canUseFullDiscovery(null)).toBe(false);
     expect(canUseFullDiscovery('teacher')).toBe(false);
-    expect(canUseFullDiscovery('admin')).toBe(false);
   });
 
   it('ignores guest filter and pagination queries', () => {
@@ -34,6 +33,5 @@ describe('role-specific discovery access', () => {
     expect(shouldShowDiscoveryNavigation(null)).toBe(true);
     expect(shouldShowDiscoveryNavigation('student')).toBe(true);
     expect(shouldShowDiscoveryNavigation('teacher')).toBe(false);
-    expect(shouldShowDiscoveryNavigation('admin')).toBe(false);
   });
 });

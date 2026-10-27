@@ -21,11 +21,7 @@ async function activeManager(locale: Locale) {
   } = await db.auth.getUser();
   if (!user)
     return {
-      error: copy(
-        locale,
-        'Sign in with an active teacher or administrator account.',
-        'سجل الدخول بحساب معلم أو مسؤول نشط.',
-      ),
+      error: copy(locale, 'Sign in with an active teacher account.', 'سجل الدخول بحساب معلم نشط.'),
     } as const;
   const { data: actor, error } = await db
     .from('profiles')
@@ -40,20 +36,16 @@ async function activeManager(locale: Locale) {
         'تعذر التحقق من حسابك. حاول مرة أخرى.',
       ),
     } as const;
-  if (actor?.status !== 'active' || !['teacher', 'admin'].includes(actor.role)) {
+  if (actor?.status !== 'active' || actor.role !== 'teacher') {
     return {
-      error: copy(
-        locale,
-        'An active teacher or administrator account is required.',
-        'يلزم حساب معلم أو مسؤول نشط.',
-      ),
+      error: copy(locale, 'An active teacher account is required.', 'يلزم حساب معلم نشط.'),
     } as const;
   }
   if (actor.role === 'teacher') {
     const access = await checkTeachingAccess(db);
     if (!access.allowed) return { error: teachingGuardMessage(locale, access.reason) } as const;
   }
-  return { db, user, role: actor.role } as const;
+  return { db, user } as const;
 }
 
 function managementError(locale: Locale, raw: string | undefined) {
@@ -124,12 +116,10 @@ function refreshManagement(locale: Locale, groupId?: string, lessonId?: string) 
   for (const current of ['en', 'ar'] as const) {
     revalidatePath(`/${current}/teacher/groups`);
     revalidatePath(`/${current}/teacher`);
-    revalidatePath(`/${current}/admin/groups`);
     if (groupId) revalidatePath(`/${current}/teacher/groups/${groupId}`);
     if (lessonId) revalidatePath(`/${current}/teacher/lessons/${lessonId}`);
     revalidatePath(`/${current}/teacher/lessons`);
   }
-  revalidatePath(`/${locale}/admin`);
 }
 
 export async function cancelTeacherGroup(
@@ -174,11 +164,7 @@ export async function deleteUnusedTeacherGroup(
   const { error } = await me.db.rpc('delete_unused_teacher_group', { p_group_id: groupId });
   if (error) return { error: managementError(locale, error.message) };
   refreshManagement(locale, groupId);
-  redirect(
-    me.role === 'admin'
-      ? `/${locale}/admin/groups?deleted=1`
-      : `/${locale}/teacher/groups?deleted=1`,
-  );
+  redirect(`/${locale}/teacher/groups?deleted=1`);
 }
 
 export async function deleteManualTeacherLesson(

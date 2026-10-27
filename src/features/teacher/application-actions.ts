@@ -281,6 +281,5 @@ function revalidate(locale: Locale, id: string) {
   for (const lang of ['en', 'ar'] as const) {
     revalidatePath(`/${lang}/account/application`);
     revalidatePath(`/${lang}/teacher`);
-    revalidatePath(`/${lang}/admin/teachers/${id}`);
   }
 }

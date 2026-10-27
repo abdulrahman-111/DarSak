@@ -38,15 +38,3 @@ export function hasTeacherWorkspaceNavigation(pathname: string, locale: string):
     `/${locale}/groups`,
   ].some(base => path === base || path.startsWith(`${base}/`));
 }
-
-export function hasAdminWorkspaceNavigation(pathname: string, locale: string): boolean {
-  const path = pathname.replace(/\/$/, '');
-  return [
-    `/${locale}/admin`,
-    `/${locale}/notifications`,
-    `/${locale}/reports`,
-    `/${locale}/account`,
-    `/${locale}/teachers`,
-    `/${locale}/groups`,
-  ].some(base => path === base || path.startsWith(`${base}/`));
-}

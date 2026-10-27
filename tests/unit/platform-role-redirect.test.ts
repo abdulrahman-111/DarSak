@@ -30,8 +30,8 @@ describe('platform role redirects', () => {
   it.each([
     ['en', 'teacher', 'student', '/en/student'],
     ['ar', 'teacher', 'student', '/ar/student'],
-    ['en', 'student', 'admin', '/en/admin'],
-    ['ar', 'student', 'admin', '/ar/admin'],
+    ['en', 'student', 'admin', '/en/login?error=admin-portal'],
+    ['ar', 'student', 'admin', '/ar/login?error=admin-portal'],
   ] as const)(
     'redirects %s %s-area mismatch to actual role home',
     async (locale, role, activeRole, target) => {

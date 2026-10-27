@@ -53,9 +53,6 @@ describe('notifications domain', () => {
     expect(notificationHref('student', 'lesson_rescheduled', { lesson_id: uuid }, 'en')).toBe(
       `/en/student/lessons/${uuid}`,
     );
-    expect(notificationHref('admin', 'teacher_review_requested', { teacher_id: uuid }, 'ar')).toBe(
-      `/ar/admin/teachers/${uuid}`,
-    );
     expect(notificationHref('teacher', 'enrollment_requested', { group_id: uuid }, 'en')).toBe(
       `/en/teacher/requests?group_id=${uuid}`,
     );

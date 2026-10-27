@@ -1,8 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-const { createClient } = vi.hoisted(() => ({ createClient: vi.fn() }));
+const { createClient, getAdminActor } = vi.hoisted(() => ({
+  createClient: vi.fn(),
+  getAdminActor: vi.fn(),
+}));
 vi.mock('server-only', () => ({}));
 vi.mock('next/server', () => ({ after: vi.fn() }));
 vi.mock('@/lib/supabase/server', () => ({ createClient }));
+vi.mock('@admin/lib/access', () => ({ getAdminActor }));
 vi.mock('next/cache', () => ({ revalidatePath: vi.fn() }));
 import {
   cairoDateTime,
@@ -13,7 +17,7 @@ import {
   parseTeacherAccessStatus,
 } from '@/features/teacher-access/domain';
 import { renewTeacherAccess } from '@/features/teacher-access/actions';
-import { saveTeacherFeePolicy } from '@/features/teacher-access/admin-actions';
+import { saveTeacherFeePolicy } from '@admin/features/teacher-access/admin-actions';
 const id = '12ab34cd-12ab-42cd-82ab-12ab34cd56ef';
 const status = (overrides: Record<string, unknown> = {}) => ({
   has_access: false,
@@ -29,7 +33,10 @@ const status = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 describe('monthly teacher access contracts', () => {
-  beforeEach(() => createClient.mockReset());
+  beforeEach(() => {
+    createClient.mockReset();
+    getAdminActor.mockReset();
+  });
   it('treats missing grants as denied and accepts current and expired periods without changing their start', () => {
     expect(parseTeacherAccessStatus(status())?.has_access).toBe(false);
     expect(
@@ -173,7 +180,7 @@ describe('monthly teacher access contracts', () => {
   });
   it('describes paid review differently for expired and still-current access', async () => {
     const access = parseTeacherAccessStatus(status({ pending_request_id: id }))!;
-    createClient.mockResolvedValue({
+    const db = {
       auth: { getUser: async () => ({ data: { user: { id } } }) },
       from: () => ({
         select: () => ({
@@ -183,7 +190,9 @@ describe('monthly teacher access contracts', () => {
         }),
       }),
       rpc: async () => ({ data: { outcome: 'requested', access, request_id: id }, error: null }),
-    });
+    };
+    createClient.mockResolvedValue(db);
+    getAdminActor.mockResolvedValue({ db, id });
     const expired = await renewTeacherAccess('en', null, new FormData());
     expect(expired?.success).toContain('Teaching remains paused');
     expect(expired?.success).not.toContain('current access remains active');
@@ -212,7 +221,7 @@ describe('monthly teacher access contracts', () => {
   });
   it('requires explicit confirmation before the admin fee policy RPC', async () => {
     const rpc = vi.fn(async () => ({ data: null, error: null }));
-    createClient.mockResolvedValue({
+    const db = {
       auth: { getUser: async () => ({ data: { user: { id } } }) },
       from: () => ({
         select: () => ({
@@ -220,7 +229,9 @@ describe('monthly teacher access contracts', () => {
         }),
       }),
       rpc,
-    });
+    };
+    createClient.mockResolvedValue(db);
+    getAdminActor.mockResolvedValue({ db, id });
     const unconfirmed = new FormData();
     expect((await saveTeacherFeePolicy('ar', null, unconfirmed))?.error).toContain(
       'أكد تغيير السياسة',

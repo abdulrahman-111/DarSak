@@ -1,22 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, revalidatePathMock } = vi.hoisted(() => ({
+const { createClientMock, getAdminActorMock, revalidatePathMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
+  getAdminActorMock: vi.fn(),
   revalidatePathMock: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
-vi.mock('next/server', () => ({ after: vi.fn() }));
-vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
+vi.mock('@admin/lib/access', () => ({ getAdminActor: getAdminActorMock }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidatePathMock }));
 
-import { adminAction, decideTeacherReview } from '@/features/admin/actions';
-import { teacherReviewDecisionSchema, teacherReviewListSchema } from '@/features/admin/domain';
+import { adminAction, decideTeacherReview } from '@admin/features/admin/actions';
+import { teacherReviewDecisionSchema, teacherReviewListSchema } from '@admin/features/admin/domain';
 import {
   adminTeacherReviews,
   canonicalTeacherReviewStatus,
   normalizeReviewPage,
   peopleTeacherMetadata,
-} from '@/features/admin/review-data';
+} from '@admin/features/admin/review-data';
 
 const teacherId = '11111111-1111-4111-8111-111111111111';
 const requestId = '22222222-2222-4222-8222-222222222222';
@@ -28,7 +28,7 @@ function form(value: Record<string, string>) {
 }
 function setup({ rpcError }: { rpcError?: { message: string } | null } = {}) {
   const rpc = vi.fn(async () => ({ data: eventId, error: rpcError ?? null }));
-  createClientMock.mockResolvedValue({
+  const db = {
     auth: {
       getUser: async () => ({ data: { user: { id: '44444444-4444-4444-8444-444444444444' } } }),
     },
@@ -40,11 +40,14 @@ function setup({ rpcError }: { rpcError?: { message: string } | null } = {}) {
       }),
     }),
     rpc,
-  });
+  };
+  createClientMock.mockResolvedValue(db);
+  getAdminActorMock.mockResolvedValue({ db, id: '44444444-4444-4444-8444-444444444444' });
   return { rpc };
 }
 beforeEach(() => {
   createClientMock.mockReset();
+  getAdminActorMock.mockReset();
   revalidatePathMock.mockReset();
 });
 
@@ -81,7 +84,7 @@ describe('explicit teacher review decisions', () => {
   });
   it('keeps account suspension independent even if the old approval checkbox is submitted', async () => {
     const rpc = vi.fn(async () => ({ data: null, error: null }));
-    createClientMock.mockResolvedValue({
+    const db = {
       auth: {
         getUser: async () => ({ data: { user: { id: '44444444-4444-4444-8444-444444444444' } } }),
       },
@@ -99,7 +102,9 @@ describe('explicit teacher review decisions', () => {
         }),
       }),
       rpc,
-    });
+    };
+    createClientMock.mockResolvedValue(db);
+    getAdminActorMock.mockResolvedValue({ db, id: '44444444-4444-4444-8444-444444444444' });
     await adminAction(
       'en',
       'user',

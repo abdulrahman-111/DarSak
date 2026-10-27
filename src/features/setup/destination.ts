@@ -3,7 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Locale } from '@/i18n/config';
 import { safeLoginReturnPath } from '@/features/auth/return-path';
 
-export type SetupRole = 'teacher' | 'student' | 'admin';
+export type SetupRole = 'teacher' | 'student';
 
 /** Keep only known local destinations that lead to a daily workspace or an existing group/class. */
 export function safeSetupReturnPath(
@@ -62,8 +62,6 @@ export async function resolveSetupDestination(
     ) {
       return errorDestination();
     }
-
-    if (canonicalRole === 'admin') return safeFallback;
 
     if (canonicalRole === 'teacher') {
       const applicationResult = await db

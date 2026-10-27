@@ -65,7 +65,8 @@ describe('transactional email boundaries', () => {
     expect(mail?.html).toContain('Open DarSak');
     expect(mail?.html).toContain('&lt;script&gt;');
     expect(mail?.html).not.toContain('<script>');
-    expect(mail?.text).toContain('https://dars.example/en/admin/teachers/' + id);
+    expect(mail?.text).toContain('https://darsak-admin-portal.vercel.app/en/admin/teachers/' + id);
+    expect(mail?.text).toContain('https://darsak-admin-portal.vercel.app/ar/admin/teachers/' + id);
     expect(
       renderEmail(
         'enrollment_requested',

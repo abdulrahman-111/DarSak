@@ -9,7 +9,7 @@ export async function ManageFeedbackPage({
   page = 1,
 }: {
   locale: 'en' | 'ar';
-  role: 'admin' | 'teacher';
+  role: 'teacher';
   page?: number;
 }) {
   const me = await requireViewer(locale, role),
@@ -23,13 +23,9 @@ export async function ManageFeedbackPage({
         eyebrow={ar ? 'جودة التعلم' : 'Learning quality'}
         title={ar ? 'آراء الطلاب' : 'Student feedback'}
         description={
-          role === 'admin'
-            ? ar
-              ? 'راجع التقييمات وردود المعلمين قبل نشرها. لا تنشر معلومات شخصية.'
-              : 'Review student feedback and teacher replies before publication. Do not publish personal information.'
-            : ar
-              ? 'رد على آراء الطلاب المنشورة. يُراجع ردك قبل ظهوره.'
-              : 'Reply to published student feedback. Replies are reviewed before they appear.'
+          ar
+            ? 'رد على آراء الطلاب المنشورة. يُراجع ردك قبل ظهوره.'
+            : 'Reply to published student feedback. Replies are reviewed before they appear.'
         }
       />
       {r.error || !data ? (
@@ -67,12 +63,7 @@ export async function ManageFeedbackPage({
                     {row.reply_pending}
                   </p>
                 )}
-                <FeedbackForm
-                  locale={locale}
-                  kind={role === 'admin' ? 'moderate' : 'reply'}
-                  id={row.id}
-                  row={row}
-                />
+                <FeedbackForm locale={locale} kind="reply" id={row.id} row={row} />
               </Panel>
             ))}
           </div>

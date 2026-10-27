@@ -55,12 +55,14 @@ const location = (response: Response) => new URL(response.headers.get('location'
 describe('auth callback route', () => {
   const exchangeCodeForSession = vi.fn();
   const verifyOtp = vi.fn();
+  const signOut = vi.fn();
 
   beforeEach(() => {
     vi.stubEnv('AUTH_RECOVERY_SECRET', 'a sufficiently long test-only recovery secret');
     afterMock.mockReset();
     exchangeCodeForSession.mockReset().mockResolvedValue({ error: null });
     verifyOtp.mockReset().mockResolvedValue({ error: null });
+    signOut.mockReset().mockResolvedValue({ error: null });
     getClaimsMock.mockReset().mockResolvedValue({
       data: {
         claims: { sub: 'email-user', session_id: 'session-1', amr: [{ method: 'password' }] },
@@ -76,11 +78,19 @@ describe('auth callback route', () => {
     onboardingDestinationMock
       .mockReset()
       .mockImplementation(async (_db, _userId, _role, _locale, fallback) => fallback);
-    profileQueryMock.mockReset().mockResolvedValue({ data: null, error: null });
+    profileQueryMock
+      .mockReset()
+      .mockResolvedValue({ data: { role: 'student', status: 'active' }, error: null });
     rpcMock.mockReset().mockResolvedValue({ data: 'teacher', error: null });
     isConfiguredMock.mockReturnValue(true);
     createClientMock.mockResolvedValue({
-      auth: { exchangeCodeForSession, verifyOtp, getUser: getUserMock, getClaims: getClaimsMock },
+      auth: {
+        exchangeCodeForSession,
+        verifyOtp,
+        getUser: getUserMock,
+        getClaims: getClaimsMock,
+        signOut,
+      },
       rpc: rpcMock,
       from: () => ({ select: () => ({ eq: () => ({ maybeSingle: profileQueryMock }) }) }),
     });
@@ -142,7 +152,7 @@ describe('auth callback route', () => {
       const target = location(await call(`code=abc&next=/en/reset-password${roleParam}`));
       expect(target.pathname).toBe('/en/reset-password');
       expect(rpcMock).not.toHaveBeenCalled();
-      expect(profileQueryMock).not.toHaveBeenCalled();
+      expect(profileQueryMock).toHaveBeenCalledOnce();
       expect(onboardingDestinationMock).not.toHaveBeenCalled();
       expect(recoveryCookieSetMock).toHaveBeenCalledWith(
         'dars-password-recovery',
@@ -214,6 +224,7 @@ describe('auth callback route', () => {
   });
 
   it('sends a new roleless Google identity to the explicit role choice page without completing it', async () => {
+    profileQueryMock.mockResolvedValue({ data: null, error: null });
     getUserMock.mockResolvedValue({
       data: { user: { id: 'new-google', identities: [{ provider: 'google' }] } },
       error: null,
@@ -233,7 +244,11 @@ describe('auth callback route', () => {
       });
       profileQueryMock.mockResolvedValue({ data: { role, status: 'active' }, error: null });
       const target = location(await call('code=abc&next=/en/dashboard'));
-      expect(target.pathname).toBe('/en/dashboard');
+      if (role === 'admin') {
+        expect(target.pathname).toBe('/en/login');
+        expect(target.searchParams.get('error')).toBe('admin-portal');
+        expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      } else expect(target.pathname).toBe('/en/dashboard');
       expect(rpcMock).not.toHaveBeenCalled();
     },
   );
@@ -287,8 +302,8 @@ describe('auth callback route', () => {
     });
     profileQueryMock.mockResolvedValue({ data: null, error: { message: 'profile read failed' } });
     const target = location(await call('code=abc&next=/en/dashboard'));
-    expect(target.pathname).toBe('/en/account/setup');
-    expect(target.searchParams.get('load')).toBe('error');
+    expect(target.pathname).toBe('/en/login');
+    expect(target.searchParams.get('error')).toBe('setup');
     expect(onboardingDestinationMock).not.toHaveBeenCalled();
   });
 
@@ -355,7 +370,7 @@ describe('auth callback route', () => {
   });
 
   it.each(['teacher', 'student', 'admin'])(
-    'preserves an existing %s role returned by signup completion',
+    'rejects or preserves an existing %s role returned by signup completion',
     async role => {
       getUserMock.mockResolvedValue({
         data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } },
@@ -365,7 +380,10 @@ describe('auth callback route', () => {
       const target = location(await call('code=abc&next=/en/dashboard&google_role=teacher'));
       expect(rpcMock).toHaveBeenCalledWith('complete_google_signup', { p_role: 'teacher' });
       expect(target.pathname).toBe(role === 'teacher' ? '/en/dashboard' : '/en/login');
-      if (role !== 'teacher') expect(target.searchParams.get('actual')).toBe(role);
+      if (role === 'admin') {
+        expect(target.searchParams.get('error')).toBe('admin-portal');
+        expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      } else if (role !== 'teacher') expect(target.searchParams.get('actual')).toBe(role);
     },
   );
 

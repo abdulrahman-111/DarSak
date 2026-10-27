@@ -2,7 +2,7 @@ import { observeOperation } from '@/features/monitoring/server';
 import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { after } from 'next/server';
-import type { EmailOtpType } from '@supabase/supabase-js';
+import type { EmailOtpType, User } from '@supabase/supabase-js';
 import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient, isConfigured } from '@/lib/supabase/server';
 import { defaultLocale, isLocale, type Locale } from '@/i18n/config';
@@ -41,6 +41,7 @@ export async function GET(request: NextRequest) {
   const tokenHash = params.get('token_hash');
   const type = params.get('type') as EmailOtpType | null;
   const db = await createClient();
+  let preverifiedUser: User | null = null;
 
   let error: unknown = new Error('Missing auth parameters');
   let recoveryFlow = false;
@@ -67,6 +68,51 @@ export async function GET(request: NextRequest) {
       !error &&
       (exchange.data as (typeof exchange.data & { redirectType?: string }) | null)?.redirectType ===
         'recovery';
+    if (!error && params.has('delete_intent')) {
+      const { data: identity, error: identityError } = await db.auth.getUser();
+      preverifiedUser = identity.user;
+      if (identityError || !identity.user) {
+        await db.auth.signOut({ scope: 'local' });
+        const response = NextResponse.redirect(
+          new URL(`/${locale}/login?error=setup`, request.nextUrl.origin),
+        );
+        response.headers.set('Cache-Control', 'private, no-store');
+        return response;
+      }
+      if (identity.user) {
+        const { data: callbackProfile, error: callbackProfileError } = await db
+          .from('profiles')
+          .select('role,status')
+          .eq('id', identity.user.id)
+          .maybeSingle();
+        if (callbackProfile?.role === 'admin') {
+          await db.auth.signOut({ scope: 'local' });
+          const jar = await cookies();
+          jar.delete(PASSWORD_RECOVERY_COOKIE);
+          const response = NextResponse.redirect(
+            new URL(`/${locale}/login?error=admin-portal`, request.nextUrl.origin),
+          );
+          response.headers.set('Cache-Control', 'private, no-store');
+          return response;
+        }
+        const isNewGoogleSetup =
+          !callbackProfile && identity.user.identities?.some(item => item.provider === 'google');
+        if (
+          callbackProfileError ||
+          (callbackProfile &&
+            (callbackProfile.status !== 'active' ||
+              (callbackProfile.role !== 'student' && callbackProfile.role !== 'teacher'))) ||
+          (!callbackProfile && !isNewGoogleSetup)
+        ) {
+          await db.auth.signOut({ scope: 'local' });
+          const response = NextResponse.redirect(
+            new URL(`/${locale}/login?error=setup`, request.nextUrl.origin),
+          );
+          response.headers.set('Cache-Control', 'private, no-store');
+          return response;
+        }
+      }
+    }
     const deletionIntent = params.get('delete_intent');
     if (deletionIntent && destination !== `/${locale}/reset-password`) {
       const jar = await cookies();
@@ -87,7 +133,9 @@ export async function GET(request: NextRequest) {
       if (error || !cookieIntent || cookieIntent !== deletionIntent || !nonce || !cookieOwner)
         return fail();
       const [{ data: identity, error: identityError }, { data: session }] = await Promise.all([
-        db.auth.getUser(),
+        preverifiedUser
+          ? Promise.resolve({ data: { user: preverifiedUser }, error: null })
+          : db.auth.getUser(),
         db.auth.getSession(),
       ]);
       if (
@@ -138,8 +186,15 @@ export async function GET(request: NextRequest) {
             db.rpc('complete_google_signup', { p_role: googleRole }),
           );
           const completedRole = completion.data;
-          setupError =
-            !!completion.error || !['student', 'teacher', 'admin'].includes(completedRole);
+          if (!completion.error && completedRole === 'admin') {
+            await db.auth.signOut({ scope: 'local' });
+            const response = NextResponse.redirect(
+              new URL(`/${locale}/login?error=admin-portal`, request.nextUrl.origin),
+            );
+            response.headers.set('Cache-Control', 'private, no-store');
+            return response;
+          }
+          setupError = !!completion.error || !['student', 'teacher'].includes(completedRole);
           if (!setupError && completedRole === 'teacher')
             after(async () => {
               try {
@@ -236,6 +291,46 @@ export async function GET(request: NextRequest) {
     const verified = await db.auth.verifyOtp({ type, token_hash: tokenHash });
     error = verified.error;
     recoveryFlow = !error && type === 'recovery';
+  }
+
+  // Every successful public callback must resolve the verified identity to a
+  // fresh profile before sending it into a protected public workspace.
+  if (!error) {
+    const { data: authData, error: identityError } = await db.auth.getUser();
+    const user = authData.user;
+    if (!identityError && user) {
+      const { data: profile, error: freshProfileError } = await db
+        .from('profiles')
+        .select('role,status')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profile?.role === 'admin') {
+        await db.auth.signOut({ scope: 'local' });
+        const jar = await cookies();
+        jar.delete(PASSWORD_RECOVERY_COOKIE);
+        const response = NextResponse.redirect(
+          new URL(`/${locale}/login?error=admin-portal`, request.nextUrl.origin),
+        );
+        response.headers.set('Cache-Control', 'private, no-store');
+        return response;
+      }
+      // A missing profile is expected only for first-time Google role setup.
+      const isGoogleSetup = !profile && user.identities?.some(i => i.provider === 'google');
+      if (
+        freshProfileError ||
+        (profile &&
+          (profile.status !== 'active' ||
+            (profile.role !== 'student' && profile.role !== 'teacher'))) ||
+        (!profile && !isGoogleSetup)
+      ) {
+        await db.auth.signOut({ scope: 'local' });
+        const response = NextResponse.redirect(
+          new URL(`/${locale}/login?error=setup`, request.nextUrl.origin),
+        );
+        response.headers.set('Cache-Control', 'private, no-store');
+        return response;
+      }
+    }
   }
 
   if (!error && recoveryFlow) {

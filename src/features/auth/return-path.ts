@@ -78,11 +78,9 @@ export function loginRedirectPath(
   const safeReturn = safeLoginReturnPath(locale, candidate);
   if (safeReturn) return safeReturn;
   const role = profile?.role;
-  if (
-    profile?.status === 'active' &&
-    (role === 'student' || role === 'teacher' || role === 'admin')
-  )
+  if (profile?.status === 'active' && (role === 'student' || role === 'teacher'))
     return `/${locale}/${role}`;
+  if (profile?.role === 'admin') return `https://darsak-admin-portal.vercel.app/${locale}/login`;
   return `/${locale}/dashboard`;
 }
 

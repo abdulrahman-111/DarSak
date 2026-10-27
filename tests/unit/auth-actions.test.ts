@@ -115,6 +115,27 @@ describe('auth actions', () => {
   afterEach(() => vi.unstubAllEnvs());
 
   describe('loginAction', () => {
+    it('clears only the local public session when an administrator uses public sign-in', async () => {
+      const signOut = vi.fn(async () => ({ error: null }));
+      const maybeSingle = vi.fn(async () => ({
+        data: { role: 'admin', status: 'active' },
+        error: null,
+      }));
+      createClientMock.mockResolvedValue({
+        auth: {
+          signInWithPassword: async () => ({ data: { user: { id: 'admin-id' } }, error: null }),
+          signOut,
+        },
+        from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }),
+      });
+      expect(
+        await redirectTarget(() =>
+          loginAction('en', null, form({ email: 'admin@example.com', password: 'password123' })),
+        ),
+      ).toBe('/en/login?error=admin-portal');
+      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+    });
+
     it('returns a generic message for invalid_credentials', async () => {
       createClientMock.mockResolvedValue({
         auth: {
@@ -785,12 +806,13 @@ describe('auth actions', () => {
   describe('chooseGoogleRoleAction', () => {
     const profileQuery = vi.fn();
     const rpc = vi.fn();
+    const signOut = vi.fn(async () => ({ error: null }));
     beforeEach(() => {
       profileQuery.mockReset();
       rpc.mockReset();
     });
     const client = (user: unknown) => ({
-      auth: { getUser: async () => ({ data: { user }, error: null }) },
+      auth: { getUser: async () => ({ data: { user }, error: null }), signOut },
       from: () => ({ select: () => ({ eq: () => ({ maybeSingle: profileQuery }) }) }),
       rpc,
     });
@@ -812,7 +834,9 @@ describe('auth actions', () => {
     });
 
     it('completes only a new profile with an allowlisted role', async () => {
-      profileQuery.mockResolvedValue({ data: null, error: null });
+      profileQuery
+        .mockResolvedValueOnce({ data: null, error: null })
+        .mockResolvedValueOnce({ data: { role: 'teacher', status: 'active' }, error: null });
       rpc.mockReset().mockResolvedValue({ data: 'teacher', error: null });
       createClientMock.mockResolvedValue(
         client({ id: 'u1', identities: [{ provider: 'google' }] }),

@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@admin/*": ["./apps/admin/src/*"]
     }
   },
   "include": [
@@ -29,5 +30,5 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", ".next", ".next-stale-20261001", "supabase/functions"]
+  "exclude": ["node_modules", ".next", ".next-stale-20261001", "supabase/functions", "apps/admin"]
 }

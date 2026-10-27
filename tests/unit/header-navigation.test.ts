@@ -40,9 +40,9 @@ describe('global Reports navigation', () => {
     mocks.unread.mockReset().mockResolvedValue(2);
   });
 
-  it('links active admins to the localized reports page', () => {
-    expect(globalReportsHref('en', 'admin')).toBe('/en/admin/reports');
-    expect(globalReportsHref('ar', 'admin')).toBe('/ar/admin/reports');
+  it('does not send public header navigation to administrator routes', () => {
+    expect(globalReportsHref('en', 'admin')).toBeNull();
+    expect(globalReportsHref('ar', 'admin')).toBeNull();
   });
 
   it('links students and teachers to problem reporting while guests get no link', () => {
@@ -65,13 +65,11 @@ describe('global Reports navigation', () => {
       register: 'Register',
     };
 
-    mocks.currentUser.mockResolvedValue({ profile: { role: 'admin', status: 'active' } });
-    mocks.pathname = '/en/admin';
+    mocks.currentUser.mockResolvedValue(null);
+    mocks.pathname = '/en';
     const adminHtml = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
-    expect(adminHtml).toContain('data-mobile-workspace-nav="true"');
-    expect(adminHtml).toContain('href="/en/admin/reports"');
-    expect(adminHtml).toContain('href="/en/admin/users"');
-    expect(adminHtml).not.toContain('href="/en/teachers"');
+    expect(adminHtml).not.toContain('/en/admin');
+    expect(adminHtml).toContain('href="/en/teachers"');
 
     mocks.currentUser.mockResolvedValue({ profile: { role: 'teacher', status: 'active' } });
     mocks.pathname = '/ar/teacher';
@@ -121,7 +119,6 @@ describe('global Reports navigation', () => {
     for (const [role, pathname] of [
       ['student', '/en/account'],
       ['teacher', '/en/teachers'],
-      ['admin', '/en/groups/abc'],
     ] as const) {
       mocks.currentUser.mockResolvedValue({ profile: { role, status: 'active' } });
       mocks.pathname = pathname;

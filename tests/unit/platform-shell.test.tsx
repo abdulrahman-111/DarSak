@@ -48,15 +48,6 @@ describe('role navigation shell', () => {
     expect(teacher).toContain('href="/en/teacher/groups"');
     expect(teacher).toContain('Groups');
 
-    mocks.pathname = '/ar/admin/teachers/abc';
-    const admin = renderToStaticMarkup(
-      <PlatformShell locale="ar" role="admin" name="مسؤول">
-        <main>Requests</main>
-      </PlatformShell>,
-    );
-    expect(admin).toContain('href="/ar/admin/teachers"');
-    expect(admin).toContain('المعلمون');
-
     mocks.pathname = '/ar/student/saved';
     const student = renderToStaticMarkup(
       <PlatformShell locale="ar" role="student" name="طالبة">
@@ -79,18 +70,8 @@ describe('role navigation shell', () => {
     expect(html).toContain('>4</span>');
   });
 
-  it('does not add the redirected teacher plans destination to admin navigation', () => {
-    const html = renderToStaticMarkup(
-      <PlatformShell locale="en" role="admin" name="Admin">
-        <main>Dashboard</main>
-      </PlatformShell>,
-    );
-    expect(html).not.toContain('href="/en/admin/access"');
-    expect(html).toContain('href="/en/admin/teachers"');
-  });
-
-  it('adds a localized problem-report link for students, teachers, and administrators', () => {
-    for (const role of ['student', 'teacher', 'admin'] as const) {
+  it('adds a localized problem-report link for public roles', () => {
+    for (const role of ['student', 'teacher'] as const) {
       const html = renderToStaticMarkup(
         <PlatformShell locale="en" role={role} name="User">
           <main>Page</main>
@@ -99,15 +80,6 @@ describe('role navigation shell', () => {
       expect(html).toContain('href="/en/reports"');
       expect(html).toContain('Report a problem');
     }
-    const admin = renderToStaticMarkup(
-      <PlatformShell locale="ar" role="admin" name="مسؤول">
-        <main>Page</main>
-      </PlatformShell>,
-    );
-    expect(admin).toContain('href="/ar/reports"');
-    expect(admin).toContain('الإبلاغ عن مشكلة');
-    expect(admin).toContain('href="/ar/admin/reports"');
-    expect(admin).toContain('البلاغات');
   });
 
   it('shows four desktop primary links and a keyboard-operable More disclosure with secondary routes', () => {

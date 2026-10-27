@@ -64,6 +64,15 @@ jobs:
       - name: Production build
         run: npm run build
 
+      - name: Administrator typecheck
+        run: npm run typecheck:admin
+
+      - name: Administrator production build
+        run: npm run build:admin
+
+      - name: Verify application boundary
+        run: npm run boundaries -- --require-manifests
+
   database:
     name: Database tests
     runs-on: ubuntu-latest

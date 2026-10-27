@@ -1,10 +1,29 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { getRequestViewer } from '@/features/platform/request-viewer';
 import { idSchema } from '@/features/student/domain';
 
 export type NotificationActionState = { error?: string; success?: string } | null;
+
+function updateError(locale: string, refresh = false) {
+  return locale === 'ar'
+    ? refresh
+      ? 'تعذر تحديث الإشعار. حدّث الصفحة وحاول مرة أخرى.'
+      : 'تعذر تحديث الإشعار. حاول مرة أخرى.'
+    : refresh
+      ? 'Could not update this notification. Refresh and try again.'
+      : 'Could not update this notification. Try again.';
+}
+
+function canManageOwnNotifications(viewer: Awaited<ReturnType<typeof getRequestViewer>>) {
+  return (
+    !!viewer.user &&
+    viewer.profile?.status === 'active' &&
+    (viewer.profile.role === 'student' || viewer.profile.role === 'teacher')
+  );
+}
+
 export async function markNotificationRead(
   locale: string,
   id: string,
@@ -12,25 +31,14 @@ export async function markNotificationRead(
   _formData: FormData,
 ): Promise<NotificationActionState> {
   if (!['en', 'ar'].includes(locale) || !idSchema.safeParse(id).success)
-    return {
-      error:
-        locale === 'ar'
-          ? 'تعذر تحديث الإشعار. حاول مرة أخرى.'
-          : 'Could not update this notification. Try again.',
-    };
-  const db = await createClient();
-  const { error } = await db.rpc('mark_notification_read', { p_id: id });
-  if (error)
-    return {
-      error:
-        locale === 'ar'
-          ? 'تعذر تحديث الإشعار. حدّث الصفحة وحاول مرة أخرى.'
-          : 'Could not update this notification. Refresh and try again.',
-    };
+    return { error: updateError(locale) };
+  const viewer = await getRequestViewer();
+  if (!canManageOwnNotifications(viewer)) return { error: updateError(locale) };
+  const { error } = await viewer.db.rpc('mark_notification_read', { p_id: id });
+  if (error) return { error: updateError(locale, true) };
   revalidatePath(`/${locale}/notifications`);
   revalidatePath(`/${locale}/student`);
   revalidatePath(`/${locale}/teacher`);
-  revalidatePath(`/${locale}/admin`);
   return { success: locale === 'ar' ? 'تم تحديث الإشعار.' : 'Notification updated.' };
 }
 
@@ -40,8 +48,15 @@ export async function markAllNotificationsRead(
   _formData: FormData,
 ): Promise<NotificationActionState> {
   if (!['en', 'ar'].includes(locale)) return { error: 'Could not update notifications.' };
-  const db = await createClient();
-  const { error } = await db.rpc('mark_all_notifications_read');
+  const viewer = await getRequestViewer();
+  if (!canManageOwnNotifications(viewer))
+    return {
+      error:
+        locale === 'ar'
+          ? 'تعذر تحديث الإشعارات. حدّث الصفحة وحاول مرة أخرى.'
+          : 'Could not update notifications. Refresh and try again.',
+    };
+  const { error } = await viewer.db.rpc('mark_all_notifications_read');
   if (error)
     return {
       error:
@@ -52,7 +67,6 @@ export async function markAllNotificationsRead(
   revalidatePath(`/${locale}/notifications`);
   revalidatePath(`/${locale}/student`);
   revalidatePath(`/${locale}/teacher`);
-  revalidatePath(`/${locale}/admin`);
   return {
     success: locale === 'ar' ? 'تم تحديد الإشعارات كمقروءة.' : 'Notifications marked as read.',
   };

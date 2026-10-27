@@ -19,11 +19,20 @@ export default async function ChooseGoogleRolePage({
     .select('role,status')
     .eq('id', user.id)
     .maybeSingle();
-  if (error) redirect(`/${locale}/login?error=setup`);
-  if (profile)
-    redirect(
-      `/${locale}/${profile.role === 'admin' || profile.role === 'teacher' ? profile.role : 'student'}`,
-    );
+  if (error) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
+  if (profile?.role === 'admin') {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=admin-portal`);
+  }
+  if (profile?.status === 'active' && profile.role === 'teacher') redirect(`/${locale}/teacher`);
+  if (profile?.status === 'active' && profile.role === 'student') redirect(`/${locale}/student`);
+  if (profile) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
 
   return (
     <div className="container grid min-h-[calc(100vh-9rem)] place-items-center py-10">

@@ -155,7 +155,22 @@ export async function loginAction(
     .select('role,status')
     .eq('id', data.user.id)
     .maybeSingle();
-  if (profileError) redirect(`/${locale}/account/setup?load=error`);
+  if (profileError) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
+  if (profile?.role === 'admin') {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=admin-portal`);
+  }
+  if (
+    profileError ||
+    profile?.status !== 'active' ||
+    (profile.role !== 'student' && profile.role !== 'teacher')
+  ) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
   if (profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
     const fallback = loginRedirectPath(locale as Locale, formData.get('next'), profile);
     redirect(
@@ -219,8 +234,22 @@ export async function signupAction(
   const { data: profile, error: profileError } = data.user
     ? await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle()
     : { data: null, error: null };
-  if (profileError) redirect(`/${locale}/account/setup?load=error`);
-  if (data.user && !profile) redirect(`/${locale}/account/setup?load=error`);
+  if (profileError || (data.user && !profile)) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
+  if (data.user && profile?.role === 'admin') {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=admin-portal`);
+  }
+  if (
+    data.user &&
+    data.session &&
+    (profile?.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher'))
+  ) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
   if (
     data.user &&
     profile?.status === 'active' &&
@@ -280,8 +309,15 @@ export async function chooseGoogleRoleAction(locale: string, formData: FormData)
     .select('role,status')
     .eq('id', user.id)
     .maybeSingle();
-  if (profileError) redirect(`/${locale}/login?error=setup`);
+  if (profileError) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
   if (profile) {
+    if (profile.role === 'admin') {
+      await db.auth.signOut({ scope: 'local' });
+      redirect(`/${locale}/login?error=admin-portal`);
+    }
     if (profile.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
       const target = await resolveSetupDestination(
         db,
@@ -292,15 +328,21 @@ export async function chooseGoogleRoleAction(locale: string, formData: FormData)
       );
       redirect(target);
     }
-    redirect(loginRedirectPath(locale, null, profile));
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
   }
   const { data: completedRole, error: completionError } = await observeOperation(
     'google_setup',
     locale,
     () => db.rpc('complete_google_signup', { p_role: requestedRole }),
   );
-  if (completionError || !['student', 'teacher', 'admin'].includes(completedRole))
+  if (completionError || !['student', 'teacher'].includes(completedRole)) {
+    if (completedRole === 'admin') {
+      await db.auth.signOut({ scope: 'local' });
+      redirect(`/${locale}/login?error=admin-portal`);
+    }
     redirect(`/${locale}/login?error=setup&google_role=${requestedRole}`);
+  }
   if (completedRole === 'teacher')
     after(async () => {
       try {
@@ -315,6 +357,19 @@ export async function chooseGoogleRoleAction(locale: string, formData: FormData)
     );
   if (completedRole !== 'student' && completedRole !== 'teacher')
     redirect(`/${locale}/login?error=setup&google_role=${requestedRole}`);
+  const { data: completedProfile, error: completedProfileError } = await db
+    .from('profiles')
+    .select('role,status')
+    .eq('id', user.id)
+    .maybeSingle();
+  if (
+    completedProfileError ||
+    completedProfile?.status !== 'active' ||
+    completedProfile.role !== completedRole
+  ) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
   const target = await resolveSetupDestination(
     db,
     user.id,
@@ -502,8 +557,18 @@ export async function verifySignupCodeAction(
     .select('role,status')
     .eq('id', data.user.id)
     .maybeSingle();
-  if (profileError) redirect(`/${locale}/account/setup?load=error`);
-  if (!profile) redirect(`/${locale}/account/setup?load=error`);
+  if (profileError || !profile) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
+  if (profile.role === 'admin') {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=admin-portal`);
+  }
+  if (profile.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher')) {
+    await db.auth.signOut({ scope: 'local' });
+    redirect(`/${locale}/login?error=setup`);
+  }
   if (profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')) {
     const fallback = loginRedirectPath(locale as Locale, null, profile);
     redirect(
@@ -515,7 +580,7 @@ export async function verifySignupCodeAction(
 export async function logoutAction() {
   if (isConfigured()) {
     const db = await createClient();
-    const { error } = await db.auth.signOut();
+    const { error } = await db.auth.signOut({ scope: 'local' });
     if (error) throw new Error('Unable to sign out. Please try again.');
   }
   redirect('/');
