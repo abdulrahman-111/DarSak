@@ -57,7 +57,5 @@ export async function requireTeachingAccess(locale: string): Promise<PlatformVie
 }
 
 export function roleHome(locale: string, role: PlatformRole) {
-  return role === 'admin'
-    ? `https://darsak-admin-portal.vercel.app/${locale}/login`
-    : `/${locale}/${role}`;
+  return role === 'admin' ? `/${locale}/login?error=admin-portal` : `/${locale}/${role}`;
 }
