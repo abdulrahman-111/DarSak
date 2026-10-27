@@ -38,7 +38,7 @@ describe('login return paths', () => {
   it.each([
     ['student', '/en/student'],
     ['teacher', '/en/teacher'],
-    ['admin', 'https://darsak-admin-portal.vercel.app/en/login'],
+    ['admin', '/en/login?error=admin-portal'],
   ])('routes an active %s to their role home by default', (role, path) => {
     expect(loginRedirectPath('en', undefined, { role, status: 'active' })).toBe(path);
   });
