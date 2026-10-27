@@ -1,23 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, afterMock, revalidatePathMock, flushMock } = vi.hoisted(() => ({
-  createClientMock: vi.fn(),
-  afterMock: vi.fn(),
-  revalidatePathMock: vi.fn(),
-  flushMock: vi.fn(),
-}));
+const { createClientMock, getAdminActorMock, afterMock, revalidatePathMock, flushMock } =
+  vi.hoisted(() => ({
+    createClientMock: vi.fn(),
+    getAdminActorMock: vi.fn(),
+    afterMock: vi.fn(),
+    revalidatePathMock: vi.fn(),
+    flushMock: vi.fn(),
+  }));
 vi.mock('server-only', () => ({}));
 vi.mock('next/server', () => ({ after: afterMock }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidatePathMock }));
-vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
-vi.mock('@/features/email/worker', () => ({ flushEmailOutbox: flushMock }));
+vi.mock('@admin/lib/access', () => ({ getAdminActor: getAdminActorMock }));
 
-import { decideTeacherAccess } from '@/features/teacher-access/admin-actions';
+import { decideTeacherAccess } from '@admin/features/teacher-access/admin-actions';
 
 const requestId = '11111111-1111-4111-8111-111111111111';
 function setup(error: { code?: string; message: string } | null = null) {
   const rpc = vi.fn(async () => ({ data: null, error }));
-  createClientMock.mockResolvedValue({
+  const db = {
     auth: {
       getUser: async () => ({ data: { user: { id: '22222222-2222-4222-8222-222222222222' } } }),
     },
@@ -29,7 +30,9 @@ function setup(error: { code?: string; message: string } | null = null) {
       }),
     }),
     rpc,
-  });
+  };
+  createClientMock.mockResolvedValue(db);
+  getAdminActorMock.mockResolvedValue({ db, id: '22222222-2222-4222-8222-222222222222' });
   return rpc;
 }
 function form(decision: string) {
@@ -41,6 +44,7 @@ function form(decision: string) {
 
 beforeEach(() => {
   createClientMock.mockReset();
+  getAdminActorMock.mockReset();
   afterMock.mockReset();
   revalidatePathMock.mockReset();
   flushMock.mockReset();
@@ -64,7 +68,7 @@ describe('monthly teacher access decisions', () => {
 
     expect(result).toMatchObject({ success: 'Decision saved.' });
     expect(rpc).toHaveBeenCalledTimes(1);
-    expect(afterMock).toHaveBeenCalledTimes(1);
+    expect(afterMock).not.toHaveBeenCalled();
     expect(revalidatePathMock).toHaveBeenCalled();
   });
 });

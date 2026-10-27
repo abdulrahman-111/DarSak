@@ -9,7 +9,7 @@ export function FeedbackForm({
   row,
 }: {
   locale: string;
-  kind: 'save' | 'withdraw' | 'reply' | 'moderate';
+  kind: 'save' | 'withdraw' | 'reply';
   id: string;
   row?: FeedbackRow | null;
 }) {
@@ -62,35 +62,6 @@ export function FeedbackForm({
             className="rounded-xl border border-line bg-cream p-3"
           />
         </label>
-      )}
-      {kind === 'moderate' && (
-        <>
-          <label className="grid gap-2 text-sm font-bold">
-            {ar ? 'قرار الإشراف' : 'Moderation decision'}
-            <select name="decision" className="rounded-xl border border-line bg-cream p-3">
-              {[
-                ['approve', ar ? 'نشر التقييم' : 'Publish feedback'],
-                ['hide', ar ? 'إخفاء التقييم' : 'Hide feedback'],
-                ['approve_reply', ar ? 'نشر الرد' : 'Publish reply'],
-                ['hide_reply', ar ? 'إخفاء الرد' : 'Hide reply'],
-              ].map(([v, t]) => (
-                <option key={v} value={v}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-bold">
-            {ar ? 'ملاحظة إدارية خاصة (١٥٠٠ حرف)' : 'Private administrator note (1,500 characters)'}
-            <textarea
-              name="admin_note"
-              defaultValue={row?.admin_note ?? ''}
-              maxLength={1500}
-              rows={3}
-              className="rounded-xl border border-line bg-cream p-3"
-            />
-          </label>
-        </>
       )}
       <button
         disabled={pending}

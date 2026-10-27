@@ -34,7 +34,10 @@ const status = {
   pending_request_id: null,
 };
 
-function configure(rpcResult: { data?: unknown; error: unknown } = { data: null, error: null }) {
+function configure(
+  rpcResult: { data?: unknown; error: unknown } = { data: null, error: null },
+  profileRole: 'student' | 'teacher' = 'teacher',
+) {
   const rpc = vi.fn(async (name: string) =>
     name === 'teacher_access_status' ? { data: status, error: null } : rpcResult,
   );
@@ -42,7 +45,7 @@ function configure(rpcResult: { data?: unknown; error: unknown } = { data: null,
     select: () => profileQuery,
     eq: () => profileQuery,
     single: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }),
-    maybeSingle: async () => ({ data: { role: 'teacher', status: 'active' }, error: null }),
+    maybeSingle: async () => ({ data: { role: profileRole, status: 'active' }, error: null }),
   };
   const db = {
     auth: { getUser: async () => ({ data: { user: { id: teacherId } } }) },
@@ -111,7 +114,7 @@ describe('mutation cache invalidation', () => {
   });
 
   it('refreshes student class pages after feedback saves', async () => {
-    configure({ data: 1, error: null });
+    configure({ data: 1, error: null }, 'student');
     await feedbackAction(
       'en',
       'save',

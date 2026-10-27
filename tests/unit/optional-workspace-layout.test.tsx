@@ -35,8 +35,8 @@ describe('optional workspace layout', () => {
     mocks.unreadNotificationCount.mockReset().mockResolvedValue(6);
   });
 
-  it('uses the active student, teacher, and admin shell with one unread count', async () => {
-    for (const role of ['student', 'teacher', 'admin'] as const) {
+  it('uses the active student and teacher shell with one unread count', async () => {
+    for (const role of ['student', 'teacher'] as const) {
       mocks.getRequestViewer.mockResolvedValueOnce({
         db: {},
         user: { id: `${role}-id` },
@@ -48,12 +48,10 @@ describe('optional workspace layout', () => {
           children: createElement('p', null, 'Content'),
         }),
       );
-      expect(html).toContain(
-        `${role === 'student' ? 'Student' : role === 'teacher' ? 'Teacher' : 'Administration'} navigation`,
-      );
+      expect(html).toContain(`${role === 'student' ? 'Student' : 'Teacher'} navigation`);
       expect(html).toContain('6 unread');
     }
-    expect(mocks.unreadNotificationCount).toHaveBeenCalledTimes(3);
+    expect(mocks.unreadNotificationCount).toHaveBeenCalledTimes(2);
   });
 
   it.each([
@@ -65,6 +63,10 @@ describe('optional workspace layout', () => {
     [
       'unknown role',
       { db: {}, user: { id: 'other' }, profile: { role: 'owner', status: 'active' } },
+    ],
+    [
+      'admin profile',
+      { db: {}, user: { id: 'admin' }, profile: { role: 'admin', status: 'active' } },
     ],
   ])(
     'keeps %s on the public layout without sidebar or notification query',

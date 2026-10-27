@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { WorkspaceNavigationSidebar } from '@/components/workspace-navigation-sidebar';
-import type { PlatformRole } from './access';
+type PublicWorkspaceRole = 'student' | 'teacher';
 
 export type NavItem = {
   href: string;
@@ -10,7 +10,7 @@ export type NavItem = {
   activePaths?: string[];
 };
 
-export function platformNavigation(locale: string, role: PlatformRole): NavItem[] {
+export function platformNavigation(locale: string, role: PublicWorkspaceRole): NavItem[] {
   const ar = locale === 'ar';
   const notifications = {
     href: `/${locale}/notifications`,
@@ -53,38 +53,6 @@ export function platformNavigation(locale: string, role: PlatformRole): NavItem[
       { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
       reportProblem,
     ];
-  if (role === 'admin')
-    return [
-      {
-        href: `/${locale}/admin`,
-        label: ar ? 'الرئيسية' : 'Home',
-        primary: { key: 'home', icon: 'home' },
-      },
-      {
-        href: `/${locale}/admin/teachers`,
-        label: ar ? 'المعلمون' : 'Teachers',
-        primary: { key: 'teachers', icon: 'teachers' },
-      },
-      {
-        href: `/${locale}/admin/reports`,
-        label: ar ? 'البلاغات' : 'Reports',
-        primary: { key: 'reports', icon: 'reports' },
-      },
-      {
-        href: `/${locale}/admin/users`,
-        label: ar ? 'الأشخاص' : 'People',
-        primary: { key: 'people', icon: 'people' },
-      },
-      { href: `/${locale}/admin/email`, label: ar ? 'حالة البريد' : 'Email delivery' },
-      { href: `/${locale}/admin/education`, label: ar ? 'الدليل التعليمي' : 'Education' },
-      { href: `/${locale}/admin/groups`, label: ar ? 'المجموعات' : 'Groups' },
-      { href: `/${locale}/admin/health`, label: ar ? 'حالة التشغيل' : 'Operational health' },
-      { href: `/${locale}/admin/feedback`, label: ar ? 'آراء الطلاب' : 'Student feedback' },
-      { href: `/${locale}/admin/settings`, label: ar ? 'الإعدادات' : 'Settings' },
-      { href: `/${locale}/account`, label: ar ? 'حسابي' : 'My account' },
-      reportProblem,
-      notifications,
-    ];
   return [
     {
       href: `/${locale}/student`,
@@ -124,7 +92,7 @@ export function PlatformShell({
   children,
 }: {
   locale: string;
-  role: PlatformRole;
+  role: PublicWorkspaceRole;
   name: string;
   unreadCount?: number | null;
   children: React.ReactNode;
@@ -153,13 +121,9 @@ export function PlatformShell({
                 ? ar
                   ? 'مساحة المعلم'
                   : 'Teacher space'
-                : role === 'admin'
-                  ? ar
-                    ? 'الإدارة'
-                    : 'Administration'
-                  : ar
-                    ? 'مساحة الطالب'
-                    : 'Student space'}
+                : ar
+                  ? 'مساحة الطالب'
+                  : 'Student space'}
             </small>
           </span>
         </Link>

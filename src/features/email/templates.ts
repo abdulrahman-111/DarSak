@@ -21,7 +21,8 @@ const escapeHtml = (value: string) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
-const link = (origin: string, path: string) => `${origin}${path}`;
+const link = (origin: string, path: string) =>
+  path.startsWith('https://') ? path : `${origin}${path}`;
 const date = (value: unknown) => {
   const raw = safeText(value, 40),
     time = Date.parse(raw);
@@ -60,7 +61,7 @@ export function renderEmail(
       detailAr = name
         ? `يوجد حساب معلم بانتظار المراجعة (${name}).`
         : 'يوجد حساب معلم بانتظار المراجعة.';
-      path = `/admin/teachers/${teacherId}`;
+      path = `https://darsak-admin-portal.vercel.app/admin/teachers/${teacherId}`;
     } else {
       const approved = kind === 'teacher_review_approved';
       titleEn = approved ? 'Teacher account approved' : 'Teacher account review update';
@@ -102,8 +103,12 @@ export function renderEmail(
     detailAr = `${ar}\nيسري اعتباراً من ${effective} بتوقيت القاهرة.`;
     path = '/account/teaching-access';
   } else return null;
-  const urlEn = link(origin, `/en${path}`),
-    urlAr = link(origin, `/ar${path}`);
+  const localizedUrl = (locale: 'en' | 'ar') =>
+    path.startsWith('https://')
+      ? path.replace('/admin/', `/${locale}/admin/`)
+      : link(origin, `/${locale}${path}`);
+  const urlEn = localizedUrl('en');
+  const urlAr = localizedUrl('ar');
   const text = `${titleEn}\n${detailEn}\n${urlEn}\n\n${titleAr}\n${detailAr}\n${urlAr}`.slice(
     0,
     5000,

@@ -2,6 +2,8 @@
 
 The application and database deploy separately. Vercel hosts the Next.js app and scheduled API routes. Supabase provides Auth, Postgres, Storage, and the account-deletion Edge Function.
 
+The administrator portal is a separate production-only Vercel application sharing the live Supabase project. Its canonical URL, production environment allowlist, authentication boundary, and operational notes are documented in the [administrator portal guide](../apps/admin/README.md). The portal does not have a staging or preview deployment, and deploying it requires no schema change. Keep Meet and AI pilots on staging; do not promote the whole staging branch to production.
+
 ## Deploy to your own Supabase project
 
 Use a new project you control; no access to DarSak's existing backend is needed. The steps below target an empty project. For an existing deployment, back up first, review pending migrations, and use an upgrade plan instead.

@@ -27,8 +27,8 @@ describe('teacher overview next lesson query', () => {
   it.each([
     ['en', 'student', '/en/student'],
     ['ar', 'student', '/ar/student'],
-    ['en', 'admin', '/en/admin'],
-    ['ar', 'admin', '/ar/admin'],
+    ['en', 'admin', '/en/login?error=admin-portal'],
+    ['ar', 'admin', '/ar/login?error=admin-portal'],
   ] as const)('sends an active %s wrong-role viewer to %s', async (locale, role, destination) => {
     const reads = vi.fn();
     mocks.getRequestViewer.mockResolvedValue({

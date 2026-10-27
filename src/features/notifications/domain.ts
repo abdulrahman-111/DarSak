@@ -1,12 +1,9 @@
-import type { PlatformRole } from '@/components/platform/access';
-
 export type NotificationKind =
   | 'lesson_rescheduled'
   | 'lesson_cancelled'
   | 'group_cancelled'
   | 'weekly_schedule_changed'
   | 'enrollment_requested'
-  | 'teacher_review_requested'
   | 'teacher_review_decision'
   | 'teacher_fee_announcement'
   | 'enrollment_accepted'
@@ -27,7 +24,6 @@ const KINDS = new Set<NotificationKind>([
   'group_cancelled',
   'weekly_schedule_changed',
   'enrollment_requested',
-  'teacher_review_requested',
   'teacher_review_decision',
   'teacher_fee_announcement',
   'enrollment_accepted',
@@ -83,7 +79,7 @@ function id(payload: Record<string, unknown>, key: string) {
   return typeof value === 'string' && UUID.test(value) ? value : null;
 }
 export function notificationHref(
-  role: PlatformRole,
+  role: 'student' | 'teacher',
   kind: string,
   payload: Record<string, unknown>,
   locale: string,
@@ -113,10 +109,6 @@ export function notificationHref(
     return value ? `/${locale}/teacher/requests?group_id=${value}` : `/${locale}/teacher/requests`;
   }
   if (role === 'teacher' && kind === 'booking_updated') return `/${locale}/teacher/bookings`;
-  if (role === 'admin' && kind === 'teacher_review_requested') {
-    const value = id(payload, 'teacher_id');
-    return value ? `/${locale}/admin/teachers/${value}` : `/${locale}/admin/teachers`;
-  }
   if (role === 'teacher' && kind === 'teacher_review_decision')
     return `/${locale}/account/application`;
   if (role === 'teacher' && kind === 'teacher_fee_announcement')

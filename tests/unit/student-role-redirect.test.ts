@@ -24,8 +24,8 @@ describe('student loader role redirects', () => {
   it.each([
     ['en', 'teacher', '/en/teacher'],
     ['ar', 'teacher', '/ar/teacher'],
-    ['en', 'admin', '/en/admin'],
-    ['ar', 'admin', '/ar/admin'],
+    ['en', 'admin', '/en/login?error=admin-portal'],
+    ['ar', 'admin', '/ar/login?error=admin-portal'],
   ] as const)('sends active %s wrong-role viewer to %s', async (locale, role, target) => {
     const read = vi.fn();
     mocks.getRequestViewer.mockResolvedValue({

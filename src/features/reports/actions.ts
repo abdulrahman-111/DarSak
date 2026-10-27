@@ -48,10 +48,10 @@ export async function submitProblemReport(
     return { error: msg(language, 'Sign in to submit a report.', 'سجّل الدخول لإرسال بلاغ.') };
   const { data: profile } = await db
     .from('profiles')
-    .select('status')
+    .select('role,status')
     .eq('id', user.id)
     .maybeSingle();
-  if (profile?.status !== 'active')
+  if (profile?.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher'))
     return {
       error: msg(
         language,

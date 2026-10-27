@@ -2,14 +2,14 @@ import { DISCOVERY_PAGE_SIZE, normalizeDiscoveryFilters } from './discovery-doma
 
 export const GUEST_DISCOVERY_SAMPLE_SIZE = 3;
 
-export type DiscoveryRole = 'student' | 'teacher' | 'admin' | null;
+export type DiscoveryRole = 'student' | 'teacher' | null;
 
 export function canUseFullDiscovery(role: DiscoveryRole) {
   return role === 'student';
 }
 
 export function shouldShowDiscoveryNavigation(role: DiscoveryRole) {
-  return role !== 'teacher' && role !== 'admin';
+  return role !== 'teacher';
 }
 
 export function discoveryFiltersForRole(

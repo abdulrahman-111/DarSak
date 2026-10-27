@@ -20,7 +20,6 @@ import {
 import { ActiveLink } from '@/components/active-link';
 import { isWorkspaceItemActive } from '@/components/navigation-domain';
 import type { NavItem } from '@/components/platform/shell';
-import type { PlatformRole } from '@/components/platform/access';
 
 function navigationIcon(item: NavItem) {
   if (item.primary?.icon === 'home') return LayoutDashboard;
@@ -54,7 +53,7 @@ export function WorkspaceNavigationSidebar({
   items,
 }: {
   locale: string;
-  role: PlatformRole;
+  role: 'student' | 'teacher';
   unreadCount: number | null;
   items: NavItem[];
 }) {
@@ -63,18 +62,7 @@ export function WorkspaceNavigationSidebar({
   const secondary = items.filter(item => !item.primary);
   const activeSecondary = secondary.some(item => isWorkspaceItemActive(pathname, item));
   const ar = locale === 'ar';
-  const roleLabel =
-    role === 'admin'
-      ? ar
-        ? 'الإدارة'
-        : 'Administration'
-      : role === 'teacher'
-        ? ar
-          ? 'المعلم'
-          : 'Teacher'
-        : ar
-          ? 'الطالب'
-          : 'Student';
+  const roleLabel = role === 'teacher' ? (ar ? 'المعلم' : 'Teacher') : ar ? 'الطالب' : 'Student';
 
   return (
     <nav

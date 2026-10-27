@@ -46,17 +46,9 @@ describe('mobile workspace navigation model', () => {
     ]);
   });
 
-  it('keeps admin reports and people in the primary row and other admin destinations in More', () => {
-    const admin = mobileWorkspaceNavigation('ar', 'admin', platformNavigation('ar', 'admin'));
-    expect(admin.primary.map(item => item.href)).toEqual([
-      '/ar/admin',
-      '/ar/admin/teachers',
-      '/ar/admin/reports',
-      '/ar/admin/users',
-    ]);
-    expect(admin.secondary.map(item => item.href)).toContain('/ar/admin/settings');
-    expect(admin.secondary.map(item => item.href)).toContain('/ar/notifications');
-    expect(admin.moreLabel).toBe('المزيد');
+  it('keeps administrator links out of public workspace navigation', () => {
+    for (const role of ['student', 'teacher'] as const)
+      expect(platformNavigation('ar', role).some(item => item.href.includes('/admin'))).toBe(false);
   });
 
   it('keeps Arabic student and teacher labels localized across four primary links and More', () => {
@@ -101,22 +93,6 @@ describe('mobile workspace navigation rendering', () => {
     expect(html).toContain('Calendar');
     expect(html.match(/aria-current="page"/g)).toHaveLength(1);
     expect(html).toContain('aria-current="page"');
-  });
-
-  it('marks only the nested primary route active instead of Home', () => {
-    mocks.pathname = '/ar/admin/teachers/abc';
-    const html = renderToStaticMarkup(
-      <MobileWorkspaceNavigation
-        locale="ar"
-        role="admin"
-        name="مسؤول"
-        unreadCount={null}
-        items={platformNavigation('ar', 'admin')}
-      />,
-    );
-    expect(html).toContain('href="/ar/admin/teachers" aria-label="المعلمون" aria-current="page"');
-    expect(html).not.toContain('href="/ar/admin" aria-label="الرئيسية" aria-current="page"');
-    expect(html.match(/aria-current="page"/g)).toHaveLength(1);
   });
 
   it('marks booking routes as their primary calendar and recommendations as Explore on desktop/mobile models', () => {

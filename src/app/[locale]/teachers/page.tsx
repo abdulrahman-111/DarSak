@@ -62,11 +62,10 @@ export default async function Teachers({
   const me = await currentUser();
   const profile = me?.profile;
   const role: DiscoveryRole =
-    profile?.status === 'active' &&
-    (profile.role === 'student' || profile.role === 'teacher' || profile.role === 'admin')
+    profile?.status === 'active' && (profile.role === 'student' || profile.role === 'teacher')
       ? profile.role
       : null;
-  if (role === 'teacher' || role === 'admin') redirect(`/${locale}/${role}`);
+  if (role === 'teacher') redirect(`/${locale}/teacher`);
   const fullDiscovery = role === 'student';
   const filters = discoveryFiltersForRole(role, query);
   const teacherSearch = fullDiscovery

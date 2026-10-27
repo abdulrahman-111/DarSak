@@ -79,7 +79,7 @@ export default async function ReportsPage({
         </Panel>
       </div>
     );
-  if (profile?.status !== 'active' || !['student', 'teacher', 'admin'].includes(profile.role))
+  if (profile?.status !== 'active' || (profile.role !== 'student' && profile.role !== 'teacher'))
     return (
       <div className="container max-w-3xl py-8">
         <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} />
@@ -119,11 +119,7 @@ export default async function ReportsPage({
   const failed = !!history.error || history.count == null;
   const labels = { page: copy.page, previous: copy.previous, next: copy.next };
   return (
-    <PlatformShell
-      locale={locale}
-      role={profile.role as 'student' | 'teacher' | 'admin'}
-      name={profile.full_name}
-    >
+    <PlatformShell locale={locale} role={profile.role} name={profile.full_name}>
       <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.intro} />
       <Panel className="mb-7">
         <ProblemReportForm locale={locale} />

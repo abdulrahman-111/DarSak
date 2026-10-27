@@ -110,7 +110,7 @@ const groupFields =
   'id,teacher_id,name,description,capacity,status,location,offering:offerings(id,subject:subjects(id,name_ar,name_en),node:education_nodes(id,name_ar,name_en))';
 export async function viewer() {
   if (!isConfigured()) return null;
-  const { db, user, profile } = await getRequestViewer();
+  const { db, user, profile, adminRejected } = await getRequestViewer();
   return user && profile
     ? {
         db,
@@ -118,14 +118,19 @@ export async function viewer() {
         fullName: profile.full_name,
         role: profile.role as string,
         status: profile.status as string,
+        adminRejected,
       }
-    : null;
+    : adminRejected
+      ? { adminRejected: true }
+      : null;
 }
 export async function student(locale: Locale) {
   const me = await viewer();
+  if (me && 'adminRejected' in me && me.adminRejected)
+    redirect(`/${locale}/login?error=admin-portal`);
   if (!me || me.status !== 'active') redirect(`/${locale}/login`);
-  if (me.role !== 'student' && me.role !== 'teacher' && me.role !== 'admin')
-    redirect(`/${locale}/login`);
+  if (me.role === 'admin') redirect(`/${locale}/login?error=admin-portal`);
+  if (me.role !== 'student' && me.role !== 'teacher') redirect(`/${locale}/login`);
   if (me.role !== 'student') redirect(roleHome(locale, me.role));
   return me;
 }
@@ -164,7 +169,7 @@ export async function classDetail(id: string) {
   if (publicDetail.error) throw new Error('Class lookup failed');
   const visibleGroup = publicDetail.data;
 
-  // Authenticated students with historical membership, group owners, and admins
+  // Authenticated students with historical membership and group owners
   // may still have RLS access to a group that is no longer in public discovery.
   // Let those existing policies decide whether the fallback row is visible.
   let groupRow: Group | null = null;

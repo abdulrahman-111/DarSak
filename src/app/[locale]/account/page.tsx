@@ -55,13 +55,7 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
                 : 'Continue or complete your learning profile setup.',
             },
           ]
-        : [
-            {
-              href: '/admin',
-              title: ar ? 'الإدارة' : 'Administration',
-              body: ar ? 'إدارة المنصة والمستخدمين.' : 'Manage the platform and its users.',
-            },
-          ];
+        : [];
   const common = [
     {
       href: 'security',

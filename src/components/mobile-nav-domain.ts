@@ -1,4 +1,4 @@
-export type MobileWorkspaceRole = 'student' | 'teacher' | 'admin';
+export type MobileWorkspaceRole = 'student' | 'teacher';
 export type MobileWorkspaceLink = { href: string; label: string };
 export type MobilePrimaryIcon =
   'home' | 'groups' | 'calendar' | 'requests' | 'explore' | 'teachers' | 'reports' | 'people';

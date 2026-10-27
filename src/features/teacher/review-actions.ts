@@ -91,8 +91,6 @@ export async function requestTeacherReview(
   });
   for (const currentLocale of ['en', 'ar']) {
     revalidatePath(`/${currentLocale}/teacher`, 'layout');
-    revalidatePath(`/${currentLocale}/admin/teachers`);
-    revalidatePath(`/${currentLocale}/admin`);
   }
   return {
     success: message(locale, 'Your review request was submitted.', 'تم إرسال طلب المراجعة.'),

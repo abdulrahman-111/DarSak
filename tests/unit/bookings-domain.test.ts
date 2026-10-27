@@ -75,7 +75,6 @@ describe('booking domain', () => {
     ).toHaveLength(1);
     expect(notificationHref('student', 'booking_updated', {}, 'en')).toBe('/en/student/bookings');
     expect(notificationHref('teacher', 'booking_updated', {}, 'ar')).toBe('/ar/teacher/bookings');
-    expect(notificationHref('admin', 'booking_updated', {}, 'en')).toBeNull();
     expect(
       notificationSummary('booking_updated', { status: 'accepted', group_name: 'Algebra' }, 'en'),
     ).toContain('accepted');

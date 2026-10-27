@@ -5,7 +5,7 @@ vi.mock('@/components/platform/ui', () => ({
   Panel: ({ children }: any) => <section>{children}</section>,
   cairoDate: () => 'date',
 }));
-vi.mock('@/features/admin/application-forms', () => ({
+vi.mock('@admin/features/admin/application-forms', () => ({
   ApplicationCvDownload: () => <button>Private CV action</button>,
   RequestApplicationChangesForm: () => <button>Request changes action</button>,
 }));
@@ -13,7 +13,7 @@ vi.mock('@/features/admin/application-forms', () => ({
 import {
   submittedApplicationReady,
   TeacherApplicationPanel,
-} from '@/features/admin/application-panel';
+} from '@admin/features/admin/application-panel';
 
 const id = '11111111-1111-4111-8111-111111111111';
 const details = {

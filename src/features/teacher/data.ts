@@ -21,11 +21,12 @@ import {
 } from '@/features/student/waitlist-domain';
 
 export async function teacherIdentity(locale: Locale) {
-  const { db, user, profile } = await getRequestViewer();
+  const { db, user, profile, adminRejected } = await getRequestViewer();
+  if (adminRejected) redirect(`/${locale}/login?error=admin-portal`);
   if (!user) redirect(`/${locale}/login`);
   if (!profile || profile.status !== 'active') redirect(`/${locale}/login`);
-  if (profile.role !== 'student' && profile.role !== 'teacher' && profile.role !== 'admin')
-    redirect(`/${locale}/login`);
+  if (profile.role === 'admin') redirect(`/${locale}/login?error=admin-portal`);
+  if (profile.role !== 'student' && profile.role !== 'teacher') redirect(`/${locale}/login`);
   if (profile.role !== 'teacher') redirect(roleHome(locale, profile.role));
   return { db, id: user.id, profile };
 }

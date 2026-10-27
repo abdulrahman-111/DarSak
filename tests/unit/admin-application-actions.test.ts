@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { createClientMock, revalidatePathMock } = vi.hoisted(() => ({
+const { createClientMock, getAdminActorMock, revalidatePathMock } = vi.hoisted(() => ({
   createClientMock: vi.fn(),
+  getAdminActorMock: vi.fn(),
   revalidatePathMock: vi.fn(),
 }));
-vi.mock('@/lib/supabase/server', () => ({ createClient: createClientMock }));
+vi.mock('@admin/lib/access', () => ({ getAdminActor: getAdminActorMock }));
 vi.mock('next/cache', () => ({ revalidatePath: revalidatePathMock }));
 
 import {
   createTeacherApplicationCvLink,
   requestTeacherApplicationChanges,
-} from '@/features/admin/application-actions';
+} from '@admin/features/admin/application-actions';
 
 const teacherId = '11111111-1111-4111-8111-111111111111';
 const requestId = '22222222-2222-4222-8222-222222222222';
@@ -53,7 +54,7 @@ function setup({
     data: { signedUrl: 'https://storage.example/signed?expires=60' },
     error: null,
   }));
-  createClientMock.mockResolvedValue({
+  const db = {
     auth: {
       getUser: async () => ({ data: { user: { id: '33333333-3333-4333-8333-333333333333' } } }),
     },
@@ -66,12 +67,15 @@ function setup({
     }),
     rpc,
     storage: { from: () => ({ createSignedUrl }) },
-  });
+  };
+  createClientMock.mockResolvedValue(db);
+  getAdminActorMock.mockResolvedValue({ db, id: '33333333-3333-4333-8333-333333333333' });
   return { rpc, createSignedUrl };
 }
 
 beforeEach(() => {
   createClientMock.mockReset();
+  getAdminActorMock.mockReset();
   revalidatePathMock.mockReset();
 });
 

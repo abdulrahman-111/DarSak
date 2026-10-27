@@ -18,7 +18,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
     const { profile } = await getRequestViewer();
     if (
       profile?.status === 'active' &&
-      (profile.role === 'student' || profile.role === 'teacher' || profile.role === 'admin')
+      (profile.role === 'student' || profile.role === 'teacher')
     ) {
       redirect(roleHome(locale, profile.role));
     }

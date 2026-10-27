@@ -11,18 +11,23 @@ export type PlatformViewer = {
   db: Awaited<ReturnType<typeof createClient>>;
   id: string;
   fullName: string;
-  role: PlatformRole;
+  role: 'student' | 'teacher';
   status: 'active' | 'suspended';
   email: string | null;
   signInMethods: string[];
 };
 
-export async function requireViewer(locale: string, role?: PlatformRole): Promise<PlatformViewer> {
+export async function requireViewer(
+  locale: string,
+  role?: 'student' | 'teacher',
+): Promise<PlatformViewer> {
   if (!isConfigured()) redirect(`/${locale}`);
-  const { db, user, profile } = await getRequestViewer();
+  const { db, user, profile, adminRejected } = await getRequestViewer();
+  if (adminRejected) redirect(`/${locale}/login?error=admin-portal`);
   if (!user) redirect(`/${locale}/login`);
   if (!profile || profile.status !== 'active' || !isPlatformRole(profile.role))
     redirect(`/${locale}/login`);
+  if (profile.role === 'admin') redirect(`/${locale}/login?error=admin-portal`);
   if (role && profile.role !== role) redirect(roleHome(locale, profile.role));
   const signInMethods = [
     ...new Set(
@@ -52,5 +57,7 @@ export async function requireTeachingAccess(locale: string): Promise<PlatformVie
 }
 
 export function roleHome(locale: string, role: PlatformRole) {
-  return `/${locale}/${role}`;
+  return role === 'admin'
+    ? `https://darsak-admin-portal.vercel.app/${locale}/login`
+    : `/${locale}/${role}`;
 }

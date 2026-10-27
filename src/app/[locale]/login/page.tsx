@@ -20,6 +20,7 @@ export default async function Login({
   const linkFailed = error === 'link';
   const setupFailed = error === 'setup';
   const roleMismatch = error === 'role-mismatch';
+  const adminPortalRequired = error === 'admin-portal';
   const actualRole =
     actual === 'student' || actual === 'teacher' || actual === 'admin' ? actual : null;
   const actualRoleLabel =
@@ -45,6 +46,20 @@ export default async function Login({
               {copy.loginTitle}
             </h1>
             <p className="mt-4 max-w-lg leading-7 text-ink-soft">{copy.loginBody}</p>
+            {adminPortalRequired && (
+              <p
+                role="status"
+                className="mt-6 rounded-xl bg-cream p-4 text-sm leading-6 text-ink-soft"
+              >
+                {copy.adminPortalNotice}{' '}
+                <Link
+                  className="font-bold text-teal underline"
+                  href={`https://darsak-admin-portal.vercel.app/${locale}/login`}
+                >
+                  {locale === 'ar' ? 'فتح بوابة الإدارة' : 'Open administrator portal'}
+                </Link>
+              </p>
+            )}
             {linkFailed && (
               <p role="alert" className="mt-6 rounded-xl bg-[#f3e1db] p-3 text-sm text-[#6e2414]">
                 {copy.linkInvalid}

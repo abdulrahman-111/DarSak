@@ -13,7 +13,7 @@ vi.mock('next/link', () => ({
   ),
 }));
 vi.mock('next/navigation', () => ({ notFound: notFoundMock }));
-vi.mock('@/components/platform/access', () => ({ requireViewer: requireViewerMock }));
+vi.mock('@admin/lib/access', () => ({ requireViewer: requireViewerMock }));
 vi.mock('@/components/platform/ui', () => ({
   Panel: ({ children, ...props }: any) => <section {...props}>{children}</section>,
   ScreenTitle: ({ title, action }: any) => (
@@ -25,12 +25,12 @@ vi.mock('@/components/platform/ui', () => ({
   Status: ({ value }: any) => <span>{value}</span>,
   cairoDate: () => 'date',
 }));
-vi.mock('@/features/admin/review-form', () => ({
+vi.mock('@admin/features/admin/review-form', () => ({
   ReviewDecisionForm: ({ submittedReady }: { submittedReady: boolean }) =>
     submittedReady ? <button>Decision controls</button> : null,
 }));
 
-import AdminTeacherReviewDetail from '@/app/[locale]/admin/teachers/[id]/page';
+import AdminTeacherReviewDetail from '@admin/app/[locale]/admin/teachers/[id]/page';
 
 const id = '11111111-1111-4111-8111-111111111111';
 function setup({
