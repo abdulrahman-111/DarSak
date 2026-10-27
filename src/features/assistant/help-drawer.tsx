@@ -28,11 +28,18 @@ function HelpDrawerPanel({
 }): React.JSX.Element {
   const ar = locale === 'ar';
   const [open, setOpen] = useState(false);
+  const [ready, setReady] = useState(false);
   const dialogId = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [available, setAvailable] = useState<boolean | null>(null);
   const hasAccess = access !== null;
+
+  useEffect(() => {
+    // Keep the server-rendered launcher inert until its click handler is hydrated.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setReady(true);
+  }, []);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -71,11 +78,13 @@ function HelpDrawerPanel({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
+        aria-busy={!ready}
         aria-controls={dialogId}
         aria-label={ar ? 'فتح سند' : 'Open Sanad'}
         title={ar ? 'فتح سند · المساعدة' : 'Open Sanad · Help'}
+        disabled={!ready}
         onClick={() => setOpen(true)}
-        className="sanad-launcher fixed z-30 inline-flex size-14 items-center justify-center rounded-full border border-teal/15 bg-teal text-cream shadow-lg transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-teal/95 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange"
+        className="sanad-launcher fixed z-30 inline-flex size-14 items-center justify-center rounded-full border border-teal/15 bg-teal text-cream shadow-lg transition-[transform,background-color,box-shadow] duration-150 hover:-translate-y-0.5 hover:bg-teal/95 hover:shadow-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-orange disabled:cursor-wait disabled:opacity-60"
       >
         <MessageCircle className="size-6" aria-hidden="true" />
       </button>

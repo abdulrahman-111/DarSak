@@ -82,6 +82,8 @@ describe('guided help UI', () => {
     expect(html).toContain('aria-haspopup="dialog"');
     expect(html).toContain('<dialog');
     expect(html).toContain('aria-label="فتح سند"');
+    expect(html).toContain('disabled=""');
+    expect(html).toContain('aria-busy="true"');
     expect(html).toContain('sanad-launcher');
     expect(html).not.toContain('Guided platform help');
   });
