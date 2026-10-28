@@ -6,14 +6,8 @@
     "staging": "817d582 (tree matches f5e3de0)"
   },
   "viewports": {
-    "desktop": [
-      1440,
-      1000
-    ],
-    "mobile": [
-      390,
-      844
-    ]
+    "desktop": [1440, 1000],
+    "mobile": [390, 844]
   },
   "entries": [
     {
@@ -38,19 +32,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/account/application/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "draft/incomplete",
-        "pending",
-        "approved",
-        "changes requested/rejected"
-      ],
+      "critical_states": ["draft/incomplete", "pending", "approved", "changes requested/rejected"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/delete",
@@ -68,12 +52,7 @@
         "service unavailable"
       ],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/goodbye",
@@ -84,16 +63,9 @@
       "role": "authenticated",
       "source": "src/app/[locale]/account/goodbye/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/learning-profile",
@@ -104,16 +76,9 @@
       "role": "student",
       "source": "src/app/[locale]/account/learning-profile/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account",
@@ -124,17 +89,9 @@
       "role": "authenticated",
       "source": "src/app/[locale]/account/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "student links",
-        "teacher links"
-      ],
+      "critical_states": ["student links", "teacher links"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/profile",
@@ -145,16 +102,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/account/profile/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/security",
@@ -165,16 +115,9 @@
       "role": "authenticated",
       "source": "src/app/[locale]/account/security/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/setup",
@@ -196,12 +139,7 @@
         "teacher review"
       ],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/account/teaching-access",
@@ -212,17 +150,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/account/teaching-access/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "current plan and usage",
-        "renewal request"
-      ],
+      "critical_states": ["current plan and usage", "renewal request"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/check-email",
@@ -233,17 +163,9 @@
       "role": "guest",
       "source": "src/app/[locale]/check-email/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "registration confirmation",
-        "recovery confirmation"
-      ],
+      "critical_states": ["registration confirmation", "recovery confirmation"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/choose-role",
@@ -254,16 +176,9 @@
       "role": "guest",
       "source": "src/app/[locale]/choose-role/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/classes/[id]",
@@ -303,16 +218,9 @@
       "role": "guest",
       "source": "src/app/[locale]/forgot-password/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/groups/[id]",
@@ -335,12 +243,7 @@
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/help",
@@ -351,16 +254,9 @@
       "role": "guest",
       "source": "src/app/[locale]/help/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/login",
@@ -377,12 +273,7 @@
         "Google sign-in entry (no provider success claim)"
       ],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/notifications",
@@ -393,17 +284,9 @@
       "role": "authenticated",
       "source": "src/app/[locale]/notifications/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "unread/read",
-        "mark read actions"
-      ],
+      "critical_states": ["unread/read", "mark read actions"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/",
@@ -421,12 +304,7 @@
         "mobile navigation open"
       ],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/pricing",
@@ -450,16 +328,9 @@
       "role": "guest",
       "source": "src/app/[locale]/privacy/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/register",
@@ -470,18 +341,9 @@
       "role": "guest",
       "source": "src/app/[locale]/register/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "role chooser",
-        "?role=student form",
-        "?role=teacher form"
-      ],
+      "critical_states": ["role chooser", "?role=student form", "?role=teacher form"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/reports",
@@ -492,18 +354,9 @@
       "role": "authenticated",
       "source": "src/app/[locale]/reports/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "report form",
-        "report history",
-        "status filter"
-      ],
+      "critical_states": ["report form", "report history", "status filter"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/reset-password",
@@ -514,16 +367,9 @@
       "role": "guest",
       "source": "src/app/[locale]/reset-password/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/bookings",
@@ -534,19 +380,9 @@
       "role": "student",
       "source": "src/app/[locale]/student/bookings/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "requests",
-        "upcoming bookings",
-        "past bookings",
-        "cancel request"
-      ],
+      "critical_states": ["requests", "upcoming bookings", "past bookings", "cancel request"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/classes/[id]",
@@ -572,12 +408,7 @@
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/classes",
@@ -588,18 +419,9 @@
       "role": "student",
       "source": "src/app/[locale]/student/classes/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "active classes",
-        "waitlist",
-        "cancelled/archived"
-      ],
+      "critical_states": ["active classes", "waitlist", "cancelled/archived"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/lessons/[id]",
@@ -610,19 +432,12 @@
       "role": "student",
       "source": "src/app/[locale]/student/lessons/[id]/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/materials",
@@ -633,17 +448,9 @@
       "role": "student",
       "source": "src/app/[locale]/student/materials/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "search/filter",
-        "resource links"
-      ],
+      "critical_states": ["search/filter", "resource links"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student",
@@ -654,16 +461,9 @@
       "role": "student",
       "source": "src/app/[locale]/student/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/profile",
@@ -687,16 +487,9 @@
       "role": "student",
       "source": "src/app/[locale]/student/recommendations/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/student/saved",
@@ -707,17 +500,9 @@
       "role": "student",
       "source": "src/app/[locale]/student/saved/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "saved cards",
-        "remove saved"
-      ],
+      "critical_states": ["saved cards", "remove saved"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/access",
@@ -754,18 +539,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/bookings/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "availability slot form",
-        "requests",
-        "booking actions"
-      ],
+      "critical_states": ["availability slot form", "requests", "booking actions"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/catalogue",
@@ -776,16 +552,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/catalogue/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "subject/category additions"
-      ],
+      "critical_states": ["subject/category additions"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/feedback",
@@ -796,16 +565,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/feedback/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "feedback visibility controls"
-      ],
+      "critical_states": ["feedback visibility controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups/[id]/assignments/[assignmentId]",
@@ -816,20 +578,12 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/groups/[id]/assignments/[assignmentId]/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "submissions",
-        "grading form"
-      ],
+      "critical_states": ["submissions", "grading form"],
       "fixture_placeholders": [
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups/[id]/assignments",
@@ -840,21 +594,12 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/groups/[id]/assignments/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "create form",
-        "?edit=[assignmentId] edit form",
-        "assignment list"
-      ],
+      "critical_states": ["create form", "?edit=[assignmentId] edit form", "assignment list"],
       "fixture_placeholders": [
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups/[id]/edit",
@@ -865,20 +610,12 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/groups/[id]/edit/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "published limited edit",
-        "draft details edit"
-      ],
+      "critical_states": ["published limited edit", "draft details edit"],
       "fixture_placeholders": [
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups/[id]",
@@ -902,12 +639,7 @@
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups/[id]/setup",
@@ -928,12 +660,7 @@
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups/new",
@@ -944,16 +671,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/groups/new/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "group details form"
-      ],
+      "critical_states": ["group details form"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/groups",
@@ -964,16 +684,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/groups/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/lessons/[id]",
@@ -984,22 +697,12 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/lessons/[id]/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "edit lesson",
-        "copy lesson",
-        "add resource",
-        "attendance editor"
-      ],
+      "critical_states": ["edit lesson", "copy lesson", "add resource", "attendance editor"],
       "fixture_placeholders": [
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/lessons",
@@ -1010,19 +713,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/lessons/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "add lesson",
-        "filters",
-        "calendar/list views",
-        "bulk controls"
-      ],
+      "critical_states": ["add lesson", "filters", "calendar/list views", "bulk controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher",
@@ -1033,17 +726,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "approved dashboard",
-        "unapproved onboarding dashboard"
-      ],
+      "critical_states": ["approved dashboard", "unapproved onboarding dashboard"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/profile",
@@ -1067,18 +752,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/requests/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "pending requests",
-        "waiting list",
-        "accept/reject controls"
-      ],
+      "critical_states": ["pending requests", "waiting list", "accept/reject controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teacher/students",
@@ -1089,16 +765,9 @@
       "role": "teacher",
       "source": "src/app/[locale]/teacher/students/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teachers/[id]",
@@ -1109,21 +778,12 @@
       "role": "guest",
       "source": "src/app/[locale]/teachers/[id]/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "profile",
-        "groups",
-        "booking request form"
-      ],
+      "critical_states": ["profile", "groups", "booking request form"],
       "fixture_placeholders": [
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/teachers",
@@ -1134,18 +794,9 @@
       "role": "guest",
       "source": "src/app/[locale]/teachers/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "search and subject filters",
-        "results",
-        "empty search"
-      ],
+      "critical_states": ["search and subject filters", "results", "empty search"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/terms",
@@ -1156,16 +807,9 @@
       "role": "guest",
       "source": "src/app/[locale]/terms/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "public:/timetable",
@@ -1176,18 +820,9 @@
       "role": "authenticated",
       "source": "src/app/[locale]/timetable/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "week selector",
-        "week populated",
-        "lesson details"
-      ],
+      "critical_states": ["week selector", "week populated", "lesson details"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/access",
@@ -1211,16 +846,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/education/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "catalogue forms"
-      ],
+      "critical_states": ["catalogue forms"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/email",
@@ -1231,17 +859,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/email/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "queue summary",
-        "retry controls"
-      ],
+      "critical_states": ["queue summary", "retry controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/feedback",
@@ -1252,16 +872,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/feedback/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "moderation controls"
-      ],
+      "critical_states": ["moderation controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/groups",
@@ -1272,16 +885,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/groups/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "group moderation controls"
-      ],
+      "critical_states": ["group moderation controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/health",
@@ -1292,16 +898,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/health/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "operational status panels"
-      ],
+      "critical_states": ["operational status panels"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin",
@@ -1312,16 +911,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "default populated page"
-      ],
+      "critical_states": ["default populated page"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/reports",
@@ -1332,17 +924,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/reports/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "status filters",
-        "resolution controls"
-      ],
+      "critical_states": ["status filters", "resolution controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/settings",
@@ -1353,17 +937,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/settings/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "add setting form",
-        "edit settings"
-      ],
+      "critical_states": ["add setting form", "edit settings"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/teachers/[id]",
@@ -1384,12 +960,7 @@
         "[id]=valid fixture appropriate to role",
         "[assignmentId]=fixture assignment"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/teachers",
@@ -1400,17 +971,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/teachers/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "status filter",
-        "search"
-      ],
+      "critical_states": ["status filter", "search"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/admin/users",
@@ -1421,17 +984,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/admin/users/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "search filters",
-        "user status controls"
-      ],
+      "critical_states": ["search filters", "user status controls"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/login",
@@ -1448,12 +1003,7 @@
         "Google sign-in entry (no provider success claim)"
       ],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/notifications",
@@ -1464,17 +1014,9 @@
       "role": "admin",
       "source": "apps/admin/src/app/[locale]/notifications/page.tsx",
       "source_environment": "production",
-      "critical_states": [
-        "unread/read",
-        "mark read actions"
-      ],
+      "critical_states": ["unread/read", "mark read actions"],
       "fixture_placeholders": [],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "admin:/",
@@ -1535,12 +1077,7 @@
         "OAuth not configured warning",
         "connected status only with genuine synthetic/provider setup"
       ],
-      "capture_matrix": [
-        "en-desktop",
-        "en-mobile",
-        "ar-desktop",
-        "ar-mobile"
-      ]
+      "capture_matrix": ["en-desktop", "en-mobile", "ar-desktop", "ar-mobile"]
     },
     {
       "id": "staging:sandak",
