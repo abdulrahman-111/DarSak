@@ -24,9 +24,15 @@ const GOOGLE_ORIGIN = 'https://accounts.google.com';
  * user-generated content and no auth widgets.
  */
 const STATIC_CONTENT_PATH = /^\/(?:(?:ar|en)\/)?(?:help|privacy|terms|pricing)(?:\/|$)/;
+/** The localized landing page (`/ar`, `/en`, optional trailing slash), statically rendered for visitors. */
+const LANDING_PATH = /^\/(?:ar|en)\/?$/;
+
+export function isLandingPath(pathname: string) {
+  return LANDING_PATH.test(pathname);
+}
 
 export function isStaticContentPath(pathname: string) {
-  return STATIC_CONTENT_PATH.test(pathname);
+  return STATIC_CONTENT_PATH.test(pathname) || LANDING_PATH.test(pathname);
 }
 
 export function isCspEnforced(value = process.env.CSP_ENFORCE) {
