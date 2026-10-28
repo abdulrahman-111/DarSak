@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-const mocks = vi.hoisted(() => ({ flush: vi.fn() }));
+const mocks = vi.hoisted(() => ({ flush: vi.fn(), enqueue: vi.fn().mockResolvedValue(0) }));
+vi.mock('@/features/email/reminders', () => ({ enqueueLessonReminders: mocks.enqueue }));
 vi.mock('@/features/email/worker', () => ({
   flushEmailOutbox: mocks.flush,
   MAX_EMAIL_JOBS_PER_RUN: 50,
@@ -9,6 +10,8 @@ import { GET } from '@/app/api/email/cron/route';
 afterEach(() => {
   vi.unstubAllEnvs();
   mocks.flush.mockReset();
+  mocks.enqueue.mockReset();
+  mocks.enqueue.mockResolvedValue(0);
 });
 
 describe('protected email cron route', () => {
@@ -44,7 +47,28 @@ describe('protected email cron route', () => {
       failed: 0,
       skipped: 0,
       unsettled: 1,
+      reminders_enqueued: 0,
     });
+  });
+  it('queues lesson reminders before draining and still drains when queueing fails', async () => {
+    vi.stubEnv('CRON_SECRET', 'secret');
+    const order: string[] = [];
+    mocks.enqueue.mockImplementation(async () => {
+      order.push('enqueue');
+      return null;
+    });
+    mocks.flush.mockImplementation(async () => {
+      order.push('flush');
+      return { state: 'ok', claimed: 0, sent: 0, retried: 0, failed: 0, skipped: 0, unsettled: 0 };
+    });
+    const response = await GET(
+      new Request('https://dars.example/api/email/cron', {
+        headers: { authorization: 'Bearer secret' },
+      }) as never,
+    );
+    expect(order).toEqual(['enqueue', 'flush']);
+    expect(response.status).toBe(200);
+    expect((await response.json()).reminders_enqueued).toBeNull();
   });
   it('drains with the per-run job limit', async () => {
     vi.stubEnv('CRON_SECRET', 'secret');

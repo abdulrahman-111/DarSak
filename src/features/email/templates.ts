@@ -4,7 +4,8 @@ export type EmailKind =
   | 'teacher_review_declined'
   | 'enrollment_requested'
   | 'teacher_renewal'
-  | 'teacher_fee_announcement';
+  | 'teacher_fee_announcement'
+  | 'lesson_reminder';
 export type EmailMessage = { subject: string; text: string; html: string };
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const safeText = (value: unknown, max: number) =>
@@ -30,6 +31,16 @@ const escapeHtml = (value: string) =>
     .replace(/'/g, '&#39;');
 const link = (origin: string, path: string) =>
   path.startsWith('https://') ? path : `${origin}${path}`;
+const dateTime = (value: unknown, locale: 'en-GB' | 'ar-EG') => {
+  const time = Date.parse(safeText(value, 40));
+  return Number.isFinite(time)
+    ? new Intl.DateTimeFormat(locale, {
+        dateStyle: 'medium',
+        timeStyle: 'short',
+        timeZone: 'Africa/Cairo',
+      }).format(time)
+    : '';
+};
 const date = (value: unknown) => {
   const raw = safeText(value, 40),
     time = Date.parse(raw);
@@ -109,6 +120,24 @@ export function renderEmail(
     detailEn = `${en}\nEffective ${effective} (Cairo time).`;
     detailAr = `${ar}\nيسري اعتباراً من ${effective} بتوقيت القاهرة.`;
     path = '/account/teaching-access';
+  } else if (kind === 'lesson_reminder') {
+    const lessonId = safeText(payload.lesson_id, 36),
+      offset = payload.offset,
+      role = payload.role,
+      group = defangUserText(safeText(payload.group_name, 160)),
+      lesson = defangUserText(safeText(payload.title, 160)),
+      whenEn = dateTime(payload.starts_at, 'en-GB'),
+      whenAr = dateTime(payload.starts_at, 'ar-EG');
+    if (!uuid.test(lessonId) || !whenEn || (offset !== '24h' && offset !== '1h')) return null;
+    if (role !== 'student' && role !== 'teacher') return null;
+    const soonEn = offset === '1h' ? 'in about 1 hour' : 'tomorrow',
+      soonAr = offset === '1h' ? 'بعد نحو ساعة' : 'غداً';
+    const label = (name: string, fallback: string) => (name ? `"${name}"` : fallback);
+    titleEn = offset === '1h' ? 'Lesson starts in 1 hour' : 'Lesson reminder: tomorrow';
+    titleAr = offset === '1h' ? 'تبدأ الحصة بعد ساعة' : 'تذكير بحصة غداً';
+    detailEn = `${label(lesson, 'Your lesson')}${group ? ` (${label(group, '')})` : ''} starts ${soonEn}, on ${whenEn} (Cairo time).\nCheck DarSak for the latest time before you go.`;
+    detailAr = `تبدأ حصة ${label(lesson, 'حصتك')}${group ? ` (${label(group, '')})` : ''} ${soonAr}، يوم ${whenAr} بتوقيت القاهرة.\nراجع درسك للتأكد من آخر موعد قبل الذهاب.`;
+    path = `/${role}/lessons/${lessonId}`;
   } else return null;
   const localizedUrl = (locale: 'en' | 'ar') =>
     path.startsWith('https://')

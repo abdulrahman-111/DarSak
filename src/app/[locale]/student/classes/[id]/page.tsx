@@ -29,6 +29,7 @@ import { AnnouncementView } from '@/features/groups/announcement-view';
 import { GroupFeedbackSection } from '@/features/feedback/group-section';
 import { StudentTeacherContactCard } from '@/features/student/teacher-contact-card';
 import { StudentAssignments } from '@/features/assignments/views';
+import { LearningText } from '@/features/teacher/learning-text';
 
 export default async function StudentClassPage({
   params,
@@ -203,9 +204,10 @@ export default async function StudentClassPage({
                       <h3 className="mt-5 font-bold text-teal">
                         {ar ? 'ما ستتعلمه' : 'What you will learn'}
                       </h3>
-                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-muted">
-                        {group.learning.outcomes}
-                      </p>
+                      <LearningText
+                        text={group.learning.outcomes}
+                        className="mt-2 text-sm leading-7 text-muted"
+                      />
                     </>
                   )}
                   {group.learning?.prerequisites && (
@@ -213,9 +215,10 @@ export default async function StudentClassPage({
                       <h3 className="mt-5 font-bold text-teal">
                         {ar ? 'الاستعداد للتعلم' : 'Getting ready'}
                       </h3>
-                      <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-7 text-muted">
-                        {group.learning.prerequisites}
-                      </p>
+                      <LearningText
+                        text={group.learning.prerequisites}
+                        className="mt-2 text-sm leading-7 text-muted"
+                      />
                     </>
                   )}
                 </section>
@@ -288,8 +291,8 @@ export default async function StudentClassPage({
                     {group.learning?.fee_includes && (
                       <div>
                         <dt className="text-muted">{ar ? 'ما تتضمنه المجموعة' : 'Included'}</dt>
-                        <dd className="mt-1 whitespace-pre-wrap break-words">
-                          {group.learning.fee_includes}
+                        <dd className="mt-1">
+                          <LearningText text={group.learning.fee_includes} />
                         </dd>
                       </div>
                     )}

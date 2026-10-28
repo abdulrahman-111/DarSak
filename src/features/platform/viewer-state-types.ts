@@ -9,6 +9,8 @@ import type { AssistantAccess } from '@/features/assistant/domain';
  */
 export type ViewerState = {
   signedIn: boolean;
+  /** Auth user id, used only to scope the live notification subscription. */
+  userId: string | null;
   /** Set only for an active student or teacher; drives the workspace navigation. */
   activeRole: 'student' | 'teacher' | null;
   fullName: string;
@@ -18,6 +20,7 @@ export type ViewerState = {
 
 export const ANONYMOUS_VIEWER: ViewerState = {
   signedIn: false,
+  userId: null,
   activeRole: null,
   fullName: '',
   unreadCount: null,

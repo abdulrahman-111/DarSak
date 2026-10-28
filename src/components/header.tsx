@@ -13,6 +13,7 @@ import { platformNavigation } from './platform/shell';
 import { MobileWorkspaceNavigation } from './mobile-workspace-navigation';
 import { useViewerState } from './viewer-state';
 import type { ViewerState } from '@/features/platform/viewer-state-types';
+import { NotificationBell } from '@/features/notifications/notification-bell';
 
 export function globalReportsHref(locale: string, activeRole: string | null) {
   if (activeRole === 'student' || activeRole === 'teacher') return `/${locale}/reports`;
@@ -210,6 +211,15 @@ export function HeaderView({
                   )}
                 </nav>
               </details>
+            )}
+            {activeRole && me?.userId && (
+              <NotificationBell
+                userId={me.userId}
+                initialCount={unreadCount}
+                href={`/${locale}/notifications`}
+                label={locale === 'ar' ? 'الإشعارات' : 'Notifications'}
+                unreadLabel={locale === 'ar' ? 'غير مقروء' : 'unread'}
+              />
             )}
             {loading ? (
               <span

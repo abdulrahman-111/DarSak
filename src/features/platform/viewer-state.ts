@@ -21,6 +21,7 @@ export async function loadViewerState(): Promise<ViewerState> {
   ]);
   return {
     signedIn: true,
+    userId: viewer.user.id,
     activeRole,
     fullName: profile?.full_name ?? '',
     unreadCount,

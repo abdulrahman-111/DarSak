@@ -58,6 +58,13 @@ export default async function AccountPage({ params }: { params: Promise<{ locale
         : [];
   const common = [
     {
+      href: 'notifications',
+      title: ar ? 'الإشعارات' : 'Notifications',
+      body: ar
+        ? 'اختر تذكيرات الحصص التي تصلك بالبريد.'
+        : 'Choose which lesson reminders you get by email.',
+    },
+    {
       href: 'security',
       title: ar ? 'الأمان' : 'Security',
       body: ar

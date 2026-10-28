@@ -47,6 +47,7 @@ describe('viewer state for the client header', () => {
     });
     expect(await loadViewerState()).toEqual({
       signedIn: true,
+      userId: 'u',
       activeRole: 'student',
       fullName: 'Sara',
       unreadCount: 4,

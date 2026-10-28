@@ -10,7 +10,7 @@ export function EnrollmentProgress({
   const ar = locale === 'ar';
   const activeIndex = current === 'requested' ? 0 : 1;
   const labels = ar
-    ? ['تم إرسال الطلب', 'تمت الموافقة', 'تواصل مع المعلم']
+    ? ['تم إرسال الطلب', 'تم القبول', 'تواصل مع المعلم']
     : ['Request sent', 'Accepted', 'Contact teacher'];
   const states = ar
     ? [current === 'accepted' ? 'مكتمل' : 'الخطوة الحالية', 'الخطوة الحالية', 'الخطوة التالية']

@@ -94,7 +94,7 @@ const ar: typeof en = {
   accepted: 'مسجّل',
   rejected: 'تم رفض الطلب',
   cancelled: 'ملغى',
-  removed: 'تم إلغاء العضوية',
+  removed: 'تمت إزالة التسجيل',
   login: 'سجّل الدخول لطلب الانضمام',
   studentOnly: 'يلزم حساب طالب نشط للانضمام.',
   success: 'تم حفظ طلبك.',

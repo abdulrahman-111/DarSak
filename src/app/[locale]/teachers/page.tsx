@@ -301,8 +301,8 @@ export default async function Teachers({
                   </div>
                   <p id="teacher-search-help" className="mt-2 text-sm text-muted">
                     {locale === 'ar'
-                      ? 'ابحث عن المدرسين المعتمدين بالاسم (حتى ٥٠ نتيجة)، ثم اختر المدرس واضغط «تصفية».'
-                      : 'Search approved teachers by name (up to 50 matches), choose a teacher, then apply filters.'}
+                      ? `ابحث عن المدرسين المعتمدين بالاسم (حتى ٥٠ نتيجة)، ثم اختر المدرس واضغط «${c.filter}».`
+                      : `Search approved teachers by name (up to 50 matches), choose a teacher, then press “${c.filter}”.`}
                   </p>
                   <button
                     className="mt-3 inline-flex min-h-11 items-center rounded-xl border border-teal px-4 font-bold text-teal"
