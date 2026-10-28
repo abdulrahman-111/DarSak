@@ -51,7 +51,7 @@ async function teacherGroups(
 
 export async function teacherCalendarGroupChoices(locale: Locale, requestedGroup: unknown = '') {
   const me = await teacherIdentity(locale);
-  const normalized = normalizeTimetableSelection('2000-01-03', null, requestedGroup).group;
+  const normalized = normalizeTimetableSelection('2000-01-01', null, requestedGroup).group;
   const groups = await teacherGroups(me, normalized, true);
   const selectedGroup = groups.groups.find(group => group.id === normalized) ?? null;
   return {

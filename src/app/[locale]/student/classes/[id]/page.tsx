@@ -19,7 +19,8 @@ import {
   StudentHeading,
   studentCard,
 } from '@/features/student/workspace-ui';
-import { Status, cairoDate, weekday } from '@/components/platform/ui';
+import { Status, cairoDate } from '@/components/platform/ui';
+import { summarizeSchedule } from '@/features/groups/schedule-summary';
 import { StudentPagination } from '@/features/student/pagination';
 import { DownloadForm, EnrollmentForm } from '@/features/student/forms';
 import { safeLink } from '@/features/student/domain';
@@ -231,19 +232,18 @@ export default async function StudentClassPage({
                       : 'Cairo time. Check Lessons for actual dates and changes.'}
                   </p>
                   {data.slots.length ? (
-                    <ul className="mt-4 divide-y divide-line">
-                      {data.slots.map(slot => (
-                        <li
-                          key={slot.id}
-                          className="flex flex-wrap justify-between gap-2 py-3 text-sm"
-                        >
-                          <span>{weekday(slot.weekday, locale)}</span>
-                          <span dir="ltr" className="font-semibold">
-                            {slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <ul className="mt-4 divide-y divide-line">
+                        {summarizeSchedule(data.slots, locale).lines.map(line => (
+                          <li key={line} className="py-3 text-sm font-semibold">
+                            {line}
+                          </li>
+                        ))}
+                      </ul>
+                      <p className="mt-2 text-xs text-muted">
+                        {summarizeSchedule(data.slots, locale).countLabel}
+                      </p>
+                    </>
                   ) : (
                     <p className="mt-4 text-sm text-muted">
                       {ar ? 'لم يُحدد جدول أسبوعي بعد.' : 'No weekly times have been set yet.'}

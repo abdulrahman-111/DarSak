@@ -33,12 +33,8 @@ import { StudentOverlapWarning } from '@/features/student/overlap-warning';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
 import { AnnouncementView } from '@/features/groups/announcement-view';
+import { summarizeSchedule } from '@/features/groups/schedule-summary';
 export const maxDuration = 40;
-
-const weekdays = {
-  en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
-  ar: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
-};
 
 export async function generateMetadata({
   params,
@@ -284,25 +280,26 @@ export default async function GroupDetail({
                 <CalendarDays size={20} />
                 {locale === 'ar' ? 'المواعيد الأسبوعية' : 'Weekly schedule'}
               </h2>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {detail.slots.length ? (
-                  detail.slots.map(slot => (
-                    <div key={slot.id} className="rounded-xl bg-cream p-4">
-                      <p className="font-bold text-teal">{weekdays[locale][slot.weekday]}</p>
-                      <p className="mt-1 text-sm text-muted">
-                        {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)} ·{' '}
-                        {locale === 'ar' ? 'توقيت القاهرة' : 'Cairo time'}
-                      </p>
-                    </div>
-                  ))
-                ) : (
+              {detail.slots.length ? (
+                <div className="mt-4 grid gap-3">
+                  <ul className="grid gap-3 sm:grid-cols-2">
+                    {summarizeSchedule(detail.slots, locale).lines.map(line => (
+                      <li key={line} className="rounded-xl bg-cream p-4 font-bold text-teal">
+                        {line}
+                      </li>
+                    ))}
+                  </ul>
                   <p className="text-sm text-muted">
-                    {locale === 'ar'
-                      ? 'سيعلن المدرس المواعيد قريبًا.'
-                      : 'The teacher will publish the schedule soon.'}
+                    {summarizeSchedule(detail.slots, locale).countLabel}
                   </p>
-                )}
-              </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-sm text-muted">
+                  {locale === 'ar'
+                    ? 'سيعلن المدرس المواعيد قريبًا.'
+                    : 'The teacher will publish the schedule soon.'}
+                </p>
+              )}
             </div>
             <div id="feedback">
               <GroupFeedbackSection

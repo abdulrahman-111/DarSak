@@ -6,6 +6,7 @@ import {
   normalizeTimetableWeek,
   timetableDayDates,
   validTimetableDate,
+  WEEK_START,
 } from '@/features/student/timetable-domain';
 
 export {
@@ -15,6 +16,7 @@ export {
   normalizeTimetableWeek,
   timetableDayDates,
   validTimetableDate,
+  WEEK_START,
 };
 
 export type TeacherCalendarView = 'week' | 'all';

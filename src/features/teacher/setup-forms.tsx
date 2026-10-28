@@ -23,6 +23,7 @@ import type { SetupCatalogue } from './setup-data';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
 import { GroupLearningFields } from './group-learning-fields';
 import type { GroupLearningDetails } from './group-learning-domain';
+import { WEEK_START } from '@/features/student/timetable-domain';
 import { useUnsavedProfileSection } from './unsaved-profile-protection';
 
 const copy = (locale: Locale) =>
@@ -664,12 +665,12 @@ export function GroupSetupSteps({
   );
 }
 
-const weekdayLabels = (locale: Locale) =>
+export const weekdayLabels = (locale: Locale) =>
   locale === 'ar'
     ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
     : ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-const scheduleCopy = (locale: Locale) =>
+export const scheduleCopy = (locale: Locale) =>
   locale === 'ar'
     ? {
         title: 'المواعيد الأسبوعية',
@@ -718,7 +719,9 @@ const scheduleCopy = (locale: Locale) =>
         clearProposal: 'Hide suggestion',
       };
 
-function SlotFields({
+const weekdayOptionOrder = Array.from({ length: 7 }, (_, index) => (WEEK_START + index) % 7);
+
+export function SlotFields({
   locale,
   idPrefix,
   weekday,
@@ -728,6 +731,7 @@ function SlotFields({
   onStart,
   onEnd,
   invalid,
+  autoFocus,
 }: {
   idPrefix: string;
   locale: Locale;
@@ -738,6 +742,7 @@ function SlotFields({
   onStart: (value: string) => void;
   onEnd: (value: string) => void;
   invalid?: Record<string, string>;
+  autoFocus?: boolean;
 }) {
   const t = scheduleCopy(locale);
   return (
@@ -749,15 +754,16 @@ function SlotFields({
         <select
           id={`slot-${idPrefix}-weekday`}
           name="weekday"
+          autoFocus={autoFocus}
           value={weekday}
           onChange={event => onWeekday(Number(event.target.value))}
           required
           aria-invalid={!!invalid?.weekday}
           className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
         >
-          {weekdayLabels(locale).map((label, value) => (
+          {weekdayOptionOrder.map(value => (
             <option key={value} value={value}>
-              {label}
+              {weekdayLabels(locale)[value]}
             </option>
           ))}
         </select>

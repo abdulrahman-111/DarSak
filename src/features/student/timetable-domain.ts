@@ -4,6 +4,9 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const DAY_MS = 86_400_000;
 
+/** Native Sunday-zero weekday index on which timetable weeks begin (6 = Saturday). */
+export const WEEK_START = 6;
+
 export function validTimetableDate(value: unknown): value is string {
   if (typeof value !== 'string' || !DATE_RE.test(value)) return false;
   const date = new Date(`${value}T00:00:00Z`);
@@ -40,9 +43,9 @@ function dateAtCairoMidnight(date: string): Date {
   return new Date(guess);
 }
 
-export function cairoWeekBounds(date: string) {
+export function cairoWeekBounds(date: string, weekStart: number = WEEK_START) {
   const base = new Date(`${date}T12:00:00Z`);
-  const weekday = (base.getUTCDay() + 6) % 7;
+  const weekday = (base.getUTCDay() - weekStart + 7) % 7;
   base.setUTCDate(base.getUTCDate() - weekday);
   const startDate = base.toISOString().slice(0, 10);
   const endDate = new Date(base.getTime() + 7 * DAY_MS).toISOString().slice(0, 10);
@@ -61,11 +64,15 @@ export function cairoDayBounds(date: string) {
   return { start: dateAtCairoMidnight(date), end: dateAtCairoMidnight(next) };
 }
 
-export function normalizeTimetableWeek(input: unknown, now = new Date()) {
+export function normalizeTimetableWeek(
+  input: unknown,
+  now = new Date(),
+  weekStart: number = WEEK_START,
+) {
   const today = cairoDateString(now);
   const parsed = validTimetableDate(input) ? input : today;
-  const week = cairoWeekBounds(parsed);
-  const todayWeek = cairoWeekBounds(today);
+  const week = cairoWeekBounds(parsed, weekStart);
+  const todayWeek = cairoWeekBounds(today, weekStart);
   const distance = Math.abs(
     Date.parse(`${week.startDate}T00:00:00Z`) - Date.parse(`${todayWeek.startDate}T00:00:00Z`),
   );
@@ -74,30 +81,41 @@ export function normalizeTimetableWeek(input: unknown, now = new Date()) {
     ...selected,
     today,
     weekStart: selected.startDate,
+    weekStartDay: weekStart,
     isCurrentWeek: selected.startDate === todayWeek.startDate,
   };
 }
 
-export function timetableDayDates(weekStart: string) {
-  const monday = new Date(`${weekStart}T00:00:00Z`);
+/** Seven consecutive days from `weekStartDate`; `weekday` is the Sunday-zero index. */
+export function timetableDayDates(weekStartDate: string, weekStart: number = WEEK_START) {
+  const first = new Date(`${weekStartDate}T00:00:00Z`);
   return Array.from({ length: 7 }, (_, day) => {
-    const date = new Date(monday.getTime() + day * DAY_MS);
-    return { date: date.toISOString().slice(0, 10), weekday: (day + 1) % 7 };
+    const date = new Date(first.getTime() + day * DAY_MS);
+    return { date: date.toISOString().slice(0, 10), weekday: (weekStart + day) % 7 };
   });
 }
 
-export function normalizeTimetableSelection(weekStart: string, day: unknown, group: unknown) {
-  const days = timetableDayDates(weekStart).map(item => item.date);
+export function normalizeTimetableSelection(
+  weekStartDate: string,
+  day: unknown,
+  group: unknown,
+  weekStart: number = WEEK_START,
+) {
+  const days = timetableDayDates(weekStartDate, weekStart).map(item => item.date);
   return {
     day: typeof day === 'string' && days.includes(day) ? day : null,
     group: typeof group === 'string' && UUID_RE.test(group) ? group : null,
   };
 }
 
-export function shiftTimetableWeek(weekStart: string, amount: number) {
-  const shifted = new Date(`${weekStart}T12:00:00Z`);
+export function shiftTimetableWeek(
+  weekStartDate: string,
+  amount: number,
+  weekStart: number = WEEK_START,
+) {
+  const shifted = new Date(`${weekStartDate}T12:00:00Z`);
   shifted.setUTCDate(shifted.getUTCDate() + amount * 7);
-  return cairoWeekBounds(shifted.toISOString().slice(0, 10)).startDate;
+  return cairoWeekBounds(shifted.toISOString().slice(0, 10), weekStart).startDate;
 }
 
 export const TIMETABLE_LESSON_LIMIT = 50;

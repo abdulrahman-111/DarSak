@@ -4,7 +4,10 @@ import {
   isCurrentConflictFreePreview,
   lessonExclusionsSchema,
   canConfirmGeneration,
+  groupPreviewRowsByMonth,
+  previewTotals,
   summarizeGenerationPreview,
+  type GenerationPreviewState,
 } from '@/features/teacher/generation-domain';
 
 describe('lesson generation preview domain', () => {
@@ -81,5 +84,45 @@ describe('lesson generation preview domain', () => {
     ).toBe(false);
     expect(isCurrentConflictFreePreview([{ state: 'ready' }], range, range, true)).toBe(false);
     expect(isCurrentConflictFreePreview(null, null, range, false)).toBe(false);
+  });
+});
+
+describe('generation preview grouping', () => {
+  const row = (local_date: string, state: GenerationPreviewState = 'ready') => ({
+    slot_id: 's',
+    local_date,
+    start_time: '16:00:00',
+    end_time: '17:00:00',
+    starts_at: null,
+    ends_at: null,
+    state,
+    conflict_lesson_id: null,
+    conflict_group_id: null,
+    conflict_title: null,
+  });
+
+  it('groups rows by month in date order and keeps rows in each month sorted', () => {
+    const months = groupPreviewRowsByMonth([
+      row('2026-11-03'),
+      row('2026-10-29'),
+      row('2026-10-27'),
+      row('2026-12-01'),
+    ]);
+    expect(months.map(month => month.month)).toEqual(['2026-10', '2026-11', '2026-12']);
+    expect(months[0].rows.map(item => item.local_date)).toEqual(['2026-10-27', '2026-10-29']);
+  });
+
+  it('returns no groups for no rows', () => {
+    expect(groupPreviewRowsByMonth([])).toEqual([]);
+  });
+
+  it('counts lessons without excluded dates, plus excluded dates and conflicts', () => {
+    const totals = previewTotals([
+      row('2026-10-27'),
+      row('2026-10-29', 'already_generated'),
+      row('2026-11-03', 'excluded'),
+      row('2026-11-05', 'conflicting'),
+    ]);
+    expect(totals).toEqual({ lessons: 3, excluded: 1, conflicts: 1 });
   });
 });

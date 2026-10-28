@@ -281,7 +281,7 @@ export default async function StudentDashboard({
                 </div>
                 <nav
                   aria-label={ar ? 'أيام هذا الأسبوع' : 'Days this week'}
-                  className="mt-4 grid grid-cols-7 gap-1"
+                  className="mt-4 grid grid-cols-7 gap-0.5 sm:gap-1"
                 >
                   {days.map(day => (
                     <Link
@@ -295,7 +295,7 @@ export default async function StudentDashboard({
                         }).format(new Date(`${day.date}T12:00:00Z`)) +
                         (lessonDays.has(day.date) ? (ar ? '، يوجد حصة' : ', has a lesson') : '')
                       }
-                      className={`relative flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl text-xs transition-colors ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
+                      className={`relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:text-xs ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
                     >
                       {lessonDays.has(day.date) && (
                         <span
@@ -303,9 +303,9 @@ export default async function StudentDashboard({
                           className={`absolute bottom-1.5 size-1.5 rounded-full ${day.date === week.today ? 'bg-white' : 'bg-orange'}`}
                         />
                       )}
-                      <span>
+                      <span aria-hidden="true" className="max-w-full truncate px-0.5 font-semibold">
                         {new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
-                          weekday: 'narrow',
+                          weekday: 'short',
                           timeZone: 'UTC',
                         }).format(new Date(`${day.date}T12:00:00Z`))}
                       </span>

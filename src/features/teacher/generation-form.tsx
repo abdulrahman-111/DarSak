@@ -6,7 +6,9 @@ import type { Locale } from '@/features/student/domain';
 import {
   canConfirmGeneration,
   generationRangeSchema,
+  groupPreviewRowsByMonth,
   isCurrentConflictFreePreview,
+  previewTotals,
   summarizeGenerationPreview,
   type GenerationPreviewRow,
 } from './generation-domain';
@@ -99,6 +101,19 @@ const copy = (locale: Locale) =>
         emptyDate: 'Choose a valid date.',
       };
 
+function countText(
+  locale: Locale,
+  count: number,
+  forms: { en: [string, string]; ar: [string, string, string, string] },
+) {
+  if (locale === 'en') return `${count} ${count === 1 ? forms.en[0] : forms.en[1]}`;
+  const [one, two, few, many] = forms.ar;
+  if (count === 1) return one;
+  if (count === 2) return two;
+  const n = new Intl.NumberFormat('ar-EG', { useGrouping: false }).format(count);
+  return `${n} ${count >= 3 && count <= 10 ? few : many}`;
+}
+
 export function GenerationPreviewForm({
   locale,
   groupId,
@@ -139,6 +154,28 @@ export function GenerationPreviewForm({
   const rangeValid = generationRangeSchema.safeParse({ from, until }).success;
   const dirtyExclusions = editDates.join('|') !== savedDates.join('|');
   const summary = useMemo(() => summarizeGenerationPreview(rows ?? []), [rows]);
+  const totals = useMemo(() => previewTotals(rows ?? []), [rows]);
+  const months = useMemo(() => groupPreviewRowsByMonth(rows ?? []), [rows]);
+  const monthLabel = (month: string) =>
+    new Intl.DateTimeFormat(locale === 'ar' ? 'ar-EG' : 'en-GB', {
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(new Date(`${month}-01T12:00:00Z`));
+  const summaryLine = [
+    countText(locale, totals.lessons, {
+      en: ['lesson', 'lessons'],
+      ar: ['حصة واحدة', 'حصتان', 'حصص', 'حصة'],
+    }),
+    countText(locale, totals.excluded, {
+      en: ['excluded date', 'excluded dates'],
+      ar: ['يوم مستثنى', 'يومان مستثنيان', 'أيام مستثناة', 'يوماً مستثنى'],
+    }),
+    countText(locale, totals.conflicts, {
+      en: ['conflict', 'conflicts'],
+      ar: ['تعارض واحد', 'تعارضان', 'تعارضات', 'تعارضاً'],
+    }),
+  ].join(' · ');
   const currentPreviewIsValid = isCurrentConflictFreePreview(
     rows,
     previewRange,
@@ -407,40 +444,80 @@ export function GenerationPreviewForm({
             </div>
           </div>
           {rows.length ? (
-            <div className="mt-4 grid gap-3">
-              {rows.map((row, index) => (
-                <article
-                  key={`${row.slot_id}:${row.local_date}:${index}`}
-                  className={`rounded-xl border p-4 ${row.state === 'conflicting' ? 'border-danger/30 bg-danger-soft' : 'border-line bg-white'}`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <strong dir="ltr">{row.local_date}</strong>
-                      <p className="mt-1 text-sm text-muted" dir="ltr">
-                        {previewTime(row.starts_at, row.start_time)} –{' '}
-                        {previewTime(row.ends_at, row.end_time)}
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-cream px-3 py-1 text-xs font-bold">
-                      {t[row.state]}
-                    </span>
-                  </div>
-                  {row.state === 'conflicting' && (
-                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
-                      <span>{row.conflict_title || t.group}</span>
-                      {row.conflict_lesson_id && (
-                        <Link
-                          href={`/${locale}/teacher/lessons/${row.conflict_lesson_id}`}
-                          className="font-bold text-teal underline"
-                        >
-                          {t.openConflict}
-                        </Link>
-                      )}
-                    </div>
-                  )}
-                </article>
-              ))}
-            </div>
+            <>
+              <p
+                id="generation-preview-summary"
+                role="status"
+                className={`mt-3 rounded-xl px-4 py-3 text-sm font-bold ${totals.conflicts ? 'bg-danger-soft text-danger' : 'bg-mint text-teal'}`}
+              >
+                {summaryLine}
+              </p>
+              <div className="mt-4 grid gap-3">
+                {months.map((group, monthIndex) => {
+                  const conflicts = group.rows.filter(row => row.state === 'conflicting').length;
+                  return (
+                    <details
+                      key={`${group.month}:${previewRange?.from}:${previewRange?.until}`}
+                      open={monthIndex === 0 || conflicts > 0}
+                      className="group rounded-xl border border-line bg-white"
+                    >
+                      <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+                        <span>{monthLabel(group.month)}</span>
+                        <span className="text-xs font-semibold text-muted">
+                          {countText(locale, group.rows.length, {
+                            en: ['date', 'dates'],
+                            ar: ['موعد واحد', 'موعدان', 'مواعيد', 'موعداً'],
+                          })}
+                          {conflicts > 0 && (
+                            <span className="text-danger">
+                              {' · '}
+                              {countText(locale, conflicts, {
+                                en: ['conflict', 'conflicts'],
+                                ar: ['تعارض واحد', 'تعارضان', 'تعارضات', 'تعارضاً'],
+                              })}
+                            </span>
+                          )}
+                        </span>
+                      </summary>
+                      <div className="grid gap-3 border-t border-line p-3">
+                        {group.rows.map((row, index) => (
+                          <article
+                            key={`${row.slot_id}:${row.local_date}:${index}`}
+                            className={`rounded-xl border p-4 ${row.state === 'conflicting' ? 'border-danger/30 bg-danger-soft' : 'border-line bg-white'}`}
+                          >
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <div>
+                                <strong dir="ltr">{row.local_date}</strong>
+                                <p className="mt-1 text-sm text-muted" dir="ltr">
+                                  {previewTime(row.starts_at, row.start_time)} –{' '}
+                                  {previewTime(row.ends_at, row.end_time)}
+                                </p>
+                              </div>
+                              <span className="rounded-full bg-cream px-3 py-1 text-xs font-bold">
+                                {t[row.state]}
+                              </span>
+                            </div>
+                            {row.state === 'conflicting' && (
+                              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-sm">
+                                <span>{row.conflict_title || t.group}</span>
+                                {row.conflict_lesson_id && (
+                                  <Link
+                                    href={`/${locale}/teacher/lessons/${row.conflict_lesson_id}`}
+                                    className="inline-flex min-h-11 items-center font-bold text-teal underline"
+                                  >
+                                    {t.openConflict}
+                                  </Link>
+                                )}
+                              </div>
+                            )}
+                          </article>
+                        ))}
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
+            </>
           ) : (
             <p className="mt-4 text-sm text-muted">{t.noRows}</p>
           )}

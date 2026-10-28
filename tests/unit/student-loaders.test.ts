@@ -91,8 +91,9 @@ describe('student dashboard loader query contract', () => {
 
     expect(rpc).toHaveBeenCalledTimes(1);
     expect(rpc).toHaveBeenCalledWith('student_dashboard_summary', {
-      p_week_start: '2026-10-11T21:00:00.000Z',
-      p_week_end: '2026-10-18T21:00:00.000Z',
+      // Saturday-start Cairo week: Sat 10 Oct 00:00 to Sat 17 Oct 00:00 (UTC+3).
+      p_week_start: '2026-10-09T21:00:00.000Z',
+      p_week_end: '2026-10-16T21:00:00.000Z',
       p_now: now.toISOString(),
     });
     // Learning profile reads only student_profiles and profiles; no per-day queries remain.
@@ -106,7 +107,7 @@ describe('student dashboard loader query contract', () => {
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['future-0']);
     expect(result.classes).toEqual(summary.classes);
     // Days outside the displayed week are ignored; order follows the week.
-    expect(result.occupiedDays).toEqual(['2026-10-13', '2026-10-17']);
+    expect(result.occupiedDays).toEqual(['2026-10-13']); // 17 Oct falls in the next Saturday-start week
   });
 
   it('reports an error with empty data when the summary RPC fails', async () => {

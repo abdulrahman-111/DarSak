@@ -13,7 +13,7 @@ const blocks = [
 export function WeeklyPreview({ locale }: { locale: PublicLocale }) {
   const c = publicCopy[locale];
   const ar = locale === 'ar';
-  const days = ar ? ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'] : ['SUN', 'MON', 'TUE', 'WED', 'THU'];
+  const days = ar ? ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء'] : ['SAT', 'SUN', 'MON', 'TUE', 'WED'];
   const subjects = ar
     ? { chemistry: 'كيمياء ٤:٠٠ م', maths: 'رياضيات ٦:٠٠ م', physics: 'فيزياء ٥:٠٠ م' }
     : { chemistry: 'Chemistry 4:00 pm', maths: 'Maths 6:00 pm', physics: 'Physics 5:00 pm' };
