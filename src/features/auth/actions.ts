@@ -16,8 +16,6 @@ import { authErrorMessage } from './errors';
 import { loginRedirectPath, safeAuthNext } from './return-path';
 import { authCopy } from '@/components/auth/copy';
 import { resolveSetupDestination } from '@/features/setup/destination';
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { getSupabaseConfig } from '@/lib/supabase/config';
 import { PASSWORD_RECOVERY_COOKIE } from './recovery-proof';
 
 /** Non-secret fields echoed back on error so the reset form can repopulate them. Passwords are never included. */
@@ -469,35 +467,21 @@ export async function changePasswordAction(
           : 'Use a password of 8 to 72 characters.',
     };
   }
-  const config = getSupabaseConfig();
-  if (!config || !user.email)
-    return { error: authCopy[locale as Locale].passwordVerificationFailed };
-  const verifier = createSupabaseClient(config.url, config.key, {
-    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-  });
-  let verified = false;
-  try {
-    const { data, error } = await verifier.auth.signInWithPassword({
-      email: user.email,
-      password: currentPassword,
-    });
-    verified = !error && data.user?.id === user.id;
-  } catch {
-    verified = false;
-  } finally {
-    try {
-      await verifier.auth.signOut({ scope: 'local' });
-    } catch {
-      /* The isolated client is never the request session. */
-    }
-  }
-  if (!verified) return { error: authCopy[locale as Locale].currentPasswordIncorrect };
+  // Supabase verifies current_password server-side when "Secure password change" is enabled.
+  // No separate sign-in is made, so no extra session is created and captcha does not apply.
   const db = await createClient();
   const { error } = await db.auth.updateUser({
     password: parsed.data.password,
     current_password: currentPassword,
   });
-  if (error) return { error: authErrorMessage(locale, error.code, 'update') };
+  if (error) {
+    // Codes come from the Supabase Auth server (auth-js does not enumerate them yet).
+    if (error.code === 'current_password_invalid')
+      return { error: authCopy[locale as Locale].currentPasswordIncorrect };
+    if (error.code === 'current_password_required')
+      return { error: authCopy[locale as Locale].currentPasswordRequired };
+    return { error: authErrorMessage(locale, error.code, 'update') };
+  }
   redirect(`/${locale}/dashboard`);
 }
 export async function resendConfirmationAction(

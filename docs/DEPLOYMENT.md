@@ -57,7 +57,7 @@ Application confirmation and recovery emails are sent by Supabase Auth using its
 
 Set the production Auth site URL to the production app origin and add the matching allowed redirect origin with the `/**` path pattern so callback paths and their query strings are accepted. Keep signup confirmation enabled and use the numeric-code confirmation template. Configure Supabase Auth's custom SMTP for confirmation and recovery delivery; it is separate from the Gmail app-notification worker.
 
-For Google sign-in, configure Google OAuth credentials and Supabase's callback URL in the Google provider, allow the app's callback origin, test both student and teacher entry flows, then turn on the app flag. A password change from account security requires the current password.
+For Google sign-in, configure Google OAuth credentials and Supabase's callback URL in the Google provider, allow the app's callback origin, test both student and teacher entry flows, then turn on the app flag. A password change from account security requires the current password; enable Supabase Auth "Secure password change" (Authentication > Providers > Email) so Supabase verifies `current_password` itself, which also works with captcha enabled.
 
 Deploy reviewed database migrations in order using the project's established Supabase release process. Review each migration and any data impact before deployment. Do not reset or recreate the production database. A database backup does not include Storage objects or Supabase Auth provider settings; back up or document those separately.
 
