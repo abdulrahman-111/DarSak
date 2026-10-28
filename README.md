@@ -47,6 +47,7 @@ Copy the local Supabase URL and public key into `.env.local`, generate the recov
 - [Architecture](docs/ARCHITECTURE.md) — app structure, data flow, and key integrations.
 - [Deployment](docs/DEPLOYMENT.md) — hosting, Supabase configuration, migrations, and scheduled workers.
 - [Administrator portal](apps/admin/README.md) — separate production-only Vercel application setup and operations.
+- [Screenshot gallery](docs/screenshots/README.md) — current route captures, provenance, and coverage; [offline contact sheet](docs/screenshots/index.html) for local browsing.
 - [Archived project records](docs/archive/README.md) — historical proposals, plans, and validation notes.
 
 ## Repository layout
@@ -63,7 +64,7 @@ Copy the local Supabase URL and public key into `.env.local`, generate the recov
 
 ## Contributing and project status
 
-See [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), the [roadmap](docs/ROADMAP.md), and [starter issues](docs/STARTER_ISSUES.md). See [adoption evidence](docs/ADOPTION.md) and the [pilot guide](docs/pilot/README.md) for maintainer-reported university use and privacy-preserving feedback collection. See the [0.1.0 release notes](docs/releases/0.1.0.md), [screenshots](docs/SCREENSHOTS.md), and [release checklist](docs/RELEASING.md). Published versions are listed on the [Releases page](https://github.com/abdulrahman-111/DarSak/releases).
+See [Contributing](CONTRIBUTING.md), [Security](SECURITY.md), the [roadmap](docs/ROADMAP.md), and [starter issues](docs/STARTER_ISSUES.md). See [adoption evidence](docs/ADOPTION.md) and the [pilot guide](docs/pilot/README.md) for maintainer-reported university use and privacy-preserving feedback collection. See the [0.1.0 release notes](docs/releases/0.1.0.md), [historical screenshot index](docs/SCREENSHOTS.md), and [release checklist](docs/RELEASING.md). Published versions are listed on the [Releases page](https://github.com/abdulrahman-111/DarSak/releases).
 
 ## License
 

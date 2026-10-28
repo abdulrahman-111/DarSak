@@ -1,0 +1,546 @@
+[
+  {
+    "path": "docs/screenshots/staging/meet-integrations-disabled-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/account/integrations",
+    "feature": "Google Meet",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "pilot disabled by local environment",
+    "note": "Observed exact disabled-pilot notice; local APP_ENV is local and Google provider credentials are absent."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-integrations-disabled-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/account/integrations",
+    "feature": "Google Meet",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "pilot disabled by local environment",
+    "note": "Observed exact disabled-pilot notice; local APP_ENV is local and Google provider credentials are absent."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-lesson-disabled-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "feature": "Google Meet",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "meeting controls unavailable",
+    "note": "Seeded lesson title is visible. The local pilot gate is closed, so the lesson page omits the Meet card and manual-link controls."
+  },
+  {
+    "path": "docs/screenshots/staging/staging-landing-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "Staging public landing",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "signed-out staging feature highlights",
+    "note": "Signed-out staging landing with the SanDak and Google Meet pilot highlights."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-lesson-disabled-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "feature": "Google Meet",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "meeting controls unavailable",
+    "note": "Synthetic lesson record. The local APP_ENV is local and the Google Meet pilot gate is closed, so this lesson route omits the meeting card and manual-link controls; no meeting was created."
+  },
+  {
+    "path": "docs/screenshots/staging/staging-landing-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "Staging public landing",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "signed-out staging feature highlights",
+    "note": "Signed-out local staging landing page with the SanDak and Google Meet pilot feature highlights."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-public-drawer-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "SanDak public guidance",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "guest help drawer",
+    "note": "Signed-out public help drawer; no authenticated account information is shown."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-public-drawer-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "SanDak public guidance",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "guest help drawer",
+    "note": "Signed-out public help drawer; no authenticated account information is shown."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-group-template-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "authored local template",
+    "note": "Authored local template only; no AI provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-draft-unavailable-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "live provider unavailable",
+    "note": "The provider gate is closed in the local replica; no generation request or successful response is claimed."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-guidance-drawer-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak local guidance",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "local guidance drawer",
+    "note": "Local authored guidance UI."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-chat-unavailable-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak chat",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "provider unavailable",
+    "note": "Provider unavailable state from closed local gate; no provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-group-template-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "authored local template",
+    "note": "Authored local template only; no AI provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-draft-unavailable-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "live provider unavailable",
+    "note": "The provider gate is closed in the local replica; no generation request or successful response is claimed."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-guidance-drawer-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak local guidance",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "local guidance drawer",
+    "note": "Local authored guidance UI."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-chat-unavailable-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak chat",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "provider unavailable",
+    "note": "Provider unavailable state from closed local gate; no provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/staging-landing-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "Staging public landing",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "signed-out staging feature highlights",
+    "note": "Signed-out local staging landing page with the SanDak and Google Meet pilot feature highlights."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-public-drawer-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "SanDak public guidance",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "guest help drawer",
+    "note": "Signed-out public help drawer; no authenticated account information is shown."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-integrations-disabled-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/account/integrations",
+    "feature": "Google Meet",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "pilot disabled by local environment",
+    "note": "Staging source UI; local replica has no Google provider credentials and the pilot gate remains closed."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-lesson-disabled-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "feature": "Google Meet",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "meeting controls unavailable",
+    "note": "Synthetic lesson record. The local APP_ENV is local and the Google Meet pilot gate is closed, so this lesson route omits the meeting card and manual-link controls; no meeting was created."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-group-template-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "authored local template",
+    "note": "Authored local template only; no AI provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-draft-unavailable-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "live provider unavailable",
+    "note": "The provider gate is closed in the local replica; no generation request or successful response is claimed."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-guidance-drawer-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak local guidance",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "local guidance drawer",
+    "note": "Local authored guidance UI."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-chat-unavailable-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak chat",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "provider unavailable",
+    "note": "Provider unavailable state from closed local gate; no provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/staging-landing-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "Staging public landing",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "signed-out staging feature highlights",
+    "note": "Signed-out local staging landing page with the SanDak and Google Meet pilot feature highlights."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-public-drawer-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "/",
+    "feature": "SanDak public guidance",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "guest help drawer",
+    "note": "Signed-out public help drawer; no authenticated account information is shown."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-integrations-disabled-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/account/integrations",
+    "feature": "Google Meet",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "pilot disabled by local environment",
+    "note": "Staging source UI; local replica has no Google provider credentials and the pilot gate remains closed."
+  },
+  {
+    "path": "docs/screenshots/staging/meet-lesson-disabled-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "feature": "Google Meet",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "meeting controls unavailable",
+    "note": "Synthetic lesson record. The local APP_ENV is local and the Google Meet pilot gate is closed, so this lesson route omits the meeting card and manual-link controls; no meeting was created."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-group-template-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "authored local template",
+    "note": "Authored local template only; no AI provider response is represented."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-draft-unavailable-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/new",
+    "feature": "SanDak group drafting",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "live provider unavailable",
+    "note": "The provider gate is closed in the local replica; no generation request or successful response is claimed."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-guidance-drawer-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak local guidance",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "local guidance drawer",
+    "note": "Local authored guidance UI."
+  },
+  {
+    "path": "docs/screenshots/staging/sandak-chat-unavailable-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "feature": "SanDak chat",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "817d582b8a042ff7c2fd7700b079a973fff7324d",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "state": "provider unavailable",
+    "note": "Provider unavailable state from closed local gate; no provider response is represented."
+  }
+]
