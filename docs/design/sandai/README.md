@@ -4,15 +4,15 @@ SanDai (Arabic: سندي) is DarSak's assistant: an original pixel "pocket noteb
 
 ## Contents
 
-| Path | What it is |
-| --- | --- |
+| Path                                 | What it is                                                                                                                                       |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `previews/sandai-moods.png` / `.svg` | The six moods (idle, thinking, needs you, done, oops, sleeping), generated from the production sprite data in `src/components/sandak/sprite.ts`. |
-| `source/Main.dc.html` | Character sheet and playground (switch moods and languages). |
-| `source/Pet.dc.html` | The pet sprite as a design component. |
-| `source/StudentDesktop.dc.html` | Student home with SanDai docked (EN, desktop). |
-| `source/StudentMobileAr.dc.html` | Student home on mobile (AR, RTL). |
-| `source/TeacherSchedule.dc.html` | UI plan for the compact teacher schedule and Saturday-start week. |
-| `source/canvas.json` | Canvas layout for the boards above. |
+| `source/Main.dc.html`                | Character sheet and playground (switch moods and languages).                                                                                     |
+| `source/Pet.dc.html`                 | The pet sprite as a design component.                                                                                                            |
+| `source/StudentDesktop.dc.html`      | Student home with SanDai docked (EN, desktop).                                                                                                   |
+| `source/StudentMobileAr.dc.html`     | Student home on mobile (AR, RTL).                                                                                                                |
+| `source/TeacherSchedule.dc.html`     | UI plan for the compact teacher schedule and Saturday-start week.                                                                                |
+| `source/canvas.json`                 | Canvas layout for the boards above.                                                                                                              |
 
 The `.dc.html` files are the original Claude Design canvas sources. They load a design-runtime script (`support.js`) that is not part of this repository, so open them in Claude Design rather than directly in a browser.
 
