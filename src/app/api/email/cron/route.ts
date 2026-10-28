@@ -1,5 +1,5 @@
 import { NextRequest } from 'next/server';
-import { flushEmailOutbox } from '@/features/email/worker';
+import { flushEmailOutbox, MAX_EMAIL_JOBS_PER_RUN } from '@/features/email/worker';
 import { validCronAuthorization } from './auth';
 
 export const runtime = 'nodejs';
@@ -14,8 +14,13 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: 'unauthorized' }, { status: 401, headers });
   }
   try {
-    const counts = await flushEmailOutbox(5);
-    return Response.json(counts, { status: counts.state === 'error' ? 503 : 200, headers });
+    // Claims one job at a time until the outbox is empty or the worker's time budget is spent.
+    const counts = await flushEmailOutbox(MAX_EMAIL_JOBS_PER_RUN);
+    // A production deployment without mail configuration must not look healthy to cron monitoring.
+    const misconfigured =
+      counts.state === 'not_configured' && process.env.VERCEL_ENV === 'production';
+    const status = counts.state === 'error' || misconfigured ? 503 : 200;
+    return Response.json(counts, { status, headers });
   } catch {
     return Response.json(
       { state: 'error', claimed: 0, sent: 0, retried: 0, failed: 0, skipped: 0, unsettled: 0 },

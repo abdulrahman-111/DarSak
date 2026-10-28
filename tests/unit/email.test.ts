@@ -4,6 +4,7 @@ import { emailConfig } from '@/features/email/config';
 import {
   classifyEmailError,
   flushEmailOutbox,
+  MAX_EMAIL_JOBS_PER_RUN,
   runEmailWorker,
   type EmailOutboxStore,
 } from '@/features/email/worker';
@@ -172,6 +173,47 @@ describe('transactional email boundaries', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('drains more than five queued jobs in one run while the time budget allows', async () => {
+    let remaining = 12;
+    const store: EmailOutboxStore = {
+      claim: vi.fn(async () => {
+        if (remaining === 0) return { jobs: [], skipped: 0 };
+        remaining -= 1;
+        return { jobs: [job], skipped: 0 };
+      }),
+      settle: vi.fn(async () => true),
+    };
+    const result = await runEmailWorker(
+      { store, send: vi.fn(async () => {}), now: () => 0 },
+      'https://dars.example',
+      MAX_EMAIL_JOBS_PER_RUN,
+    );
+    expect(result).toMatchObject({ state: 'ok', claimed: 12, sent: 12 });
+    expect(remaining).toBe(0);
+  });
+
+  it('stops claiming once the run would exceed its time budget', async () => {
+    let clock = 0;
+    const store: EmailOutboxStore = {
+      claim: vi.fn(async () => ({ jobs: [job], skipped: 0 })),
+      settle: vi.fn(async () => true),
+    };
+    const result = await runEmailWorker(
+      {
+        store,
+        send: vi.fn(async () => {
+          clock += 4_000;
+        }),
+        now: () => clock,
+      },
+      'https://dars.example',
+      MAX_EMAIL_JOBS_PER_RUN,
+    );
+    expect(result.sent).toBeGreaterThan(0);
+    expect(result.sent).toBeLessThan(MAX_EMAIL_JOBS_PER_RUN);
+    expect(clock).toBeLessThanOrEqual(38_000);
   });
 
   it('requires exact constant-time cron bearer input and denies missing secrets', () => {
