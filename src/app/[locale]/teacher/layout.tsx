@@ -1,9 +1,12 @@
+import type { Metadata } from 'next';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { PlatformShell } from '@/components/platform/shell';
 import { unreadNotificationCount } from '@/features/notifications/data';
 import { TeacherSubscriptionNotice } from '@/features/teacher-access/subscription-notice';
 export const maxDuration = 40;
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function TeacherLayout({
   children,

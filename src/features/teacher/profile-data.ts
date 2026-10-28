@@ -1,4 +1,5 @@
 import 'server-only';
+import { cache } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { teacherViewer } from './data';
 import type { Locale } from '@/features/student/domain';
@@ -199,7 +200,8 @@ export async function teacherProfile(locale: Locale) {
   };
 }
 
-export async function publicTeacherDetail(locale: Locale, teacherId: string) {
+// Memoized per request so the page and its generateMetadata share one fetch.
+export const publicTeacherDetail = cache(async (locale: Locale, teacherId: string) => {
   return measuredServerRead(
     'public_teacher_detail',
     locale,
@@ -290,4 +292,4 @@ export async function publicTeacherDetail(locale: Locale, teacherId: string) {
     },
     result => result.error !== null,
   );
-}
+});
