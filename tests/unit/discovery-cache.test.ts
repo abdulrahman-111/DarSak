@@ -1,7 +1,13 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ updateTag: vi.fn() }));
-vi.mock('next/cache', () => ({ updateTag: mocks.updateTag }));
+const mocks = vi.hoisted(() => ({ updateTag: vi.fn(), outsideAction: false }));
+vi.mock('next/cache', () => ({
+  updateTag: (tag: string) => {
+    if (mocks.outsideAction)
+      throw new Error('updateTag can only be called from within a Server Action');
+    mocks.updateTag(tag);
+  },
+}));
 
 import {
   invalidatePublicDiscovery,
@@ -9,7 +15,10 @@ import {
 } from '@/features/platform/discovery-cache';
 
 describe('public discovery cache invalidation', () => {
-  beforeEach(() => mocks.updateTag.mockReset());
+  beforeEach(() => {
+    mocks.updateTag.mockReset();
+    mocks.outsideAction = false;
+  });
 
   it('expires the shared discovery tag', () => {
     invalidatePublicDiscovery();
@@ -17,9 +26,7 @@ describe('public discovery cache invalidation', () => {
   });
 
   it('does not break a caller outside a Server Action', () => {
-    mocks.updateTag.mockImplementation(() => {
-      throw new Error('updateTag can only be called from within a Server Action');
-    });
+    mocks.outsideAction = true;
     expect(() => invalidatePublicDiscovery()).not.toThrow();
   });
 });
