@@ -49,7 +49,7 @@ export default async function StudentClasses({
             className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
           >
             {ar ? 'اكتشف مجموعة' : 'Find a class'}
-            <ArrowUpRight size={16} />
+            <ArrowUpRight size={16} aria-hidden="true" className="rtl:-scale-x-100" />
           </Link>
         }
       />
@@ -173,7 +173,7 @@ export default async function StudentClasses({
                     </div>
                     <h3 className="mt-4 break-words text-lg font-bold text-teal">
                       <Link
-                        className="underline decoration-teal/20 underline-offset-2"
+                        className="inline-flex min-h-11 items-center underline decoration-teal/20 underline-offset-2"
                         href={`/${locale}/student/classes/${e.group_id}`}
                       >
                         {e.group?.name || (ar ? 'مجموعتك التعليمية' : 'Your learning class')}
@@ -188,7 +188,7 @@ export default async function StudentClasses({
                         className="inline-flex min-h-11 items-center gap-2 underline decoration-teal/30 underline-offset-2"
                       >
                         {ar ? 'تواصل مع المعلم' : 'Contact teacher'}
-                        <ArrowUpRight size={16} aria-hidden="true" />
+                        <ArrowUpRight size={16} aria-hidden="true" className="rtl:-scale-x-100" />
                       </Link>
                     </p>
                     <EnrollmentProgress locale={locale} current="accepted" />

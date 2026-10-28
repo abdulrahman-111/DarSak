@@ -63,7 +63,7 @@ export default async function SavedGroupsPage({
                   <div className="mt-4 flex flex-wrap items-center gap-4">
                     <Link
                       href={`/${locale}/groups/${item.group_id}`}
-                      className="font-bold text-orange underline"
+                      className="inline-flex min-h-11 items-center font-bold text-orange underline"
                     >
                       {copy.view}
                     </Link>
@@ -85,13 +85,9 @@ export default async function SavedGroupsPage({
         </div>
       ) : (
         <Panel>
-          <EmptyState>{copy.empty}</EmptyState>
-          <Link
-            href={`/${locale}/teachers`}
-            className="mt-4 inline-flex rounded-xl bg-teal px-4 py-3 font-bold text-white"
-          >
-            {copy.discover}
-          </Link>
+          <EmptyState action={{ href: `/${locale}/teachers`, label: copy.discover }}>
+            {copy.empty}
+          </EmptyState>
         </Panel>
       )}
       {!data.error && (

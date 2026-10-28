@@ -62,7 +62,10 @@ export default async function StudentBookings({
                 : 'Choose from times published by teachers of your accepted groups.'}
             </p>
           </div>
-          <Link href={`/${locale}/timetable`} className="font-semibold text-orange underline">
+          <Link
+            href={`/${locale}/timetable`}
+            className="inline-flex min-h-11 items-center font-semibold text-orange underline"
+          >
             {ar ? 'الجدول الدراسي للحصص' : 'Regular lesson timetable'}
           </Link>
         </div>
@@ -115,7 +118,10 @@ export default async function StudentBookings({
                 : 'A booking does not create attendance in a group lesson.'}
             </p>
           </div>
-          <Link href={`/${locale}/timetable`} className="font-semibold text-orange underline">
+          <Link
+            href={`/${locale}/timetable`}
+            className="inline-flex min-h-11 items-center font-semibold text-orange underline"
+          >
             {ar ? 'عرض حصص المجموعة' : 'View group lessons'}
           </Link>
         </div>
