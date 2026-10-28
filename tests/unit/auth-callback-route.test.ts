@@ -307,55 +307,6 @@ describe('auth callback route', () => {
     expect(onboardingDestinationMock).not.toHaveBeenCalled();
   });
 
-  it('routes legacy signup token_hash confirmations through setup', async () => {
-    getUserMock.mockResolvedValue({
-      data: { user: { id: 'confirmed-student', identities: [{ provider: 'email' }] } },
-      error: null,
-    });
-    profileQueryMock.mockResolvedValue({
-      data: { role: 'student', status: 'active' },
-      error: null,
-    });
-    onboardingDestinationMock.mockResolvedValue('/en/account/setup?returnTo=%2Fen%2Fstudent');
-    const target = location(await call('token_hash=h&type=signup&next=/en/student'));
-    expect(verifyOtp).toHaveBeenCalledWith({ type: 'signup', token_hash: 'h' });
-    expect(onboardingDestinationMock).toHaveBeenCalledWith(
-      expect.anything(),
-      'confirmed-student',
-      'student',
-      'en',
-      '/en/student',
-    );
-    expect(target.pathname).toBe('/en/account/setup');
-  });
-
-  it('keeps recovery token callbacks on the reset destination without setup routing', async () => {
-    getUserMock.mockResolvedValue({
-      data: { user: { id: 'recovering-student', identities: [{ provider: 'email' }] } },
-      error: null,
-    });
-    getClaimsMock.mockResolvedValue({
-      data: {
-        claims: {
-          sub: 'recovering-student',
-          session_id: 'recovery-session',
-          amr: [{ method: 'otp' }],
-        },
-      },
-      error: null,
-    });
-    const target = location(await call('token_hash=h&type=recovery&next=/en/reset-password'));
-    expect(target.pathname).toBe('/en/reset-password');
-    expect(verifyOtp).toHaveBeenCalled();
-    expect(getClaimsMock).toHaveBeenCalled();
-    expect(recoveryCookieSetMock).toHaveBeenCalledWith(
-      'dars-password-recovery',
-      expect.stringMatching(/\./),
-      expect.objectContaining({ httpOnly: true, maxAge: 900 }),
-    );
-    expect(onboardingDestinationMock).not.toHaveBeenCalled();
-  });
-
   it('explains an existing student role when teacher signup is requested', async () => {
     getUserMock.mockResolvedValue({
       data: { user: { id: 'google-user', identities: [{ provider: 'google' }] } },
@@ -387,12 +338,6 @@ describe('auth callback route', () => {
     },
   );
 
-  it('verifies a token hash for custom email templates', async () => {
-    const target = location(await call('token_hash=h&type=recovery&next=/en/reset-password'));
-    expect(verifyOtp).toHaveBeenCalledWith({ type: 'recovery', token_hash: 'h' });
-    expect(target.pathname).toBe('/en/reset-password');
-  });
-
   it.each(['//evil.com', 'https://evil.com', '/\\evil', '/fr/x', '/en/../x'])(
     'never redirects off-site for next=%s',
     async next => {
@@ -414,6 +359,29 @@ describe('auth callback route', () => {
     isConfiguredMock.mockReturnValue(false);
     expect(location(await call('code=abc')).pathname).toBe('/ar/login');
     expect(createClientMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe('legacy token_hash links', () => {
+    it.each([
+      'token_hash=h&type=recovery&next=/en/reset-password',
+      'token_hash=h&type=signup&next=/en/student',
+      'token_hash=h&type=magiclink&next=/en/student',
+      'token_hash=h&type=email_change&next=/en/student',
+      'token_hash=h&next=/en/student',
+      'token_hash=h&type=recovery&code=abc&next=/en/reset-password',
+    ])('never creates a session or recovery proof for %s', async query => {
+      const response = await call(query);
+      const target = location(response);
+      expect(verifyOtp).not.toHaveBeenCalled();
+      expect(exchangeCodeForSession).not.toHaveBeenCalled();
+      expect(getClaimsMock).not.toHaveBeenCalled();
+      expect(recoveryCookieSetMock).not.toHaveBeenCalled();
+      expect(onboardingDestinationMock).not.toHaveBeenCalled();
+      expect(target.origin).toBe('https://dars.example');
+      expect(target.pathname).toBe(query.includes('/en/') ? '/en/login' : '/ar/login');
+      expect(target.search).toBe('?error=link');
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+    });
   });
 
   it('rejects unknown OTP types', async () => {

@@ -2,7 +2,7 @@ import { observeOperation } from '@/features/monitoring/server';
 import { NextResponse, type NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import { after } from 'next/server';
-import type { EmailOtpType, User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient, isConfigured } from '@/lib/supabase/server';
 import { defaultLocale, isLocale, type Locale } from '@/i18n/config';
@@ -16,17 +16,9 @@ import {
   PASSWORD_RECOVERY_TTL_SECONDS,
 } from '@/features/auth/recovery-proof';
 
-const OTP_TYPES: readonly EmailOtpType[] = [
-  'signup',
-  'invite',
-  'magiclink',
-  'recovery',
-  'email_change',
-  'email',
-];
 export const maxDuration = 40;
 
-/** Finish PKCE / email-link auth, then send the user to a sanitized `next` path. */
+/** Finish PKCE auth, then send the user to a sanitized `next` path. */
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const next = params.get('next');
@@ -36,10 +28,14 @@ export async function GET(request: NextRequest) {
   const destination = safeAuthNext(next, locale);
   const failure = new URL(`/${locale}/login?error=link`, request.nextUrl.origin);
 
-  if (!isConfigured()) return NextResponse.redirect(failure);
+  // Legacy `token_hash` links are not bound to the requesting browser (login CSRF),
+  // so they never create a session or recovery proof. Only PKCE `code` flows do.
+  if (!isConfigured() || params.has('token_hash')) {
+    const response = NextResponse.redirect(failure);
+    response.headers.set('Cache-Control', 'private, no-store');
+    return response;
+  }
   const code = params.get('code');
-  const tokenHash = params.get('token_hash');
-  const type = params.get('type') as EmailOtpType | null;
   const db = await createClient();
   let preverifiedUser: User | null = null;
 
@@ -287,10 +283,6 @@ export async function GET(request: NextRequest) {
         }
       }
     }
-  } else if (tokenHash && type && OTP_TYPES.includes(type)) {
-    const verified = await db.auth.verifyOtp({ type, token_hash: tokenHash });
-    error = verified.error;
-    recoveryFlow = !error && type === 'recovery';
   }
 
   // Every successful public callback must resolve the verified identity to a
@@ -362,27 +354,6 @@ export async function GET(request: NextRequest) {
         maxAge: PASSWORD_RECOVERY_TTL_SECONDS,
       });
     } else jar.delete(PASSWORD_RECOVERY_COOKIE);
-  }
-
-  // The legacy confirmation template may deliver token_hash URLs instead of PKCE codes.
-  // Signup/email confirmations use the same setup resolver as the code path.
-  if (
-    !error &&
-    tokenHash &&
-    (type === 'signup' || type === 'email') &&
-    destination !== `/${locale}/reset-password` &&
-    !params.has('delete_intent')
-  ) {
-    const { data: authData, error: authError } = await db.auth.getUser();
-    const user = authData.user;
-    if (!authError && user) {
-      const target = await setupTargetForUser(user.id);
-      if (target) {
-        const response = NextResponse.redirect(new URL(target, request.nextUrl.origin));
-        response.headers.set('Cache-Control', 'private, no-store');
-        return response;
-      }
-    }
   }
 
   const setupFailure = new URL(`/${locale}/login?error=setup`, request.nextUrl.origin);
