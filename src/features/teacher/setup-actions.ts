@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import {
@@ -249,6 +250,7 @@ export async function saveGroupDraft(
     revalidatePath(`/${currentLocale}/teacher/groups/${savedId}/setup`);
     revalidatePath(`/${currentLocale}/teacher/groups/${savedId}/edit`);
   }
+  invalidatePublicDiscovery();
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/groups/${savedId}`);
     revalidatePath(`/${currentLocale}/teachers`);

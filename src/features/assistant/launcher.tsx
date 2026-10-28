@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { SandakCompanion } from '@/components/sandak/companion';
+import { AssistantMount } from '@/components/sandak/assistant-mount';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { readTeacherAccessStatus } from '@/features/teacher-access/data';
 import { getDictionary } from '@/i18n/config';
@@ -49,31 +49,32 @@ async function getAssistantIdentity(): Promise<{
   return { access: null, key: `${user.id}:guest` };
 }
 
+/** Per-user companion state. Fetched through /api/viewer, never during page prerender. */
+export async function resolveAssistant(): Promise<{
+  access: AssistantAccess | null;
+  key: string;
+  aiEnabled: boolean;
+}> {
+  const { access, key } = await getAssistantIdentity();
+  const aiEnabled =
+    access !== null &&
+    (access.role === 'student' || access.role === 'teacher') &&
+    getSanadConfig() !== null;
+  return { access, key, aiEnabled };
+}
+
 /**
  * Mounts the docked SanDai companion once for every visitor. Live AI is offered
  * only to active students and teachers when the server configuration enables it;
- * everyone else (including anonymous visitors) gets local guided help.
+ * everyone else (including anonymous visitors) gets local guided help. The
+ * per-user access is resolved on the client from /api/viewer so this layout part
+ * stays static.
  */
 export async function SanadLauncher({
   locale,
 }: {
   locale: AssistantLocale;
 }): Promise<React.JSX.Element> {
-  const [{ access, key }, dictionary] = await Promise.all([
-    getAssistantIdentity(),
-    getDictionary(locale),
-  ]);
-  const aiEnabled =
-    access !== null &&
-    (access.role === 'student' || access.role === 'teacher') &&
-    getSanadConfig() !== null;
-  return (
-    <SandakCompanion
-      key={key}
-      locale={locale}
-      access={access}
-      aiEnabled={aiEnabled}
-      copy={dictionary.sandak}
-    />
-  );
+  const dictionary = await getDictionary(locale);
+  return <AssistantMount locale={locale} copy={dictionary.sandak} />;
 }

@@ -16,27 +16,12 @@ vi.mock('@/features/teacher-access/data', () => ({
   readTeacherAccessStatus: mocks.readTeacherAccessStatus,
 }));
 vi.mock('@/features/assistant/config', () => ({ getSanadConfig: mocks.getSanadConfig }));
-vi.mock('@/components/sandak/companion', () => ({
-  SandakCompanion: ({
-    locale,
-    access,
-    aiEnabled,
-    copy,
-  }: {
-    locale: string;
-    access: unknown;
-    aiEnabled: boolean;
-    copy: { name: string };
-  }) =>
-    createElement('output', {
-      'data-locale': locale,
-      'data-access': JSON.stringify(access),
-      'data-ai': String(aiEnabled),
-      'data-name': copy.name,
-    }),
+vi.mock('@/components/sandak/assistant-mount', () => ({
+  AssistantMount: ({ locale, copy }: { locale: string; copy: { name: string } }) =>
+    createElement('output', { 'data-locale': locale, 'data-name': copy.name }),
 }));
 
-import { SanadLauncher } from '@/features/assistant/launcher';
+import { resolveAssistant, SanadLauncher } from '@/features/assistant/launcher';
 
 function html(element: React.ReactElement) {
   return renderToStaticMarkup(element);
@@ -54,9 +39,7 @@ describe('global SanDai companion mount', () => {
 
   it('shows the companion with local help only and no AI when Supabase is unavailable', async () => {
     mocks.isConfigured.mockReturnValue(false);
-    const rendered = html(await SanadLauncher({ locale: 'en' }));
-    expect(rendered).toContain('data-access="null"');
-    expect(rendered).toContain('data-ai="false"');
+    expect(await resolveAssistant()).toEqual({ access: null, key: 'guest', aiEnabled: false });
     expect(mocks.getRequestViewer).not.toHaveBeenCalled();
   });
 
@@ -78,9 +61,10 @@ describe('global SanDai companion mount', () => {
         status: { has_access: true },
         error: false,
       });
-      const rendered = html(await SanadLauncher({ locale: 'ar' }));
-      expect(rendered).toContain('data-ai="true"');
-      expect(rendered).toContain('data-locale="ar"');
+      const assistant = await resolveAssistant();
+      expect(assistant.aiEnabled).toBe(true);
+      expect(assistant.access).toEqual({ role, canTeach: role === 'teacher' });
+      expect(html(await SanadLauncher({ locale: 'ar' }))).toContain('data-locale="ar"');
     },
   );
 
@@ -91,9 +75,9 @@ describe('global SanDai companion mount', () => {
       user: { id: 'student-id' },
       profile: { role: 'student', status: 'active' },
     });
-    const rendered = html(await SanadLauncher({ locale: 'en' }));
-    expect(rendered).toContain('data-ai="false"');
-    expect(rendered).toContain('&quot;role&quot;:&quot;student&quot;');
+    const assistant = await resolveAssistant();
+    expect(assistant.aiEnabled).toBe(false);
+    expect(assistant.access).toEqual({ role: 'student', canTeach: false });
   });
 
   it('never enables live chat for administrators', async () => {
@@ -102,7 +86,7 @@ describe('global SanDai companion mount', () => {
       user: { id: 'admin-id' },
       profile: { role: 'admin', status: 'active' },
     });
-    expect(html(await SanadLauncher({ locale: 'en' }))).toContain('data-ai="false"');
+    expect((await resolveAssistant()).aiEnabled).toBe(false);
   });
 
   it('checks teaching capability with the same viewer database and fails closed', async () => {
@@ -113,14 +97,10 @@ describe('global SanDai companion mount', () => {
       profile: { role: 'teacher', status: 'active' },
     });
     mocks.readTeacherAccessStatus.mockResolvedValue({ status: { has_access: true }, error: false });
-    expect(html(await SanadLauncher({ locale: 'en' }))).toContain(
-      'data-access="{&quot;role&quot;:&quot;teacher&quot;,&quot;canTeach&quot;:true}"',
-    );
+    expect((await resolveAssistant()).access).toEqual({ role: 'teacher', canTeach: true });
     expect(mocks.readTeacherAccessStatus).toHaveBeenCalledWith(db);
     mocks.readTeacherAccessStatus.mockRejectedValue(new Error('status unavailable'));
-    expect(html(await SanadLauncher({ locale: 'en' }))).toContain(
-      'data-access="{&quot;role&quot;:&quot;teacher&quot;,&quot;canTeach&quot;:false}"',
-    );
+    expect((await resolveAssistant()).access).toEqual({ role: 'teacher', canTeach: false });
   });
 
   it.each([
@@ -129,9 +109,7 @@ describe('global SanDai companion mount', () => {
     ['missing profile', { user: { id: 'missing' }, profile: null }],
   ])('gives %s visitors the companion with local help only and no AI', async (_label, viewer) => {
     mocks.getRequestViewer.mockResolvedValue({ db: {}, ...viewer });
-    const rendered = html(await SanadLauncher({ locale: 'en' }));
-    expect(rendered).toContain('data-access="null"');
-    expect(rendered).toContain('data-ai="false"');
+    expect(await resolveAssistant()).toMatchObject({ access: null, aiEnabled: false });
     expect(mocks.readTeacherAccessStatus).not.toHaveBeenCalled();
   });
 });

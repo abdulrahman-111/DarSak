@@ -92,6 +92,24 @@ SUPABASE_URL='replace-with-target-project-url' SUPABASE_SERVICE_ROLE_KEY='replac
 
 The script promotes exactly one existing profile; sign out and back in to refresh the app role. Do not save the service-role key in the repository or shared app environment for this one-off operation.
 
+## Regions and caching
+
+Every server render makes several round trips to Supabase (Auth, `profiles`, page data), so the Vercel function region must sit next to the database.
+
+| Environment | Supabase project | Supabase region       | Vercel function region |
+| ----------- | ---------------- | --------------------- | ---------------------- |
+| Production  | `Dars`           | `eu-west-1` (Ireland) | `dub1` (Dublin)        |
+| Staging     | staging project  | `eu-west-1` (Ireland) | `dub1` (Dublin)        |
+
+`vercel.json` pins `"regions": ["dub1"]`. Dublin is the Vercel region that matches AWS `eu-west-1`, so no change is needed. If a project is ever moved to another Supabase region, change `regions` in `vercel.json` to the matching Vercel region in the same release (for example `fra1` for `eu-central-1`) and update this table.
+
+Caching model:
+
+- `help`, `privacy`, `terms` and `pricing` are prerendered for both locales and revalidated hourly, so anonymous visitors get `Cache-Control: s-maxage=3600, stale-while-revalidate`. Requests that carry a Supabase session cookie are answered `private, no-store` by `src/proxy.ts`.
+- The layout never reads cookies. The header and the SanDak companion fetch a display-only snapshot from `/api/viewer` (always `private, no-store`) after the shell is delivered. Visitors without a `sb-` session cookie make no request. Authorization still happens on the server in every page and action.
+- Visitor-independent discovery reads (`public_discovery_catalogue`, `public_teachers`, the unfiltered `public_teacher_choices` and first `discover_groups` page) are shared through the Next.js data cache for 60 seconds under the `public-discovery` tag with an anonymous Supabase client. Teacher publish, group, profile and catalogue actions expire that tag. Never route per-user data through `src/features/platform/data.ts` `cachePublic`.
+- Keep the project on asymmetric JWT signing keys so `getClaims()` in `src/proxy.ts` verifies tokens locally instead of calling Supabase Auth on every request.
+
 ## Scheduled jobs
 
 `vercel.json` schedules `/api/email/cron` daily at 06:00 UTC and `/api/account-deletions/cron` daily at 06:30 UTC. Configure `CRON_SECRET` in Vercel. The account-deletion route also requires `ACCOUNT_DELETION_WORKER_SECRET`; the email worker additionally requires `GMAIL_APP_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, the Supabase URL, and an HTTPS `NEXT_PUBLIC_SITE_URL`. Without complete email configuration, app notification delivery stays disabled, queued messages remain in the outbox, and the production cron route answers `503` with `state: "not_configured"` so the missing configuration shows up as a failing cron run instead of a silent success. Each run claims jobs one at a time, up to 50, until the outbox is empty or the worker's 38-second time budget is spent.

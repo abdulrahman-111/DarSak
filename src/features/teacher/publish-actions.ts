@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
@@ -124,6 +125,7 @@ export async function publishGroup(
           : mutationError(locale, error.message),
     };
 
+  invalidatePublicDiscovery();
   for (const currentLocale of ['en', 'ar'] as const) {
     revalidatePath(`/${currentLocale}/teacher/groups`);
     revalidatePath(`/${currentLocale}/teacher/groups/${groupId}`);

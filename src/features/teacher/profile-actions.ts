@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import {
@@ -141,6 +142,7 @@ function revalidateTeacherProfilePaths(locale: Locale, teacherId: string) {
     revalidatePath(`/${currentLocale}/teachers/${teacherId}`);
   }
   revalidatePath('/[locale]/teachers/[id]', 'page');
+  invalidatePublicDiscovery();
 }
 
 export async function uploadTeacherAvatar(
@@ -326,5 +328,6 @@ export async function saveTeacherProfile(
     revalidatePath(`/${currentLocale}/teachers`);
   }
   revalidatePath('/[locale]/teachers/[id]', 'page');
+  invalidatePublicDiscovery();
   return { success: message(locale, 'Profile saved.', 'تم حفظ الملف الشخصي.') };
 }

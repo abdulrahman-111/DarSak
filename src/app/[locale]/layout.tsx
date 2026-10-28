@@ -4,6 +4,8 @@ import '../globals.css';
 import { fontVariables } from '../fonts';
 import { ensureLocale, getDictionary, getDirection } from '@/i18n/config';
 import { Header } from '@/components/header';
+import { headerCopy, renderStamp } from '@/components/header-copy';
+import { ViewerStateSync } from '@/components/viewer-state';
 import { SanadLauncher } from '@/features/assistant/launcher';
 import { siteUrl } from '@/lib/supabase/config';
 
@@ -39,7 +41,8 @@ export default async function LocaleLayout({
         <a className="skip-link" href="#main-content">
           {locale === 'ar' ? 'انتقل إلى المحتوى الرئيسي' : 'Skip to main content'}
         </a>
-        <Header locale={locale} t={t} />
+        <ViewerStateSync stamp={renderStamp()} />
+        <Header locale={locale} t={headerCopy(t)} />
         <main id="main-content" tabIndex={-1} className="flex-1">
           {children}
         </main>
