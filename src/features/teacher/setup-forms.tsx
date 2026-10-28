@@ -21,6 +21,8 @@ import { CatalogueLabelEditor } from './catalogue-forms';
 import { isTeacherCatalogueCategory } from './catalogue-domain';
 import type { SetupCatalogue } from './setup-data';
 import type { TeacherCatalogueCategory, TeacherCatalogueSubject } from './catalogue-data';
+import { GroupDraftPanel } from '@/features/assistant/group-draft-panel';
+import type { GroupDraft } from '@/features/assistant/domain';
 import { GroupLearningFields } from './group-learning-fields';
 import type { GroupLearningDetails } from './group-learning-domain';
 import { useUnsavedProfileSection } from './unsaved-profile-protection';
@@ -116,6 +118,19 @@ type Props = {
   learningError?: boolean;
 };
 
+export function applyDraftTextToFormValues<
+  T extends Pick<GroupLearningDetails, 'outcomes' | 'prerequisites'>,
+>(formValues: GroupDetailsFormValues, learningValues: T, draft: GroupDraft) {
+  return {
+    formValues: { ...formValues, name: draft.name, description: draft.description },
+    learningValues: {
+      ...learningValues,
+      outcomes: draft.outcomes,
+      prerequisites: draft.prerequisites,
+    },
+  };
+}
+
 export function GroupDetailsForm({
   locale,
   values,
@@ -138,6 +153,10 @@ export function GroupDetailsForm({
     updated_at: values?.updated_at ?? null,
   });
   const [initialLearningDetails] = useState(learningDetails);
+  const [learningValues, setLearningValues] = useState(() => ({
+    outcomes: learningDetails?.outcomes ?? '',
+    prerequisites: learningDetails?.prerequisites ?? '',
+  }));
   const [subjects, setSubjects] = useState(catalogue.subjects);
   const [nodes, setNodes] = useState(catalogue.nodes);
   const [addSubject, setAddSubject] = useState(false);
@@ -264,6 +283,15 @@ export function GroupDetailsForm({
       node = node.parent_id ? nodes.find(item => item.id === node?.parent_id) : undefined;
     }
     return labels.join(' › ');
+  };
+  const applyTemplate = (draft: GroupDraft) => {
+    const applied = applyDraftTextToFormValues(formValues, learningValues, draft);
+    setFormValues(applied.formValues);
+    setLearningValues({
+      outcomes: applied.learningValues.outcomes,
+      prerequisites: applied.learningValues.prerequisites,
+    });
+    setDirty(true);
   };
 
   return (
@@ -528,6 +556,17 @@ export function GroupDetailsForm({
               locale={locale}
               details={initialLearningDetails}
               errors={state?.fieldErrors ?? {}}
+              values={learningValues}
+              onValueChange={(field, value) =>
+                setLearningValues(current => ({ ...current, [field]: value }))
+              }
+            />
+          )}
+          {!editPublished && (
+            <GroupDraftPanel
+              locale={locale}
+              disabled={pending || learningError}
+              onApply={applyTemplate}
             />
           )}
           {state?.error && (
