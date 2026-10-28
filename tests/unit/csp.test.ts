@@ -10,7 +10,13 @@ vi.mock('next-intl/middleware', () => ({ default: () => localizeMock }));
 
 import { proxy } from '@/proxy';
 import { proxy as adminProxy } from '@admin/proxy';
-import { buildCsp, createNonce, isStaticContentPath, supabaseOrigins } from '@/lib/security/csp';
+import {
+  buildCsp,
+  createNonce,
+  isLandingPath,
+  isStaticContentPath,
+  supabaseOrigins,
+} from '@/lib/security/csp';
 import { buildCsp as buildAdminCsp } from '@admin/lib/csp';
 
 const directive = (policy: string, name: string) =>
@@ -75,6 +81,15 @@ describe('buildCsp', () => {
     expect(isStaticContentPath('/ar/pricing')).toBe(true);
     expect(isStaticContentPath('/en/helpdesk')).toBe(false);
     expect(isStaticContentPath('/en/login')).toBe(false);
+  });
+
+  it('exempts only the exact localized landing paths from the nonce', () => {
+    for (const path of ['/ar', '/en', '/ar/', '/en/']) {
+      expect(isStaticContentPath(path)).toBe(true);
+      expect(isLandingPath(path)).toBe(true);
+    }
+    for (const path of ['/', '/fr', '/en/teachers', '/en/student', '/en/login', '/ar/register'])
+      expect(isStaticContentPath(path)).toBe(false);
   });
 
   it('generates unique, base64 nonces', () => {
