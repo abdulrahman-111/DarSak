@@ -141,6 +141,12 @@ export default async function TeacherLessons({
   const allView = allData !== null;
   const timetableView = calendarData !== null;
   const week = calendarData?.week ?? null;
+  // Localised calendar-day labels: raw ISO dates mix digit systems and reorder under RTL.
+  const dayLabel = (isoDay: string) =>
+    new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
+      dateStyle: 'medium',
+      timeZone: 'UTC',
+    }).format(new Date(`${isoDay}T12:00:00Z`));
   const dayDates = week ? timetableDayDates(week.weekStart).map(item => item.date) : [];
   const dayGroups = calendarData
     ? groupTeacherLessonsByCairoDay(calendarData.lessons, dayDates)
@@ -424,8 +430,8 @@ export default async function TeacherLessons({
                     <div className="mt-5">
                       <h2 className="mb-3 text-lg font-black text-teal">
                         {calendarData.day
-                          ? `${weekday(teacherCalendarWeekday(calendarData.day), locale)} · ${calendarData.day} · ${calendarData.total} ${copy.lessons}`
-                          : `${week.startDate} – ${dayDates.at(-1)} · ${calendarData.total} ${copy.lessons}`}
+                          ? `${weekday(teacherCalendarWeekday(calendarData.day), locale)} · ${dayLabel(calendarData.day)} · ${calendarData.total} ${copy.lessons}`
+                          : `${dayLabel(week.startDate)} – ${dayLabel(dayDates.at(-1) ?? week.startDate)} · ${calendarData.total} ${copy.lessons}`}
                       </h2>
                       {calendarData.total ? (
                         <div className="grid gap-4">
@@ -437,11 +443,12 @@ export default async function TeacherLessons({
                             .map(([dayDate, entries]) => (
                               <section
                                 key={dayDate}
-                                aria-label={`${weekday(teacherCalendarWeekday(dayDate), locale)} · ${dayDate}`}
+                                aria-label={`${weekday(teacherCalendarWeekday(dayDate), locale)} · ${dayLabel(dayDate)}`}
                               >
                                 {!calendarData.day && (
                                   <h3 className="mb-2 font-bold text-teal">
-                                    {weekday(teacherCalendarWeekday(dayDate), locale)} · {dayDate}
+                                    {weekday(teacherCalendarWeekday(dayDate), locale)} ·{' '}
+                                    {dayLabel(dayDate)}
                                   </h3>
                                 )}
                                 <div className="grid gap-2">

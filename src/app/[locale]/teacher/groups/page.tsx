@@ -89,7 +89,7 @@ export default async function TeacherGroups({
           </a>
         </Panel>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 lg:grid-cols-2">
           {groups.data?.length ? (
             groups.data.map(group => {
               const relation = (
@@ -170,17 +170,19 @@ export default async function TeacherGroups({
               );
             })
           ) : (
-            <EmptyState
-              title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
-              action={{
-                href: `/${locale}/teacher/groups/new`,
-                label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
-              }}
-            >
-              {ar
-                ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
-                : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
-            </EmptyState>
+            <div className="lg:col-span-2">
+              <EmptyState
+                title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
+                action={{
+                  href: `/${locale}/teacher/groups/new`,
+                  label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
+                }}
+              >
+                {ar
+                  ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
+                  : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
+              </EmptyState>
+            </div>
           )}
         </div>
       )}

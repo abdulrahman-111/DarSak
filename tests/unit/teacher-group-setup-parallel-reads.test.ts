@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({ viewer: vi.fn(), choices: vi.fn() }));
 vi.mock('server-only', () => ({}));
-vi.mock('@/features/teacher/data', () => ({ teacherViewer: mocks.viewer }));
+vi.mock('@/features/teacher/data', () => ({ teacherIdentity: mocks.viewer }));
 vi.mock('@/features/teacher/catalogue-data', () => ({ teacherCatalogueChoices: mocks.choices }));
 vi.mock('@/features/teacher/setup-domain', () => ({ setupCatalogueChoices: () => [] }));
 vi.mock('@/features/teacher/catalogue-domain', () => ({
@@ -37,6 +37,7 @@ describe('teacher group setup independent reads', () => {
     };
     const rows = {
       groups: { data: group, error: null },
+      teacher_profiles: { data: { approved: true }, error: null },
       subjects: {
         data: {
           id: 'subject-1',
@@ -88,6 +89,7 @@ describe('teacher group setup independent reads', () => {
 
     const result = teacherGroupSetup('en', groupId);
     for (let i = 0; i < 8; i++) await Promise.resolve();
+    expect(started.has('teacher_profiles')).toBe(true);
     expect(started.has('group_schedule_slots')).toBe(true);
     expect(started.has('group_lesson_exclusions')).toBe(true);
 
