@@ -3,12 +3,12 @@ import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@admin/lib/access';
 import { AdminForm } from '@admin/features/admin/forms';
 import { EmptyState, Panel, ScreenTitle, cairoDate } from '@/components/platform/ui';
+import { Chip, Disclosure, FilterBar, Pager, PillLink } from '@admin/components/ui';
 import {
   normalizeStudentPage,
   studentPageCount,
   STUDENT_PAGE_SIZE,
 } from '@/features/student/pagination-domain';
-import { StudentPagination } from '@/features/student/pagination';
 import { reportProgress, parseAdminReportPage } from '@/features/reports/domain';
 
 export default async function AdminReports({
@@ -94,18 +94,19 @@ export default async function AdminReports({
   return (
     <>
       <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />
-      <nav aria-label={copy.status} className="mb-5 flex flex-wrap gap-2">
-        {(['all', 'open', 'resolved'] as const).map(value => (
-          <Link
-            key={value}
-            aria-current={status === value ? 'page' : undefined}
-            href={`/${locale}/admin/reports?status=${value}`}
-            className={`rounded-full border px-4 py-2 text-sm font-bold ${status === value ? 'border-teal bg-teal text-white' : 'border-line text-teal'}`}
-          >
-            {copy[value]}
-          </Link>
-        ))}
-      </nav>
+      <FilterBar label={copy.status}>
+        <nav aria-label={copy.status} className="flex flex-wrap gap-2">
+          {(['all', 'open', 'resolved'] as const).map(value => (
+            <PillLink
+              key={value}
+              current={status === value}
+              href={`/${locale}/admin/reports?status=${value}`}
+            >
+              {copy[value]}
+            </PillLink>
+          ))}
+        </nav>
+      </FilterBar>
       {failed ? (
         <Panel>
           <p role="alert" className="text-sm text-danger">
@@ -121,20 +122,20 @@ export default async function AdminReports({
       ) : reportPage.rows.length ? (
         <div className="grid gap-4">
           {reportPage.rows.map(report => (
-            <Panel key={report.id}>
-              <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="break-words font-black text-teal [overflow-wrap:anywhere]">
-                    {report.subject}
-                  </h2>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
-                    {report.description}
-                  </p>
-                </div>
-                <span className="rounded-full bg-teal/10 px-3 py-2 text-sm font-bold text-teal">
+            <Disclosure
+              key={report.id}
+              defaultOpen={report.status === 'open' && reportPage.rows.length <= 3}
+              title={report.subject}
+              chip={
+                <Chip tone={report.status === 'resolved' ? 'ok' : 'warn'}>
                   {reportProgress(report.status, report.reviewed_at, locale)}
-                </span>
-              </div>
+                </Chip>
+              }
+              meta={`${report.reporter_name} · ${cairoDate(report.created_at, locale)}`}
+            >
+              <p className="whitespace-pre-wrap break-words text-sm text-ink-soft [overflow-wrap:anywhere]">
+                {report.description}
+              </p>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
                 <span>
                   {copy.reporter}: <strong className="text-teal">{report.reporter_name}</strong>
@@ -202,18 +203,24 @@ export default async function AdminReports({
                   ]}
                 />
               </div>
-            </Panel>
+            </Disclosure>
           ))}
         </div>
       ) : (
         <EmptyState>{copy.empty}</EmptyState>
       )}
       {!failed && (
-        <StudentPagination
-          locale={locale}
-          href={`/${locale}/admin/reports?status=${status}`}
+        <Pager
+          ariaLabel={copy.page}
           page={page}
           pageCount={studentPageCount(reportPage.total)}
+          total={reportPage.total}
+          prevHref={page > 1 ? `/${locale}/admin/reports?status=${status}&page=${page - 1}` : null}
+          nextHref={
+            page < studentPageCount(reportPage.total)
+              ? `/${locale}/admin/reports?status=${status}&page=${page + 1}`
+              : null
+          }
           labels={copy}
         />
       )}

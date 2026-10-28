@@ -74,7 +74,7 @@ export function AdminShell({
             <Link
               key={path}
               href={`/${locale}/${path}`}
-              className="shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-ink-soft hover:bg-cream"
+              className="flex min-h-11 shrink-0 items-center rounded-lg px-3 text-sm font-semibold text-ink-soft hover:bg-cream"
             >
               <span className="inline-flex items-center gap-2">
                 {copy[label]}
@@ -97,7 +97,7 @@ export function AdminShell({
           <input type="hidden" name="locale" value={locale} />
           <button
             type="submit"
-            className="rounded-lg px-3 py-2 text-sm font-bold text-orange hover:bg-cream"
+            className="min-h-11 rounded-lg px-3 text-sm font-bold text-orange hover:bg-cream"
           >
             {copy.logout}
           </button>

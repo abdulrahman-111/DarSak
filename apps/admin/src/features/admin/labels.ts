@@ -24,7 +24,7 @@ const en = {
   working: 'Saving…',
   saved: 'Changes saved.',
   invalid: 'Check the form values and try again.',
-  denied: 'An active administrator account is required.',
+  denied: 'An active administrator account with two-step verification is required. Sign in again.',
   error:
     'The change could not be saved. The record may be in use or your permissions may have changed.',
   nameAr: 'Arabic name',
@@ -108,7 +108,7 @@ const ar: typeof en = {
   working: 'جارٍ الحفظ…',
   saved: 'تم حفظ التغييرات.',
   invalid: 'راجع القيم في النموذج وحاول مجددًا.',
-  denied: 'يلزم حساب مسؤول نشط.',
+  denied: 'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
   error: 'تعذر حفظ التغيير. قد يكون السجل مستخدمًا أو تغيرت صلاحياتك.',
   nameAr: 'الاسم بالعربية',
   nameEn: 'الاسم بالإنجليزية',

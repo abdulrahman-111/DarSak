@@ -54,7 +54,7 @@ for (const file of adminRoutes) {
   if (
     segments.length &&
     segments[0] !== 'admin' &&
-    !['login', 'notifications'].includes(segments.join('/'))
+    !['login', 'notifications', 'mfa/enroll', 'mfa/verify'].includes(segments.join('/'))
   ) {
     fail(`admin route is outside the root, login, and administrator allowlist: ${relative}`);
   }
@@ -206,7 +206,7 @@ checkManifest(
   path.join(root, 'apps/admin/.next/server/app-paths-manifest.json'),
   /(?:^|\/)(?:student|teacher|register|registration|choose-role|api|cron|integrations)(?:\/|$)/,
   /\[locale\]\/admin\/page$/,
-  /^\/(?:_not-found\/page|_global-error\/page|(?:\[locale\]\/)?(?:page|login\/page|notifications\/page|admin\/(?:.+\/)?page))$/,
+  /^\/(?:_not-found\/page|_global-error\/page|(?:\[locale\]\/)?(?:page|login\/page|mfa\/(?:enroll|verify)\/page|notifications\/page|admin\/(?:.+\/)?page))$/,
 );
 
 if (process.exitCode) process.exit(process.exitCode);

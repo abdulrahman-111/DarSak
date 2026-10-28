@@ -9,7 +9,7 @@ import {
   STUDENT_PAGE_SIZE,
   studentPageCount,
 } from '@/features/student/pagination-domain';
-import { StudentPagination } from '@/features/student/pagination';
+import { Pager } from '@admin/components/ui';
 import { readCountedPage } from '@/lib/supabase/counted-page';
 
 export default async function AdminGroups({
@@ -105,8 +105,11 @@ export default async function AdminGroups({
                 </div>
                 <Status value={group.status} locale={locale} />
               </div>
-              <div className="mt-5 border-t border-line pt-5">
-                <div className="mb-4">
+              <details className="mt-5 border-t border-line pt-3">
+                <summary className="flex min-h-11 cursor-pointer items-center font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+                  {ar ? 'إدارة المجموعة' : 'Manage group'}
+                </summary>
+                <div className="mb-4 mt-3">
                   <h3 className="mb-2 text-sm font-black text-teal">
                     {ar ? 'النشر والمسودة' : 'Publishing and draft status'}
                   </h3>
@@ -129,7 +132,7 @@ export default async function AdminGroups({
                   />
                 </div>
                 <GroupManagementControls locale={locale} groupId={group.id} status={group.status} />
-              </div>
+              </details>
             </Panel>
           ))}
         </div>
@@ -137,11 +140,13 @@ export default async function AdminGroups({
         <EmptyState>{ar ? 'لا توجد مجموعات.' : 'No groups found.'}</EmptyState>
       )}
       {!failed && (
-        <StudentPagination
-          locale={locale}
-          href={`/${locale}/admin/groups`}
+        <Pager
+          ariaLabel={ar ? 'صفحات المجموعات' : 'Group pages'}
           page={page}
           pageCount={pageCount}
+          total={count}
+          prevHref={page > 1 ? `/${locale}/admin/groups?page=${page - 1}` : null}
+          nextHref={page < pageCount ? `/${locale}/admin/groups?page=${page + 1}` : null}
           labels={pageLabels}
         />
       )}
