@@ -26,7 +26,7 @@ import { StudentPagination } from '@/features/student/pagination';
 import { CalendarExportForm } from '@/features/calendar/export-form';
 import { defaultCalendarRange } from '@/features/calendar/domain';
 import { shiftTimetableWeek, timetableDayDates } from '@/features/student/timetable-domain';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 
 type Search = {
   new?: string;
@@ -48,17 +48,22 @@ export default async function TeacherLessons({
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  await requireTeachingAccess(locale);
   const requestedNew = query.new === '1';
   const view = normalizeTeacherCalendarView(query.view);
   const date = normalizeTeacherCalendarDate(query.date);
   const exportRange = defaultCalendarRange();
-  const allData = view === 'all' && !requestedNew ? await teacherLessons(locale, query.page) : null;
-  const newData = requestedNew ? await teacherCalendarGroupChoices(locale, query.groupId) : null;
-  const calendarData =
-    !requestedNew && view !== 'all'
-      ? await teacherTimetable(locale, date, query.day, query.groupId, query.page)
-      : null;
+  const {
+    data: { allData, newData, calendarData },
+  } = await loadWithTeachingAccess(locale, async () => {
+    const [allData, newData, calendarData] = await Promise.all([
+      view === 'all' && !requestedNew ? teacherLessons(locale, query.page) : null,
+      requestedNew ? teacherCalendarGroupChoices(locale, query.groupId) : null,
+      !requestedNew && view !== 'all'
+        ? teacherTimetable(locale, date, query.day, query.groupId, query.page)
+        : null,
+    ]);
+    return { allData, newData, calendarData };
+  });
   const selectedGroup = newData?.selectedGroup ?? calendarData?.selectedGroup ?? null;
   const groups = newData?.groups ?? calendarData?.groups ?? allData?.groups ?? [];
   const base = `/${locale}/teacher/lessons`;

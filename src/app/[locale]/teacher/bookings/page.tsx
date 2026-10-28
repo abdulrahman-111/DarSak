@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { readTeacherAccessStatus } from '@/features/teacher-access/data';
 import { teacherViewer } from '@/features/teacher/data';
+import { getRequestViewer } from '@/features/platform/request-viewer';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { StudentPagination } from '@/features/student/pagination';
 import { teacherBookingData } from '@/features/bookings/data';
@@ -19,11 +20,15 @@ export default async function TeacherBookings({
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw),
     ar = locale === 'ar';
-  const viewer = await teacherViewer(locale);
+  // Profile, access status and booking data are independent reads: one parallel batch. They are
+  // all RLS-scoped, and the approval redirect still happens before anything is rendered.
+  const [viewer, access, data] = await Promise.all([
+    teacherViewer(locale),
+    getRequestViewer().then(({ db }) => readTeacherAccessStatus(db)),
+    teacherBookingData(locale, query.requests_page, query.slots_page),
+  ]);
   if (viewer.teacherError || !viewer.teacher?.approved) redirect(`/${locale}/account/application`);
-  const access = await readTeacherAccessStatus(viewer.db);
   const hasTeachingAccess = !access.error && !!access.status?.has_access;
-  const data = await teacherBookingData(locale, query.requests_page, query.slots_page);
   const now = new Date().toISOString();
   const labels = ar
     ? { previous: 'السابق', next: 'التالي', page: 'صفحة' }

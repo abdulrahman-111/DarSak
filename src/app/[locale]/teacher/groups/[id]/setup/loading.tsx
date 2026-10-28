@@ -1,5 +1,5 @@
-import { RouteLoading } from '@/components/route-feedback';
+import { TeacherSkeleton } from '@/features/teacher/loading-skeletons';
 
 export default function Loading() {
-  return <RouteLoading area="groupSetup" />;
+  return <TeacherSkeleton variant="detail" />;
 }

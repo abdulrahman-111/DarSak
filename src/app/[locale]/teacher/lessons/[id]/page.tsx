@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 import { LessonForm } from '@/components/platform/forms';
 import { TeacherMaterialForms } from '@/components/platform/actions';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
@@ -30,38 +30,45 @@ export default async function TeacherLesson({
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  const me = await requireTeachingAccess(locale);
-  const lessonResult = await me.db
-    .from('lessons')
-    .select(
-      'id,group_id,title,starts_at,ends_at,status,notes,slot_id,local_date,group:groups!inner(id,name,teacher_id,status)',
-    )
-    .eq('id', id)
-    .eq('group.teacher_id', me.id)
-    .maybeSingle();
+  const requestedPage = normalizeAttendancePage(
+    Array.isArray(query.attendance_page) ? query.attendance_page[0] : query.attendance_page,
+  );
+  // One parallel batch: access check, the lesson itself and everything keyed by the lesson id.
+  // Materials, attendance and the teacher's own groups are RLS-scoped, so reading them
+  // before ownership of the lesson is confirmed exposes nothing; they are dropped on notFound().
+  const {
+    me,
+    data: [lessonResult, materials, groups, approval, requestedAttendance],
+  } = await loadWithTeachingAccess(locale, me =>
+    Promise.all([
+      me.db
+        .from('lessons')
+        .select(
+          'id,group_id,title,starts_at,ends_at,status,notes,slot_id,local_date,group:groups!inner(id,name,teacher_id,status)',
+        )
+        .eq('id', id)
+        .eq('group.teacher_id', me.id)
+        .maybeSingle(),
+      me.db
+        .from('lesson_materials')
+        .select('id,title,kind,url,content,file_size,mime_type')
+        .eq('lesson_id', id)
+        .order('created_at'),
+      me.db
+        .from('groups')
+        .select('id,name')
+        .eq('teacher_id', me.id)
+        .neq('status', 'archived')
+        .order('name')
+        .order('id'),
+      me.db.from('teacher_profiles').select('approved').eq('id', me.id).maybeSingle(),
+      teacherAttendancePage(me.db, id, (requestedPage - 1) * 20),
+    ]),
+  );
   if (!lessonResult.data) notFound();
   const lesson = lessonResult.data;
   const group = Array.isArray(lesson.group) ? lesson.group[0] : lesson.group;
   if (!group) notFound();
-  const requestedPage = normalizeAttendancePage(
-    Array.isArray(query.attendance_page) ? query.attendance_page[0] : query.attendance_page,
-  );
-  const [materials, groups, approval, requestedAttendance] = await Promise.all([
-    me.db
-      .from('lesson_materials')
-      .select('id,title,kind,url,content,file_size,mime_type')
-      .eq('lesson_id', id)
-      .order('created_at'),
-    me.db
-      .from('groups')
-      .select('id,name')
-      .eq('teacher_id', me.id)
-      .neq('status', 'archived')
-      .order('name')
-      .order('id'),
-    me.db.from('teacher_profiles').select('approved').eq('id', me.id).maybeSingle(),
-    teacherAttendancePage(me.db, id, (requestedPage - 1) * 20),
-  ]);
   const archived = group.status === 'archived';
   const attendancePageCount = requestedAttendance
     ? getAttendancePageCount(requestedAttendance.total)

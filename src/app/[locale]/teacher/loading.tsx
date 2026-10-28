@@ -1,5 +1,5 @@
-import { WorkspaceLoading } from '@/components/platform/workspace-loading';
+import { TeacherSkeleton } from '@/features/teacher/loading-skeletons';
 
 export default function Loading() {
-  return <WorkspaceLoading />;
+  return <TeacherSkeleton variant="dashboard" />;
 }

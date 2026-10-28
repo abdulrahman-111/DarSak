@@ -40,7 +40,14 @@ export default async function TeacherDashboard({
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'teacher');
-  const access = await readTeacherAccessStatus(me.db);
+  // The overview starts together with the access check (one round trip instead of two). It is
+  // RLS-scoped to this teacher and is dropped unread when teaching access is paused.
+  const [accessResult, overviewResult] = await Promise.allSettled([
+    readTeacherAccessStatus(me.db),
+    teacherOverview(locale),
+  ]);
+  if (accessResult.status === 'rejected') throw accessResult.reason;
+  const access = accessResult.value;
   if (access.error || !access.status)
     return (
       <>
@@ -102,7 +109,8 @@ export default async function TeacherDashboard({
       </>
     );
 
-  const data = await teacherOverview(locale);
+  if (overviewResult.status === 'rejected') throw overviewResult.reason;
+  const data = overviewResult.value;
   const now = new Date();
   const firstName = data.me.profile.full_name.trim().split(/\s+/)[0] || data.me.profile.full_name;
   const todayLessons = [...data.todayLessons].sort(

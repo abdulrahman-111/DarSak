@@ -7,7 +7,7 @@ import {
   type TeacherCatalogueSubject,
 } from './catalogue-data';
 import { catalogueDisplayName } from './catalogue-domain';
-import { teacherViewer } from './data';
+import { teacherIdentity, type teacherViewer } from './data';
 import {
   setupCatalogueChoices,
   type SetupCatalogueChoice,
@@ -60,7 +60,14 @@ export async function teacherGroupSetup(
   id?: string | null,
   copyScheduleFrom?: string | null,
 ) {
-  const me = await teacherViewer(locale);
+  const identity = await teacherIdentity(locale);
+  // The teacher row is read in the same batch as the catalogue and group below; the early
+  // returns before that batch never expose it.
+  let me: Awaited<ReturnType<typeof teacherViewer>> = {
+    ...identity,
+    teacher: null,
+    teacherError: null,
+  };
   const ar = locale === 'ar';
   const empty = {
     me,
@@ -85,25 +92,50 @@ export async function teacherGroupSetup(
   }
   const proposalId =
     copyScheduleFrom && idSchema.safeParse(copyScheduleFrom).success ? copyScheduleFrom : null;
-  const [choices, groupResult, sourceGroupResult] = await Promise.all([
-    teacherCatalogueChoices(me.db, me.id),
-    id
-      ? me.db
-          .from('groups')
-          .select('id,teacher_id,name,description,offering_id,capacity,location,status,updated_at')
-          .eq('id', id)
-          .eq('teacher_id', me.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-    proposalId
-      ? me.db
-          .from('groups')
-          .select('id,name')
-          .eq('id', proposalId)
-          .eq('teacher_id', me.id)
-          .maybeSingle()
-      : Promise.resolve({ data: null, error: null }),
-  ]);
+  const [choices, groupResult, sourceGroupResult, teacherResult, slotsResult, exclusionsResult] =
+    await Promise.all([
+      teacherCatalogueChoices(me.db, me.id),
+      id
+        ? me.db
+            .from('groups')
+            .select(
+              'id,teacher_id,name,description,offering_id,capacity,location,status,updated_at',
+            )
+            .eq('id', id)
+            .eq('teacher_id', me.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      proposalId
+        ? me.db
+            .from('groups')
+            .select('id,name')
+            .eq('id', proposalId)
+            .eq('teacher_id', me.id)
+            .maybeSingle()
+        : Promise.resolve({ data: null, error: null }),
+      me.db
+        .from('teacher_profiles')
+        .select('headline,bio,approved,avatar_path,cover_path')
+        .eq('id', me.id)
+        .maybeSingle(),
+      id
+        ? me.db
+            .from('group_schedule_slots')
+            .select('id,group_id,weekday,start_time,end_time,timezone')
+            .eq('group_id', id)
+            .order('weekday')
+            .order('start_time')
+        : Promise.resolve({ data: null, error: null }),
+      id
+        ? me.db
+            .from('group_lesson_exclusions')
+            .select('local_date')
+            .eq('group_id', id)
+            .order('local_date')
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+  me = { ...me, teacher: teacherResult.data, teacherError: teacherResult.error };
+  empty.me = me;
 
   if (groupResult.error || choices.error.error) return { ...empty, error: errorCopy(locale) };
   if (id && !groupResult.data) {
@@ -128,33 +160,21 @@ export async function teacherGroupSetup(
   if (!groupResult.data) return { ...empty, catalogue };
 
   const group = groupResult.data;
-  const [savedOfferingResult, slotsResult, exclusionsResult, proposalSlotsResult] =
-    await Promise.all([
-      me.db
-        .from('offerings')
-        .select('id,owner_teacher_id,archived_at,node_id,subject_id')
-        .eq('id', group.offering_id)
-        .maybeSingle(),
-      me.db
-        .from('group_schedule_slots')
-        .select('id,group_id,weekday,start_time,end_time,timezone')
-        .eq('group_id', id!)
-        .order('weekday')
-        .order('start_time'),
-      me.db
-        .from('group_lesson_exclusions')
-        .select('local_date')
-        .eq('group_id', id!)
-        .order('local_date'),
-      proposalId && sourceGroupResult.data
-        ? me.db
-            .from('group_schedule_slots')
-            .select('weekday,start_time,end_time')
-            .eq('group_id', proposalId)
-            .order('weekday')
-            .order('start_time')
-        : Promise.resolve({ data: null, error: null }),
-    ]);
+  const [savedOfferingResult, proposalSlotsResult] = await Promise.all([
+    me.db
+      .from('offerings')
+      .select('id,owner_teacher_id,archived_at,node_id,subject_id')
+      .eq('id', group.offering_id)
+      .maybeSingle(),
+    proposalId && sourceGroupResult.data
+      ? me.db
+          .from('group_schedule_slots')
+          .select('weekday,start_time,end_time')
+          .eq('group_id', proposalId)
+          .order('weekday')
+          .order('start_time')
+      : Promise.resolve({ data: null, error: null }),
+  ]);
   if (savedOfferingResult.error || !savedOfferingResult.data)
     return { ...empty, error: errorCopy(locale) };
   const savedOffering = savedOfferingResult.data as TeacherCatalogueOffering;
