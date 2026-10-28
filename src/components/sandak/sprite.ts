@@ -1,4 +1,4 @@
-/** SanDak: a 16x16 pocket-notebook sprite with six moods. Pure data, no React. */
+/** SanDai: a 16x16 pocket-notebook sprite with six moods. Pure data, no React. */
 
 export type SandakMood = 'idle' | 'thinking' | 'needs' | 'done' | 'oops' | 'sleep';
 

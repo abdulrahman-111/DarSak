@@ -64,7 +64,7 @@ export async function resolveAssistant(): Promise<{
 }
 
 /**
- * Mounts the docked SanDak companion once for every visitor. Live AI is offered
+ * Mounts the docked SanDai companion once for every visitor. Live AI is offered
  * only to active students and teachers when the server configuration enables it;
  * everyone else (including anonymous visitors) gets local guided help. The
  * per-user access is resolved on the client from /api/viewer so this layout part

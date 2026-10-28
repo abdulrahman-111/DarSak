@@ -3,7 +3,7 @@ import { spriteRects, SPRITE_HEADROOM, SPRITE_SIZE, type SandakMood } from './sp
 export type { SandakMood } from './sprite';
 
 /**
- * SanDak the pocket-notebook companion, drawn as one inline SVG of rects.
+ * SanDai the pocket-notebook companion, drawn as one inline SVG of rects.
  * `scale` is the number of CSS pixels per sprite pixel. Decorative: the parent
  * control supplies the accessible name.
  */

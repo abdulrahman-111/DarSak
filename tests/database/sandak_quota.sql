@@ -8,7 +8,7 @@ do $$ begin
      or has_table_privilege('authenticated','dars_private.sandak_settings','SELECT,INSERT,UPDATE,DELETE')
      or has_table_privilege('anon','dars_private.sandak_user_daily_usage','SELECT,INSERT,UPDATE,DELETE')
      or has_table_privilege('service_role','dars_private.sandak_request_leases','SELECT,INSERT,UPDATE,DELETE') then
-    raise exception 'SanDak private tables must use RLS and have no direct API table grants';
+    raise exception 'SanDai private tables must use RLS and have no direct API table grants';
   end if;
   if has_function_privilege('public','public.sanad_reserve_request(integer,integer,integer,integer)','EXECUTE')
      or has_function_privilege('anon','public.sanad_reserve_request(integer,integer,integer,integer)','EXECUTE')
@@ -16,24 +16,24 @@ do $$ begin
      or not has_function_privilege('authenticated','public.sanad_reserve_request(integer,integer,integer,integer)','EXECUTE')
      or has_function_privilege('anon','public.sanad_release_request(uuid)','EXECUTE')
      or not has_function_privilege('authenticated','public.sanad_release_request(uuid)','EXECUTE') then
-    raise exception 'SanDak RPC grants are unsafe';
+    raise exception 'SanDai RPC grants are unsafe';
   end if;
   if (select (user_daily_limit,user_minute_limit,global_daily_limit,global_concurrency)
         from dars_private.sandak_settings) is distinct from row(60,10,3000,10) then
-    raise exception 'SanDak default limits are not 60/10/3000/10';
+    raise exception 'SanDai default limits are not 60/10/3000/10';
   end if;
 end $$;
 
 -- 1 student, 2 student, 3 student, 4 student, 5 student, 6 teacher, 7 suspended, 8 admin.
 insert into auth.users(id,aud,role,email,raw_user_meta_data) values
- ('a8200000-0000-4000-8000-000000000001','authenticated','authenticated','sandak-one@test.invalid','{"full_name":"SanDak One","requested_role":"student"}'),
- ('a8200000-0000-4000-8000-000000000002','authenticated','authenticated','sandak-two@test.invalid','{"full_name":"SanDak Two","requested_role":"student"}'),
- ('a8200000-0000-4000-8000-000000000003','authenticated','authenticated','sandak-three@test.invalid','{"full_name":"SanDak Three","requested_role":"student"}'),
- ('a8200000-0000-4000-8000-000000000004','authenticated','authenticated','sandak-four@test.invalid','{"full_name":"SanDak Four","requested_role":"student"}'),
- ('a8200000-0000-4000-8000-000000000005','authenticated','authenticated','sandak-five@test.invalid','{"full_name":"SanDak Five","requested_role":"student"}'),
- ('a8200000-0000-4000-8000-000000000006','authenticated','authenticated','sandak-teacher@test.invalid','{"full_name":"SanDak Teacher","requested_role":"teacher"}'),
- ('a8200000-0000-4000-8000-000000000007','authenticated','authenticated','sandak-suspended@test.invalid','{"full_name":"SanDak Suspended","requested_role":"student"}'),
- ('a8200000-0000-4000-8000-000000000008','authenticated','authenticated','sandak-admin@test.invalid','{"full_name":"SanDak Admin","requested_role":"student"}');
+ ('a8200000-0000-4000-8000-000000000001','authenticated','authenticated','sandak-one@test.invalid','{"full_name":"SanDai One","requested_role":"student"}'),
+ ('a8200000-0000-4000-8000-000000000002','authenticated','authenticated','sandak-two@test.invalid','{"full_name":"SanDai Two","requested_role":"student"}'),
+ ('a8200000-0000-4000-8000-000000000003','authenticated','authenticated','sandak-three@test.invalid','{"full_name":"SanDai Three","requested_role":"student"}'),
+ ('a8200000-0000-4000-8000-000000000004','authenticated','authenticated','sandak-four@test.invalid','{"full_name":"SanDai Four","requested_role":"student"}'),
+ ('a8200000-0000-4000-8000-000000000005','authenticated','authenticated','sandak-five@test.invalid','{"full_name":"SanDai Five","requested_role":"student"}'),
+ ('a8200000-0000-4000-8000-000000000006','authenticated','authenticated','sandak-teacher@test.invalid','{"full_name":"SanDai Teacher","requested_role":"teacher"}'),
+ ('a8200000-0000-4000-8000-000000000007','authenticated','authenticated','sandak-suspended@test.invalid','{"full_name":"SanDai Suspended","requested_role":"student"}'),
+ ('a8200000-0000-4000-8000-000000000008','authenticated','authenticated','sandak-admin@test.invalid','{"full_name":"SanDai Admin","requested_role":"student"}');
 set local session_replication_role=replica;
 update public.profiles set status='suspended' where id='a8200000-0000-4000-8000-000000000007';
 update public.profiles set role='admin' where id='a8200000-0000-4000-8000-000000000008';
@@ -43,7 +43,7 @@ set local role anon;
 do $$ declare v_denied boolean:=false; begin
   begin perform public.sanad_reserve_request();
   exception when insufficient_privilege then v_denied:=true; end;
-  if not v_denied then raise exception 'anon executed SanDak reserve RPC'; end if;
+  if not v_denied then raise exception 'anon executed SanDai reserve RPC'; end if;
 end $$;
 reset role;
 
@@ -52,7 +52,7 @@ set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000007';
 do $$ begin
   if public.sanad_reserve_request() is not null then raise exception 'suspended user reserved'; end if;
   begin perform 1 from dars_private.sandak_settings;
-    raise exception 'authenticated role read SanDak settings';
+    raise exception 'authenticated role read SanDai settings';
   exception when insufficient_privilege then null; end;
 end $$;
 reset role;
@@ -184,4 +184,4 @@ do $$ declare a uuid; d date:=(clock_timestamp() at time zone 'UTC')::date; begi
 end $$;
 
 rollback;
-select 'SanDak quota permissions, eligibility, lease ownership, and rate limit assertions passed' as result;
+select 'SanDai quota permissions, eligibility, lease ownership, and rate limit assertions passed' as result;

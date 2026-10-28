@@ -53,6 +53,17 @@ Set the following values in the Vercel project as appropriate for each environme
 
 Application confirmation and recovery emails are sent by Supabase Auth using its SMTP configuration. Keep email confirmation enabled and use the custom Auth SMTP provider and confirmation template. The integration fixtures under `tests/integration/` require a separate local Supabase instance with confirmation disabled; that local test setting does not apply to production.
 
+## Content Security Policy
+
+Both apps send a per-request nonce policy from their proxy (`src/proxy.ts`, `apps/admin/src/proxy.ts`; policy builders in `src/lib/security/csp.ts` and `apps/admin/src/lib/csp.ts`). Next stamps the nonce on its own inline scripts, and components can read it from the `x-nonce` request header.
+
+- Default: `Content-Security-Policy-Report-Only`. Violations show in the browser console and change nothing for users.
+- `CSP_ENFORCE=true` (server-only, set per Vercel project): the same policy is sent as the enforcing `Content-Security-Policy`, plus `upgrade-insecure-requests` when `NEXT_PUBLIC_SITE_URL` is HTTPS. Roll out by deploying Report-Only, browsing login, register (with Turnstile), Google sign-in, discovery and dashboards with the console open, then flipping the variable.
+- `frame-ancestors 'none'; base-uri 'self'; object-src 'none'` is always enforced by the static header in `next.config.ts`, independent of `CSP_ENFORCE`.
+- Scripts: `'self'`, the request nonce and `'strict-dynamic'` (plus Cloudflare Turnstile for old browsers); styles keep `'unsafe-inline'`. Supabase origins (`https` and `wss`) are derived from `NEXT_PUBLIC_SUPABASE_URL`. Turnstile and Google sign-in origins are allowed on the public app only; the admin policy has none.
+- `Strict-Transport-Security: max-age=31536000` is set on both apps because Vercel only adds HSTS on `*.vercel.app`. It omits `includeSubDomains` and `preload` on purpose.
+- A nonce forces dynamic rendering. `help`, `privacy`, `terms` and `pricing` (see `isStaticContentPath`) therefore get no nonce and a nonce-free policy with `script-src 'self' 'unsafe-inline'`, so they can be statically rendered. Add any other static page to that list.
+
 ## Supabase configuration
 
 Set the production Auth site URL to the production app origin and add the matching allowed redirect origin with the `/**` path pattern so callback paths and their query strings are accepted. Keep signup confirmation enabled and use the numeric-code confirmation template. Configure Supabase Auth's custom SMTP for confirmation and recovery delivery; it is separate from the Gmail app-notification worker.

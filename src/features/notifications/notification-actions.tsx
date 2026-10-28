@@ -1,7 +1,20 @@
 'use client';
 
-import { useActionState } from 'react';
-import type { NotificationActionState } from './actions';
+import { useActionState, useEffect, useRef } from 'react';
+import { markNotificationsViewed, type NotificationActionState } from './actions';
+
+/** Marks the listed unread notifications as read once, shortly after the page is shown. */
+export function MarkViewedOnOpen({ locale, ids }: { locale: string; ids: string[] }) {
+  const done = useRef<string>('');
+  const key = ids.join(',');
+  useEffect(() => {
+    if (!key || done.current === key) return;
+    done.current = key;
+    const timer = setTimeout(() => void markNotificationsViewed(locale, key.split(',')), 1200);
+    return () => clearTimeout(timer);
+  }, [locale, key]);
+  return null;
+}
 
 export function NotificationSubmit({
   children,

@@ -4,7 +4,10 @@ import { requireViewer } from '@/components/platform/access';
 import { PlatformShell } from '@/components/platform/shell';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { markAllNotificationsRead, markNotificationRead } from '@/features/notifications/actions';
-import { NotificationSubmit } from '@/features/notifications/notification-actions';
+import {
+  MarkViewedOnOpen,
+  NotificationSubmit,
+} from '@/features/notifications/notification-actions';
 import {
   notificationHref,
   notificationSummary,
@@ -78,6 +81,10 @@ export default async function NotificationsPage({
           </Panel>
         ) : (
           <>
+            <MarkViewedOnOpen
+              locale={locale}
+              ids={page.rows.filter(row => !row.read_at).map(row => row.id)}
+            />
             <Panel>
               <div className="grid min-w-0 gap-3">
                 {page.rows.map(row => {
