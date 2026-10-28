@@ -162,6 +162,7 @@ export function GroupCard({
       <Link
         className="mt-5 inline-flex items-center gap-1.5 self-start font-bold text-orange after:absolute after:inset-0"
         href={`/${locale}/groups/${group.id}`}
+        aria-label={`${c.openGroup}: ${group.name}`}
       >
         <span className="relative">{c.openGroup}</span>
         <ArrowUpRight className={lang === 'ar' ? 'rotate-[-90deg]' : ''} size={16} />

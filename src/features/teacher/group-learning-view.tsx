@@ -1,3 +1,4 @@
+import { LearningText } from './learning-text';
 import { feeLabel, type GroupLearningDetails } from './group-learning-domain';
 export function GroupLearningView({
   locale,
@@ -34,9 +35,14 @@ export function GroupLearningView({
         {rows.map(r => (
           <div key={r.title} className="min-w-0">
             <dt className="font-bold text-teal">{r.title}</dt>
-            <dd className="mt-1 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
-              {r.text ||
-                (ar ? 'لم يحدد المعلم هذه التفاصيل بعد.' : 'Not specified by the teacher yet.')}
+            <dd className="mt-1 text-sm text-muted">
+              {r.text?.trim() ? (
+                <LearningText text={r.text} />
+              ) : (
+                <p>
+                  {ar ? 'لم يحدد المعلم هذه التفاصيل بعد.' : 'Not specified by the teacher yet.'}
+                </p>
+              )}
             </dd>
           </div>
         ))}
