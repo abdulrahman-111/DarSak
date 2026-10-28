@@ -6,3 +6,6 @@ public
 supabase
 docs/archive
 *.woff2
+
+# Claude Design canvas sources (kept byte-for-byte)
+docs/design/sandai/source/

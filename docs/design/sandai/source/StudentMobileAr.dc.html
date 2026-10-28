@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>الصفحة الرئيسية للطالب مع سندي</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#b04c16}a:hover{color:#8f3d11}
+.sandak-pet{transform-origin:50% 100%}
+.sandak-needs{animation:sandak-bounce 1s ease-in-out infinite}
+@keyframes sandak-bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-9px)}60%{transform:translateY(0) scaleY(.96)}}
+@media (prefers-reduced-motion: reduce){.sandak-pet{animation:none}}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div dir="rtl" style="position: relative; width: 390px; height: 844px; box-sizing: border-box; background: #f6f0e4; font-family: 'IBM Plex Sans Arabic', 'Instrument Sans', Arial, sans-serif; color: #23211e; overflow: hidden">
+  <header style="height: 64px; padding: 0 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #e3d9c8">
+    <p style="margin: 0; font-size: 24px; font-weight: 700; color: #0e4a4b">درسك<span style="color: #b04c16">.</span></p>
+    <button type="button" style="height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #d8ccb8; background: #fffdf8; color: #0e4a4b; font-weight: 700; font-family: 'Instrument Sans', Arial, sans-serif">EN</button>
+  </header>
+
+  <main style="padding: 20px; display: flex; flex-direction: column; gap: 16px">
+    <div>
+      <p style="margin: 0; font-size: 13px; color: #4d473f">الأربعاء، ٢٨ أكتوبر ٢٠٢٦</p>
+      <h1 style="margin: 4px 0 0; font-size: 30px; font-weight: 700; color: #0e4a4b">أهلاً، يوسف</h1>
+    </div>
+    <section style="border-radius: 24px; background: #0e4a4b; color: #fff; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <p style="margin: 0; font-size: 13px; opacity: 0.85">حصتك القادمة</p>
+      <h2 style="margin: 0; font-size: 22px; line-height: 1.35">حل المعادلات الخطية</h2>
+      <p style="margin: 0; font-size: 14px; opacity: 0.9">الجمعة ٣٠ أكتوبر · ٤:٠٠–٥:٠٠ م</p>
+      <a href="#" style="align-self: flex-start; margin-top: 4px; padding: 12px 18px; border-radius: 12px; background: #fffdf8; color: #0e4a4b; font-weight: 700; text-decoration: none">افتح الحصة واستعد</a>
+    </section>
+    <section style="border-radius: 24px; background: #fffdf8; border: 1px solid #e3d9c8; padding: 16px">
+      <h2 style="margin: 0 0 12px; font-size: 16px; color: #0e4a4b">أسبوعك الدراسي</h2>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; text-align: center; font-size: 12px">
+        <div style="padding: 8px 0; border-radius: 12px"><span style="display: block">السبت</span><strong style="display: block; font-size: 15px">٢٤</strong></div>
+        <div style="padding: 8px 0; border-radius: 12px"><span style="display: block">الأحد</span><strong style="display: block; font-size: 15px">٢٥</strong></div>
+        <div style="padding: 8px 0; border-radius: 12px"><span style="display: block">الاثنين</span><strong style="display: block; font-size: 15px">٢٦</strong></div>
+        <div style="padding: 8px 0; border-radius: 12px"><span style="display: block">الثلاثاء</span><strong style="display: block; font-size: 15px">٢٧</strong></div>
+        <div style="padding: 8px 0; border-radius: 12px; background: #0e4a4b; color: #fff"><span style="display: block">الأربعاء</span><strong style="display: block; font-size: 15px">٢٨</strong></div>
+        <div style="padding: 8px 0; border-radius: 12px"><span style="display: block">الخميس</span><strong style="display: block; font-size: 15px">٢٩</strong></div>
+        <div style="padding: 8px 0; border-radius: 12px"><span style="display: block">الجمعة</span><strong style="display: block; font-size: 15px">٣٠</strong><span style="display: block; margin: 4px auto 0; width: 6px; height: 6px; border-radius: 50%; background: #b04c16"></span></div>
+      </div>
+    </section>
+  </main>
+
+  <div style="position: absolute; left: 14px; bottom: 82px; display: flex; flex-direction: row-reverse; align-items: flex-end; gap: 6px">
+    <button type="button" aria-label="افتح سندي" style="border: 0; background: transparent; padding: 0">
+      <dc-import name="Pet" mood="needs" px="4" hint-size="80px,88px"></dc-import>
+    </button>
+    <div role="status" style="width: 250px; box-sizing: border-box; padding: 12px 14px; border-radius: 18px 18px 18px 6px; background: #fffdf8; border: 1px solid #d8ccb8; box-shadow: 0 12px 28px rgba(14, 74, 75, 0.16); display: flex; flex-direction: column; gap: 10px; margin-bottom: 52px">
+      <p style="margin: 0; font-size: 12px; font-weight: 700; color: #b04c16">سندي</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.55">حصة الجبر يوم الجمعة الساعة ٤ م. نراجع ٣ أسئلة سريعة قبلها؟</p>
+      <div style="display: flex; gap: 8px">
+        <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #0e4a4b; background: #0e4a4b; color: #fff; font-weight: 700">ابدأ</button>
+        <button type="button" style="min-height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid #d8ccb8; background: #fffdf8; color: #0e4a4b; font-weight: 700">لاحقًا</button>
+      </div>
+    </div>
+  </div>
+
+  <nav aria-label="تنقل مساحة الطالب" style="position: absolute; inset: auto 0 0 0; height: 72px; background: #ffffff; border-top: 1px solid #e3d9c8; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); text-align: center; font-size: 12px">
+    <a href="#" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; color: #0e4a4b; font-weight: 700; text-decoration: none">الرئيسية</a>
+    <a href="#" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; color: #4d473f; text-decoration: none">مجموعاتي</a>
+    <a href="#" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; color: #4d473f; text-decoration: none">الجدول</a>
+    <a href="#" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; color: #4d473f; text-decoration: none">اكتشف</a>
+    <a href="#" style="display: flex; flex-direction: column; justify-content: center; gap: 2px; color: #4d473f; text-decoration: none">المزيد</a>
+  </nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>
