@@ -23,6 +23,7 @@ import {
 import { teacherOverview } from '@/features/teacher/data';
 import { requireViewer } from '@/components/platform/access';
 import { readTeacherAccessStatus } from '@/features/teacher-access/data';
+import { pluralize } from '@/lib/plural';
 
 function groupName(group: unknown): string | null {
   const candidate = Array.isArray(group) ? group[0] : group;
@@ -142,7 +143,14 @@ export default async function TeacherDashboard({
         laterHeading: 'لاحقًا في جدولك',
         requestsHeading: 'طلبات تنتظر الرد',
         requestsWaiting: (count: number) =>
-          count === 1 ? 'طلب واحد ينتظر ردك' : `${count} طلبات تنتظر ردك`,
+          pluralize('ar', count, {
+            zero: 'لا توجد طلبات تنتظر ردك',
+            one: 'طلب واحد ينتظر ردك',
+            two: 'طلبان ينتظران ردك',
+            few: '{n} طلبات تنتظر ردك',
+            many: '{n} طلبًا ينتظر ردك',
+            other: '{n} طلب ينتظر ردك',
+          }),
         review: 'راجع الطلبات',
         viewAll: 'عرض الكل',
         noRequests: 'لا توجد طلبات تنتظر المراجعة.',

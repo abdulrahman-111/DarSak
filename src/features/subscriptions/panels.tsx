@@ -2,6 +2,7 @@
 
 import { canAssignPlan, type TeacherPlanStatus } from './domain';
 import { TEACHER_PLANS } from './plans';
+import { pluralize } from '@/lib/plural';
 
 const when = (value: string | null, locale: string) =>
   value
@@ -29,7 +30,7 @@ const limits = (plan: 'standard' | 'pro' | 'free', ar: boolean) => {
   if (plan === 'free') return ar ? 'لا توجد حصص مدفوعة مفعلة حالياً' : 'No paid quotas are active';
   const caps = TEACHER_PLANS[plan];
   return ar
-    ? `${caps.activeGroups} مجموعات · ${caps.storedFiles} ملف · ${bytes(caps.storageBytes, 'ar')} إجمالي · ${bytes(caps.maxFileBytes, 'ar')}/ملف`
+    ? `${pluralize('ar', caps.activeGroups, { one: 'مجموعة واحدة', two: 'مجموعتان', few: '{n} مجموعات', other: '{n} مجموعة' })} · ${pluralize('ar', caps.storedFiles, { one: 'ملف واحد', two: 'ملفان', few: '{n} ملفات', many: '{n} ملفًا', other: '{n} ملف' })} · ${bytes(caps.storageBytes, 'ar')} إجمالي · ${bytes(caps.maxFileBytes, 'ar')}/ملف`
     : `${caps.activeGroups} groups · ${caps.storedFiles} files · ${bytes(caps.storageBytes, 'en')} total · ${bytes(caps.maxFileBytes, 'en')}/file`;
 };
 
