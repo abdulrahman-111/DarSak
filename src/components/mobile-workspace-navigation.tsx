@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveUnreadCount } from '@/features/notifications/live-unread';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -57,7 +58,7 @@ export function MobileWorkspaceNavigation({
   locale,
   role,
   name,
-  unreadCount,
+  unreadCount: serverUnreadCount,
   items,
 }: {
   locale: string;
@@ -67,6 +68,7 @@ export function MobileWorkspaceNavigation({
   items: MobileWorkspaceLink[];
 }) {
   const pathname = usePathname() ?? '';
+  const unreadCount = useLiveUnreadCount(serverUnreadCount);
   const { primary, secondary, moreLabel } = useMemo(
     () => mobileWorkspaceNavigation(locale, role, items),
     [locale, role, items],

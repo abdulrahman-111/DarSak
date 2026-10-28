@@ -13,6 +13,7 @@ import { shouldShowDiscoveryNavigation } from '@/features/platform/discovery-acc
 import { platformNavigation } from './platform/shell';
 import { MobileWorkspaceNavigation } from './mobile-workspace-navigation';
 import { unreadNotificationCount } from '@/features/notifications/data';
+import { NotificationBell } from '@/features/notifications/notification-bell';
 import type { PlatformRole } from './platform/access';
 
 export function globalReportsHref(locale: string, activeRole: string | null) {
@@ -197,6 +198,15 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                   )}
                 </nav>
               </details>
+            )}
+            {activeRole && me?.profile?.id && (
+              <NotificationBell
+                userId={me.profile.id}
+                initialCount={unreadCount}
+                href={`/${locale}/notifications`}
+                label={locale === 'ar' ? 'الإشعارات' : 'Notifications'}
+                unreadLabel={locale === 'ar' ? 'غير مقروء' : 'unread'}
+              />
             )}
             {me ? (
               <form action={logoutAction} data-confirm-unsaved-navigation>

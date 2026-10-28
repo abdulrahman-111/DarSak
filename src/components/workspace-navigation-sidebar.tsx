@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveUnreadCount } from '@/features/notifications/live-unread';
 import { usePathname } from 'next/navigation';
 import {
   ArrowUpRight,
@@ -49,7 +50,7 @@ function navigationIcon(item: NavItem) {
 export function WorkspaceNavigationSidebar({
   locale,
   role,
-  unreadCount,
+  unreadCount: serverUnreadCount,
   items,
 }: {
   locale: string;
@@ -58,6 +59,7 @@ export function WorkspaceNavigationSidebar({
   items: NavItem[];
 }) {
   const pathname = usePathname() ?? '';
+  const unreadCount = useLiveUnreadCount(serverUnreadCount);
   const primary = items.filter(item => item.primary);
   const secondary = items.filter(item => !item.primary);
   const activeSecondary = secondary.some(item => isWorkspaceItemActive(pathname, item));
