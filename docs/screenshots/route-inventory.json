@@ -1,0 +1,1575 @@
+{
+  "schema_version": 1,
+  "capture_origin": "local builds with synthetic database; source_environment is revision provenance, never live-host evidence",
+  "revisions": {
+    "production": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "staging": "817d582 (tree matches f5e3de0)"
+  },
+  "viewports": {
+    "desktop": [
+      1440,
+      1000
+    ],
+    "mobile": [
+      390,
+      844
+    ]
+  },
+  "entries": [
+    {
+      "id": "public:/[...segments]",
+      "app": "public",
+      "route": "/{locale}/[...segments]",
+      "classification": "not_found",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/[...segments]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/account/application",
+      "app": "public",
+      "route": "/{locale}/account/application",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/account/application/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "draft/incomplete",
+        "pending",
+        "approved",
+        "changes requested/rejected"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/delete",
+      "app": "public",
+      "route": "/{locale}/account/delete",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/account/delete/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "confirmation and reauthentication form",
+        "teacher warning",
+        "pending deletion",
+        "service unavailable"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/goodbye",
+      "app": "public",
+      "route": "/{locale}/account/goodbye",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/account/goodbye/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/learning-profile",
+      "app": "public",
+      "route": "/{locale}/account/learning-profile",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/account/learning-profile/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account",
+      "app": "public",
+      "route": "/{locale}/account",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/account/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "student links",
+        "teacher links"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/profile",
+      "app": "public",
+      "route": "/{locale}/account/profile",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/account/profile/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/security",
+      "app": "public",
+      "route": "/{locale}/account/security",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/account/security/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/setup",
+      "app": "public",
+      "route": "/{locale}/account/setup",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/account/setup/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "student stage 1",
+        "student stage 2",
+        "student review",
+        "teacher stage 1",
+        "teacher stage 2",
+        "teacher stage 3",
+        "teacher stage 4",
+        "teacher review"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/account/teaching-access",
+      "app": "public",
+      "route": "/{locale}/account/teaching-access",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/account/teaching-access/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "current plan and usage",
+        "renewal request"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/check-email",
+      "app": "public",
+      "route": "/{locale}/check-email",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/check-email/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "registration confirmation",
+        "recovery confirmation"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/choose-role",
+      "app": "public",
+      "route": "/{locale}/choose-role",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/choose-role/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/classes/[id]",
+      "app": "public",
+      "route": "/{locale}/classes/[id]",
+      "classification": "redirect",
+      "target": "/groups/[id]",
+      "role": "guest",
+      "source": "src/app/[locale]/classes/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/dashboard",
+      "app": "public",
+      "route": "/{locale}/dashboard",
+      "classification": "redirect",
+      "target": "role home",
+      "role": "authenticated",
+      "source": "src/app/[locale]/dashboard/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/forgot-password",
+      "app": "public",
+      "route": "/{locale}/forgot-password",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/forgot-password/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/groups/[id]",
+      "app": "public",
+      "route": "/{locale}/groups/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/groups/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "guest sign-in request",
+        "student join request",
+        "pending request",
+        "full group waitlist",
+        "saved group",
+        "feedback section"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/help",
+      "app": "public",
+      "route": "/{locale}/help",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/help/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/login",
+      "app": "public",
+      "route": "/{locale}/login",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/login/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "password form",
+        "validation/error notice",
+        "Google sign-in entry (no provider success claim)"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/notifications",
+      "app": "public",
+      "route": "/{locale}/notifications",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/notifications/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "unread/read",
+        "mark read actions"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/",
+      "app": "public",
+      "route": "/{locale}",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "featured groups",
+        "group search/filter",
+        "FAQ expanded",
+        "mobile navigation open"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/pricing",
+      "app": "public",
+      "route": "/{locale}/pricing",
+      "classification": "redirect",
+      "target": "/",
+      "role": "guest",
+      "source": "src/app/[locale]/pricing/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/privacy",
+      "app": "public",
+      "route": "/{locale}/privacy",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/privacy/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/register",
+      "app": "public",
+      "route": "/{locale}/register",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/register/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "role chooser",
+        "?role=student form",
+        "?role=teacher form"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/reports",
+      "app": "public",
+      "route": "/{locale}/reports",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/reports/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "report form",
+        "report history",
+        "status filter"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/reset-password",
+      "app": "public",
+      "route": "/{locale}/reset-password",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/reset-password/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/bookings",
+      "app": "public",
+      "route": "/{locale}/student/bookings",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/bookings/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "requests",
+        "upcoming bookings",
+        "past bookings",
+        "cancel request"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/classes/[id]",
+      "app": "public",
+      "route": "/{locale}/student/classes/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/classes/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "?view=overview",
+        "?view=lessons",
+        "?view=lessons&lessons=past",
+        "?view=materials",
+        "?view=assignments",
+        "?view=teacher",
+        "?view=progress",
+        "assignment submission form",
+        "feedback form"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/classes",
+      "app": "public",
+      "route": "/{locale}/student/classes",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/classes/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "active classes",
+        "waitlist",
+        "cancelled/archived"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/lessons/[id]",
+      "app": "public",
+      "route": "/{locale}/student/lessons/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/lessons/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/materials",
+      "app": "public",
+      "route": "/{locale}/student/materials",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/materials/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "search/filter",
+        "resource links"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student",
+      "app": "public",
+      "route": "/{locale}/student",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/profile",
+      "app": "public",
+      "route": "/{locale}/student/profile",
+      "classification": "redirect",
+      "target": "/account/learning-profile",
+      "role": "student",
+      "source": "src/app/[locale]/student/profile/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/student/recommendations",
+      "app": "public",
+      "route": "/{locale}/student/recommendations",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/recommendations/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/student/saved",
+      "app": "public",
+      "route": "/{locale}/student/saved",
+      "classification": "rendered",
+      "target": null,
+      "role": "student",
+      "source": "src/app/[locale]/student/saved/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "saved cards",
+        "remove saved"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/access",
+      "app": "public",
+      "route": "/{locale}/teacher/access",
+      "classification": "redirect",
+      "target": "/account/teaching-access",
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/access/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/teacher/application",
+      "app": "public",
+      "route": "/{locale}/teacher/application",
+      "classification": "redirect",
+      "target": "/account/application",
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/application/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/teacher/bookings",
+      "app": "public",
+      "route": "/{locale}/teacher/bookings",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/bookings/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "availability slot form",
+        "requests",
+        "booking actions"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/catalogue",
+      "app": "public",
+      "route": "/{locale}/teacher/catalogue",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/catalogue/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "subject/category additions"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/feedback",
+      "app": "public",
+      "route": "/{locale}/teacher/feedback",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/feedback/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "feedback visibility controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups/[id]/assignments/[assignmentId]",
+      "app": "public",
+      "route": "/{locale}/teacher/groups/[id]/assignments/[assignmentId]",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/[id]/assignments/[assignmentId]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "submissions",
+        "grading form"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups/[id]/assignments",
+      "app": "public",
+      "route": "/{locale}/teacher/groups/[id]/assignments",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/[id]/assignments/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "create form",
+        "?edit=[assignmentId] edit form",
+        "assignment list"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups/[id]/edit",
+      "app": "public",
+      "route": "/{locale}/teacher/groups/[id]/edit",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/[id]/edit/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "published limited edit",
+        "draft details edit"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups/[id]",
+      "app": "public",
+      "route": "/{locale}/teacher/groups/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "schedule",
+        "new lesson form",
+        "generate lessons form",
+        "lessons",
+        "student roster",
+        "announcement editor",
+        "management/archive controls"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups/[id]/setup",
+      "app": "public",
+      "route": "/{locale}/teacher/groups/[id]/setup",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/[id]/setup/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "?step=details",
+        "?step=schedule",
+        "?step=review",
+        "copy schedule selector"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups/new",
+      "app": "public",
+      "route": "/{locale}/teacher/groups/new",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/new/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "group details form"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/groups",
+      "app": "public",
+      "route": "/{locale}/teacher/groups",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/groups/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/lessons/[id]",
+      "app": "public",
+      "route": "/{locale}/teacher/lessons/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/lessons/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "edit lesson",
+        "copy lesson",
+        "add resource",
+        "attendance editor"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/lessons",
+      "app": "public",
+      "route": "/{locale}/teacher/lessons",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/lessons/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "add lesson",
+        "filters",
+        "calendar/list views",
+        "bulk controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher",
+      "app": "public",
+      "route": "/{locale}/teacher",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "approved dashboard",
+        "unapproved onboarding dashboard"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/profile",
+      "app": "public",
+      "route": "/{locale}/teacher/profile",
+      "classification": "redirect",
+      "target": "/account/profile",
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/profile/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "public:/teacher/requests",
+      "app": "public",
+      "route": "/{locale}/teacher/requests",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/requests/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "pending requests",
+        "waiting list",
+        "accept/reject controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teacher/students",
+      "app": "public",
+      "route": "/{locale}/teacher/students",
+      "classification": "rendered",
+      "target": null,
+      "role": "teacher",
+      "source": "src/app/[locale]/teacher/students/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teachers/[id]",
+      "app": "public",
+      "route": "/{locale}/teachers/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/teachers/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "profile",
+        "groups",
+        "booking request form"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/teachers",
+      "app": "public",
+      "route": "/{locale}/teachers",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/teachers/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "search and subject filters",
+        "results",
+        "empty search"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/terms",
+      "app": "public",
+      "route": "/{locale}/terms",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "src/app/[locale]/terms/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "public:/timetable",
+      "app": "public",
+      "route": "/{locale}/timetable",
+      "classification": "rendered",
+      "target": null,
+      "role": "authenticated",
+      "source": "src/app/[locale]/timetable/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "week selector",
+        "week populated",
+        "lesson details"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/access",
+      "app": "admin",
+      "route": "/{locale}/admin/access",
+      "classification": "redirect",
+      "target": "/admin/teachers?status=all",
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/access/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "admin:/admin/education",
+      "app": "admin",
+      "route": "/{locale}/admin/education",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/education/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "catalogue forms"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/email",
+      "app": "admin",
+      "route": "/{locale}/admin/email",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/email/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "queue summary",
+        "retry controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/feedback",
+      "app": "admin",
+      "route": "/{locale}/admin/feedback",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/feedback/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "moderation controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/groups",
+      "app": "admin",
+      "route": "/{locale}/admin/groups",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/groups/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "group moderation controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/health",
+      "app": "admin",
+      "route": "/{locale}/admin/health",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/health/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "operational status panels"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin",
+      "app": "admin",
+      "route": "/{locale}/admin",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "default populated page"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/reports",
+      "app": "admin",
+      "route": "/{locale}/admin/reports",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/reports/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "status filters",
+        "resolution controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/settings",
+      "app": "admin",
+      "route": "/{locale}/admin/settings",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/settings/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "add setting form",
+        "edit settings"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/teachers/[id]",
+      "app": "admin",
+      "route": "/{locale}/admin/teachers/[id]",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/teachers/[id]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "application profile",
+        "review decision form",
+        "access controls",
+        "review history"
+      ],
+      "fixture_placeholders": [
+        "[id]=valid fixture appropriate to role",
+        "[assignmentId]=fixture assignment"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/teachers",
+      "app": "admin",
+      "route": "/{locale}/admin/teachers",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/teachers/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "status filter",
+        "search"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/admin/users",
+      "app": "admin",
+      "route": "/{locale}/admin/users",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/admin/users/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "search filters",
+        "user status controls"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/login",
+      "app": "admin",
+      "route": "/{locale}/login",
+      "classification": "rendered",
+      "target": null,
+      "role": "guest",
+      "source": "apps/admin/src/app/[locale]/login/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "password form",
+        "validation/error notice",
+        "Google sign-in entry (no provider success claim)"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/notifications",
+      "app": "admin",
+      "route": "/{locale}/notifications",
+      "classification": "rendered",
+      "target": null,
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/notifications/page.tsx",
+      "source_environment": "production",
+      "critical_states": [
+        "unread/read",
+        "mark read actions"
+      ],
+      "fixture_placeholders": [],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "admin:/",
+      "app": "admin",
+      "route": "/{locale}",
+      "classification": "redirect",
+      "target": "/admin",
+      "role": "admin",
+      "source": "apps/admin/src/app/[locale]/page.tsx",
+      "source_environment": "production",
+      "critical_states": [],
+      "fixture_placeholders": [],
+      "capture_matrix": []
+    },
+    {
+      "id": "api:api/account-deletions/cron",
+      "route": "/api/account-deletions/cron",
+      "classification": "nonvisual_api",
+      "source": "src/app/api/account-deletions/cron/route.ts",
+      "source_environment": "production",
+      "critical_states": []
+    },
+    {
+      "id": "api:api/auth/callback",
+      "route": "/api/auth/callback",
+      "classification": "nonvisual_api",
+      "source": "src/app/api/auth/callback/route.ts",
+      "source_environment": "production",
+      "critical_states": []
+    },
+    {
+      "id": "api:api/calendar",
+      "route": "/api/calendar",
+      "classification": "nonvisual_api",
+      "source": "src/app/api/calendar/route.ts",
+      "source_environment": "production",
+      "critical_states": []
+    },
+    {
+      "id": "api:api/email/cron",
+      "route": "/api/email/cron",
+      "classification": "nonvisual_api",
+      "source": "src/app/api/email/cron/route.ts",
+      "source_environment": "production",
+      "critical_states": []
+    },
+    {
+      "id": "staging:/account/integrations",
+      "app": "public",
+      "route": "/{locale}/account/integrations",
+      "classification": "rendered",
+      "role": "teacher",
+      "source": "src/app/[locale]/account/integrations/page.tsx",
+      "source_environment": "staging",
+      "critical_states": [
+        "pilot disabled",
+        "pilot enabled Google disconnected",
+        "OAuth not configured warning",
+        "connected status only with genuine synthetic/provider setup"
+      ],
+      "capture_matrix": [
+        "en-desktop",
+        "en-mobile",
+        "ar-desktop",
+        "ar-mobile"
+      ]
+    },
+    {
+      "id": "staging:sandak",
+      "classification": "feature_state",
+      "role": "authenticated",
+      "source_environment": "staging",
+      "route": "/{locale}/student or /teacher",
+      "critical_states": [
+        "launcher",
+        "help drawer open",
+        "guided help",
+        "chat panel empty",
+        "provider unavailable/quota status",
+        "teacher group draft assistant"
+      ],
+      "note": "Never fabricate successful provider response; feature flags/config may hide launcher."
+    },
+    {
+      "id": "staging:meet",
+      "classification": "feature_state",
+      "role": "teacher/student",
+      "source_environment": "staging",
+      "route": "/{locale}/teacher/lessons/[id] and /student/lessons/[id]",
+      "critical_states": [
+        "manual HTTPS meeting link form",
+        "meeting link display",
+        "automatic meeting configuration/status"
+      ],
+      "note": "No real Google connection or successful Meet creation claimed without provider evidence."
+    }
+  ]
+}

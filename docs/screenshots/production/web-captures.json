@@ -1,0 +1,4502 @@
+[
+  {
+    "path": "docs/screenshots/production/public/choose-role-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/en/login",
+    "expectedHeading": "Continue your week.",
+    "consoleErrors": [],
+    "error": "No verified Google identity was available; route correctly redirects to login."
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/en/login",
+    "expectedHeading": "Continue your week.",
+    "consoleErrors": [],
+    "error": "No verified Google identity was available; route correctly redirects to login."
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/ar/login",
+    "expectedHeading": "تابع أسبوعك.",
+    "consoleErrors": [],
+    "error": "No verified Google identity was available; route correctly redirects to login."
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/ar/login",
+    "expectedHeading": "تابع أسبوعك.",
+    "consoleErrors": [],
+    "error": "No verified Google identity was available; route correctly redirects to login."
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/en/forgot-password",
+    "expectedHeading": "Reset your password.",
+    "consoleErrors": [],
+    "error": "No verified recovery context was available; local auth redirected to forgot-password."
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/en/forgot-password",
+    "expectedHeading": "Reset your password.",
+    "consoleErrors": [],
+    "error": "No verified recovery context was available; local auth redirected to forgot-password."
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/ar/forgot-password",
+    "expectedHeading": "أعد تعيين كلمة المرور.",
+    "consoleErrors": [],
+    "error": "No verified recovery context was available; local auth redirected to forgot-password."
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T06:49:41.251Z",
+    "actualEnvironment": "local",
+    "status": "blocked",
+    "finalURL": "/ar/forgot-password",
+    "expectedHeading": "أعد تعيين كلمة المرور.",
+    "consoleErrors": [],
+    "error": "No verified recovery context was available; local auth redirected to forgot-password."
+  },
+  {
+    "path": "docs/screenshots/production/public/check-email-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/check-email",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/check-email",
+    "expectedHeading": "Check your email.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/check-email-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/check-email",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/check-email",
+    "expectedHeading": "Check your email.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/check-email-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/check-email",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/check-email",
+    "expectedHeading": "تحقق من بريدك الإلكتروني.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/check-email-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/check-email",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/check-email",
+    "expectedHeading": "تحقق من بريدك الإلكتروني.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/forgot-password-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/forgot-password",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/forgot-password",
+    "expectedHeading": "Reset your password.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/forgot-password-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/forgot-password",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/forgot-password",
+    "expectedHeading": "Reset your password.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/forgot-password-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/forgot-password",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/forgot-password",
+    "expectedHeading": "أعد تعيين كلمة المرور.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/forgot-password-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/forgot-password",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/forgot-password",
+    "expectedHeading": "أعد تعيين كلمة المرور.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/groups-published-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/groups/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/groups-published-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/groups/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/groups-published-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/groups/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/groups-published-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/groups/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/help-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/help",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/help",
+    "expectedHeading": "How can we help?",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/help-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/help",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/help",
+    "expectedHeading": "How can we help?",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/help-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/help",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/help",
+    "expectedHeading": "كيف نساعدك؟",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/help-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/help",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/help",
+    "expectedHeading": "كيف نساعدك؟",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/login-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/login",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/login",
+    "expectedHeading": "Continue your week.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/login-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/login",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/login",
+    "expectedHeading": "Continue your week.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/login-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/login",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/login",
+    "expectedHeading": "تابع أسبوعك.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/login-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/login",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/login",
+    "expectedHeading": "تابع أسبوعك.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/home-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en",
+    "expectedHeading": "Find a teacher who fits your learning goals.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/home-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en",
+    "expectedHeading": "Find a teacher who fits your learning goals.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/home-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar",
+    "expectedHeading": "اختر معلمًا يناسب أهدافك في التعلّم.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/home-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar",
+    "expectedHeading": "اختر معلمًا يناسب أهدافك في التعلّم.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/privacy-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/privacy",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/privacy",
+    "expectedHeading": "Privacy on DarSak",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/privacy-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/privacy",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/privacy",
+    "expectedHeading": "Privacy on DarSak",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/privacy-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/privacy",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/privacy",
+    "expectedHeading": "الخصوصية على دارسَك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/privacy-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/privacy",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/privacy",
+    "expectedHeading": "الخصوصية على دارسَك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/register-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/register",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/register",
+    "expectedHeading": "Join DarSak",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/register-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/register",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/register",
+    "expectedHeading": "Join DarSak",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/register-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/register",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/register",
+    "expectedHeading": "انضم إلى درسك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/register-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/register",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/register",
+    "expectedHeading": "انضم إلى درسك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teacher-public-profile-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "expectedHeading": "Amina Nour | أمينة نور",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teacher-public-profile-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "expectedHeading": "Amina Nour | أمينة نور",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teacher-public-profile-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "expectedHeading": "Amina Nour | أمينة نور",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teacher-public-profile-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "expectedHeading": "Amina Nour | أمينة نور",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teachers-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teachers",
+    "expectedHeading": "Find a group that fits your week.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teachers-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teachers",
+    "expectedHeading": "Find a group that fits your week.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teachers-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teachers",
+    "expectedHeading": "ابحث عن مجموعة تناسب أسبوعك.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/teachers-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/teachers",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teachers",
+    "expectedHeading": "ابحث عن مجموعة تناسب أسبوعك.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/terms-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/terms",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/terms",
+    "expectedHeading": "Using DarSak",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/terms-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/terms",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/terms",
+    "expectedHeading": "Using DarSak",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/terms-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/terms",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/terms",
+    "expectedHeading": "استخدام دارسَك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/terms-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/terms",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:06:03.868Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/terms",
+    "expectedHeading": "استخدام دارسَك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-recovery-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "verified-recovery",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:12:09.042Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/reset-password",
+    "expectedHeading": "Choose a new password",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-recovery-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "verified-recovery",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:12:09.042Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/reset-password",
+    "expectedHeading": "Choose a new password",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-recovery-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "verified-recovery",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:12:09.042Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/reset-password",
+    "expectedHeading": "اختر كلمة مرور جديدة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/reset-password-recovery-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/reset-password",
+    "feature": "verified-recovery",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:12:09.042Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/reset-password",
+    "expectedHeading": "اختر كلمة مرور جديدة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-application-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/application",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/application",
+    "expectedHeading": "Application",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-application-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/application",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/application",
+    "expectedHeading": "Application",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-application-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/application",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/application",
+    "expectedHeading": "طلب الاعتماد",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-application-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/application",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/application",
+    "expectedHeading": "طلب الاعتماد",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-delete-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/delete",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/delete",
+    "expectedHeading": "Permanently delete your account",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-delete-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/delete",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/delete",
+    "expectedHeading": "Permanently delete your account",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-delete-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/delete",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/delete",
+    "expectedHeading": "حذف حسابك نهائيًا",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-delete-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/delete",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/delete",
+    "expectedHeading": "حذف حسابك نهائيًا",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-goodbye-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/goodbye",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/goodbye",
+    "expectedHeading": "Your account has been deleted",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-goodbye-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/goodbye",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/goodbye",
+    "expectedHeading": "Your account has been deleted",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-goodbye-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/goodbye",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/goodbye",
+    "expectedHeading": "تم حذف حسابك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-goodbye-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/goodbye",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/goodbye",
+    "expectedHeading": "تم حذف حسابك",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-learning-profile-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/learning-profile",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/learning-profile",
+    "expectedHeading": "Complete your learning profile",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-learning-profile-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/learning-profile",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/learning-profile",
+    "expectedHeading": "Complete your learning profile",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-learning-profile-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/learning-profile",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/learning-profile",
+    "expectedHeading": "أكمل ملف التعلم",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-learning-profile-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/learning-profile",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/learning-profile",
+    "expectedHeading": "أكمل ملف التعلم",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account",
+    "expectedHeading": "Account settings",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account",
+    "expectedHeading": "Account settings",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account",
+    "expectedHeading": "إعدادات الحساب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account",
+    "expectedHeading": "إعدادات الحساب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-profile-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/profile",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/profile",
+    "expectedHeading": "Profile",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-profile-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/profile",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/profile",
+    "expectedHeading": "Profile",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-profile-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/profile",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/profile",
+    "expectedHeading": "الملف الشخصي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-profile-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/profile",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/profile",
+    "expectedHeading": "الملف الشخصي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-security-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/security",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/security",
+    "expectedHeading": "Security",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-security-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/security",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/security",
+    "expectedHeading": "Security",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-security-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/security",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/security",
+    "expectedHeading": "الأمان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-security-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/security",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/security",
+    "expectedHeading": "الأمان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/setup",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/setup",
+    "expectedHeading": "Set up your account",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/setup",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/setup",
+    "expectedHeading": "Set up your account",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/setup",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/setup",
+    "expectedHeading": "إعداد الحساب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/account/setup",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/setup",
+    "expectedHeading": "إعداد الحساب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-teaching-access-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/teaching-access",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/teaching-access",
+    "expectedHeading": "Teaching plan and usage",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-teaching-access-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/teaching-access",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/teaching-access",
+    "expectedHeading": "Teaching plan and usage",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-teaching-access-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/teaching-access",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/teaching-access",
+    "expectedHeading": "الخطة والاستخدام",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-teaching-access-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/teaching-access",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/teaching-access",
+    "expectedHeading": "الخطة والاستخدام",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/notifications-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/notifications",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/notifications",
+    "expectedHeading": "Notifications",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/notifications-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/notifications",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/notifications",
+    "expectedHeading": "Notifications",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/notifications-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/notifications",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/notifications",
+    "expectedHeading": "الإشعارات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/notifications-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/notifications",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/notifications",
+    "expectedHeading": "الإشعارات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/reports-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/reports",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/reports",
+    "expectedHeading": "Report a problem",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/reports-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/reports",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/reports",
+    "expectedHeading": "Report a problem",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/reports-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/reports",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/reports",
+    "expectedHeading": "الإبلاغ عن مشكلة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/reports-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/reports",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/reports",
+    "expectedHeading": "الإبلاغ عن مشكلة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-bookings-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/bookings",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/bookings",
+    "expectedHeading": "Bookings",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-bookings-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/bookings",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/bookings",
+    "expectedHeading": "Bookings",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-bookings-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/bookings",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/bookings",
+    "expectedHeading": "الحجوزات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-bookings-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/bookings",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/bookings",
+    "expectedHeading": "الحجوزات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-de100000-0000-4000-8000-000000000001-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-de100000-0000-4000-8000-000000000001-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-de100000-0000-4000-8000-000000000001-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-de100000-0000-4000-8000-000000000001-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes",
+    "expectedHeading": "My classes",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes",
+    "expectedHeading": "My classes",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes",
+    "expectedHeading": "مجموعاتي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-classes-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes",
+    "expectedHeading": "مجموعاتي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-lessons-de200000-0000-4000-8000-000000000001-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/lessons/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-lessons-de200000-0000-4000-8000-000000000001-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/lessons/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-lessons-de200000-0000-4000-8000-000000000001-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/lessons/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-lessons-de200000-0000-4000-8000-000000000001-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/lessons/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-materials-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/materials",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/materials",
+    "expectedHeading": "Learning resources",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-materials-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/materials",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/materials",
+    "expectedHeading": "Learning resources",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-materials-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/materials",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/materials",
+    "expectedHeading": "الموارد التعليمية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-materials-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/materials",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/materials",
+    "expectedHeading": "الموارد التعليمية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student",
+    "expectedHeading": "Welcome back, Youssef",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student",
+    "expectedHeading": "Welcome back, Youssef",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student",
+    "expectedHeading": "أهلاً, Youssef",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student",
+    "expectedHeading": "أهلاً, Youssef",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-recommendations-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/recommendations",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/recommendations",
+    "expectedHeading": "Suggested learning groups",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-recommendations-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/recommendations",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/recommendations",
+    "expectedHeading": "Suggested learning groups",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-recommendations-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/recommendations",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:08:40.637Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/recommendations",
+    "expectedHeading": "اقتراحات لمجموعات تعليمية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-recommendations-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/recommendations",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/recommendations",
+    "expectedHeading": "اقتراحات لمجموعات تعليمية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-saved-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/saved",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/saved",
+    "expectedHeading": "Saved groups",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-saved-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/saved",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/saved",
+    "expectedHeading": "Saved groups",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-saved-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/saved",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/saved",
+    "expectedHeading": "المجموعات المحفوظة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-saved-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/saved",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/saved",
+    "expectedHeading": "المجموعات المحفوظة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-bookings-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/bookings",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/bookings",
+    "expectedHeading": "Bookings",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-bookings-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/bookings",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/bookings",
+    "expectedHeading": "Bookings",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-bookings-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/bookings",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/bookings",
+    "expectedHeading": "الحجوزات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-bookings-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/bookings",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/bookings",
+    "expectedHeading": "الحجوزات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-catalogue-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/catalogue",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/catalogue",
+    "expectedHeading": "Subjects & categories",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-catalogue-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/catalogue",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/catalogue",
+    "expectedHeading": "Subjects & categories",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-catalogue-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/catalogue",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/catalogue",
+    "expectedHeading": "المواد والفئات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-catalogue-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/catalogue",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/catalogue",
+    "expectedHeading": "المواد والفئات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-feedback-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/feedback",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/feedback",
+    "expectedHeading": "Student feedback",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-feedback-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/feedback",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/feedback",
+    "expectedHeading": "Student feedback",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-feedback-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/feedback",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/feedback",
+    "expectedHeading": "آراء الطلاب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-feedback-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/feedback",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/feedback",
+    "expectedHeading": "آراء الطلاب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-de300000-0000-4000-8000-000000000001-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments/[assignmentId]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001/assignments/de300000-0000-4000-8000-000000000001",
+    "expectedHeading": "Build your equation toolkit",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-de300000-0000-4000-8000-000000000001-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments/[assignmentId]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001/assignments/de300000-0000-4000-8000-000000000001",
+    "expectedHeading": "Build your equation toolkit",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-de300000-0000-4000-8000-000000000001-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments/[assignmentId]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001/assignments/de300000-0000-4000-8000-000000000001",
+    "expectedHeading": "Build your equation toolkit",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-de300000-0000-4000-8000-000000000001-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments/[assignmentId]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001/assignments/de300000-0000-4000-8000-000000000001",
+    "expectedHeading": "Build your equation toolkit",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001/assignments",
+    "expectedHeading": "Assignments",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001/assignments",
+    "expectedHeading": "Assignments",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001/assignments",
+    "expectedHeading": "الواجبات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-assignments-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/assignments",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001/assignments",
+    "expectedHeading": "الواجبات",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-edit-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/edit",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/edit",
+    "expectedHeading": "404",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-edit-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/edit",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/edit",
+    "expectedHeading": "404",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-edit-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/edit",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/edit",
+    "expectedHeading": "404",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-edit-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/edit",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/edit",
+    "expectedHeading": "404",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000001-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-setup-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/setup",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-setup-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/setup",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-setup-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/setup",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-de100000-0000-4000-8000-000000000002-setup-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/setup",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-new-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/new",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/new",
+    "expectedHeading": "Create a group",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-new-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/new",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/new",
+    "expectedHeading": "Create a group",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-new-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/new",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/new",
+    "expectedHeading": "إنشاء مجموعة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-new-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/new",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/new",
+    "expectedHeading": "إنشاء مجموعة",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups",
+    "expectedHeading": "My groups",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups",
+    "expectedHeading": "My groups",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups",
+    "expectedHeading": "مجموعاتي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-groups-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups",
+    "expectedHeading": "مجموعاتي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-de200000-0000-4000-8000-000000000001-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-de200000-0000-4000-8000-000000000001-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons/[id]",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-de200000-0000-4000-8000-000000000001-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-de200000-0000-4000-8000-000000000001-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons/[id]",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/lessons/de200000-0000-4000-8000-000000000001",
+    "expectedHeading": "Solving Linear Equations | حل المعادلات الخطية",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/lessons",
+    "expectedHeading": "Lessons",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/lessons",
+    "expectedHeading": "Lessons",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/lessons",
+    "expectedHeading": "الحصص",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-lessons-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/lessons",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/lessons",
+    "expectedHeading": "الحصص",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher",
+    "expectedHeading": "Welcome, Amina",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher",
+    "expectedHeading": "Welcome, Amina",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher",
+    "expectedHeading": "مرحباً, Amina",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher",
+    "expectedHeading": "مرحباً, Amina",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-requests-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/requests",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/requests",
+    "expectedHeading": "Enrollment requests",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-requests-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/requests",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/requests",
+    "expectedHeading": "Enrollment requests",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-requests-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/requests",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/requests",
+    "expectedHeading": "طلبات الانضمام",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-requests-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/requests",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/requests",
+    "expectedHeading": "طلبات الانضمام",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-students-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/students",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/students",
+    "expectedHeading": "My students",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-students-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/students",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/students",
+    "expectedHeading": "My students",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-students-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/students",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/students",
+    "expectedHeading": "طلابي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-students-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/students",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/students",
+    "expectedHeading": "طلابي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/timetable-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/timetable",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/timetable",
+    "expectedHeading": "My timetable",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/timetable-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/timetable",
+    "feature": "default",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/timetable",
+    "expectedHeading": "My timetable",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/timetable-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/timetable",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/timetable",
+    "expectedHeading": "جدولي الدراسي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/timetable-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/timetable",
+    "feature": "default",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/timetable",
+    "expectedHeading": "جدولي الدراسي",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-lessons-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-lessons",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=lessons",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-lessons-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-lessons",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=lessons",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-lessons-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-lessons",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=lessons",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-lessons-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-lessons",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=lessons",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-materials-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-materials",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-materials-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-materials",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-materials-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-materials",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-materials-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-materials",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-assignments-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-assignments",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=assignments",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-assignments-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-assignments",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=assignments",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-assignments-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-assignments",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=assignments",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-assignments-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-assignments",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=assignments",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-teacher-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-teacher",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=teacher",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-teacher-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-teacher",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=teacher",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-teacher-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-teacher",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=teacher",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-teacher-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-teacher",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=teacher",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-progress-en-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-progress",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=progress",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-progress-en-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-progress",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=progress",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-progress-ar-desktop.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-progress",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=progress",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/student/student-class-progress-ar-mobile.webp",
+    "role": "student",
+    "logicalRoute": "public:/student/classes/[id]",
+    "feature": "class-view-progress",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=progress",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-schedule-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-schedule",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=schedule",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-schedule-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-schedule",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=schedule",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-schedule-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-schedule",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=schedule",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-schedule-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-schedule",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=schedule",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-review-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-review",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=review",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-review-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-review",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=review",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-review-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-review",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=review",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-setup-review-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]/setup",
+    "feature": "setup-step-review",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000002/setup?step=review",
+    "expectedHeading": "Exam Prep Workshop | ورشة التحضير للامتحان",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-teacher-onboarding-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/setup",
+    "feature": "wizard-teacher-stage-1",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/setup",
+    "expectedHeading": "Set up your account",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-teacher-onboarding-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/setup",
+    "feature": "wizard-teacher-stage-1",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/account/setup",
+    "expectedHeading": "Set up your account",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-teacher-onboarding-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/setup",
+    "feature": "wizard-teacher-stage-1",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/setup",
+    "expectedHeading": "إعداد الحساب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/account/account-setup-teacher-onboarding-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/account/setup",
+    "feature": "wizard-teacher-stage-1",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/account/setup",
+    "expectedHeading": "إعداد الحساب",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-generation-preview-with-exclusion-en-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "generation-preview-excluded-day",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:22:26.241Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-synthetic-google-en-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "synthetic-google-identity",
+    "provenance": "Local synthetic Google identity fixture; live Google OAuth not tested.",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:28:45.806Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/choose-role",
+    "expectedHeading": "Choose how you will use DarSak.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-synthetic-google-en-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "synthetic-google-identity",
+    "provenance": "Local synthetic Google identity fixture; live Google OAuth not tested.",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:28:45.806Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/choose-role",
+    "expectedHeading": "Choose how you will use DarSak.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-synthetic-google-ar-desktop.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "synthetic-google-identity",
+    "provenance": "Local synthetic Google identity fixture; live Google OAuth not tested.",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:28:45.806Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/choose-role",
+    "expectedHeading": "اختر طريقة استخدامك لدرسك.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/public/choose-role-synthetic-google-ar-mobile.webp",
+    "role": "guest",
+    "logicalRoute": "public:/choose-role",
+    "feature": "synthetic-google-identity",
+    "provenance": "Local synthetic Google identity fixture; live Google OAuth not tested.",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:28:45.806Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/choose-role",
+    "expectedHeading": "اختر طريقة استخدامك لدرسك.",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-generation-preview-with-exclusion-ar-desktop.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "generation-preview-excluded-day",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:29:20.427Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-generation-preview-with-exclusion-en-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "generation-preview-excluded-day",
+    "provenance": "390 px responsive viewport; Chromium mobile-device emulation disabled so keyboard-committed date input events reach the page.",
+    "locale": "en",
+    "viewport": "mobile",
+    "mobileEmulation": false,
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:34:31.897Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/en/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  },
+  {
+    "path": "docs/screenshots/production/teacher/teacher-group-generation-preview-with-exclusion-ar-mobile.webp",
+    "role": "teacher",
+    "logicalRoute": "public:/teacher/groups/[id]",
+    "feature": "generation-preview-excluded-day",
+    "provenance": "Arabic interface at 390 px responsive width; browser-native date control uses en-US locale because Arabic locale did not commit its date event to React.",
+    "locale": "ar",
+    "viewport": "mobile",
+    "mobileEmulation": false,
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "capturedAt": "2026-10-28T07:35:38.146Z",
+    "actualEnvironment": "local",
+    "status": "captured",
+    "finalURL": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "expectedHeading": "Algebra Foundations | أساسيات الجبر",
+    "consoleErrors": []
+  }
+]

@@ -1,0 +1,770 @@
+[
+  {
+    "path": "docs/screenshots/campaign/teacher-public-profile-en-desktop.png",
+    "slug": "teacher-public-profile",
+    "title": "Public teacher profile",
+    "role": "guest",
+    "logicalRoute": "/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:22:50.247Z",
+    "status": "captured",
+    "finalPath": "/en/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "heading": "Amina Nour | أمينة نور",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-public-profile-en-mobile.png",
+    "slug": "teacher-public-profile",
+    "title": "Public teacher profile",
+    "role": "guest",
+    "logicalRoute": "/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:22:53.259Z",
+    "status": "captured",
+    "finalPath": "/en/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "heading": "Amina Nour | أمينة نور",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-public-profile-ar-desktop.png",
+    "slug": "teacher-public-profile",
+    "title": "Public teacher profile",
+    "role": "guest",
+    "logicalRoute": "/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:22:56.239Z",
+    "status": "captured",
+    "finalPath": "/ar/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "heading": "Amina Nour | أمينة نور",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-public-profile-ar-mobile.png",
+    "slug": "teacher-public-profile",
+    "title": "Public teacher profile",
+    "role": "guest",
+    "logicalRoute": "/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:00.055Z",
+    "status": "captured",
+    "finalPath": "/ar/teachers/97ca2a79-b895-4e64-86a3-2f2af8845302",
+    "heading": "Amina Nour | أمينة نور",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/published-group-detail-en-desktop.png",
+    "slug": "published-group-detail",
+    "title": "Published learning group detail and enrollment",
+    "role": "guest",
+    "logicalRoute": "/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:03.371Z",
+    "status": "captured",
+    "finalPath": "/en/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/published-group-detail-en-mobile.png",
+    "slug": "published-group-detail",
+    "title": "Published learning group detail and enrollment",
+    "role": "guest",
+    "logicalRoute": "/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:08.052Z",
+    "status": "captured",
+    "finalPath": "/en/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/published-group-detail-ar-desktop.png",
+    "slug": "published-group-detail",
+    "title": "Published learning group detail and enrollment",
+    "role": "guest",
+    "logicalRoute": "/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:11.257Z",
+    "status": "captured",
+    "finalPath": "/ar/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/published-group-detail-ar-mobile.png",
+    "slug": "published-group-detail",
+    "title": "Published learning group detail and enrollment",
+    "role": "guest",
+    "logicalRoute": "/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:15.220Z",
+    "status": "captured",
+    "finalPath": "/ar/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-dashboard-en-desktop.png",
+    "slug": "student-dashboard",
+    "title": "Student learning dashboard",
+    "role": "student",
+    "logicalRoute": "/student",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:17.619Z",
+    "status": "captured",
+    "finalPath": "/en/student",
+    "heading": "Welcome back, Youssef",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-dashboard-en-mobile.png",
+    "slug": "student-dashboard",
+    "title": "Student learning dashboard",
+    "role": "student",
+    "logicalRoute": "/student",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:21.622Z",
+    "status": "captured",
+    "finalPath": "/en/student",
+    "heading": "Welcome back, Youssef",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-dashboard-ar-desktop.png",
+    "slug": "student-dashboard",
+    "title": "Student learning dashboard",
+    "role": "student",
+    "logicalRoute": "/student",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:25.339Z",
+    "status": "captured",
+    "finalPath": "/ar/student",
+    "heading": "أهلاً, Youssef",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-dashboard-ar-mobile.png",
+    "slug": "student-dashboard",
+    "title": "Student learning dashboard",
+    "role": "student",
+    "logicalRoute": "/student",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:29.591Z",
+    "status": "captured",
+    "finalPath": "/ar/student",
+    "heading": "أهلاً, Youssef",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-timetable-en-desktop.png",
+    "slug": "student-timetable",
+    "title": "Student timetable",
+    "role": "student",
+    "logicalRoute": "/timetable",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:33.539Z",
+    "status": "captured",
+    "finalPath": "/en/timetable",
+    "heading": "My timetable",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-timetable-en-mobile.png",
+    "slug": "student-timetable",
+    "title": "Student timetable",
+    "role": "student",
+    "logicalRoute": "/timetable",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:37.644Z",
+    "status": "captured",
+    "finalPath": "/en/timetable",
+    "heading": "My timetable",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-timetable-ar-desktop.png",
+    "slug": "student-timetable",
+    "title": "Student timetable",
+    "role": "student",
+    "logicalRoute": "/timetable",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:41.016Z",
+    "status": "captured",
+    "finalPath": "/ar/timetable",
+    "heading": "جدولي الدراسي",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-timetable-ar-mobile.png",
+    "slug": "student-timetable",
+    "title": "Student timetable",
+    "role": "student",
+    "logicalRoute": "/timetable",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:23:45.461Z",
+    "status": "captured",
+    "finalPath": "/ar/timetable",
+    "heading": "جدولي الدراسي",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-dashboard-ar-desktop.png",
+    "slug": "teacher-dashboard",
+    "title": "Teacher dashboard",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:24:11.281Z",
+    "status": "captured",
+    "finalPath": "/ar/teacher",
+    "heading": "مرحباً, Amina",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-dashboard-ar-mobile.png",
+    "slug": "teacher-dashboard",
+    "title": "Teacher dashboard",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:24:14.868Z",
+    "status": "captured",
+    "finalPath": "/ar/teacher",
+    "heading": "مرحباً, Amina",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-group-management-en-desktop.png",
+    "slug": "teacher-group-management",
+    "title": "Teacher group management and schedule",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:24:17.730Z",
+    "status": "captured",
+    "finalPath": "/en/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-group-management-en-mobile.png",
+    "slug": "teacher-group-management",
+    "title": "Teacher group management and schedule",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:24:21.746Z",
+    "status": "captured",
+    "finalPath": "/en/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-group-management-ar-desktop.png",
+    "slug": "teacher-group-management",
+    "title": "Teacher group management and schedule",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:24:25.632Z",
+    "status": "captured",
+    "finalPath": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-group-management-ar-mobile.png",
+    "slug": "teacher-group-management",
+    "title": "Teacher group management and schedule",
+    "role": "teacher",
+    "logicalRoute": "/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:24:29.727Z",
+    "status": "captured",
+    "finalPath": "/ar/teacher/groups/de100000-0000-4000-8000-000000000001",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/home-hero-en-desktop.png",
+    "slug": "home-hero",
+    "title": "Home and teacher discovery hero",
+    "role": "guest",
+    "logicalRoute": "/",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:01.232Z",
+    "status": "captured",
+    "finalPath": "/en",
+    "heading": "Find a teacher who fits your learning goals.",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/home-hero-en-mobile.png",
+    "slug": "home-hero",
+    "title": "Home and teacher discovery hero",
+    "role": "guest",
+    "logicalRoute": "/",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:03.895Z",
+    "status": "captured",
+    "finalPath": "/en",
+    "heading": "Find a teacher who fits your learning goals.",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/home-hero-ar-desktop.png",
+    "slug": "home-hero",
+    "title": "Home and teacher discovery hero",
+    "role": "guest",
+    "logicalRoute": "/",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:06.639Z",
+    "status": "captured",
+    "finalPath": "/ar",
+    "heading": "اختر معلمًا يناسب أهدافك في التعلّم.",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/home-hero-ar-mobile.png",
+    "slug": "home-hero",
+    "title": "Home and teacher discovery hero",
+    "role": "guest",
+    "logicalRoute": "/",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:10.267Z",
+    "status": "captured",
+    "finalPath": "/ar",
+    "heading": "اختر معلمًا يناسب أهدافك في التعلّم.",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-class-materials-en-desktop.png",
+    "slug": "student-class-materials",
+    "title": "Enrolled class materials workspace",
+    "role": "student",
+    "logicalRoute": "/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:14.431Z",
+    "status": "captured",
+    "finalPath": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-class-materials-en-mobile.png",
+    "slug": "student-class-materials",
+    "title": "Enrolled class materials workspace",
+    "role": "student",
+    "logicalRoute": "/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:19.035Z",
+    "status": "captured",
+    "finalPath": "/en/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-class-materials-ar-desktop.png",
+    "slug": "student-class-materials",
+    "title": "Enrolled class materials workspace",
+    "role": "student",
+    "logicalRoute": "/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:23.535Z",
+    "status": "captured",
+    "finalPath": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/student-class-materials-ar-mobile.png",
+    "slug": "student-class-materials",
+    "title": "Enrolled class materials workspace",
+    "role": "student",
+    "logicalRoute": "/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:28.275Z",
+    "status": "captured",
+    "finalPath": "/ar/student/classes/de100000-0000-4000-8000-000000000001?view=materials",
+    "heading": "Algebra Foundations | أساسيات الجبر",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-dashboard-en-desktop.png",
+    "slug": "teacher-dashboard",
+    "title": "Teacher dashboard",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "pixelDimensions": {
+      "width": 2880,
+      "height": 2000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:31.594Z",
+    "status": "captured",
+    "finalPath": "/en/teacher",
+    "heading": "Welcome, Amina",
+    "pageErrors": []
+  },
+  {
+    "path": "docs/screenshots/campaign/teacher-dashboard-en-mobile.png",
+    "slug": "teacher-dashboard",
+    "title": "Teacher dashboard",
+    "role": "teacher",
+    "logicalRoute": "/teacher",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "pixelDimensions": {
+      "width": 780,
+      "height": 1688
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local synthetic database; no hosted data",
+    "capturedAt": "2026-10-28T07:25:36.538Z",
+    "status": "captured",
+    "finalPath": "/en/teacher",
+    "heading": "Welcome, Amina",
+    "pageErrors": []
+  }
+]

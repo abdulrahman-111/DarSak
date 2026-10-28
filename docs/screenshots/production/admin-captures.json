@@ -1,0 +1,1042 @@
+[
+  {
+    "role": "guest",
+    "logicalRoute": "/en/login",
+    "feature": "admin sign in",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/login-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/login",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "guest",
+    "logicalRoute": "/en/login",
+    "feature": "admin sign in",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/login-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/login",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "guest",
+    "logicalRoute": "/ar/login",
+    "feature": "admin sign in",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/login-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/login",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "guest",
+    "logicalRoute": "/ar/login",
+    "feature": "admin sign in",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/login-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/login",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin",
+    "feature": "admin overview",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/overview-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin",
+    "feature": "admin overview",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/overview-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin",
+    "feature": "admin overview",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/overview-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin",
+    "feature": "admin overview",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/overview-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/teachers",
+    "feature": "teacher applications",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/teachers-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/teachers",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/teachers",
+    "feature": "teacher applications",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/teachers-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/teachers",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/teachers",
+    "feature": "teacher applications",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/teachers-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/teachers",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/teachers",
+    "feature": "teacher applications",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/teachers-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/teachers",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/users",
+    "feature": "user management",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/users-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/users",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/users",
+    "feature": "user management",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/users-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/users",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/groups",
+    "feature": "group moderation",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/groups-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/groups",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/groups",
+    "feature": "group moderation",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/groups-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/groups",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/groups",
+    "feature": "group moderation",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/groups-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/groups",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/education",
+    "feature": "education catalogue",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/education-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/education",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/education",
+    "feature": "education catalogue",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/education-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/education",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/education",
+    "feature": "education catalogue",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/education-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/education",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/education",
+    "feature": "education catalogue",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/education-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/education",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/feedback",
+    "feature": "student feedback",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/feedback-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/feedback",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/feedback",
+    "feature": "student feedback",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/feedback-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/feedback",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/feedback",
+    "feature": "student feedback",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/feedback-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/feedback",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/feedback",
+    "feature": "student feedback",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/feedback-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/feedback",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/reports",
+    "feature": "content reports",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/reports-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/reports",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/reports",
+    "feature": "content reports",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/reports-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/reports",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/reports",
+    "feature": "content reports",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/reports-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/reports",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/reports",
+    "feature": "content reports",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/reports-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/reports",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/email",
+    "feature": "email delivery",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/email-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/email",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/email",
+    "feature": "email delivery",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/email-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/email",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/email",
+    "feature": "email delivery",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/email-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/email",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/email",
+    "feature": "email delivery",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/email-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/email",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/health",
+    "feature": "operational health",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/health-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/health",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/health",
+    "feature": "operational health",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/health-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/health",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/health",
+    "feature": "operational health",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/health-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/health",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/health",
+    "feature": "operational health",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/health-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/health",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/settings",
+    "feature": "platform settings",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/settings-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/settings",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/settings",
+    "feature": "platform settings",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/settings-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/settings",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/settings",
+    "feature": "platform settings",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/settings-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/settings",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/settings",
+    "feature": "platform settings",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/settings-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/settings",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/notifications",
+    "feature": "notifications",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/notifications-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/notifications",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/notifications",
+    "feature": "notifications",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/notifications-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/notifications",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/notifications",
+    "feature": "notifications",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/notifications-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/notifications",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/notifications",
+    "feature": "notifications",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/notifications-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/notifications",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "feature": "teacher application review",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/teacher-detail-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "feature": "teacher application review",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/teacher-detail-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/en/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "feature": "teacher application review",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/teacher-detail-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "feature": "teacher application review",
+    "locale": "ar",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/teacher-detail-ar-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T06:55:43.830Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/teachers/de000000-0000-4000-8000-000000000004",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en",
+    "feature": "locale root redirect",
+    "locale": "en",
+    "viewport": "n/a",
+    "dimensions": null,
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "alias",
+    "target": "/en/admin"
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/access",
+    "feature": "legacy access route",
+    "locale": "en",
+    "viewport": "n/a",
+    "dimensions": null,
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "alias",
+    "target": "/en/admin/teachers?status=all"
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar",
+    "feature": "locale root redirect",
+    "locale": "ar",
+    "viewport": "n/a",
+    "dimensions": null,
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "alias",
+    "target": "/ar/admin"
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/access",
+    "feature": "legacy access route",
+    "locale": "ar",
+    "viewport": "n/a",
+    "dimensions": null,
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "alias",
+    "target": "/ar/admin/teachers?status=all"
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/users",
+    "feature": "user management",
+    "locale": "en",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/users-en-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "captured",
+    "finalURL": "/en/admin/users",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/en/admin/users",
+    "feature": "user management",
+    "locale": "en",
+    "viewport": "mobile",
+    "dimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "path": "docs/screenshots/production/admin/users-en-mobile.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "captured",
+    "finalURL": "/en/admin/users",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  },
+  {
+    "role": "admin",
+    "logicalRoute": "/ar/admin/groups",
+    "feature": "group moderation",
+    "locale": "ar",
+    "viewport": "desktop",
+    "dimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "path": "docs/screenshots/production/admin/groups-ar-desktop.webp",
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "capturedAt": "2026-10-28T07:02:55.323Z",
+    "status": "captured",
+    "finalURL": "/ar/admin/groups",
+    "consoleErrors": [],
+    "screenshotStyle": "Hides the local Next.js development toolbar only."
+  }
+]

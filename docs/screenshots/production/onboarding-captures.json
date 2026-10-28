@@ -1,0 +1,610 @@
+[
+  {
+    "path": "docs/screenshots/production/onboarding-student-about-en-desktop.webp",
+    "role": "student",
+    "feature": "student onboarding · about",
+    "stage": "about",
+    "stageLabel": "About you",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:31.250Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-learning-en-desktop.webp",
+    "role": "student",
+    "feature": "student onboarding · learning",
+    "stage": "learning",
+    "stageLabel": "Your learning",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:31.666Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-review-en-desktop.webp",
+    "role": "student",
+    "feature": "student onboarding · review",
+    "stage": "review",
+    "stageLabel": "Review and finish",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:32.001Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-about-en-mobile.webp",
+    "role": "student",
+    "feature": "student onboarding · about",
+    "stage": "about",
+    "stageLabel": "About you",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:34.531Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-learning-en-mobile.webp",
+    "role": "student",
+    "feature": "student onboarding · learning",
+    "stage": "learning",
+    "stageLabel": "Your learning",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:34.875Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-review-en-mobile.webp",
+    "role": "student",
+    "feature": "student onboarding · review",
+    "stage": "review",
+    "stageLabel": "Review and finish",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:35.263Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-about-ar-desktop.webp",
+    "role": "student",
+    "feature": "student onboarding · about",
+    "stage": "about",
+    "stageLabel": "معلومات عنك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:38.322Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-learning-ar-desktop.webp",
+    "role": "student",
+    "feature": "student onboarding · learning",
+    "stage": "learning",
+    "stageLabel": "تعلمك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:38.743Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-review-ar-desktop.webp",
+    "role": "student",
+    "feature": "student onboarding · review",
+    "stage": "review",
+    "stageLabel": "المراجعة والإكمال",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:39.100Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-about-ar-mobile.webp",
+    "role": "student",
+    "feature": "student onboarding · about",
+    "stage": "about",
+    "stageLabel": "معلومات عنك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:41.603Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-learning-ar-mobile.webp",
+    "role": "student",
+    "feature": "student onboarding · learning",
+    "stage": "learning",
+    "stageLabel": "تعلمك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:41.906Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-student-review-ar-mobile.webp",
+    "role": "student",
+    "feature": "student onboarding · review",
+    "stage": "review",
+    "stageLabel": "المراجعة والإكمال",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:31:42.223Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-about-en-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · about",
+    "stage": "about",
+    "stageLabel": "About you",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:02.573Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-background-en-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · background",
+    "stage": "background",
+    "stageLabel": "Your background",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:04.216Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-offerings-en-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · offerings",
+    "stage": "offerings",
+    "stageLabel": "What you teach",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:05.575Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-verification-en-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · verification",
+    "stage": "verification",
+    "stageLabel": "Contact and verification",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:05.998Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-review-en-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · review",
+    "stage": "review",
+    "stageLabel": "Review and submit",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:06.462Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-about-en-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · about",
+    "stage": "about",
+    "stageLabel": "About you",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:08.995Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-background-en-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · background",
+    "stage": "background",
+    "stageLabel": "Your background",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:09.581Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-offerings-en-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · offerings",
+    "stage": "offerings",
+    "stageLabel": "What you teach",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:09.954Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-verification-en-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · verification",
+    "stage": "verification",
+    "stageLabel": "Contact and verification",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:10.290Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-review-en-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · review",
+    "stage": "review",
+    "stageLabel": "Review and submit",
+    "logicalRoute": "/account/setup",
+    "locale": "en",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:10.619Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-about-ar-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · about",
+    "stage": "about",
+    "stageLabel": "معلومات عنك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:13.733Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-background-ar-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · background",
+    "stage": "background",
+    "stageLabel": "خبراتك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:14.492Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-offerings-ar-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · offerings",
+    "stage": "offerings",
+    "stageLabel": "ما الذي تدرّسه",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:14.942Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-verification-ar-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · verification",
+    "stage": "verification",
+    "stageLabel": "بيانات التواصل والتحقق",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:15.322Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-review-ar-desktop.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · review",
+    "stage": "review",
+    "stageLabel": "المراجعة والإرسال",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "desktop",
+    "cssDimensions": {
+      "width": 1440,
+      "height": 1000
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:15.760Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-about-ar-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · about",
+    "stage": "about",
+    "stageLabel": "معلومات عنك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:18.331Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-background-ar-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · background",
+    "stage": "background",
+    "stageLabel": "خبراتك",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:18.876Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-offerings-ar-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · offerings",
+    "stage": "offerings",
+    "stageLabel": "ما الذي تدرّسه",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:19.246Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-verification-ar-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · verification",
+    "stage": "verification",
+    "stageLabel": "بيانات التواصل والتحقق",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:19.577Z",
+    "status": "captured"
+  },
+  {
+    "path": "docs/screenshots/production/onboarding-teacher-review-ar-mobile.webp",
+    "role": "teacher",
+    "feature": "teacher onboarding · review",
+    "stage": "review",
+    "stageLabel": "المراجعة والإرسال",
+    "logicalRoute": "/account/setup",
+    "locale": "ar",
+    "viewport": "mobile",
+    "cssDimensions": {
+      "width": 390,
+      "height": 844
+    },
+    "sourceRevision": "0e3dc958f3db71b39e1048fa44e76db47aea7327",
+    "actualEnvironment": "local",
+    "demoProvenance": "Synthetic onboarding account with fictional profile details entered through the real UI; setup was not submitted or completed.",
+    "capturedAt": "2026-10-28T07:35:19.963Z",
+    "status": "captured"
+  }
+]
