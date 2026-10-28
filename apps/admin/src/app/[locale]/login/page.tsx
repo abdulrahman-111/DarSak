@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { getAdminActor } from '@admin/lib/access';
+import { getAdminAccess } from '@admin/lib/access';
 import { isLocale } from '@admin/lib/i18n';
 import { loginAction } from './actions';
 
@@ -10,7 +10,8 @@ const messages = {
     email: 'البريد الإلكتروني',
     password: 'كلمة المرور',
     submit: 'تسجيل الدخول',
-    invalid: 'تعذر التحقق من الحساب. تأكد من بيانات الدخول وأن الحساب إداري نشط.',
+    invalid:
+      'تعذر التحقق من الحساب. تأكد من بيانات الدخول وأن الحساب إداري نشط. بعد عدة محاولات فاشلة يتوقف الدخول مؤقتاً لمدة 15 دقيقة.',
     only: 'هذا الحساب لا يملك صلاحية دخول بوابة الإدارة.',
     unavailable: 'بوابة الإدارة غير متاحة حالياً. يرجى المحاولة لاحقاً.',
   },
@@ -20,7 +21,8 @@ const messages = {
     email: 'Email',
     password: 'Password',
     submit: 'Sign in',
-    invalid: 'Sign in failed. Check your credentials and active administrator access.',
+    invalid:
+      'Sign in failed. Check your credentials and active administrator access. After several failed attempts, sign-in pauses for 15 minutes.',
     only: 'This account cannot access the administrator portal.',
     unavailable: 'The administrator portal is currently unavailable. Please try again later.',
   },
@@ -36,7 +38,10 @@ export default async function LoginPage({
   const { locale: rawLocale } = await params;
   if (!isLocale(rawLocale)) redirect('/ar/login');
   const locale = rawLocale;
-  if (await getAdminActor()) redirect(`/${locale}/admin`);
+  const access = await getAdminAccess();
+  if (access.status === 'ok') redirect(`/${locale}/admin`);
+  if (access.status === 'mfa-enroll') redirect(`/${locale}/mfa/enroll`);
+  if (access.status === 'mfa-verify') redirect(`/${locale}/mfa/verify`);
   const { error } = await searchParams;
   const copy = messages[locale];
   const message =

@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@admin/lib/access';
-import { Panel, ScreenTitle } from '@/components/platform/ui';
+import { EmptyState, Panel, ScreenTitle } from '@/components/platform/ui';
+import { Chip, Disclosure, Pager, secondaryButtonClass } from '@admin/components/ui';
 import { retryEmailJob } from '@admin/features/email/admin-actions';
 
 type EmailRow = {
@@ -99,6 +100,11 @@ export default async function AdminEmailPage({
             ? 'سجل محدود لحالة التسليم وإدارة المحاولات الفاشلة.'
             : 'A limited delivery status log with controls for failed attempts.'
         }
+        action={
+          <Link href={`/${locale}/admin/email`} className={secondaryButtonClass}>
+            {ar ? 'تحديث' : 'Refresh'}
+          </Link>
+        }
       />
       {result && (
         <Panel className="mb-5">
@@ -117,22 +123,36 @@ export default async function AdminEmailPage({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="font-black text-teal">{ar ? 'ملخص قائمة الانتظار' : 'Queue summary'}</h2>
-            <p className="mt-2 text-sm text-muted">
-              {ar
-                ? `قيد الانتظار ${count('queued')} · جارٍ ${count('sending')} · قُبل ${count('sent')} · فشل ${count('failed')} · متخطى ${count('skipped')}`
-                : `Queued ${count('queued')} · sending ${count('sending')} · SMTP accepted ${count('sent')} · failed ${count('failed')} · skipped ${count('skipped')}`}
-            </p>
+            <ul className="mt-3 flex flex-wrap gap-2">
+              <li>
+                <Chip tone={count('queued') ? 'warn' : 'neutral'}>
+                  {ar ? 'بانتظار الإرسال' : 'Queued'} {count('queued')}
+                </Chip>
+              </li>
+              <li>
+                <Chip tone="info">
+                  {ar ? 'جارٍ' : 'Sending'} {count('sending')}
+                </Chip>
+              </li>
+              <li>
+                <Chip tone="ok">
+                  {ar ? 'قُبل' : 'SMTP accepted'} {count('sent')}
+                </Chip>
+              </li>
+              <li>
+                <Chip tone={count('failed') ? 'danger' : 'neutral'}>
+                  {ar ? 'فشل' : 'Failed'} {count('failed')}
+                </Chip>
+              </li>
+              <li>
+                <Chip>
+                  {ar ? 'متخطى' : 'Skipped'} {count('skipped')}
+                </Chip>
+              </li>
+            </ul>
             <p className="mt-1 text-xs text-muted">
               {ar ? `أقدم رسالة بانتظار الإرسال: ${oldest}` : `Oldest queued message: ${oldest}`}
             </p>
-          </div>
-          <div className="flex gap-2">
-            <Link
-              href={`/${locale}/admin/email`}
-              className="rounded-xl border border-line px-4 py-2.5 text-sm font-bold"
-            >
-              {ar ? 'تحديث' : 'Refresh'}
-            </Link>
           </div>
         </div>
         <p className="mt-4 text-xs leading-6 text-muted">
@@ -159,17 +179,28 @@ export default async function AdminEmailPage({
       ) : visibleRows.length ? (
         <div className="grid gap-3">
           {visibleRows.map(row => (
-            <Panel key={row.id}>
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <h2 className="font-black text-teal">{label(kinds, row.kind, ar)}</h2>
-                  <p className="mt-1 text-sm">{row.recipient_label}</p>
-                </div>
-                <span className="rounded-full bg-cream px-3 py-1 text-xs font-bold">
+            <Disclosure
+              key={row.id}
+              defaultOpen={row.state === 'failed'}
+              title={label(kinds, row.kind, ar)}
+              meta={`${row.recipient_label} · ${when(row.created_at, locale)}`}
+              chip={
+                <Chip
+                  tone={
+                    row.state === 'failed'
+                      ? 'danger'
+                      : row.state === 'sent'
+                        ? 'ok'
+                        : row.state === 'queued' || row.state === 'sending'
+                          ? 'warn'
+                          : 'neutral'
+                  }
+                >
                   {label(states, row.state, ar)}
-                </span>
-              </div>
-              <dl className="mt-4 grid gap-2 text-xs text-muted sm:grid-cols-2">
+                </Chip>
+              }
+            >
+              <dl className="grid gap-2 text-xs text-muted sm:grid-cols-2">
                 <div>
                   <dt>{ar ? 'تاريخ الإنشاء' : 'Created'}</dt>
                   <dd>{when(row.created_at, locale)}</dd>
@@ -196,48 +227,32 @@ export default async function AdminEmailPage({
               {row.state === 'failed' && (
                 <form action={retryEmailJob.bind(null, locale)} className="mt-4">
                   <input type="hidden" name="id" value={row.id} />
-                  <button className="min-h-11 rounded-xl border border-orange px-4 py-2 font-bold text-ink">
+                  <button className="min-h-11 rounded-xl border border-orange px-4 py-2 font-bold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
                     {ar ? 'إعادة المحاولة' : 'Retry failed message'}
                   </button>
                 </form>
               )}
-            </Panel>
+            </Disclosure>
           ))}
         </div>
       ) : (
-        <Panel>
-          <p className="text-sm text-muted">
-            {ar ? 'لا توجد رسائل في سجل البريد.' : 'There are no email messages in the log.'}
-          </p>
-        </Panel>
+        <EmptyState>
+          {ar ? 'لا توجد رسائل في سجل البريد.' : 'There are no email messages in the log.'}
+        </EmptyState>
       )}
-      {total > 20 && (
-        <nav className="mt-5 flex justify-between" aria-label={ar ? 'صفحات البريد' : 'Email pages'}>
-          {page > 1 ? (
-            <Link
-              href={`/${locale}/admin/email?page=${page - 1}`}
-              className="font-bold text-teal underline"
-            >
-              {ar ? 'السابق' : 'Previous'}
-            </Link>
-          ) : (
-            <span />
-          )}
-          <span>
-            {page} · {lastPage}
-          </span>
-          {page < lastPage ? (
-            <Link
-              href={`/${locale}/admin/email?page=${page + 1}`}
-              className="font-bold text-teal underline"
-            >
-              {ar ? 'التالي' : 'Next'}
-            </Link>
-          ) : (
-            <span />
-          )}
-        </nav>
-      )}
+      <Pager
+        ariaLabel={ar ? 'صفحات البريد' : 'Email pages'}
+        page={page}
+        pageCount={lastPage}
+        total={total}
+        prevHref={page > 1 ? `/${locale}/admin/email?page=${page - 1}` : null}
+        nextHref={page < lastPage ? `/${locale}/admin/email?page=${page + 1}` : null}
+        labels={{
+          previous: ar ? 'السابق' : 'Previous',
+          next: ar ? 'التالي' : 'Next',
+          page: ar ? 'صفحة' : 'Page',
+        }}
+      />
     </>
   );
 }

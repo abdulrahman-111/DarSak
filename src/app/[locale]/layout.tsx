@@ -5,6 +5,7 @@ import { fontVariables } from '../fonts';
 import { ensureLocale, getDictionary, getDirection } from '@/i18n/config';
 import { Header } from '@/components/header';
 import { SanadLauncher } from '@/features/assistant/launcher';
+import { siteUrl } from '@/lib/supabase/config';
 
 export async function generateMetadata({
   params,
@@ -13,7 +14,12 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale: raw } = await params;
   const t = await getDictionary(ensureLocale(raw));
-  return { title: t.brand, description: t.tagline, icons: { icon: '/brand/darsak/favicon.svg' } };
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: t.brand,
+    description: t.tagline,
+    icons: { icon: '/brand/darsak/favicon.svg' },
+  };
 }
 
 export default async function LocaleLayout({

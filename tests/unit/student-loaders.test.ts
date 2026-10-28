@@ -27,132 +27,26 @@ import {
 describe('student dashboard loader query contract', () => {
   beforeEach(() => mocks.getRequestViewer.mockReset());
 
-  it('summarizes every occupied day of the current week beyond the five lesson preview', async () => {
-    const now = new Date('2026-10-13T10:00:00.000Z');
-    let failDaySummary = false;
-    const allLessons = [
-      {
-        id: 'completed-monday',
-        starts_at: '2026-10-12T07:00:00.000Z',
-        ends_at: '2026-10-12T08:00:00.000Z',
-        status: 'completed',
-        student_id: 'student-id',
-      },
-      ...['13', '13', '14', '15', '16', '17', '17', '17'].map((day, index) => ({
-        id: `future-${index}`,
-        starts_at: `2026-10-${day}T12:00:00.000Z`,
-        ends_at: `2026-10-${day}T13:00:00.000Z`,
-        status: 'scheduled',
-        student_id: 'student-id',
-      })),
-      {
-        id: 'cancelled',
-        starts_at: '2026-10-18T12:00:00.000Z',
-        ends_at: '2026-10-18T13:00:00.000Z',
-        status: 'cancelled',
-        student_id: 'student-id',
-      },
-      {
-        id: 'other-student',
-        starts_at: '2026-10-18T14:00:00.000Z',
-        ends_at: '2026-10-18T15:00:00.000Z',
-        status: 'scheduled',
-        student_id: 'someone-else',
-      },
-    ];
-    const queries: Array<{
-      table: string;
-      fields: string;
-      filters: Array<[string, string, unknown]>;
-      limit?: number;
-    }> = [];
+  const profileRow = {
+    age_range: null,
+    education_year: '',
+    interests: [],
+    learning_goal: '',
+    school_name: '',
+    onboarding_required: false,
+    onboarding_completed_at: null,
+    updated_at: '2026-10-01T00:00:00.000Z',
+  };
+  function dashboardDb(rpc: ReturnType<typeof vi.fn>, profile: unknown = profileRow) {
+    const tables: string[] = [];
     const db = {
+      rpc,
       from(table: string) {
-        const query = {
-          table,
-          fields: '',
-          filters: [] as Array<[string, string, unknown]>,
-          limit: undefined as number | undefined,
-        };
-        queries.push(query);
+        tables.push(table);
         const builder = {
-          select(fields: string) {
-            query.fields = fields;
-            return builder;
-          },
-          eq(column: string, value: unknown) {
-            query.filters.push(['eq', column, value]);
-            return builder;
-          },
-          neq(column: string, value: unknown) {
-            query.filters.push(['neq', column, value]);
-            return builder;
-          },
-          gt(column: string, value: unknown) {
-            query.filters.push(['gt', column, value]);
-            return builder;
-          },
-          gte(column: string, value: unknown) {
-            query.filters.push(['gte', column, value]);
-            return builder;
-          },
-          lt(column: string, value: unknown) {
-            query.filters.push(['lt', column, value]);
-            return builder;
-          },
-          order() {
-            return builder;
-          },
-          limit(value: number) {
-            query.limit = value;
-            return builder;
-          },
-          maybeSingle: async () => ({
-            data: {
-              age_range: null,
-              education_year: '',
-              interests: [],
-              learning_goal: '',
-              school_name: '',
-              onboarding_required: false,
-              onboarding_completed_at: null,
-              updated_at: '2026-10-01T00:00:00.000Z',
-            },
-            error: null,
-          }),
-          then(resolve: (value: unknown) => unknown) {
-            if (table === 'lessons') {
-              if (
-                failDaySummary &&
-                query.filters.some(([kind, column]) => kind === 'gte' && column === 'starts_at')
-              ) {
-                return Promise.resolve(resolve({ data: null, error: new Error('query failed') }));
-              }
-              let rows = allLessons.filter(row =>
-                query.filters.every(([kind, column, value]) => {
-                  const actual =
-                    column === 'group.enrollments.student_id'
-                      ? row.student_id
-                      : column === 'group.enrollments.status'
-                        ? 'accepted'
-                        : row[column as keyof typeof row];
-                  if (kind === 'eq') return actual === value;
-                  if (kind === 'neq') return actual !== value;
-                  const actualTime = new Date(String(actual)).getTime();
-                  const compareTime = new Date(String(value)).getTime();
-                  if (kind === 'gt') return actualTime > compareTime;
-                  if (kind === 'gte') return actualTime >= compareTime;
-                  if (kind === 'lt') return actualTime < compareTime;
-                  return false;
-                }),
-              );
-              if (query.limit !== undefined) rows = rows.slice(0, query.limit);
-              return Promise.resolve(resolve({ data: rows, error: null }));
-            }
-            if (table === 'enrollments')
-              return Promise.resolve(resolve({ data: null, count: 1, error: null }));
-            return Promise.resolve(resolve({ data: [], error: null }));
-          },
+          select: () => builder,
+          eq: () => builder,
+          maybeSingle: async () => ({ data: profile, error: null }),
         };
         return builder;
       },
@@ -162,218 +56,80 @@ describe('student dashboard loader query contract', () => {
       user: { id: 'student-id' },
       profile: { id: 'student-id', full_name: 'Test Student', role: 'student', status: 'active' },
     });
-
-    const result = await studentDashboard('en', now);
-
-    expect(result.lessons.map(lesson => lesson.id)).toEqual([
-      'future-0',
-      'future-1',
-      'future-2',
-      'future-3',
-      'future-4',
-    ]);
-    expect(result.occupiedDays).toEqual([
-      '2026-10-12',
-      '2026-10-13',
-      '2026-10-14',
-      '2026-10-15',
-      '2026-10-16',
-      '2026-10-17',
-    ]);
-    const dayQueries = queries.filter(
-      query =>
-        query.table === 'lessons' &&
-        query.fields.includes('enrollments!inner') &&
-        query.filters.some(([kind, column]) => kind === 'gte' && column === 'starts_at'),
-    );
-    expect(dayQueries).toHaveLength(7);
-    expect(dayQueries.every(query => query.limit === 1)).toBe(true);
-    expect(
-      dayQueries.every(query =>
-        query.filters.some(([kind, column]) => kind === 'neq' && column === 'status'),
-      ),
-    ).toBe(true);
-    expect(
-      dayQueries.every(query =>
-        query.filters.some(
-          ([kind, column]) => kind === 'eq' && column === 'group.enrollments.student_id',
-        ),
-      ),
-    ).toBe(true);
-    expect(
-      dayQueries.every(query =>
-        query.filters.some(
-          ([kind, column]) => kind === 'eq' && column === 'group.enrollments.status',
-        ),
-      ),
-    ).toBe(true);
-    expect(dayQueries.every(query => query.fields.includes('student_id,status'))).toBe(true);
-
-    failDaySummary = true;
-    const failedSummary = await studentDashboard('en', now);
-    expect(failedSummary.occupiedDays).toEqual([]);
-    expect(failedSummary.calendarError).toBe(true);
-  });
-
-  it('filters past lesson history before its five-row preview while retaining exact enrollment counts', async () => {
-    const now = new Date('2026-10-12T10:00:00.000Z');
-    const allLessons = [
-      ...Array.from({ length: 500 }, (_, index) => ({
-        id: `past-${String(index).padStart(3, '0')}`,
-        group_id: 'group',
-        title: 'Past lesson',
-        starts_at: `2025-01-${String((index % 28) + 1).padStart(2, '0')}T08:00:00.000Z`,
-        ends_at: '2025-01-01T09:00:00.000Z',
-        status: 'scheduled',
-        group: { name: 'Algebra group' },
-      })),
-      ...Array.from({ length: 8 }, (_, index) => ({
-        id: `future-${index}`,
+    return tables;
+  }
+  const summary = {
+    accepted_count: 14,
+    pending_count: 3,
+    upcoming: [
+      {
+        id: 'future-0',
         group_id: 'group',
         title: 'Upcoming lesson',
-        starts_at: `2026-10-1${2 + index}T12:00:00.000Z`,
-        ends_at: `2026-10-1${2 + index}T13:00:00.000Z`,
+        starts_at: '2026-10-13T12:00:00.000Z',
+        ends_at: '2026-10-13T13:00:00.000Z',
         status: 'scheduled',
-        group: { name: 'Algebra group' },
-      })),
-    ];
-    const queries: Array<{
-      table: string;
-      filters: Array<[string, string, unknown]>;
-      limit?: number;
-      selectOptions?: unknown;
-      fields?: string;
-    }> = [];
-    const db = {
-      from(table: string) {
-        const query = {
-          table,
-          filters: [] as Array<[string, string, unknown]>,
-          limit: undefined as number | undefined,
-          selectOptions: undefined as unknown,
-          fields: '',
-        };
-        queries.push(query);
-        const builder = {
-          select(fields: string, options?: unknown) {
-            query.fields = fields;
-            query.selectOptions = options;
-            return builder;
-          },
-          eq(column: string, value: unknown) {
-            query.filters.push(['eq', column, value]);
-            return builder;
-          },
-          maybeSingle: async () => ({
-            data: {
-              age_range: null,
-              education_year: '',
-              interests: [],
-              learning_goal: '',
-              school_name: '',
-              onboarding_required: false,
-              onboarding_completed_at: null,
-              updated_at: '2026-10-01T00:00:00.000Z',
-            },
-            error: null,
-          }),
-          gt(column: string, value: unknown) {
-            query.filters.push(['gt', column, value]);
-            return builder;
-          },
-          neq(column: string, value: unknown) {
-            query.filters.push(['neq', column, value]);
-            return builder;
-          },
-          gte(column: string, value: unknown) {
-            query.filters.push(['gte', column, value]);
-            return builder;
-          },
-          lt(column: string, value: unknown) {
-            query.filters.push(['lt', column, value]);
-            return builder;
-          },
-          order() {
-            return builder;
-          },
-          limit(value: number) {
-            query.limit = value;
-            return builder;
-          },
-          range() {
-            return builder;
-          },
-          then(resolve: (value: unknown) => unknown) {
-            if (table === 'lessons') {
-              let rows = allLessons.filter(row =>
-                query.filters.every(([kind, column, value]) => {
-                  const actual = row[column as keyof typeof row];
-                  if (column.startsWith('group.enrollments.')) return true;
-                  if (kind === 'eq') return actual === value;
-                  if (kind === 'neq') return actual !== value;
-                  const actualTime = new Date(String(actual)).getTime();
-                  const compareTime = new Date(String(value)).getTime();
-                  if (kind === 'gt') return actualTime > compareTime;
-                  if (kind === 'gte') return actualTime >= compareTime;
-                  if (kind === 'lt') return actualTime < compareTime;
-                  return false;
-                }),
-              );
-              if (query.limit !== undefined) rows = rows.slice(0, query.limit);
-              return Promise.resolve(resolve({ data: rows, count: null, error: null }));
-            }
-            const status = query.filters.find(
-              ([kind, column]) => kind === 'eq' && column === 'status',
-            )?.[2];
-            return Promise.resolve(
-              resolve({ data: null, count: status === 'accepted' ? 14 : 3, error: null }),
-            );
-          },
-        };
-        return builder;
+        group: { id: 'group', name: 'Algebra group' },
       },
-    };
-    mocks.getRequestViewer.mockResolvedValue({
-      db,
-      user: { id: 'student-id' },
-      profile: { id: 'student-id', full_name: 'Test Student', role: 'student', status: 'active' },
-    });
+    ],
+    classes: [
+      {
+        id: 'enrollment',
+        group_id: 'group',
+        group: { id: 'group', name: 'Algebra group', status: 'published', location: null },
+      },
+    ],
+    occupied_days: ['2026-10-13', '2026-10-17', '2026-10-25'],
+  };
+
+  it('loads the dashboard with one summary RPC using Cairo week bounds from TypeScript', async () => {
+    const now = new Date('2026-10-13T10:00:00.000Z');
+    const rpc = vi.fn(async () => ({ data: summary, error: null }));
+    const tables = dashboardDb(rpc);
 
     const result = await studentDashboard('en', now);
 
-    expect(result.error).toBe(false);
-    expect(result).not.toHaveProperty('upcomingCount');
-    expect(result.learningProfile).toMatchObject({
-      onboarding_required: false,
-      onboarding_completed_at: null,
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith('student_dashboard_summary', {
+      p_week_start: '2026-10-11T21:00:00.000Z',
+      p_week_end: '2026-10-18T21:00:00.000Z',
+      p_now: now.toISOString(),
     });
+    // Learning profile reads only student_profiles and profiles; no per-day queries remain.
+    expect(tables.every(table => table === 'student_profiles' || table === 'profiles')).toBe(true);
+    expect(result.error).toBe(false);
+    expect(result.calendarError).toBe(false);
+    expect(result).not.toHaveProperty('upcomingCount');
+    expect(result.learningProfile).toMatchObject({ onboarding_required: false });
     expect(result.acceptedCount).toBe(14);
     expect(result.pendingCount).toBe(3);
-    expect(result.lessons.map(lesson => lesson.id)).toEqual([
-      'future-0',
-      'future-1',
-      'future-2',
-      'future-3',
-      'future-4',
-    ]);
-    expect(
-      Array.isArray(result.lessons[0].group)
-        ? result.lessons[0].group[0]?.name
-        : result.lessons[0].group?.name,
-    ).toBe('Algebra group');
-    expect(queries.find(query => query.table === 'lessons')).toMatchObject({
-      filters: [
-        ['eq', 'status', 'scheduled'],
-        ['eq', 'group.enrollments.student_id', 'student-id'],
-        ['eq', 'group.enrollments.status', 'accepted'],
-        ['gt', 'ends_at', now.toISOString()],
-      ],
-      limit: 5,
-      selectOptions: undefined,
+    expect(result.lessons.map(lesson => lesson.id)).toEqual(['future-0']);
+    expect(result.classes).toEqual(summary.classes);
+    // Days outside the displayed week are ignored; order follows the week.
+    expect(result.occupiedDays).toEqual(['2026-10-13', '2026-10-17']);
+  });
+
+  it('reports an error with empty data when the summary RPC fails', async () => {
+    const rpc = vi.fn(async () => ({ data: null, error: new Error('rpc failed') }));
+    dashboardDb(rpc);
+    const result = await studentDashboard('en', new Date('2026-10-13T10:00:00.000Z'));
+    expect(result).toMatchObject({
+      error: true,
+      calendarError: true,
+      acceptedCount: 0,
+      pendingCount: 0,
+      lessons: [],
+      occupiedDays: [],
+      classes: [],
     });
-    expect(queries.find(query => query.table === 'lessons')?.fields).toContain(
-      'groups!inner(id,name,enrollments!inner(id))',
-    );
+    expect(result.learningProfile).not.toBeNull();
+  });
+
+  it('reports an error when the learning profile is unavailable', async () => {
+    const rpc = vi.fn(async () => ({ data: summary, error: null }));
+    dashboardDb(rpc, null);
+    const result = await studentDashboard('en', new Date('2026-10-13T10:00:00.000Z'));
+    expect(result).toMatchObject({ error: true, learningProfile: null, acceptedCount: 0 });
   });
 
   it('routes a new student with required setup to the profile page before loading dashboard data', async () => {
@@ -387,21 +143,10 @@ describe('student dashboard loader query contract', () => {
       onboarding_completed_at: null,
       updated_at: '2026-10-01T00:00:00.000Z',
     };
-    const db = {
-      from() {
-        const builder = {
-          select: () => builder,
-          eq: () => builder,
-          maybeSingle: async () => ({ data: profile, error: null }),
-        };
-        return builder;
-      },
-    };
-    mocks.getRequestViewer.mockResolvedValue({
-      db,
-      user: { id: 'new-student' },
-      profile: { id: 'new-student', full_name: 'New Student', role: 'student', status: 'active' },
-    });
+    dashboardDb(
+      vi.fn(async () => ({ data: summary, error: null })),
+      profile,
+    );
 
     await expect(studentDashboard('en')).rejects.toThrow('redirect:/en/account/setup');
   });

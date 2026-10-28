@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react';
-import { getDictionary } from '@/i18n/config';
+import { ensureLocale, getDictionary } from '@/i18n/config';
+import { pageMetadata } from '@/features/seo/metadata';
+import { seoCopy } from '@/features/seo/copy';
 import { publicGroups } from '@/features/platform/data';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { roleHome } from '@/components/platform/access';
@@ -10,6 +13,21 @@ import { GroupCard, SetupCard } from '@/components/ui';
 import { isConfigured } from '@/lib/supabase/server';
 import { publicCopy } from '@/components/public/copy';
 import { WeeklyPreview } from '@/components/public/weekly-preview';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const locale = ensureLocale((await params).locale);
+  const t = await getDictionary(locale);
+  return pageMetadata({
+    locale,
+    title: `${t.brand} · ${seoCopy[locale].home.title}`,
+    description: seoCopy[locale].home.description,
+    fullTitle: true,
+  });
+}
 
 export default async function Home({ params }: { params: Promise<{ locale: 'ar' | 'en' }> }) {
   const { locale } = await params;

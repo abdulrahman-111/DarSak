@@ -12,7 +12,11 @@ async function mutateGroup(locale: string, groupId: string, operation: 'archive'
   const actor = await getAdminActor();
   if (!actor)
     return {
-      error: copy(locale, 'An active administrator account is required.', 'يلزم حساب مسؤول نشط.'),
+      error: copy(
+        locale,
+        'An active administrator account with two-step verification is required. Sign in again.',
+        'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
+      ),
     };
   if (!groupIdSchema.safeParse(groupId).success)
     return {

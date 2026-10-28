@@ -2,6 +2,13 @@ import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@admin/lib/access';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
+import {
+  FilterBar,
+  Pager,
+  fieldClass,
+  primaryButtonClass,
+  secondaryButtonClass,
+} from '@admin/components/ui';
 import { adminTeacherReviews } from '@admin/features/admin/review-data';
 import { teacherReviewListSchema } from '@admin/features/admin/domain';
 
@@ -92,35 +99,24 @@ export default async function AdminTeacherReviews({
   return (
     <>
       <ScreenTitle eyebrow={text.eyebrow} title={text.title} description={text.description} />
-      <Panel className="mb-5">
+      <FilterBar label={text.filter}>
         <form method="get" className="grid gap-3 sm:grid-cols-[minmax(12rem,1fr)_12rem_auto]">
           <label className="grid gap-1 text-sm font-semibold">
             {text.search}
-            <input
-              name="q"
-              maxLength={120}
-              defaultValue={filters.query}
-              className="rounded-xl border border-line bg-cream p-3"
-            />
+            <input name="q" maxLength={120} defaultValue={filters.query} className={fieldClass} />
           </label>
           <label className="grid gap-1 text-sm font-semibold">
             {text.status}
-            <select
-              name="status"
-              defaultValue={filters.status}
-              className="rounded-xl border border-line bg-cream p-3"
-            >
+            <select name="status" defaultValue={filters.status} className={fieldClass}>
               <option value="pending">{text.pending}</option>
               <option value="approved">{text.approved}</option>
               <option value="declined">{text.declined}</option>
               <option value="all">{text.all}</option>
             </select>
           </label>
-          <button className="self-end rounded-xl bg-teal px-5 py-3 font-bold text-white">
-            {text.filter}
-          </button>
+          <button className={`self-end ${primaryButtonClass}`}>{text.filter}</button>
         </form>
-      </Panel>
+      </FilterBar>
       {result.error ? (
         <Panel>
           <p role="alert" className="text-danger">
@@ -156,38 +152,21 @@ export default async function AdminTeacherReviews({
                     </dd>
                   </div>
                 </dl>
-                <Link
-                  href={reviewHref(row.teacher_id)}
-                  className="mt-4 inline-flex rounded-xl border border-line px-4 py-2 font-bold text-teal"
-                >
+                <Link href={reviewHref(row.teacher_id)} className={`mt-4 ${secondaryButtonClass}`}>
                   {text.review}
                 </Link>
               </Panel>
             ))}
           </div>
-          <nav className="mt-6 flex items-center justify-between">
-            <span className="text-sm text-muted">
-              {text.page} {currentPage} {text.of} {lastPage} · {result.total}
-            </span>
-            <span className="flex gap-3">
-              {currentPage > 1 && (
-                <Link
-                  href={href(currentPage - 1)}
-                  className="rounded-xl border border-line px-4 py-2 font-bold"
-                >
-                  {text.previous}
-                </Link>
-              )}
-              {currentPage < lastPage && (
-                <Link
-                  href={href(currentPage + 1)}
-                  className="rounded-xl border border-line px-4 py-2 font-bold"
-                >
-                  {text.next}
-                </Link>
-              )}
-            </span>
-          </nav>
+          <Pager
+            ariaLabel={text.page}
+            page={currentPage}
+            pageCount={lastPage}
+            total={result.total}
+            prevHref={currentPage > 1 ? href(currentPage - 1) : null}
+            nextHref={currentPage < lastPage ? href(currentPage + 1) : null}
+            labels={text}
+          />
         </>
       ) : (
         <EmptyState>{text.empty}</EmptyState>

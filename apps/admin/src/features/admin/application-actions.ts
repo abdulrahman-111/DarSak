@@ -10,7 +10,7 @@ export type ApplicationActionState = { error?: string; success?: string; url?: s
 const copy = (locale: string) =>
   locale === 'ar'
     ? {
-        denied: 'يلزم حساب مسؤول نشط.',
+        denied: 'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
         invalid: 'تحقق من سبب طلب التعديل ثم حاول مجددًا.',
         failed: 'تعذر حفظ طلب التعديل. حدّث الصفحة وحاول مرة أخرى.',
         stale: 'تغير الطلب. حدّث الصفحة لمراجعة أحدث حالة.',
@@ -18,7 +18,8 @@ const copy = (locale: string) =>
         download: 'تعذر تجهيز تنزيل السيرة الذاتية. حدّث الصفحة وحاول مرة أخرى.',
       }
     : {
-        denied: 'An active administrator account is required.',
+        denied:
+          'An active administrator account with two-step verification is required. Sign in again.',
         invalid: 'Check the requested changes and try again.',
         failed: 'The change request could not be saved. Refresh and try again.',
         stale: 'The application changed. Refresh to review its current status.',

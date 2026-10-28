@@ -14,7 +14,11 @@ export async function decideTeacherAccess(
   const actor = await getAdminActor();
   if (!actor)
     return {
-      error: msg(locale, 'An active administrator account is required.', 'يلزم حساب مسؤول نشط.'),
+      error: msg(
+        locale,
+        'An active administrator account with two-step verification is required. Sign in again.',
+        'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
+      ),
     };
   const id = form.get('request_id'),
     decision = form.get('decision');
@@ -63,7 +67,11 @@ export async function saveTeacherFeePolicy(
   const actor = await getAdminActor();
   if (!actor)
     return {
-      error: msg(locale, 'An active administrator account is required.', 'يلزم حساب مسؤول نشط.'),
+      error: msg(
+        locale,
+        'An active administrator account with two-step verification is required. Sign in again.',
+        'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
+      ),
     };
   const enabled = form.get('enabled') === 'true',
     confirmed = form.get('confirm') === 'on';

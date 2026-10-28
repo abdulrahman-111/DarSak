@@ -1,6 +1,9 @@
+import type { Metadata } from 'next';
+import { pageMetadata } from '@/features/seo/metadata';
+import { seoCopy } from '@/features/seo/copy';
 import Link from 'next/link';
 import { ChevronDown, Search, SlidersHorizontal } from 'lucide-react';
-import { getDictionary } from '@/i18n/config';
+import { ensureLocale, getDictionary } from '@/i18n/config';
 import {
   catalogue,
   currentUser,
@@ -38,6 +41,15 @@ function urlFor(
   if (teacherSearch) params.set('teacher_search', teacherSearch);
   const query = params.toString();
   return `/${locale}/teachers${query ? `?${query}` : ''}`;
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const locale = ensureLocale((await params).locale);
+  return pageMetadata({ locale, path: '/teachers', ...seoCopy[locale].teachers });
 }
 
 export default async function Teachers({
