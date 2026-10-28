@@ -5,8 +5,7 @@ import { lessonDetail } from '@/features/student/data';
 import { DownloadForm } from '@/features/student/forms';
 import { EmptyState, Panel, ScreenTitle, Status, cairoDate } from '@/components/platform/ui';
 import { safeLink } from '@/features/student/domain';
-import { createClient } from '@/lib/supabase/server';
-import { groupAnnouncement } from '@/features/groups/announcement-data';
+import { Suspense } from 'react';
 import { AnnouncementView } from '@/features/groups/announcement-view';
 import { StudentAttendanceStatus } from '@/features/student/attendance-status';
 
@@ -20,8 +19,6 @@ export default async function StudentLesson({
     ar = locale === 'ar';
   const data = await lessonDetail(locale, id);
   if (!data) notFound();
-  const db = await createClient();
-  const announcement = await groupAnnouncement(db, data.lesson.group_id);
   return (
     <>
       <Link
@@ -36,8 +33,20 @@ export default async function StudentLesson({
         description={cairoDate(data.lesson.starts_at, locale)}
         action={<Status value={data.lesson.status} locale={locale} />}
       />
-      <AnnouncementView locale={locale} announcement={announcement} className="mb-6" />
-      <StudentAttendanceStatus db={db} locale={locale} lessonId={id} />
+      <AnnouncementView locale={locale} announcement={data.announcement} className="mb-6" />
+      <Suspense
+        fallback={
+          <Panel className="mb-6">
+            <div aria-hidden="true" className="h-5 w-24 animate-pulse rounded bg-line/70" />
+            <div
+              aria-hidden="true"
+              className="mt-3 h-4 w-56 max-w-full animate-pulse rounded bg-line/70"
+            />
+          </Panel>
+        }
+      >
+        <StudentAttendanceStatus db={data.db} locale={locale} lessonId={id} />
+      </Suspense>
       {data.lesson.notes && (
         <Panel className="mb-6">
           <h2 className="font-black text-teal">{ar ? 'ملاحظات الحصة' : 'Lesson notes'}</h2>
@@ -83,7 +92,7 @@ export default async function StudentLesson({
                         href={safeLink(material.url)!}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="break-all font-bold text-orange underline"
+                        className="inline-flex min-h-11 items-center break-all font-bold text-orange underline"
                       >
                         {ar ? 'فتح الرابط' : 'Open resource'}
                       </Link>
