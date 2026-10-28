@@ -18,7 +18,7 @@ describe('teacher group template preview', () => {
     expect(html).toContain('The local template option uses authored text, not AI');
     expect(html).toContain('Nothing is saved until you save the group form');
     expect(html).toContain('Create template preview');
-    expect(html).toContain('Generate with SanDak');
+    expect(html).toContain('Generate with SanDai');
     expect(html).toContain('Local group template');
     expect(html).toContain('id="group-template-topic"');
     expect(html).not.toContain('<form');
@@ -28,7 +28,7 @@ describe('teacher group template preview', () => {
   it('keeps local drafting explicitly labeled and does not nest or submit the parent form', () => {
     const html = renderToStaticMarkup(<GroupDraftPanel locale="ar" onApply={() => undefined} />);
     expect(html).toContain('خيار القالب المحلي يستخدم نصًا مُعدًا مسبقًا');
-    expect(html).toContain('إنشاء بمساعدة سندك');
+    expect(html).toContain('إنشاء بمساعدة سنداي');
     expect(html).not.toContain('<form');
     expect(html).not.toContain('type="submit"');
   });

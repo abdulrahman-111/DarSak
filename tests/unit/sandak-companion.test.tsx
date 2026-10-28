@@ -9,7 +9,7 @@ import en from '../../messages/en.json';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/en' }));
 
-describe('SanDak mood mapping', () => {
+describe('SanDai mood mapping', () => {
   const idle = { status: 'idle', doneFlash: false, sleeping: false } as const;
   it('maps the real request lifecycle to moods', () => {
     expect(deriveMood(idle)).toBe('idle');
@@ -27,7 +27,7 @@ describe('SanDak mood mapping', () => {
   });
 });
 
-describe('SanDak companion shell', () => {
+describe('SanDai companion shell', () => {
   it('renders nothing on the server so the remembered hide preference never flashes', () => {
     const html = renderToStaticMarkup(
       createElement(SandakCompanion, {
@@ -68,7 +68,7 @@ function staticImports(file: string, seen = new Set<string>()): Set<string> {
   return seen;
 }
 
-describe('SanDak global bundle budget', () => {
+describe('SanDai global bundle budget', () => {
   it('keeps zod, chat, guidance and panels out of the always-loaded companion', () => {
     const graph = [...staticImports(resolve('src/components/sandak/companion.tsx'))];
     expect(graph.some(entry => entry.includes('zod'))).toBe(false);
