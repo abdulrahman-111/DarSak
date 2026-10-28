@@ -14,6 +14,13 @@ const safeText = (value: unknown, max: number) =>
         .trim()
         .slice(0, max)
     : '';
+/**
+ * Breaks URL- and domain-looking runs in user-supplied text so mail clients do not
+ * auto-link them: "://" becomes "[://]" (no longer a scheme) and a dot between two
+ * alphanumerics becomes "[.]" (no longer a domain). Applied after safeText, before escapeHtml.
+ */
+export const defangUserText = (value: string) =>
+  value.replace(/:\/\//g, '[://]').replace(/(?<=[A-Za-z0-9])\.(?=[A-Za-z0-9])/g, '[.]');
 const escapeHtml = (value: string) =>
   value
     .replace(/&/g, '&amp;')
@@ -51,7 +58,7 @@ export function renderEmail(
   ) {
     const teacherId = safeText(payload.teacher_id, 36);
     if (!uuid.test(teacherId)) return null;
-    const name = safeText(payload.teacher_name, 160);
+    const name = defangUserText(safeText(payload.teacher_name, 160));
     if (kind === 'teacher_review_requested') {
       titleEn = 'Teacher review request';
       titleAr = 'طلب مراجعة معلم';
@@ -75,13 +82,13 @@ export function renderEmail(
     }
   } else if (kind === 'enrollment_requested') {
     const groupId = safeText(payload.group_id, 36),
-      group = safeText(payload.group_name, 160),
-      student = safeText(payload.student_name, 160);
+      group = defangUserText(safeText(payload.group_name, 160)),
+      student = defangUserText(safeText(payload.student_name, 160));
     if (!uuid.test(groupId)) return null;
     titleEn = 'New enrollment request';
     titleAr = 'طلب انضمام جديد';
-    detailEn = `${student ? `${student} requested` : 'A student requested'} to join ${group ? group : 'your group'}.`;
-    detailAr = `${student || 'أحد الطلاب'} طلب الانضمام إلى ${group || 'مجموعتك'}.`;
+    detailEn = `${student ? `A student ("${student}") requested` : 'A student requested'} to join ${group ? `"${group}"` : 'your group'}.`;
+    detailAr = `${student ? `الطالب ("${student}") طلب` : 'أحد الطلاب طلب'} الانضمام إلى ${group ? `"${group}"` : 'مجموعتك'}.`;
     path = `/teacher/requests?group_id=${groupId}`;
   } else if (kind === 'teacher_renewal') {
     const starts = date(payload.period_starts_at),
