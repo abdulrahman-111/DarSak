@@ -1,5 +1,8 @@
+import type { Metadata } from 'next';
 import { ensureLocale } from '@/i18n/config';
 import { OptionalWorkspaceLayout } from '@/components/platform/optional-workspace-layout';
+
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function AccountLayout({
   children,

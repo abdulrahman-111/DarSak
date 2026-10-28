@@ -1,11 +1,23 @@
+import type { Metadata } from 'next';
+import { pageMetadata } from '@/features/seo/metadata';
+import { seoCopy } from '@/features/seo/copy';
 import Link from 'next/link';
-import { getDictionary } from '@/i18n/config';
+import { ensureLocale, getDictionary } from '@/i18n/config';
 import { AuthAside } from '@/components/auth/auth-aside';
 import { AuthForm } from '@/components/auth/auth-form';
 import { authCopy } from '@/components/auth/copy';
 export const maxDuration = 40;
 
 type SearchValue = string | string[] | undefined;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const locale = ensureLocale((await params).locale);
+  return pageMetadata({ locale, path: '/register', ...seoCopy[locale].register });
+}
 
 export default async function Register({
   params,

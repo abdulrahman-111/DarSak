@@ -1,6 +1,7 @@
 import { groupLearningDetails } from '@/features/teacher/group-learning-data';
 import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import { GroupFeedbackSection } from '@/features/feedback/group-section';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { GroupRequestBar } from '@/features/groups/request-bar';
 import Image from 'next/image';
@@ -15,10 +16,12 @@ import {
   Users,
 } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
+import { pageMetadata, snippet } from '@/features/seo/metadata';
+import { publicGroupDetail } from '@/features/platform/data';
 import { publicCopy } from '@/components/public/copy';
 import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
-import { canRequest } from '@/features/student/domain';
+import { canRequest, idSchema } from '@/features/student/domain';
 import { EnrollmentForm } from '@/features/student/forms';
 import { WaitlistJoinForm, WaitlistWithdrawForm } from '@/features/student/waitlist-forms';
 import { canSharePublicGroup } from '@/features/student/share-domain';
@@ -36,6 +39,41 @@ const weekdays = {
   en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
   ar: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
 };
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: 'ar' | 'en'; id: string }>;
+}): Promise<Metadata> {
+  const { locale, id } = await params;
+  const ar = locale === 'ar';
+  const fallback = pageMetadata({
+    locale,
+    path: `/groups/${id}`,
+    title: ar ? 'تفاصيل المجموعة' : 'Group details',
+    description: ar
+      ? 'تفاصيل المجموعة ومواعيدها على درسك.'
+      : 'Group details and schedule on DarSak.',
+    noIndex: true,
+  });
+  if (!isConfigured() || !idSchema.safeParse(id).success) return fallback;
+  // Same memoized public lookup the page uses for the group, so no extra fetch.
+  const { data: group, error } = await publicGroupDetail(id);
+  if (error || !group || group.status !== 'published') return fallback;
+  const subject = group.offering?.subject
+    ? catalogueDisplayName(group.offering.subject, locale)
+    : '';
+  const teacher = group.teacher?.full_name ?? '';
+  const generated = ar
+    ? `مجموعة${subject ? ` ${subject}` : ''}${teacher ? ` مع ${teacher}` : ''}${group.location ? ` — ${group.location}` : ''} على درسك.`
+    : `${subject ? `${subject} group` : 'Group'}${teacher ? ` with ${teacher}` : ''}${group.location ? ` — ${group.location}` : ''} on DarSak.`;
+  return pageMetadata({
+    locale,
+    path: `/groups/${id}`,
+    title: subject ? `${group.name} — ${subject}` : group.name,
+    description: snippet(group.description) || generated,
+  });
+}
 
 export default async function GroupDetail({
   params,
