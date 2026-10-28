@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { idSchema } from '@/features/student/domain';
+import { parseLessonReminderPreference } from './reminder-preference';
 
 export type NotificationActionState = { error?: string; success?: string } | null;
 
@@ -70,6 +71,28 @@ export async function markAllNotificationsRead(
   return {
     success: locale === 'ar' ? 'تم تحديد الإشعارات كمقروءة.' : 'Notifications marked as read.',
   };
+}
+
+export async function setLessonReminderPreference(
+  locale: string,
+  _previous: NotificationActionState,
+  formData: FormData,
+): Promise<NotificationActionState> {
+  const ar = locale === 'ar';
+  const failure = {
+    error: ar
+      ? 'تعذر حفظ تفضيل التذكيرات. حاول مرة أخرى.'
+      : 'Could not save your reminder preference. Try again.',
+  };
+  if (!['en', 'ar'].includes(locale)) return failure;
+  const value = parseLessonReminderPreference(formData.get('lesson_reminders'));
+  if (!value) return failure;
+  const viewer = await getRequestViewer();
+  if (!canManageOwnNotifications(viewer)) return failure;
+  const { error } = await viewer.db.rpc('set_lesson_reminder_preference', { p_value: value });
+  if (error) return failure;
+  revalidatePath(`/${locale}/account/notifications`);
+  return { success: ar ? 'تم حفظ تفضيل التذكيرات.' : 'Reminder preference saved.' };
 }
 
 /** Opening the notifications page marks the notifications it lists as read. */
