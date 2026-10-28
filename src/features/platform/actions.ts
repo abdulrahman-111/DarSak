@@ -3,7 +3,7 @@ import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { flushEmailOutbox } from '@/features/email/worker';
 import { createClient } from '@/lib/supabase/server';
-import { groupSchema, slotSchema, lessonSchema, profileSchema } from '@/lib/domain';
+import { slotSchema, lessonSchema, profileSchema } from '@/lib/domain';
 import { submitProblemReport } from '@/features/reports/actions';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
 function result(error?: { message: string } | null) {
@@ -132,40 +132,6 @@ export async function updateProfile(locale: string, _previous: unknown, formData
     .update({ full_name: parsed.data.fullName, preferred_language: parsed.data.preferredLanguage })
     .eq('id', user.id);
   revalidatePath(`/${locale}/profile`);
-  return result(r.error);
-}
-export async function saveGroup(locale: string, _previous: unknown, formData: FormData) {
-  const parsed = groupSchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) return { error: parsed.error.issues[0].message };
-  const db = await createClient();
-  const denied = await accessError(locale, db);
-  if (denied) return { error: denied };
-  const id = String(formData.get('id') || '');
-  const {
-    data: { user },
-  } = await db.auth.getUser();
-  if (!user) return { error: 'Not authenticated' };
-  const payload = {
-    teacher_id: user.id,
-    offering_id: parsed.data.offeringId,
-    name: parsed.data.name,
-    description: parsed.data.description,
-    capacity: parsed.data.capacity,
-    location: parsed.data.location,
-    status: parsed.data.status,
-  };
-  const r = id
-    ? await db.from('groups').update(payload).eq('id', id).eq('teacher_id', user.id)
-    : await db.from('groups').insert(payload);
-  revalidatePath(`/${locale}/teacher/groups`);
-  return result(r.error);
-}
-export async function archiveGroup(locale: string, id: string) {
-  const db = await createClient();
-  const denied = await accessError(locale, db);
-  if (denied) return { error: denied };
-  const r = await db.from('groups').update({ status: 'archived' }).eq('id', id);
-  revalidatePath(`/${locale}/teacher/groups`);
   return result(r.error);
 }
 export async function saveSlot(locale: string, _previous: unknown, formData: FormData) {

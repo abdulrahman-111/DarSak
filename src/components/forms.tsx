@@ -1,12 +1,7 @@
 'use client';
 import { useActionState } from 'react';
 import { loginAction, signupAction } from '@/features/auth/actions';
-import {
-  updateProfile,
-  submitReport,
-  requestEnrollment,
-  saveGroup,
-} from '@/features/platform/actions';
+import { updateProfile, submitReport, requestEnrollment } from '@/features/platform/actions';
 const input =
   'mt-2 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-none ring-orange focus:ring-2';
 function Feedback({ state }: { state: any }) {
@@ -148,66 +143,6 @@ export function JoinButton({
         {pending ? t.loading : t.apply}
       </button>
       {state?.error && <p className="mt-2 text-sm text-danger">{state.error}</p>}
-    </form>
-  );
-}
-export function GroupForm({
-  locale,
-  t,
-  offerings,
-}: {
-  locale: string;
-  t: Record<string, string>;
-  offerings: any[];
-}) {
-  const [state, action, pending] = useActionState(saveGroup.bind(null, locale), null);
-  return (
-    <form action={action} className="grid gap-4">
-      <label>
-        {t.groups}
-        <input className={input} name="name" required />
-      </label>
-      <label>
-        {t.description}
-        <textarea className={input} name="description" rows={3} />
-      </label>
-      <label>
-        {t.subject}
-        <select className={input} name="offeringId" required>
-          <option value="">—</option>
-          {offerings.map(o => (
-            <option key={o.id} value={o.id}>
-              {o.subject?.name_en || o.subject?.name_ar || o.id}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label>
-          {t.capacity}
-          <input
-            className={input}
-            name="capacity"
-            type="number"
-            min="1"
-            max="500"
-            defaultValue="10"
-          />
-        </label>
-        <label>
-          {t.location}
-          <input className={input} name="location" />
-        </label>
-      </div>
-      <input type="hidden" name="status" value="draft" />
-      <button disabled={pending} className="rounded-2xl bg-teal px-5 py-3 font-bold text-white">
-        {pending ? t.loading : t.save}
-      </button>
-      {state?.error && (
-        <p role="alert" className="text-sm text-danger">
-          {state.error}
-        </p>
-      )}
     </form>
   );
 }

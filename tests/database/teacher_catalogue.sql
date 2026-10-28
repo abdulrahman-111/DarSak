@@ -194,6 +194,22 @@ do $$
 begin
   if not exists(select 1 from public.subjects where id='7a100000-0000-4000-8000-000000000003') then raise exception 'owner cannot read a private draft label'; end if;
   if exists(select 1 from public.subjects where id='7a100000-0000-4000-8000-000000000002') then raise exception 'owner can read another teacher private label'; end if;
+  begin
+    update public.groups set name='Server timestamp check',updated_at='2100-01-01T00:00:00Z' where id='7a400000-0000-4000-8000-000000000002';
+    raise exception 'raw group update by teacher succeeded';
+  exception when insufficient_privilege then null; end;
+  begin
+    insert into public.groups(teacher_id,offering_id,name,capacity)
+    values('7a000000-0000-4000-8000-000000000001','7a300000-0000-4000-8000-000000000002','Foreign pair',5);
+    raise exception 'raw group insert by teacher succeeded';
+  exception when insufficient_privilege then null; end;
+end $$;
+reset role;
+-- Direct writes are revoked from authenticated; the row guards still run for
+-- the table owner while auth.uid() is the teacher.
+set local request.jwt.claim.sub='7a000000-0000-4000-8000-000000000001';
+do $$
+begin
   update public.groups set name='Server timestamp check',updated_at='2100-01-01T00:00:00Z' where id='7a400000-0000-4000-8000-000000000002';
   if (select updated_at from public.groups where id='7a400000-0000-4000-8000-000000000002')='2100-01-01T00:00:00Z'::timestamptz then raise exception 'raw group update forged updated_at'; end if;
   begin
@@ -204,7 +220,6 @@ begin
     if sqlerrm='teacher selected a foreign owned offering' then raise; end if;
   end;
 end $$;
-reset role;
 
 set local role authenticated;
 set local request.jwt.claim.sub='7a000000-0000-4000-8000-000000000002';

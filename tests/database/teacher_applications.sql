@@ -133,7 +133,7 @@ begin
   begin
     update public.teacher_profiles set approved=true where id=auth.uid();
     raise exception 'raw owner approval approved an unsubmitted application';
-  exception when raise_exception then
+  exception when raise_exception or insufficient_privilege then
     if sqlerrm='raw owner approval approved an unsubmitted application' then raise; end if;
   end;
 end $$;

@@ -51,6 +51,37 @@ beforeEach(() => {
   revalidatePathMock.mockReset();
 });
 
+describe('admin group status changes', () => {
+  const groupId = '55555555-5555-4555-8555-555555555555';
+  function groupSetup() {
+    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    const from = vi.fn();
+    const db = { rpc, from };
+    getAdminActorMock.mockResolvedValue({ db, id: '44444444-4444-4444-8444-444444444444' });
+    return { rpc, from };
+  }
+  it.each([
+    ['draft', 'admin_set_group_draft'],
+    ['archived', 'cancel_teacher_group'],
+  ])('routes %s through %s and never writes groups directly', async (status, fn) => {
+    const { rpc, from } = groupSetup();
+    const result = await adminAction('en', 'group', null, form({ id: groupId, status }));
+    expect(rpc).toHaveBeenCalledWith(fn, { p_group_id: groupId });
+    expect(from).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty('error');
+  });
+  it('publishes through publish_group', async () => {
+    const { rpc, from } = groupSetup();
+    await adminAction('en', 'group', null, form({ id: groupId, status: 'published' }));
+    expect(rpc).toHaveBeenCalledWith('publish_group', {
+      p_group_id: groupId,
+      p_from: null,
+      p_until: null,
+    });
+    expect(from).not.toHaveBeenCalled();
+  });
+});
+
 describe('explicit teacher review decisions', () => {
   it('does not treat the old checkbox value as an approval decision', async () => {
     const { rpc } = setup();

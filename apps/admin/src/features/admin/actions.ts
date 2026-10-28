@@ -168,7 +168,11 @@ export async function adminAction(
           };
         }
         result = published;
-      } else result = await db.from('groups').update({ status }).eq('id', id).select('id').single();
+      } else if (status === 'archived') {
+        result = await db.rpc('cancel_teacher_group', { p_group_id: id });
+      } else {
+        result = await db.rpc('admin_set_group_draft', { p_group_id: id });
+      }
     } else if (operation === 'report') {
       z.uuid().parse(id);
       const status = z.enum(['open', 'resolved']).parse(value('status'));
