@@ -83,7 +83,7 @@ The script promotes exactly one existing profile; sign out and back in to refres
 
 ## Scheduled jobs
 
-`vercel.json` schedules `/api/email/cron` daily at 06:00 UTC and `/api/account-deletions/cron` daily at 06:30 UTC. Configure `CRON_SECRET` in Vercel. The account-deletion route also requires `ACCOUNT_DELETION_WORKER_SECRET`; the email worker additionally requires `GMAIL_APP_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, the Supabase URL, and an HTTPS `NEXT_PUBLIC_SITE_URL`. Without complete email configuration, app notification delivery stays disabled and queued messages remain in the outbox.
+`vercel.json` schedules `/api/email/cron` daily at 06:00 UTC and `/api/account-deletions/cron` daily at 06:30 UTC. Configure `CRON_SECRET` in Vercel. The account-deletion route also requires `ACCOUNT_DELETION_WORKER_SECRET`; the email worker additionally requires `GMAIL_APP_PASSWORD`, `SUPABASE_SERVICE_ROLE_KEY`, the Supabase URL, and an HTTPS `NEXT_PUBLIC_SITE_URL`. Without complete email configuration, app notification delivery stays disabled, queued messages remain in the outbox, and the production cron route answers `503` with `state: "not_configured"` so the missing configuration shows up as a failing cron run instead of a silent success. Each run claims jobs one at a time, up to 50, until the outbox is empty or the worker's 38-second time budget is spent.
 
 ## Release checks
 

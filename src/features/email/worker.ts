@@ -9,6 +9,8 @@ const SMTP_USER = ADMIN_MAILBOX;
 const SEND_DEADLINE_MS = 15_000;
 const STORE_DEADLINE_MS = 5_000;
 const TOTAL_BUDGET_MS = 38_000;
+/** Upper bound per run; the time budget above normally stops a run earlier. */
+export const MAX_EMAIL_JOBS_PER_RUN = 50;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export type EmailJob = {
@@ -95,7 +97,7 @@ export function classifyEmailError(error: unknown): { outcome: 'retry' | 'failed
   return { outcome: 'retry', code: 'smtp_transient' };
 }
 
-/** Executes at most five jobs, claiming each individually and stopping inside a 120s DB lease. */
+/** Executes up to maxJobs (capped at MAX_EMAIL_JOBS_PER_RUN), claiming each individually, stopping within the time budget and inside a 120s DB lease. */
 export async function runEmailWorker(
   deps: WorkerDeps,
   origin: string,
@@ -112,7 +114,7 @@ export async function runEmailWorker(
   };
   const now = deps.now ?? Date.now;
   const startedAt = now();
-  for (let index = 0; index < Math.min(5, Math.max(0, maxJobs)); index += 1) {
+  for (let index = 0; index < Math.min(MAX_EMAIL_JOBS_PER_RUN, Math.max(0, maxJobs)); index += 1) {
     // Reserve a full claim + send + settle window before claiming the next job.
     if (now() - startedAt >= TOTAL_BUDGET_MS - (STORE_DEADLINE_MS * 2 + SEND_DEADLINE_MS)) break;
     let result: { jobs: EmailJob[]; skipped: number };
