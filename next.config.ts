@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { BASELINE_CSP, HSTS } from './src/lib/security/csp';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -12,8 +13,11 @@ const nextConfig: NextConfig = {
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+            // Always-enforced baseline. The nonce policy is added per request by src/proxy.ts.
+            value: BASELINE_CSP,
           },
+          // Vercel only adds HSTS on *.vercel.app; custom domains need it from the app.
+          { key: 'Strict-Transport-Security', value: HSTS },
           {
             key: 'Permissions-Policy',
             value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
