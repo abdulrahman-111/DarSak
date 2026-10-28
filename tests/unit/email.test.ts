@@ -223,3 +223,71 @@ describe('transactional email boundaries', () => {
     expect(validCronAuthorization('secret', 'secret')).toBe(false);
   });
 });
+
+describe('user-supplied names in notification emails', () => {
+  const origin = 'https://dars.example';
+  const url = 'https://evil.example';
+
+  it('defangs URL-like student names in text and html bodies', () => {
+    const mail = renderEmail(
+      'enrollment_requested',
+      { group_id: id, group_name: 'Physics', student_name: 'Pay now at https://evil.example' },
+      origin,
+    );
+    expect(mail).not.toBeNull();
+    for (const body of [mail!.text, mail!.html]) {
+      expect(body).not.toContain('https://evil');
+      expect(body).not.toContain('evil.example');
+      expect(body).toContain('[://]');
+      expect(body).toContain('evil[.]example');
+    }
+  });
+
+  it('defangs URL-like teacher and group names', () => {
+    const teacher = renderEmail(
+      'teacher_review_requested',
+      { teacher_id: id, teacher_name: 'www.evil.example' },
+      origin,
+    );
+    expect(teacher?.text).not.toContain('www.evil.example');
+    expect(teacher?.html).not.toContain('www.evil.example');
+    expect(teacher?.text).toContain('www[.]evil[.]example');
+
+    const group = renderEmail(
+      'enrollment_requested',
+      { group_id: id, group_name: 'http://evil.example/login', student_name: 'Sara' },
+      origin,
+    );
+    expect(group?.text).not.toContain('http://');
+    expect(group?.html).not.toContain('evil.example');
+    expect(group?.text).not.toContain(url);
+  });
+
+  it('keeps normal Arabic and English names unchanged', () => {
+    const en = renderEmail(
+      'teacher_review_requested',
+      { teacher_id: id, teacher_name: 'Youssef Karim' },
+      origin,
+    );
+    expect(en?.text).toContain('(Youssef Karim)');
+    expect(en?.html).toContain('(Youssef Karim)');
+
+    const ar = renderEmail(
+      'teacher_review_requested',
+      { teacher_id: id, teacher_name: 'يوسف كريم' },
+      origin,
+    );
+    expect(ar?.text).toContain('(يوسف كريم)');
+    expect(ar?.html).toContain('(يوسف كريم)');
+
+    const enrollment = renderEmail(
+      'enrollment_requested',
+      { group_id: id, group_name: 'Physics 101', student_name: 'Youssef Karim' },
+      origin,
+    );
+    expect(enrollment?.text).toContain(
+      'A student ("Youssef Karim") requested to join "Physics 101".',
+    );
+    expect(enrollment?.text).toContain('الطالب ("Youssef Karim") طلب الانضمام إلى "Physics 101".');
+  });
+});
