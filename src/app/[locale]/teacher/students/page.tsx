@@ -5,7 +5,7 @@ import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui
 import { StudentPagination } from '@/features/student/pagination';
 import { teacherStudents } from '@/features/teacher/data';
 import { TeacherRosterFilterForm } from '@/features/teacher/roster-filter-form';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 
 export default async function TeacherStudents({
   params,
@@ -21,8 +21,9 @@ export default async function TeacherStudents({
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw),
     ar = locale === 'ar';
-  await requireTeachingAccess(locale);
-  const data = await teacherStudents(locale, query.page, query.q, query.group_id);
+  const { data } = await loadWithTeachingAccess(locale, () =>
+    teacherStudents(locale, query.page, query.q, query.group_id),
+  );
   const copy = ar
     ? {
         eyebrow: 'المجموعات الحالية',

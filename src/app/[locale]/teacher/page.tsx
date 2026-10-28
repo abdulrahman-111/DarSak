@@ -40,7 +40,14 @@ export default async function TeacherDashboard({
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   const me = await requireViewer(locale, 'teacher');
-  const access = await readTeacherAccessStatus(me.db);
+  // The overview starts together with the access check (one round trip instead of two). It is
+  // RLS-scoped to this teacher and is dropped unread when teaching access is paused.
+  const [accessResult, overviewResult] = await Promise.allSettled([
+    readTeacherAccessStatus(me.db),
+    teacherOverview(locale),
+  ]);
+  if (accessResult.status === 'rejected') throw accessResult.reason;
+  const access = accessResult.value;
   if (access.error || !access.status)
     return (
       <>
@@ -102,7 +109,8 @@ export default async function TeacherDashboard({
       </>
     );
 
-  const data = await teacherOverview(locale);
+  if (overviewResult.status === 'rejected') throw overviewResult.reason;
+  const data = overviewResult.value;
   const now = new Date();
   const firstName = data.me.profile.full_name.trim().split(/\s+/)[0] || data.me.profile.full_name;
   const todayLessons = [...data.todayLessons].sort(
@@ -356,6 +364,171 @@ export default async function TeacherDashboard({
             </div>
           </section>
 
+          <div className="mb-6 grid gap-5 xl:grid-cols-2">
+            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-teal">{copy.todayHeading}</h2>
+                <Link
+                  href={`/${locale}/teacher/lessons`}
+                  aria-label={ar ? 'افتح تقويم الحصص' : 'Open lesson calendar'}
+                  className="grid size-11 shrink-0 place-items-center rounded-xl text-teal hover:bg-cream"
+                >
+                  <ArrowUpRight size={18} aria-hidden="true" className="rtl:-scale-x-100" />
+                </Link>
+              </div>
+              {todayLessons.length ? (
+                <ul className="divide-y divide-line">
+                  {todayLessons.map(lesson => {
+                    const state = lessonCountdown(lesson.starts_at, lesson.ends_at, locale, now);
+                    const group = lessonGroup(lesson);
+                    return (
+                      <li key={lesson.id} className="py-3">
+                        <div className="flex min-w-0 flex-wrap items-start gap-x-3 gap-y-1 sm:flex-nowrap">
+                          <span
+                            className={`mt-1 grid w-16 shrink-0 place-items-center rounded-xl px-1 py-2 text-xs font-bold ${state.kind === 'live' ? 'bg-teal text-white' : state.kind === 'ended' ? 'bg-cream text-muted' : 'bg-teal/5 text-teal'}`}
+                          >
+                            {new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
+                              hour: 'numeric',
+                              minute: '2-digit',
+                              timeZone: 'Africa/Cairo',
+                            }).format(new Date(lesson.starts_at))}
+                          </span>
+                          <div className="min-w-0 flex-1 basis-40">
+                            <Link
+                              href={`/${locale}/teacher/lessons/${lesson.id}`}
+                              className="block min-h-11 break-words py-1 text-sm font-bold text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                            >
+                              {lesson.title}
+                            </Link>
+                            <p className="text-xs leading-5 text-muted">
+                              {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
+                              {group ? ` · ${group}` : ''}
+                              {lesson.status === 'scheduled' && state.kind !== 'ended'
+                                ? ` · ${state.label}`
+                                : ''}
+                            </p>
+                            <div className="mt-1 flex flex-wrap gap-x-4">
+                              <Link
+                                href={`/${locale}/teacher/lessons/${lesson.id}#attendance`}
+                                className="inline-flex min-h-11 items-center text-xs font-semibold text-teal underline underline-offset-4"
+                              >
+                                {copy.attendance}
+                              </Link>
+                              <Link
+                                href={`/${locale}/teacher/lessons/${lesson.id}#materials`}
+                                className="inline-flex min-h-11 items-center text-xs font-semibold text-muted underline underline-offset-4"
+                              >
+                                {copy.materials}
+                              </Link>
+                            </div>
+                          </div>
+                          <Status value={lesson.status} locale={locale} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <EmptyState
+                  action={{ href: `/${locale}/teacher/lessons?new=1`, label: copy.addLesson }}
+                >
+                  {copy.noToday}
+                </EmptyState>
+              )}
+            </section>
+
+            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
+              <div className="mb-4 flex items-center justify-between gap-3">
+                <h2 className="text-lg font-bold text-teal">{copy.requestsHeading}</h2>
+                <Link
+                  href={`/${locale}/teacher/requests`}
+                  className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
+                >
+                  {copy.viewAll}
+                  <ArrowUpRight size={15} aria-hidden="true" className="rtl:-scale-x-100" />
+                </Link>
+              </div>
+              {data.pendingRequests.length ? (
+                <div className="grid gap-3">
+                  {data.pendingRequests.slice(0, 3).map(request => (
+                    <div key={request.enrollment_id} className="rounded-2xl border border-line p-4">
+                      <div className="flex min-w-0 items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <strong className="break-words text-sm text-teal">
+                            {request.full_name}
+                          </strong>
+                          <p className="mt-1 break-words text-sm text-muted">
+                            {request.group_name}
+                          </p>
+                        </div>
+                        <Status value={request.status} locale={locale} />
+                      </div>
+                      <EnrollmentDecisionButtons
+                        locale={locale}
+                        id={request.enrollment_id}
+                        status={request.status}
+                      />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState>{copy.noRequests}</EmptyState>
+              )}
+            </section>
+
+            {laterLessons.length > 0 && (
+              <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm xl:col-span-2">
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <h2 className="text-lg font-bold text-teal">{copy.laterHeading}</h2>
+                  <Link
+                    href={`/${locale}/teacher/lessons`}
+                    className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
+                  >
+                    {copy.viewAll}
+                    <ArrowUpRight size={15} aria-hidden="true" className="rtl:-scale-x-100" />
+                  </Link>
+                </div>
+                <ul className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                  {laterLessons.map(lesson => {
+                    const tile = lessonDateTile(lesson.starts_at, locale);
+                    const group = lessonGroup(lesson);
+                    return (
+                      <li key={lesson.id} className="min-w-0">
+                        <Link
+                          href={`/${locale}/teacher/lessons/${lesson.id}`}
+                          className="student-card flex h-full min-h-20 min-w-0 items-start gap-3 rounded-xl border border-line p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                        >
+                          <span className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal">
+                            <span className="sr-only">{tile.fullLabel}</span>
+                            <span aria-hidden="true">
+                              <strong className="text-lg leading-none">{tile.day}</strong>
+                              <span className="mt-1 block text-[11px] font-semibold text-muted">
+                                {tile.month}
+                              </span>
+                            </span>
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block break-words text-sm font-bold text-teal [overflow-wrap:anywhere]">
+                              {lesson.title}
+                            </span>
+                            <span className="mt-1 block text-xs leading-5 text-muted">
+                              {tile.weekday} ·{' '}
+                              {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
+                            </span>
+                            {group && (
+                              <span className="block break-words text-xs leading-5 text-muted [overflow-wrap:anywhere]">
+                                {group}
+                              </span>
+                            )}
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </section>
+            )}
+          </div>
           {setupTasks.length > 0 && (
             <section className="mb-6 min-w-0 rounded-2xl border border-orange/30 bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-start justify-between gap-3">
@@ -453,168 +626,6 @@ export default async function TeacherDashboard({
                 </span>
               </Link>
             ))}
-          </div>
-
-          <div className="grid gap-5 xl:grid-cols-2">
-            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-teal">{copy.todayHeading}</h2>
-                <Link
-                  href={`/${locale}/teacher/lessons`}
-                  aria-label={ar ? 'افتح تقويم الحصص' : 'Open lesson calendar'}
-                  className="grid size-11 shrink-0 place-items-center rounded-xl text-teal hover:bg-cream"
-                >
-                  <ArrowUpRight size={18} aria-hidden="true" />
-                </Link>
-              </div>
-              {todayLessons.length ? (
-                <ul className="divide-y divide-line">
-                  {todayLessons.map(lesson => {
-                    const state = lessonCountdown(lesson.starts_at, lesson.ends_at, locale, now);
-                    const group = lessonGroup(lesson);
-                    return (
-                      <li key={lesson.id} className="py-3">
-                        <div className="flex min-w-0 items-start gap-3">
-                          <span
-                            className={`mt-1 grid w-16 shrink-0 place-items-center rounded-xl px-1 py-2 text-xs font-bold ${state.kind === 'live' ? 'bg-teal text-white' : state.kind === 'ended' ? 'bg-cream text-muted' : 'bg-teal/5 text-teal'}`}
-                          >
-                            {new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                              timeZone: 'Africa/Cairo',
-                            }).format(new Date(lesson.starts_at))}
-                          </span>
-                          <div className="min-w-0 flex-1">
-                            <Link
-                              href={`/${locale}/teacher/lessons/${lesson.id}`}
-                              className="block min-h-11 break-words py-1 text-sm font-bold text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
-                            >
-                              {lesson.title}
-                            </Link>
-                            <p className="text-xs leading-5 text-muted">
-                              {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
-                              {group ? ` · ${group}` : ''}
-                              {lesson.status === 'scheduled' && state.kind !== 'ended'
-                                ? ` · ${state.label}`
-                                : ''}
-                            </p>
-                            <div className="mt-1 flex flex-wrap gap-x-4">
-                              <Link
-                                href={`/${locale}/teacher/lessons/${lesson.id}#attendance`}
-                                className="inline-flex min-h-11 items-center text-xs font-semibold text-teal underline underline-offset-4"
-                              >
-                                {copy.attendance}
-                              </Link>
-                              <Link
-                                href={`/${locale}/teacher/lessons/${lesson.id}#materials`}
-                                className="inline-flex min-h-11 items-center text-xs font-semibold text-muted underline underline-offset-4"
-                              >
-                                {copy.materials}
-                              </Link>
-                            </div>
-                          </div>
-                          <Status value={lesson.status} locale={locale} />
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : (
-                <EmptyState>{copy.noToday}</EmptyState>
-              )}
-            </section>
-
-            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <h2 className="text-lg font-bold text-teal">{copy.requestsHeading}</h2>
-                <Link
-                  href={`/${locale}/teacher/requests`}
-                  className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
-                >
-                  {copy.viewAll}
-                  <ArrowUpRight size={15} aria-hidden="true" />
-                </Link>
-              </div>
-              {data.pendingRequests.length ? (
-                <div className="grid gap-3">
-                  {data.pendingRequests.slice(0, 3).map(request => (
-                    <div key={request.enrollment_id} className="rounded-2xl border border-line p-4">
-                      <div className="flex min-w-0 items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <strong className="break-words text-sm text-teal">
-                            {request.full_name}
-                          </strong>
-                          <p className="mt-1 break-words text-sm text-muted">
-                            {request.group_name}
-                          </p>
-                        </div>
-                        <Status value={request.status} locale={locale} />
-                      </div>
-                      <EnrollmentDecisionButtons
-                        locale={locale}
-                        id={request.enrollment_id}
-                        status={request.status}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <EmptyState>{copy.noRequests}</EmptyState>
-              )}
-            </section>
-
-            {laterLessons.length > 0 && (
-              <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm xl:col-span-2">
-                <div className="mb-4 flex items-center justify-between gap-3">
-                  <h2 className="text-lg font-bold text-teal">{copy.laterHeading}</h2>
-                  <Link
-                    href={`/${locale}/teacher/lessons`}
-                    className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
-                  >
-                    {copy.viewAll}
-                    <ArrowUpRight size={15} aria-hidden="true" />
-                  </Link>
-                </div>
-                <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {laterLessons.map(lesson => {
-                    const tile = lessonDateTile(lesson.starts_at, locale);
-                    const group = lessonGroup(lesson);
-                    return (
-                      <li key={lesson.id}>
-                        <Link
-                          href={`/${locale}/teacher/lessons/${lesson.id}`}
-                          className="student-card flex h-full min-h-20 items-start gap-3 rounded-xl border border-line p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
-                        >
-                          <span className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal">
-                            <span className="sr-only">{tile.fullLabel}</span>
-                            <span aria-hidden="true">
-                              <strong className="text-lg leading-none">{tile.day}</strong>
-                              <span className="mt-1 block text-[11px] font-semibold text-muted">
-                                {tile.month}
-                              </span>
-                            </span>
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block break-words text-sm font-bold text-teal">
-                              {lesson.title}
-                            </span>
-                            <span className="mt-1 block text-xs leading-5 text-muted">
-                              {tile.weekday} ·{' '}
-                              {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
-                            </span>
-                            {group && (
-                              <span className="block truncate text-xs leading-5 text-muted">
-                                {group}
-                              </span>
-                            )}
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </section>
-            )}
           </div>
         </>
       )}

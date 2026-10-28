@@ -7,7 +7,12 @@ const mocks = vi.hoisted(() => ({
   learning: vi.fn(),
 }));
 vi.mock('@/features/teacher/setup-data', () => ({ teacherGroupSetup: mocks.setup }));
-vi.mock('@/components/platform/access', () => ({ requireTeachingAccess: mocks.access }));
+vi.mock('@/features/teacher/teaching-access-gate', () => ({
+  loadWithTeachingAccess: async (_locale: string, load: (me: unknown) => Promise<unknown>) => {
+    await mocks.access();
+    return { me: {}, data: await load({}) };
+  },
+}));
 vi.mock('@/features/teacher/group-learning-data', () => ({ groupLearningDetails: mocks.learning }));
 vi.mock('next/navigation', () => ({
   notFound: () => {

@@ -4,7 +4,7 @@ import { GroupLearningView } from '@/features/teacher/group-learning-view';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
 import { idSchema } from '@/features/student/domain';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { teacherGroupSetup } from '@/features/teacher/setup-data';
 import { GroupDetailsForm } from '@/features/teacher/setup-forms';
@@ -17,8 +17,11 @@ export default async function EditPublishedGroupPage({
   const { locale: raw, id } = await params;
   const locale = ensureLocale(raw);
   if (!idSchema.safeParse(id).success) notFound();
-  await requireTeachingAccess(locale);
-  const data = await teacherGroupSetup(locale, id);
+  const {
+    data: [data, learningResult],
+  } = await loadWithTeachingAccess(locale, me =>
+    Promise.all([teacherGroupSetup(locale, id), groupLearningDetails(me.db, id)]),
+  );
   if (data.notFound) notFound();
   const ar = locale === 'ar';
   if (data.error || !data.group || !data.values) {
@@ -38,7 +41,7 @@ export default async function EditPublishedGroupPage({
   }
   if (data.group.status !== 'published') notFound();
 
-  const learning = await groupLearningDetails(data.me.db, id);
+  const learning = learningResult;
   return (
     <UnsavedProfileProtection locale={locale} kind="group">
       <ScreenTitle
