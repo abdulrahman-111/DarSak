@@ -1,4 +1,12 @@
-import { z } from 'zod';
+// Kept free of zod: this module is imported by the global header's locale switch,
+// so any dependency here ships to every page's client bundle.
+const GUID_PATTERN =
+  /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+/** Same acceptance as zod's `z.guid()`: any 8-4-4-4-12 hexadecimal identifier. */
+export function isGuid(value: string): boolean {
+  return GUID_PATTERN.test(value);
+}
 
 export const DISCOVERY_PAGE_SIZE = 12;
 export const DISCOVERY_FETCH_LIMIT = DISCOVERY_PAGE_SIZE + 1;
@@ -31,7 +39,7 @@ function firstValue(input: DiscoveryFilterInput, key: string): string {
 
 function optionalUuid(input: DiscoveryFilterInput, key: string): string | null {
   const value = firstValue(input, key).trim();
-  return z.guid().safeParse(value).success ? value.toLowerCase() : null;
+  return isGuid(value) ? value.toLowerCase() : null;
 }
 
 function optionalWeekday(input: DiscoveryFilterInput): number | null {

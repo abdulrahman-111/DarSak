@@ -125,3 +125,23 @@ describe('public discovery filter normalization', () => {
     ).toHaveLength(80);
   });
 });
+
+describe('isGuid', () => {
+  it('matches zod guid() acceptance without importing zod into the client bundle', async () => {
+    const { isGuid } = await import('@/features/platform/discovery-domain');
+    const { z } = await import('zod');
+    const samples = [
+      '00000000-0000-4000-8000-000000000000',
+      'DE100000-0000-4000-8000-000000000001',
+      'de100000-0000-4000-8000-00000000000',
+      'de100000-0000-4000-8000-0000000000011',
+      'de100000x0000-4000-8000-000000000001',
+      'gggggggg-0000-4000-8000-000000000001',
+      ' 00000000-0000-4000-8000-000000000000',
+      '00000000-0000-4000-8000-000000000000\n',
+      '',
+      'not-a-uuid',
+    ];
+    for (const sample of samples) expect(isGuid(sample)).toBe(z.guid().safeParse(sample).success);
+  });
+});
