@@ -1,0 +1,64 @@
+# SanDak (سندك): DarSak study assistant
+
+SanDak is DarSak's bilingual (Arabic/English) study and teaching helper. It appears as a small pixel "pocket notebook" companion docked at the bottom corner of every page (bottom-end: bottom-right in English, bottom-left in Arabic, above the mobile tab bar). Its mood reflects real activity: idle, thinking (a request is running), needs you (a draft waits for review), done, oops (an error, with Retry) and sleeping (after two idle minutes or when the tab is hidden). A one-click Hide control remembers the choice in the browser; a small "Show SanDak" button brings it back. All animation stops under `prefers-reduced-motion`.
+
+## Who gets what
+
+| Visitor           | Companion              | Live AI chat                           | Group drafting                    |
+| ----------------- | ---------------------- | -------------------------------------- | --------------------------------- |
+| Anonymous         | Yes, local guided help | No (no AI calls)                       | No                                |
+| Active student    | Yes                    | Yes, when enabled                      | No                                |
+| Active teacher    | Yes                    | Yes, when enabled                      | Yes, with current teaching access |
+| Admin             | Local guided help      | No (admins use the separate admin app) | No                                |
+| Suspended account | Local guided help      | No                                     | No                                |
+
+There is no age gate, adult acknowledgment or tester allowlist. Eligibility is derived on the server from the verified session and an active student or teacher profile; the database enforces the same rule when reserving quota.
+
+Local guided help is authored text that runs on the device. It links only to existing DarSak routes, follows the signed-in role, and never calls a model. Model output is rendered as plain text. Teacher group drafts stay in browser memory until the teacher reviews them and explicitly applies the four displayed fields, then separately saves the ordinary group form. A draft never publishes a group or changes enrollment.
+
+## Configuration
+
+All values are server-only. Never put a key in a `NEXT_PUBLIC_` variable, browser code, chat or source control.
+
+| Variable                   | Required | Default     | Purpose                                         |
+| -------------------------- | -------- | ----------- | ----------------------------------------------- |
+| `SANAD_ENABLED`            | Yes      | unset (off) | Must be exactly `true` to enable live AI.       |
+| `GEMINI_API_KEY`           | Yes      | unset       | Google Gemini API key.                          |
+| `SANAD_USER_DAILY_LIMIT`   | No       | `60`        | Accepted requests per user per UTC day.         |
+| `SANAD_USER_MINUTE_LIMIT`  | No       | `10`        | Accepted requests per user per UTC minute.      |
+| `SANAD_GLOBAL_DAILY_LIMIT` | No       | `3000`      | Accepted requests across all users per UTC day. |
+| `SANAD_GLOBAL_CONCURRENCY` | No       | `10`        | Requests in flight across all users.            |
+
+Live AI is enabled if and only if `SANAD_ENABLED=true` and `GEMINI_API_KEY` is set. Anything else fails closed: the API returns "unavailable" without contacting the provider and the companion keeps showing local guided help. Limit variables must be whole numbers from 1 to 100000; unset or invalid values fall back to the defaults.
+
+**Disable at any time** by setting `SANAD_ENABLED=false` (or removing the key) and redeploying.
+
+### Database
+
+Apply `supabase/migrations/20261028150000_sandak_quota.sql`. It adds private (non-API) counters in `dars_private` and two `SECURITY DEFINER` functions, `sanad_reserve_request` and `sanad_release_request`, granted to `authenticated` only. The application passes the limits above on each reservation; the table `dars_private.sandak_settings` holds the same defaults for callers that pass none. Database tests are in `tests/database/sandak_quota.sql` and `supabase/tests/sandak_quota.test.sql`.
+
+## Gemini billing, terms and age
+
+- Use a **billing-enabled (paid) Gemini API key**. On the unpaid tier Google may use submitted content to improve its products and allow human review. Paid use is governed by Google's paid-services data terms. See the [Gemini API terms](https://ai.google.dev/gemini-api/terms) and additional terms.
+- The Gemini API terms require end users to be **18 or older**. The product decision is to launch for university students first. DarSak does not verify age. Before onboarding users under 18, add restrictions (for example disabling live chat for minors or requiring a compliant eligibility process) and review the provider terms again.
+- Application limits are not a monetary spending guarantee. Set a budget and alerts on the Google Cloud project that owns the key, and keep Google's own project quotas in place. No paid fallback model is configured.
+
+## Limits and abuse protection
+
+One server request uses the fixed `gemini-3.5-flash-lite` model with a 20-second timeout and no retries. Request bodies are limited to 24 KiB, provider responses to 64 KiB and generation to 2,048 output tokens. A chat sends at most eight messages and 8,000 characters (2,000 per message). The model has no tools, no web access and no database access, and the system prompt refuses secrets, personal data and unsupported actions.
+
+An atomic database reservation enforces, per user: the daily and per-minute limits and one active request; and globally: the daily limit and the concurrency cap. A 45-second lease recovers from crashed workers. Failed provider calls still consume the reserved attempt. Cross-origin requests are rejected. When a quota is reached the user sees a friendly "too many requests" message and the companion shows the oops mood.
+
+## Data handling
+
+- The model receives only what the user typed (recent messages in the open conversation, or the teacher's group-draft inputs), the locale, the server-derived role, and a coarse page type (`home`, `group`, `teacher_workspace`, and similar) plus authored public DarSak help topics. No profile records, student data, group data, IDs or URLs are sent.
+- Conversation text lives only in component memory in the browser, with a clear-conversation action, and is gone on reload.
+- DarSak does not log or persist prompts or answers. Quota tables store only user IDs, counters, UTC dates and short-lived lease metadata. Google handles content sent for inference under its own terms.
+- The chat shows a notice that messages are sent to Google's Gemini service and asks users not to include personal or private information.
+
+## Operations checklist
+
+1. Apply the migration to the production database.
+2. In the production Vercel project set `GEMINI_API_KEY` (paid, billing-enabled key) and `SANAD_ENABLED=true`; optionally set the limit variables. Redeploy.
+3. Confirm a student and a teacher can chat, an anonymous visitor sees only local help, and a quota breach shows the friendly message.
+4. To pause AI quickly, set `SANAD_ENABLED=false` and redeploy.

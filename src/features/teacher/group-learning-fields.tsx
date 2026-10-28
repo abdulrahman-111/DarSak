@@ -1,13 +1,18 @@
+import type { ChangeEvent } from 'react';
 import type { GroupLearningDetails } from './group-learning-domain';
 
 export function GroupLearningFields({
   locale,
   details,
   errors = {},
+  values,
+  onValueChange,
 }: {
   locale: string;
   details: GroupLearningDetails | null;
   errors?: Record<string, string>;
+  values?: Pick<GroupLearningDetails, 'outcomes' | 'prerequisites'>;
+  onValueChange?: (field: 'outcomes' | 'prerequisites', value: string) => void;
 }) {
   const ar = locale === 'ar';
   const fields = [
@@ -91,9 +96,16 @@ export function GroupLearningFields({
           <textarea
             id={`learning-${f.name}`}
             name={f.name}
-            defaultValue={details?.[f.name] ?? ''}
+            {...(values && onValueChange && (f.name === 'outcomes' || f.name === 'prerequisites')
+              ? {
+                  value: values[f.name],
+                  onChange: (event: ChangeEvent<HTMLTextAreaElement>) =>
+                    onValueChange(f.name, event.target.value),
+                }
+              : { defaultValue: details?.[f.name] ?? '' })}
             rows={3}
             maxLength={f.max}
+            dir="auto"
             placeholder={f.example}
             {...invalid(f.name)}
             className="w-full rounded-xl border border-line bg-cream p-3"

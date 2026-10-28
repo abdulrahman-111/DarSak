@@ -78,5 +78,31 @@
     "verifyGoogleAgain": "Verify with Google again.",
     "googleError": "Google verification could not be completed. Please verify again."
   },
-  "teachOnDarsak": "Teach on DarSak"
+  "teachOnDarsak": "Teach on DarSak",
+  "sandak": {
+    "name": "SanDak",
+    "openLabel": "Open SanDak, your study helper",
+    "closeLabel": "Close SanDak",
+    "hideLabel": "Hide SanDak",
+    "showLabel": "Show SanDak",
+    "panelTitle": "SanDak · DarSak helper",
+    "panelClose": "Close",
+    "bubbleIdle": "Need a hand? Ask me about studying or DarSak.",
+    "bubbleThinking": "Working on your answer…",
+    "bubbleNeeds": "I have a draft ready. Take a look before you use it.",
+    "bubbleDone": "Done!",
+    "bubbleOops": "Something went wrong. Want to try again?",
+    "bubbleSleep": "SanDak is sleeping. Tap to wake me.",
+    "actionAsk": "Ask SanDak",
+    "actionStop": "Stop",
+    "actionReview": "Review",
+    "actionLater": "Later",
+    "actionRetry": "Retry",
+    "actionDraft": "Go to the group draft helper",
+    "statusThinking": "SanDak is working on your request.",
+    "statusNeeds": "SanDak needs you to review something.",
+    "statusDone": "SanDak finished.",
+    "statusOops": "SanDak ran into a problem.",
+    "dataNotice": "Your message is sent to Google's Gemini service to write a reply. Please do not include personal, private or sensitive information."
+  }
 }

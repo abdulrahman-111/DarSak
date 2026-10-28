@@ -241,3 +241,173 @@ a {
     font-size: 16px !important;
   }
 }
+
+/* SanDak companion: docked at the inline end (left in RTL), above the mobile tab bar. */
+.sandak-dock {
+  position: fixed;
+  z-index: 30;
+  inset-inline-end: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: calc(100vw - 32px);
+  pointer-events: none;
+}
+.sandak-dock > * {
+  pointer-events: auto;
+}
+.sandak-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.sandak-hide {
+  opacity: 0.7;
+}
+.sandak-hide:hover,
+.sandak-hide:focus-visible {
+  opacity: 1;
+}
+.sandak-pet-button {
+  background: transparent;
+  padding: 0;
+}
+.sandak-bubble,
+.sandak-panel:not([hidden]) {
+  border: 1px solid rgba(14, 74, 75, 0.15);
+  background: #fff;
+  box-shadow: 0 12px 32px -12px rgba(14, 74, 75, 0.45);
+}
+.sandak-bubble {
+  max-width: min(18rem, calc(100vw - 32px));
+  border-radius: 1rem;
+  padding: 0.75rem 1rem;
+  animation: sandak-pop 0.18s ease-out;
+}
+.sandak-panel:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  width: min(26rem, calc(100vw - 32px));
+  max-height: min(70dvh, 34rem);
+  overflow: hidden;
+  border-radius: 1.5rem;
+  animation: sandak-pop 0.18s ease-out;
+}
+@media (max-width: 1023px) {
+  .sandak-dock {
+    inset-inline-end: 12px;
+  }
+  body:has(.group-request-bar[aria-hidden='false']) .sandak-dock {
+    bottom: calc(104px + env(safe-area-inset-bottom));
+  }
+  body:has([data-mobile-workspace-nav]) .sandak-dock {
+    bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+  body:has([data-mobile-workspace-nav]):has(.group-request-bar[aria-hidden='false']) .sandak-dock {
+    bottom: calc(160px + env(safe-area-inset-bottom));
+  }
+}
+/* Keep the footer links clear of the docked pet. */
+body:has(.sandak-dock) > footer {
+  padding-bottom: 7rem;
+}
+
+.sandak-sprite {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.sandak-pet--idle .sandak-sprite {
+  animation: sandak-bob 2.4s ease-in-out infinite;
+}
+.sandak-pet--thinking .sandak-sprite {
+  animation: sandak-tilt 1.4s ease-in-out infinite;
+}
+.sandak-pet--needs .sandak-sprite {
+  animation: sandak-bounce 0.9s ease-in-out infinite;
+}
+.sandak-pet--done .sandak-sprite {
+  animation: sandak-hop 0.5s ease-out 3;
+}
+.sandak-pet--oops .sandak-sprite {
+  animation: sandak-shake 0.4s linear 2;
+}
+.sandak-pet--sleep .sandak-sprite {
+  animation: sandak-breathe 3.2s ease-in-out infinite;
+}
+@keyframes sandak-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+@keyframes sandak-tilt {
+  0%,
+  100% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+}
+@keyframes sandak-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+}
+@keyframes sandak-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+@keyframes sandak-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+@keyframes sandak-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.97);
+  }
+}
+@keyframes sandak-pop {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sandak-sprite,
+  .sandak-bubble,
+  .sandak-panel {
+    animation: none !important;
+    transition: none !important;
+  }
+}

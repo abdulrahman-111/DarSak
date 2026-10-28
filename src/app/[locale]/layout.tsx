@@ -4,6 +4,7 @@ import '../globals.css';
 import { fontVariables } from '../fonts';
 import { ensureLocale, getDictionary, getDirection } from '@/i18n/config';
 import { Header } from '@/components/header';
+import { SanadLauncher } from '@/features/assistant/launcher';
 import { siteUrl } from '@/lib/supabase/config';
 
 export async function generateMetadata({
@@ -70,6 +71,7 @@ export default async function LocaleLayout({
             </span>
           </div>
         </footer>
+        <SanadLauncher locale={locale} />
       </body>
     </html>
   );
