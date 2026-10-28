@@ -1,14 +1,8 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({
-  currentUser: vi.fn(),
-  isConfigured: vi.fn(),
-  getRequestViewer: vi.fn(),
-  unread: vi.fn(),
-  pathname: '/en/admin',
-}));
+const mocks = vi.hoisted(() => ({ pathname: '/en/admin' }));
 vi.mock('next/navigation', () => ({
   usePathname: () => mocks.pathname,
   useSearchParams: () => new URLSearchParams(),
@@ -26,20 +20,14 @@ vi.mock('@/components/active-link', () => ({
 }));
 vi.mock('@/components/locale-switch', () => ({ LocaleSwitch: () => createElement('span') }));
 vi.mock('@/features/auth/actions', () => ({ logoutAction: vi.fn() }));
-vi.mock('@/features/platform/data', () => ({ currentUser: mocks.currentUser }));
-vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.getRequestViewer }));
-vi.mock('@/features/notifications/data', () => ({ unreadNotificationCount: mocks.unread }));
-vi.mock('@/lib/supabase/server', () => ({ isConfigured: mocks.isConfigured }));
-import { globalReportsHref, Header } from '@/components/header';
+import { globalReportsHref, HeaderView } from '@/components/header';
+import { ANONYMOUS_VIEWER, type ViewerState } from '@/features/platform/viewer-state-types';
+
+function viewer(role: 'student' | 'teacher' | null, signedIn = role !== null): ViewerState {
+  return { ...ANONYMOUS_VIEWER, signedIn, activeRole: role, unreadCount: role ? 2 : null };
+}
 
 describe('global Reports navigation', () => {
-  beforeEach(() => {
-    mocks.currentUser.mockReset();
-    mocks.isConfigured.mockReset().mockReturnValue(true);
-    mocks.getRequestViewer.mockReset().mockResolvedValue({ db: {} });
-    mocks.unread.mockReset().mockResolvedValue(2);
-  });
-
   it('does not send public header navigation to administrator routes', () => {
     expect(globalReportsHref('en', 'admin')).toBeNull();
     expect(globalReportsHref('ar', 'admin')).toBeNull();
@@ -65,15 +53,17 @@ describe('global Reports navigation', () => {
       register: 'Register',
     };
 
-    mocks.currentUser.mockResolvedValue(null);
     mocks.pathname = '/en';
-    const adminHtml = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+    const adminHtml = renderToStaticMarkup(
+      HeaderView({ locale: 'en', t: labels, viewer: ANONYMOUS_VIEWER }),
+    );
     expect(adminHtml).not.toContain('/en/admin');
     expect(adminHtml).toContain('href="/en/teachers"');
 
-    mocks.currentUser.mockResolvedValue({ profile: { role: 'teacher', status: 'active' } });
     mocks.pathname = '/ar/teacher';
-    const teacherHtml = renderToStaticMarkup(await Header({ locale: 'ar', t: labels }));
+    const teacherHtml = renderToStaticMarkup(
+      HeaderView({ locale: 'ar', t: labels, viewer: viewer('teacher') }),
+    );
     expect(teacherHtml).toContain('href="/ar/teacher/lessons"');
     expect(teacherHtml).toContain('href="/ar/teacher/requests"');
     expect(teacherHtml).not.toContain('href="/ar/teachers"');
@@ -93,9 +83,9 @@ describe('global Reports navigation', () => {
       register: 'Register',
     };
 
-    mocks.currentUser.mockResolvedValue({ profile: { role: 'teacher', status: 'suspended' } });
+    const v = viewer(null, true);
     mocks.pathname = '/en/account';
-    const html = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+    const html = renderToStaticMarkup(HeaderView({ locale: 'en', t: labels, viewer: v }));
 
     expect(html).toContain('href="/en/dashboard"');
     expect(html).toContain('href="/en/account"');
@@ -120,19 +110,47 @@ describe('global Reports navigation', () => {
       ['student', '/en/account'],
       ['teacher', '/en/teachers'],
     ] as const) {
-      mocks.currentUser.mockResolvedValue({ profile: { role, status: 'active' } });
       mocks.pathname = pathname;
-      const html = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+      const html = renderToStaticMarkup(
+        HeaderView({ locale: 'en', t: labels, viewer: viewer(role) }),
+      );
       expect(html).not.toContain(
         'class="hidden items-center gap-6 text-sm font-bold text-ink-soft lg:flex"',
       );
       expect(html).toContain('data-mobile-workspace-nav="true"');
     }
 
-    mocks.currentUser.mockResolvedValue(null);
     mocks.pathname = '/en/teachers';
-    const guestHtml = renderToStaticMarkup(await Header({ locale: 'en', t: labels }));
+    const guestHtml = renderToStaticMarkup(
+      HeaderView({ locale: 'en', t: labels, viewer: ANONYMOUS_VIEWER }),
+    );
     expect(guestHtml).toContain('aria-label="Primary navigation"');
     expect(guestHtml).not.toContain('href="/en/pricing"');
+  });
+
+  it('renders a stable shell with an account skeleton until the viewer is known', () => {
+    const labels = {
+      brand: 'Dars',
+      home: 'Home',
+      discover: 'Discover',
+      teachOnDarsak: 'Teach',
+      dashboard: 'Dashboard',
+      account: 'Account',
+      logout: 'Log out',
+      login: 'Log in',
+      register: 'Register',
+    };
+    mocks.pathname = '/en';
+    const html = renderToStaticMarkup(HeaderView({ locale: 'en', t: labels, viewer: null }));
+    expect(html).toContain('data-header-account-skeleton="true"');
+    expect(html).toContain('href="/en"');
+    expect(html).toContain('href="/en/teachers"');
+    expect(html).not.toContain('href="/en/login"');
+    expect(html).not.toContain('Log out');
+    const guest = renderToStaticMarkup(
+      HeaderView({ locale: 'en', t: labels, viewer: ANONYMOUS_VIEWER }),
+    );
+    expect(guest).not.toContain('data-header-account-skeleton');
+    expect(guest).toContain('href="/en/login"');
   });
 });

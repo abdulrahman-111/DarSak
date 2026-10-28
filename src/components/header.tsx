@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { ActiveLink } from './active-link';
@@ -5,36 +7,47 @@ import { StudentHeaderNavigation } from './student-header-navigation';
 import { Suspense } from 'react';
 import { Globe2, LogOut, Menu, Search } from 'lucide-react';
 import { logoutAction } from '@/features/auth/actions';
-import { currentUser } from '@/features/platform/data';
-import { isConfigured } from '@/lib/supabase/server';
-import { getRequestViewer } from '@/features/platform/request-viewer';
 import { LocaleSwitch } from './locale-switch';
 import { shouldShowDiscoveryNavigation } from '@/features/platform/discovery-access';
 import { platformNavigation } from './platform/shell';
 import { MobileWorkspaceNavigation } from './mobile-workspace-navigation';
-import { unreadNotificationCount } from '@/features/notifications/data';
-import type { PlatformRole } from './platform/access';
+import { useViewerState } from './viewer-state';
+import type { ViewerState } from '@/features/platform/viewer-state-types';
 
 export function globalReportsHref(locale: string, activeRole: string | null) {
   if (activeRole === 'student' || activeRole === 'teacher') return `/${locale}/reports`;
   return null;
 }
 
-export async function Header({ locale, t }: { locale: string; t: Record<string, string> }) {
-  const me = isConfigured() ? await currentUser() : null;
+/**
+ * The header never reads cookies on the server, so every page, including the
+ * prerendered public ones, ships the same shell. The account part resolves from
+ * the private /api/viewer snapshot (see ViewerStateSync).
+ */
+export function Header({ locale, t }: { locale: string; t: Record<string, string> }) {
+  return <HeaderView locale={locale} t={t} viewer={useViewerState()} />;
+}
+
+export function HeaderView({
+  locale,
+  t,
+  viewer,
+}: {
+  locale: string;
+  t: Record<string, string>;
+  viewer: ViewerState | null;
+}) {
+  const loading = viewer === null;
+  const me = viewer?.signedIn ? viewer : null;
   const otherLocale = locale === 'ar' ? 'en' : 'ar';
-  const role = me?.profile?.role;
-  const activeRole: PlatformRole | null =
-    me?.profile?.status === 'active' && (role === 'teacher' || role === 'student') ? role : null;
+  const activeRole = me?.activeRole ?? null;
   const dashboardHref = activeRole ? `/${locale}/${activeRole}` : `/${locale}/dashboard`;
   const homeHref = activeRole ? dashboardHref : `/${locale}`;
   const reportsHref = globalReportsHref(locale, activeRole);
   const showDiscovery = shouldShowDiscoveryNavigation(activeRole);
   const reportsLabel = locale === 'ar' ? 'الإبلاغ عن مشكلة' : 'Report a problem';
   const workspaceItems = activeRole ? platformNavigation(locale, activeRole) : [];
-  const unreadCount = activeRole
-    ? await unreadNotificationCount((await getRequestViewer()).db)
-    : null;
+  const unreadCount = activeRole ? (me?.unreadCount ?? null) : null;
   const navRole = activeRole ?? 'student';
   const localeSwitch = (compact: boolean) => (
     <Suspense
@@ -96,7 +109,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                 </ActiveLink>
               )}
               {/* A call to action, not a section: it never shows as the current page (it used to light up on every /register page). */}
-              {!me && (
+              {!me && !loading && (
                 <Link
                   className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
                   href={`/${locale}/register?role=teacher`}
@@ -166,7 +179,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                       {t.discover}
                     </Link>
                   )}
-                  {!me && (
+                  {!me && !loading && (
                     <Link
                       className="flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal hover:bg-cream"
                       href={`/${locale}/register?role=teacher`}
@@ -190,7 +203,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                       {reportsLabel}
                     </Link>
                   )}
-                  {!me && (
+                  {!me && !loading && (
                     <div className="mt-1 border-t border-line pt-2 sm:hidden [&_a]:w-full [&_a]:justify-start [&_a]:border-0 [&_a]:px-3 [&_a]:text-sm">
                       {localeSwitch(false)}
                     </div>
@@ -198,7 +211,13 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
                 </nav>
               </details>
             )}
-            {me ? (
+            {loading ? (
+              <span
+                aria-hidden="true"
+                data-header-account-skeleton="true"
+                className="h-11 w-36 animate-pulse rounded-xl bg-line sm:w-48"
+              />
+            ) : me ? (
               <form action={logoutAction} data-confirm-unsaved-navigation>
                 <button
                   aria-label={t.logout}
@@ -235,7 +254,7 @@ export async function Header({ locale, t }: { locale: string; t: Record<string, 
         <MobileWorkspaceNavigation
           locale={locale}
           role={activeRole}
-          name={me?.profile?.full_name ?? ''}
+          name={me?.fullName ?? ''}
           unreadCount={unreadCount}
           items={workspaceItems}
         />
