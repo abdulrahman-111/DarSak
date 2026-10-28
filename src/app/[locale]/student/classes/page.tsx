@@ -90,7 +90,7 @@ export default async function StudentClasses({
                             {
                               waiting: 'في قائمة الانتظار',
                               promoted: 'نُقل إلى طلب انضمام',
-                              withdrawn: 'غادر القائمة',
+                              withdrawn: 'تم الانسحاب من القائمة',
                               closed: 'أُغلقت القائمة',
                             } as Record<string, string>
                           )[entry.status]
@@ -221,9 +221,17 @@ export default async function StudentClasses({
                             ? ar
                               ? 'تم إرسال طلبك! سيراجعه معلمك. تابع الطلب في مجموعاتي.'
                               : 'Request sent! Your teacher will review it. Track it in My classes.'
-                            : ar
-                              ? 'يمكنك متابعة القرار هنا.'
-                              : 'Your enrollment decision is shown here.'}
+                            : e.status === 'rejected'
+                              ? ar
+                                ? 'رفض المعلم هذا الطلب. يمكنك إرسال طلب جديد من صفحة المجموعة.'
+                                : 'The teacher declined this request. You can send a new request from the group page.'
+                              : e.status === 'cancelled'
+                                ? ar
+                                  ? 'أُلغي هذا الطلب. يمكنك إرسال طلب جديد من صفحة المجموعة.'
+                                  : 'This request was cancelled. You can send a new request from the group page.'
+                                : ar
+                                  ? 'تتوفر حالة هذا الطلب هنا.'
+                                  : 'The status of this request is shown here.'}
                         </p>
                       </div>
                       <Status value={e.status} locale={locale} />
@@ -295,7 +303,7 @@ export default async function StudentClasses({
                         {
                           waiting: 'في قائمة الانتظار',
                           promoted: 'نُقل إلى طلب انضمام',
-                          withdrawn: 'غادر القائمة',
+                          withdrawn: 'تم الانسحاب من القائمة',
                           closed: 'أُغلقت القائمة',
                         } as Record<string, string>
                       )[entry.status]

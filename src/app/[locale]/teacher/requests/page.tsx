@@ -141,7 +141,7 @@ export default async function TeacherRequests({
                             {row.group_name || (ar ? 'مجموعة غير متاحة' : 'Unavailable group')}
                           </p>
                           <p className="mt-1 text-xs text-muted">
-                            {ar ? 'تاريخ الانضمام: ' : 'Joined: '}
+                            {ar ? 'تاريخ دخول قائمة الانتظار: ' : 'Joined waitlist: '}
                             {new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
                               dateStyle: 'medium',
                             }).format(new Date(row.created_at))}
