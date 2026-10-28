@@ -1,5 +1,15 @@
 #!/usr/bin/env node
-/** Operator-only: promote an existing registered account. Never import into the app. */
+/**
+ * Operator-only: promote an existing registered account. Never import into the app.
+ *
+ * MFA: the admin portal requires a TOTP second factor (Supabase MFA, aal2).
+ * After promotion, the new administrator signs in at the portal and is sent to
+ * /{locale}/mfa/enroll to scan a QR code and confirm a 6-digit code. Do this
+ * straight away: until a factor is verified, anyone with the password could enrol.
+ * Recovery for a lost device: remove the user's factor in the Supabase dashboard
+ * (Authentication > Users > the user > remove MFA factor); the next sign-in shows
+ * enrolment again. See apps/admin/README.md.
+ */
 const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const id = process.argv[2];
@@ -34,4 +44,6 @@ if (rows.length !== 1 || rows[0].role !== 'admin') {
   console.error('No matching profile was promoted. Register the account first.');
   process.exit(1);
 }
-console.log('Administrator profile verified. Sign out and back in to refresh the application.');
+console.log(
+  'Administrator profile verified. Sign in to the admin portal and complete TOTP enrolment at /<locale>/mfa/enroll straight away.',
+);

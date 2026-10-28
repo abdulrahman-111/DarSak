@@ -24,7 +24,7 @@ export type AdminState = {
 const reviewCopy = (locale: string) =>
   locale === 'ar'
     ? {
-        denied: 'يلزم حساب مسؤول نشط.',
+        denied: 'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
         invalid: 'راجع القرار وسبب الرفض ثم حاول مجددًا.',
         stale: 'تغيرت حالة الطلب منذ فتحه. حدّث الصفحة لمراجعة أحدث حالة.',
         failed: 'تعذر حفظ القرار. حدّث الصفحة وحاول مرة أخرى.',
@@ -33,7 +33,8 @@ const reviewCopy = (locale: string) =>
         reason: 'أدخل سببًا للرفض لا يتجاوز ١٠٠٠ حرف.',
       }
     : {
-        denied: 'An active administrator account is required.',
+        denied:
+          'An active administrator account with two-step verification is required. Sign in again.',
         invalid: 'Check the decision and decline reason, then try again.',
         stale: 'This request changed after you opened it. Refresh to review the current status.',
         failed: 'The decision could not be saved. Refresh and try again.',

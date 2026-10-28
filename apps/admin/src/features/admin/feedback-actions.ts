@@ -17,7 +17,11 @@ export async function moderateFeedback(
   const ar = locale === 'ar';
   const actor = await getAdminActor();
   if (!actor)
-    return { error: ar ? 'يلزم حساب مسؤول نشط.' : 'An active administrator account is required.' };
+    return {
+      error: ar
+        ? 'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.'
+        : 'An active administrator account with two-step verification is required. Sign in again.',
+    };
   const parsed = z
     .object({
       id: idSchema,
