@@ -94,3 +94,19 @@ export async function setLessonReminderPreference(
   revalidatePath(`/${locale}/account/notifications`);
   return { success: ar ? 'تم حفظ تفضيل التذكيرات.' : 'Reminder preference saved.' };
 }
+
+/** Opening the notifications page marks the notifications it lists as read. */
+export async function markNotificationsViewed(locale: string, ids: string[]): Promise<void> {
+  if (!['en', 'ar'].includes(locale)) return;
+  const valid = [...new Set(ids)].filter(id => idSchema.safeParse(id).success).slice(0, 50);
+  if (valid.length === 0) return;
+  const viewer = await getRequestViewer();
+  if (!canManageOwnNotifications(viewer)) return;
+  const results = await Promise.all(
+    valid.map(id => viewer.db.rpc('mark_notification_read', { p_id: id })),
+  );
+  if (results.some(r => r.error)) return;
+  revalidatePath(`/${locale}/notifications`);
+  revalidatePath(`/${locale}/student`);
+  revalidatePath(`/${locale}/teacher`);
+}

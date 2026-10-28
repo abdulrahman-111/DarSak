@@ -1,5 +1,5 @@
 /**
- * Tiny browser event bridge between SanDak panels and the docked companion.
+ * Tiny browser event bridge between SanDai panels and the docked companion.
  * It carries only a lifecycle status, never message text or drafts.
  */
 export type SandakStatus = 'idle' | 'pending' | 'needs_input' | 'success' | 'error';

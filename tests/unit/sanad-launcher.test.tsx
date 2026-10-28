@@ -44,7 +44,7 @@ function html(element: React.ReactElement) {
 
 const enabled = { apiKey: 'key', limits: {} };
 
-describe('global SanDak companion mount', () => {
+describe('global SanDai companion mount', () => {
   beforeEach(() => {
     mocks.isConfigured.mockReset().mockReturnValue(true);
     mocks.getRequestViewer.mockReset();
@@ -62,8 +62,8 @@ describe('global SanDak companion mount', () => {
 
   it('passes localized copy from the message dictionaries', async () => {
     mocks.isConfigured.mockReturnValue(false);
-    expect(html(await SanadLauncher({ locale: 'en' }))).toContain('data-name="SanDak"');
-    expect(html(await SanadLauncher({ locale: 'ar' }))).toContain('data-name="سندك"');
+    expect(html(await SanadLauncher({ locale: 'en' }))).toContain('data-name="SanDai"');
+    expect(html(await SanadLauncher({ locale: 'ar' }))).toContain('data-name="سندي"');
   });
 
   it.each(['student', 'teacher'] as const)(
@@ -84,7 +84,7 @@ describe('global SanDak companion mount', () => {
     },
   );
 
-  it('falls back to local guided help for signed-in users when SanDak is disabled', async () => {
+  it('falls back to local guided help for signed-in users when SanDai is disabled', async () => {
     mocks.getSanadConfig.mockReturnValue(null);
     mocks.getRequestViewer.mockResolvedValue({
       db: {},

@@ -2,6 +2,7 @@ import createMiddleware from 'next-intl/middleware';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 import { adminCookieName, getSupabaseConfig } from '@admin/lib/supabase/config';
+import { buildCsp, createNonce, cspHeader, isCspEnforced } from '@admin/lib/csp';
 
 const ADMIN_ORIGIN = 'https://darsak-admin-portal.vercel.app';
 
@@ -49,7 +50,21 @@ export async function proxy(request: NextRequest) {
     });
     await db.auth.getClaims();
   }
+  // Per-request nonce policy; Report-Only unless CSP_ENFORCE=true. Next stamps the nonce on
+  // its inline scripts from the request CSP header; `x-nonce` exposes it to components.
+  const enforce = isCspEnforced();
+  const nonce = createNonce();
+  const csp = cspHeader(
+    buildCsp({
+      nonce,
+      upgradeInsecure: enforce && process.env.NEXT_PUBLIC_SITE_URL?.startsWith('https://'),
+    }),
+    enforce,
+  );
+  request.headers.set('x-nonce', nonce);
+  request.headers.set(csp.name, csp.value);
   const response = localize(request);
+  response.headers.set(csp.name, csp.value);
   for (const { name, value, options } of updates) response.cookies.set(name, value, options);
   response.headers.set('Cache-Control', 'private, no-store');
   return response;

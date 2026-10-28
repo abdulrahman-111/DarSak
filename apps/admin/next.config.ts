@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { BASELINE_CSP, HSTS } from './src/lib/csp';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -13,8 +14,10 @@ const nextConfig: NextConfig = {
           { key: 'Cache-Control', value: 'private, no-store' },
           {
             key: 'Content-Security-Policy',
-            value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+            // Always-enforced baseline. The nonce policy is added per request by src/proxy.ts.
+            value: BASELINE_CSP,
           },
+          { key: 'Strict-Transport-Security', value: HSTS },
         ],
       },
     ];

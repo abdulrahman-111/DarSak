@@ -3,7 +3,7 @@ vi.mock('server-only', () => ({}));
 import { assistantRequestSchema } from '@/features/assistant/domain';
 import { DEFAULT_SANAD_LIMITS, getSanadConfig } from '@/features/assistant/config';
 
-describe('SanDak request contract', () => {
+describe('SanDai request contract', () => {
   it('accepts bounded chat and flattened draft requests without any age acknowledgment', () => {
     expect(
       assistantRequestSchema.safeParse({
@@ -51,7 +51,7 @@ describe('SanDak request contract', () => {
   });
 });
 
-describe('SanDak config', () => {
+describe('SanDai config', () => {
   it('is enabled only with SANAD_ENABLED=true and a server-only API key', () => {
     expect(getSanadConfig({})).toBeNull();
     expect(getSanadConfig({ SANAD_ENABLED: 'true' })).toBeNull();
