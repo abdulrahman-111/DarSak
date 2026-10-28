@@ -2,7 +2,7 @@
 -- Everything runs inside one rollback transaction.
 create extension if not exists pgtap;
 begin;
-select plan(47);
+select plan(48);
 
 insert into auth.users(id,aud,role,email,encrypted_password,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
  ('99300000-0000-4000-8000-000000000001','authenticated','authenticated','hard-teacher@example.test','','{}','{"requested_role":"teacher","full_name":"Hardening teacher"}',now(),now()),
@@ -90,7 +90,8 @@ reset role;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','99300000-0000-4000-8000-000000000001',true);
 select is((select count(*)::int from public.group_schedule_slots where group_id='99340000-0000-4000-8000-000000000002'),1,'owner reads own draft group slots');
-select lives_ok($$insert into public.lesson_materials(lesson_id,kind,title,content,uploaded_by) values('99360000-0000-4000-8000-000000000001','note','Teacher note','body','99300000-0000-4000-8000-000000000001')$$,'teacher adds a material to own lesson');
+select lives_ok($$insert into public.lesson_materials(lesson_id,kind,title,url,uploaded_by) values('99360000-0000-4000-8000-000000000001','link','Teacher link','https://example.test/resource','99300000-0000-4000-8000-000000000001')$$,'teacher adds a link resource to own lesson');
+select throws_ok($$insert into public.lesson_materials(lesson_id,kind,title,content,uploaded_by) values('99360000-0000-4000-8000-000000000001','note','Teacher note','body','99300000-0000-4000-8000-000000000001')$$,'42501',null,'teacher cannot add a non-link resource (links-only launch)');
 select lives_ok($$update public.lesson_materials set title='Renamed' where id='99370000-0000-4000-8000-000000000001'$$,'teacher updates own material');
 select lives_ok($$delete from public.lesson_materials where id='99370000-0000-4000-8000-000000000001'$$,'teacher deletes own material');
 select lives_ok($$insert into public.teacher_contacts(teacher_id,phone_number) values('99300000-0000-4000-8000-000000000001','+201000000001')$$,'teacher inserts own contacts');
