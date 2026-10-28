@@ -46,7 +46,7 @@ begin
   if not exists(
     select 1 from pg_policies
     where schemaname='public' and tablename='lesson_materials'
-      and policyname='material_write'
+      and policyname='material_write_insert'
       and roles @> array['authenticated'::name]
       and with_check like '%kind <>%file%'
   ) then raise exception 'material kind-aware policy missing'; end if;

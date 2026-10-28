@@ -50,7 +50,7 @@ For an administrator on your own backend, register an account, obtain its UUID f
 SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_SERVICE_ROLE_KEY='replace-with-local-service-role-key' node scripts/bootstrap-admin.mjs 'registered-user-uuid'
 ```
 
-Sign out and back in, then use the administrator interface to review teacher applications. This bootstrap promotes only the specified existing profile.
+Sign in to the admin portal and complete the TOTP enrolment at `/<locale>/mfa/enroll` straight away (see `apps/admin/README.md`), then use the administrator interface to review teacher applications. This bootstrap promotes only the specified existing profile.
 
 ## Optional synthetic demo
 

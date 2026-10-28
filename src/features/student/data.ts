@@ -15,7 +15,7 @@ import { parseStudentLearningProfileRow } from './student-profile-domain';
 import { readCountedPage } from '@/lib/supabase/counted-page';
 import { roleHome } from '@/components/platform/access';
 import { cairoDateKey } from '@/features/teacher/dashboard-domain';
-import { cairoDayBounds, cairoWeekBounds, timetableDayDates } from './timetable-domain';
+import { cairoWeekBounds, timetableDayDates } from './timetable-domain';
 import {
   parseStudentWaitlistPage,
   normalizeWaitlistPage,
@@ -240,93 +240,64 @@ async function pagedRows<T>(
     error: !!(result.error || result.count == null),
   };
 }
+type StudentDashboardSummary = {
+  accepted_count: number;
+  pending_count: number;
+  upcoming: Lesson[];
+  classes: DashboardClass[];
+  occupied_days: string[];
+};
+function parseStudentDashboardSummary(value: unknown): StudentDashboardSummary | null {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  if (
+    typeof row.accepted_count !== 'number' ||
+    typeof row.pending_count !== 'number' ||
+    !Array.isArray(row.upcoming) ||
+    !Array.isArray(row.classes) ||
+    !Array.isArray(row.occupied_days)
+  )
+    return null;
+  return row as unknown as StudentDashboardSummary;
+}
 export async function studentDashboard(locale: Locale, now = new Date()) {
-  const me = await student(locale),
-    timestamp = now.toISOString();
-  const learning = await studentLearningProfile(me);
+  const me = await student(locale);
+  const week = cairoWeekBounds(cairoDateKey(now));
+  const weekDays = timetableDayDates(week.startDate);
+  // One summary RPC plus the learning profile, fetched in parallel. The week bounds
+  // are computed here so the Cairo week definition has a single source of truth.
+  const [learning, summaryResult] = await Promise.all([
+    studentLearningProfile(me),
+    me.db.rpc('student_dashboard_summary', {
+      p_week_start: week.start.toISOString(),
+      p_week_end: week.end.toISOString(),
+      p_now: now.toISOString(),
+    }),
+  ]);
   if (learning.profile?.onboarding_required && !learning.profile.onboarding_completed_at)
     redirect(`/${locale}/account/setup`);
-  if (!learning.profile)
+  const summary = summaryResult.error ? null : parseStudentDashboardSummary(summaryResult.data);
+  if (!learning.profile || !summary)
     return {
       acceptedCount: 0,
       pendingCount: 0,
       lessons: [] as Lesson[],
       occupiedDays: [] as string[],
-      calendarError: false,
-      learningProfile: null,
+      calendarError: !summary,
+      learningProfile: learning.profile ?? null,
       classes: [] as DashboardClass[],
       error: true,
     };
-  const week = cairoWeekBounds(cairoDateKey(now));
-  const weekDays = timetableDayDates(week.startDate);
-  const [accepted, pending, upcoming, classes, daySummaries] = await Promise.all([
-    me.db
-      .from('enrollments')
-      .select('id', { count: 'exact', head: true })
-      .eq('student_id', me.id)
-      .eq('status', 'accepted'),
-    me.db
-      .from('enrollments')
-      .select('id', { count: 'exact', head: true })
-      .eq('student_id', me.id)
-      .eq('status', 'pending'),
-    me.db
-      .from('lessons')
-      .select(
-        'id,group_id,title,starts_at,ends_at,status,group:groups!inner(id,name,enrollments!inner(id))',
-      )
-      .eq('status', 'scheduled')
-      .eq('group.enrollments.student_id', me.id)
-      .eq('group.enrollments.status', 'accepted')
-      .gt('ends_at', timestamp)
-      .order('starts_at')
-      .order('id')
-      .limit(5),
-    me.db
-      .from('enrollments')
-      .select('id,group_id,group:groups!inner(id,name,status,location)')
-      .eq('student_id', me.id)
-      .eq('status', 'accepted')
-      .order('updated_at', { ascending: false })
-      .order('id')
-      .limit(4),
-    Promise.all(
-      weekDays.map(({ date }) => {
-        const bounds = cairoDayBounds(date);
-        return me.db
-          .from('lessons')
-          .select('id,group:groups!inner(enrollments!inner(student_id,status))')
-          .eq('group.enrollments.student_id', me.id)
-          .eq('group.enrollments.status', 'accepted')
-          .neq('status', 'cancelled')
-          .gte('starts_at', bounds.start.toISOString())
-          .lt('starts_at', bounds.end.toISOString())
-          .limit(1);
-      }),
-    ),
-  ]);
-  const calendarError = daySummaries.some(result => !!result.error);
-  const error = !!(
-    accepted.error ||
-    pending.error ||
-    upcoming.error ||
-    classes.error ||
-    accepted.count == null ||
-    pending.count == null
-  );
+  const occupied = new Set(summary.occupied_days);
   return {
-    acceptedCount: accepted.count ?? 0,
-    pendingCount: pending.count ?? 0,
-    lessons: (upcoming.data || []) as Lesson[],
-    occupiedDays: calendarError
-      ? []
-      : weekDays
-          .filter((_, index) => (daySummaries[index].data ?? []).length > 0)
-          .map(day => day.date),
-    calendarError,
+    acceptedCount: summary.accepted_count,
+    pendingCount: summary.pending_count,
+    lessons: summary.upcoming,
+    occupiedDays: weekDays.filter(day => occupied.has(day.date)).map(day => day.date),
+    calendarError: false,
     learningProfile: learning.profile,
-    classes: (classes.data ?? []) as unknown as DashboardClass[],
-    error,
+    classes: summary.classes,
+    error: false,
   };
 }
 export async function studentClasses(locale: Locale, pageInput: unknown = 1) {

@@ -12,7 +12,7 @@ export type PlanActionState = { error?: string; success?: string } | null;
 const copy = (locale: string) =>
   locale === 'ar'
     ? {
-        denied: 'يلزم حساب مسؤول نشط.',
+        denied: 'يلزم حساب مسؤول نشط مع التحقق بخطوتين. سجّل الدخول مرة أخرى.',
         invalid: 'بيانات التعيين غير صالحة. حدّث الصفحة وحاول مرة أخرى.',
         disabled: 'تعيين الخطط متوقف حتى تفعيل السياسة وبدء سريانها.',
         stale: 'تغيرت حالة الخطة. حدّث الصفحة وحاول مرة أخرى.',
@@ -21,7 +21,8 @@ const copy = (locale: string) =>
         success: 'تم حفظ تعيين الخطة.',
       }
     : {
-        denied: 'An active administrator account is required.',
+        denied:
+          'An active administrator account with two-step verification is required. Sign in again.',
         invalid: 'Assignment details are invalid. Refresh and try again.',
         disabled: 'Plan assignment is unavailable until policy is enabled and effective.',
         stale: 'The plan status changed. Refresh and try again.',

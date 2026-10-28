@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import type { PostgrestError } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { getRequestViewer } from './request-viewer';
@@ -68,14 +69,15 @@ export async function publicGroups(
   const groups = ((data ?? []) as DiscoverGroupRow[]).map(mapDiscoverGroup);
   return { data: groups, error };
 }
-export async function publicGroupDetail(
-  groupId: string,
-): Promise<{ data: Group | null; error: PostgrestError | null }> {
-  const db = await createClient();
-  const { data, error } = await db.rpc('public_group_detail', { p_group_id: groupId });
-  const row = ((data ?? []) as DiscoverGroupRow[])[0] ?? null;
-  return { data: row ? mapDiscoverGroup(row) : null, error };
-}
+// Memoized per request so the page and its generateMetadata share one fetch.
+export const publicGroupDetail = cache(
+  async (groupId: string): Promise<{ data: Group | null; error: PostgrestError | null }> => {
+    const db = await createClient();
+    const { data, error } = await db.rpc('public_group_detail', { p_group_id: groupId });
+    const row = ((data ?? []) as DiscoverGroupRow[])[0] ?? null;
+    return { data: row ? mapDiscoverGroup(row) : null, error };
+  },
+);
 export async function groupById(id: string) {
   const db = await createClient();
   return db
