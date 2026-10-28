@@ -10,7 +10,7 @@ export function GuestHelp({ locale }: { locale: AssistantLocale }): React.JSX.El
   ];
 
   return (
-    <section className="space-y-4" aria-label={ar ? 'مساعدة سندك' : 'SanDak help'}>
+    <section className="space-y-4" aria-label={ar ? 'مساعدة سنداي' : 'SanDai help'}>
       <p className="text-sm leading-6 text-ink/75">
         {ar
           ? 'يمكنك تصفح المساعدة العامة، أو تسجيل الدخول للوصول إلى الإرشادات المناسبة لحسابك.'

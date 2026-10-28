@@ -65,7 +65,7 @@
     "actualEnvironment": "local",
     "status": "captured",
     "state": "signed-out staging feature highlights",
-    "note": "Signed-out staging landing with the SanDak and Google Meet pilot highlights."
+    "note": "Signed-out staging landing with the SanDai and Google Meet pilot highlights."
   },
   {
     "path": "docs/screenshots/staging/meet-lesson-disabled-en-desktop.webp",
@@ -99,13 +99,13 @@
     "actualEnvironment": "local",
     "status": "captured",
     "state": "signed-out staging feature highlights",
-    "note": "Signed-out local staging landing page with the SanDak and Google Meet pilot feature highlights."
+    "note": "Signed-out local staging landing page with the SanDai and Google Meet pilot feature highlights."
   },
   {
     "path": "docs/screenshots/staging/sandak-public-drawer-en-desktop.webp",
     "role": "guest",
     "logicalRoute": "/",
-    "feature": "SanDak public guidance",
+    "feature": "SanDai public guidance",
     "locale": "en",
     "viewport": "desktop",
     "dimensions": {
@@ -122,7 +122,7 @@
     "path": "docs/screenshots/staging/sandak-public-drawer-en-mobile.webp",
     "role": "guest",
     "logicalRoute": "/",
-    "feature": "SanDak public guidance",
+    "feature": "SanDai public guidance",
     "locale": "en",
     "viewport": "mobile",
     "dimensions": {
@@ -139,7 +139,7 @@
     "path": "docs/screenshots/staging/sandak-group-template-en-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "en",
     "viewport": "desktop",
     "dimensions": {
@@ -156,7 +156,7 @@
     "path": "docs/screenshots/staging/sandak-draft-unavailable-en-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "en",
     "viewport": "desktop",
     "dimensions": {
@@ -173,7 +173,7 @@
     "path": "docs/screenshots/staging/sandak-guidance-drawer-en-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak local guidance",
+    "feature": "SanDai local guidance",
     "locale": "en",
     "viewport": "desktop",
     "dimensions": {
@@ -190,7 +190,7 @@
     "path": "docs/screenshots/staging/sandak-chat-unavailable-en-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak chat",
+    "feature": "SanDai chat",
     "locale": "en",
     "viewport": "desktop",
     "dimensions": {
@@ -207,7 +207,7 @@
     "path": "docs/screenshots/staging/sandak-group-template-en-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "en",
     "viewport": "mobile",
     "dimensions": {
@@ -224,7 +224,7 @@
     "path": "docs/screenshots/staging/sandak-draft-unavailable-en-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "en",
     "viewport": "mobile",
     "dimensions": {
@@ -241,7 +241,7 @@
     "path": "docs/screenshots/staging/sandak-guidance-drawer-en-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak local guidance",
+    "feature": "SanDai local guidance",
     "locale": "en",
     "viewport": "mobile",
     "dimensions": {
@@ -258,7 +258,7 @@
     "path": "docs/screenshots/staging/sandak-chat-unavailable-en-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak chat",
+    "feature": "SanDai chat",
     "locale": "en",
     "viewport": "mobile",
     "dimensions": {
@@ -286,13 +286,13 @@
     "actualEnvironment": "local",
     "status": "captured",
     "state": "signed-out staging feature highlights",
-    "note": "Signed-out local staging landing page with the SanDak and Google Meet pilot feature highlights."
+    "note": "Signed-out local staging landing page with the SanDai and Google Meet pilot feature highlights."
   },
   {
     "path": "docs/screenshots/staging/sandak-public-drawer-ar-desktop.webp",
     "role": "guest",
     "logicalRoute": "/",
-    "feature": "SanDak public guidance",
+    "feature": "SanDai public guidance",
     "locale": "ar",
     "viewport": "desktop",
     "dimensions": {
@@ -343,7 +343,7 @@
     "path": "docs/screenshots/staging/sandak-group-template-ar-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "ar",
     "viewport": "desktop",
     "dimensions": {
@@ -360,7 +360,7 @@
     "path": "docs/screenshots/staging/sandak-draft-unavailable-ar-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "ar",
     "viewport": "desktop",
     "dimensions": {
@@ -377,7 +377,7 @@
     "path": "docs/screenshots/staging/sandak-guidance-drawer-ar-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak local guidance",
+    "feature": "SanDai local guidance",
     "locale": "ar",
     "viewport": "desktop",
     "dimensions": {
@@ -394,7 +394,7 @@
     "path": "docs/screenshots/staging/sandak-chat-unavailable-ar-desktop.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak chat",
+    "feature": "SanDai chat",
     "locale": "ar",
     "viewport": "desktop",
     "dimensions": {
@@ -422,13 +422,13 @@
     "actualEnvironment": "local",
     "status": "captured",
     "state": "signed-out staging feature highlights",
-    "note": "Signed-out local staging landing page with the SanDak and Google Meet pilot feature highlights."
+    "note": "Signed-out local staging landing page with the SanDai and Google Meet pilot feature highlights."
   },
   {
     "path": "docs/screenshots/staging/sandak-public-drawer-ar-mobile.webp",
     "role": "guest",
     "logicalRoute": "/",
-    "feature": "SanDak public guidance",
+    "feature": "SanDai public guidance",
     "locale": "ar",
     "viewport": "mobile",
     "dimensions": {
@@ -479,7 +479,7 @@
     "path": "docs/screenshots/staging/sandak-group-template-ar-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "ar",
     "viewport": "mobile",
     "dimensions": {
@@ -496,7 +496,7 @@
     "path": "docs/screenshots/staging/sandak-draft-unavailable-ar-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher/groups/new",
-    "feature": "SanDak group drafting",
+    "feature": "SanDai group drafting",
     "locale": "ar",
     "viewport": "mobile",
     "dimensions": {
@@ -513,7 +513,7 @@
     "path": "docs/screenshots/staging/sandak-guidance-drawer-ar-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak local guidance",
+    "feature": "SanDai local guidance",
     "locale": "ar",
     "viewport": "mobile",
     "dimensions": {
@@ -530,7 +530,7 @@
     "path": "docs/screenshots/staging/sandak-chat-unavailable-ar-mobile.webp",
     "role": "teacher",
     "logicalRoute": "/teacher",
-    "feature": "SanDak chat",
+    "feature": "SanDai chat",
     "locale": "ar",
     "viewport": "mobile",
     "dimensions": {

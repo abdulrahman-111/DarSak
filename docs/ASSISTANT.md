@@ -1,6 +1,6 @@
-# SanDak (سندك): DarSak study assistant
+# SanDai (سنداي): DarSak study assistant
 
-SanDak is DarSak's bilingual (Arabic/English) study and teaching helper. It appears as a small pixel "pocket notebook" companion docked at the bottom corner of every page (bottom-end: bottom-right in English, bottom-left in Arabic, above the mobile tab bar). Its mood reflects real activity: idle, thinking (a request is running), needs you (a draft waits for review), done, oops (an error, with Retry) and sleeping (after two idle minutes or when the tab is hidden). A one-click Hide control remembers the choice in the browser; a small "Show SanDak" button brings it back. All animation stops under `prefers-reduced-motion`.
+SanDai is DarSak's bilingual (Arabic/English) study and teaching helper. It appears as a small pixel "pocket notebook" companion docked at the bottom corner of every page (bottom-end: bottom-right in English, bottom-left in Arabic, above the mobile tab bar). Its mood reflects real activity: idle, thinking (a request is running), needs you (a draft waits for review), done, oops (an error, with Retry) and sleeping (after two idle minutes or when the tab is hidden). A one-click Hide control remembers the choice in the browser; a small "Show SanDai" button brings it back. All animation stops under `prefers-reduced-motion`.
 
 ## Who gets what
 
