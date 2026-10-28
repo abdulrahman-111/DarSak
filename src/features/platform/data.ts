@@ -145,6 +145,19 @@ export async function publicGroups(
     );
   return readPublicGroups(await createClient(), filters, limit);
 }
+/**
+ * Default first-page groups for the statically rendered landing page. Reads only through the
+ * shared cached public client and never touches cookies, so it cannot make the page dynamic.
+ * A failed read is reported as `failed` instead of falling back to a per-visitor client.
+ */
+export async function landingGroups(limit = 3): Promise<{ data: Group[]; failed: boolean }> {
+  try {
+    const { data } = await cachedPublicGroups(normalizeDiscoveryFilters({}), limit);
+    return { data, failed: false };
+  } catch {
+    return { data: [], failed: true };
+  }
+}
 // Memoized per request so the page and its generateMetadata share one fetch.
 export const publicGroupDetail = cache(
   async (groupId: string): Promise<{ data: Group | null; error: PostgrestError | null }> => {
