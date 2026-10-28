@@ -11,6 +11,7 @@ import {
   lessonDateTile,
   lessonTimeRange,
 } from '@/components/platform/lesson-time';
+import { pluralize } from '@/lib/plural';
 export default async function StudentDashboard({
   params,
 }: {
@@ -43,7 +44,7 @@ export default async function StudentDashboard({
           dateStyle: 'full',
           timeZone: 'Africa/Cairo',
         }).format(now)}
-        title={`${ar ? 'أهلاً' : 'Welcome back'}, ${firstName}`}
+        title={ar ? `أهلاً، ${firstName}` : `Welcome back, ${firstName}`}
         description={
           ar
             ? 'مساحة واضحة لمتابعة تعلمك، خطوة بخطوة.'
@@ -162,12 +163,19 @@ export default async function StudentDashboard({
                   )}
                   <div className="mt-6 flex flex-wrap gap-x-5 gap-y-2 border-t border-white/15 pt-4 text-xs text-white/80">
                     <span>
-                      {data.acceptedCount}{' '}
-                      {ar
-                        ? 'مجموعات مسجل بها'
-                        : data.acceptedCount === 1
-                          ? 'enrolled class'
-                          : 'enrolled classes'}
+                      {pluralize(
+                        locale,
+                        data.acceptedCount,
+                        ar
+                          ? {
+                              zero: 'لا توجد مجموعات مسجل بها',
+                              one: 'مجموعة واحدة مسجل بها',
+                              two: 'مجموعتان مسجل بهما',
+                              few: '{n} مجموعات مسجل بها',
+                              other: '{n} مجموعة مسجل بها',
+                            }
+                          : { one: '{n} enrolled class', other: '{n} enrolled classes' },
+                      )}
                     </span>
                     {data.pendingCount > 0 && (
                       <Link
