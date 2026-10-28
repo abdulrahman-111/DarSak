@@ -213,14 +213,10 @@ export async function signupAction(
   );
   if (error)
     return { error: authErrorMessage(locale, error.code, 'signup'), ...signupEcho(formData) };
-  // Supabase can return an obfuscated existing account with no identity and no error.
-  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
-    return {
-      error: authErrorMessage(locale, 'user_already_exists', 'signup'),
-      ...signupEcho(formData),
-    };
-  }
-  if (parsed.data.role === 'teacher' && data.user)
+  // Supabase returns an obfuscated existing account as a user with no identities and no error.
+  // It gets the same check-email response as a new signup, but nothing is sent or flushed for it.
+  const existingAccount = Array.isArray(data.user?.identities) && data.user.identities.length === 0;
+  if (parsed.data.role === 'teacher' && data.user && !existingAccount)
     after(async () => {
       try {
         await flushEmailOutbox(1);
@@ -229,7 +225,7 @@ export async function signupAction(
       }
     });
   // Email confirmation is on: no session until the signup code is verified.
-  if (!data.session)
+  if (existingAccount || !data.session)
     redirect(`/${locale}/check-email?email=${encodeURIComponent(parsed.data.email)}`);
   const { data: profile, error: profileError } = data.user
     ? await db.from('profiles').select('role,status').eq('id', data.user.id).maybeSingle()

@@ -242,22 +242,25 @@ describe('auth actions', () => {
       expect(signupAvailabilityMock).not.toHaveBeenCalled();
     });
 
-    it.each(['confirmed email', 'Google identity'])(
-      'reports an existing %s from the Supabase signup response',
-      async () => {
-        const signUp = vi.fn(async () => ({
-          data: { user: { identities: [] }, session: null },
-          error: null,
-        }));
-        createClientMock.mockResolvedValue(signupClient({ signUp }));
-        const result = await signupAction('en', null, form(signup));
-        expect(result?.error).toBe(
-          'This email is already registered. Sign in or reset your password.',
+    it('answers an existing email (empty identities) with the same redirect as a new signup', async () => {
+      const runWith = async (data: Record<string, unknown>) => {
+        createClientMock.mockResolvedValue(
+          signupClient({ signUp: async () => ({ data, error: null }) }),
         );
-        expect(signUp).toHaveBeenCalledOnce();
-        expect(signupAvailabilityMock).not.toHaveBeenCalled();
-      },
-    );
+        return redirectTarget(() => signupAction('en', null, form({ ...signup, role: 'teacher' })));
+      };
+      const newSignup = await runWith({
+        user: { id: 'new-id', identities: [{ provider: 'email' }] },
+        session: null,
+      });
+      afterMock.mockReset();
+      const existing = await runWith({ user: { identities: [] }, session: null });
+      expect(newSignup).toBe('/en/check-email?email=sara%40example.com');
+      expect(existing).toBe(newSignup);
+      // Nothing is sent for an existing account, so the outbox flush is skipped.
+      expect(afterMock).not.toHaveBeenCalled();
+      expect(signupAvailabilityMock).not.toHaveBeenCalled();
+    });
 
     it('handles the unique-email race errors as an existing account', async () => {
       const signUp = vi.fn(async () => ({ data: {}, error: { code: 'email_exists' } }));
@@ -273,9 +276,9 @@ describe('auth actions', () => {
         error: null,
       }));
       createClientMock.mockResolvedValue(signupClient({ signUp }));
-      expect((await signupAction('en', null, form({ ...signup, role: 'teacher' })))?.error).toMatch(
-        /already registered/,
-      );
+      expect(
+        await redirectTarget(() => signupAction('en', null, form({ ...signup, role: 'teacher' }))),
+      ).toBe('/en/check-email?email=sara%40example.com');
       expect(afterMock).not.toHaveBeenCalled();
     });
 
