@@ -113,7 +113,7 @@ begin
   begin
     update public.teacher_profiles set approved=true where id=auth.uid();
     raise exception 'teacher directly changed compatibility approval';
-  exception when raise_exception then
+  exception when raise_exception or insufficient_privilege then
     if sqlerrm='teacher directly changed compatibility approval' then raise; end if;
   end;
 end $$;
@@ -195,7 +195,10 @@ begin
   if not (select approved from public.teacher_profiles where id='7b000000-0000-4000-8000-000000000001') then
     raise exception 'approval did not set compatibility boolean';
   end if;
-  update public.teacher_profiles set approved=false where id='7b000000-0000-4000-8000-000000000002';
+  begin
+    update public.teacher_profiles set approved=false where id='7b000000-0000-4000-8000-000000000002';
+    raise exception 'raw admin write to teacher approval succeeded';
+  exception when insufficient_privilege then null; end;
   if not (select approved from public.teacher_profiles where id='7b000000-0000-4000-8000-000000000002') then
     raise exception 'raw admin write changed another teacher approval';
   end if;

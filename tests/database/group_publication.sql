@@ -89,24 +89,26 @@ begin
  if not exists(select 1 from public.groups where id='78100000-0000-4000-8000-000000000002' and status='published') then
   raise exception 'no-range publication did not publish';
  end if;
- update public.groups set description='Published metadata edit' where id='78100000-0000-4000-8000-000000000002';
- if not exists(select 1 from public.groups where id='78100000-0000-4000-8000-000000000002' and description='Published metadata edit') then
-  raise exception 'owner could not edit an already published group';
+ begin
+  update public.groups set description='Published metadata edit' where id='78100000-0000-4000-8000-000000000002';
+  raise exception 'owner raw edit of a published group succeeded';
+ exception when insufficient_privilege then null;
+ end;
+ if exists(select 1 from public.groups where id='78100000-0000-4000-8000-000000000002' and description='Published metadata edit') then
+  raise exception 'owner raw edit of a published group changed the row';
  end if;
 
  begin
   update public.groups set status='published' where id='78100000-0000-4000-8000-000000000005';
   raise exception 'direct published transition bypass succeeded';
- exception when others then
-  if sqlerrm='direct published transition bypass succeeded' then raise; end if;
+ exception when insufficient_privilege then null;
  end;
  begin
   insert into public.groups(id,teacher_id,offering_id,name,capacity,status)
   select '78100000-0000-4000-8000-000000000006','78000000-0000-4000-8000-000000000001',id,'Direct insert bypass',5,'published'
   from public.offerings order by id limit 1;
   raise exception 'direct published insert bypass succeeded';
- exception when others then
-  if sqlerrm='direct published insert bypass succeeded' then raise; end if;
+ exception when insufficient_privilege then null;
  end;
 end $$;
 reset role;

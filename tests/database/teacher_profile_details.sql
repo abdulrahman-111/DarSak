@@ -228,7 +228,18 @@ set local session_replication_role=origin;
 
 set local role authenticated;
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
+do $$
+begin
+  begin
+    update public.teacher_profiles set bio='Denied raw bio write' where id='20000000-0000-4000-8000-000000000001';
+    raise exception 'authenticated teacher raw bio write succeeded';
+  exception when insufficient_privilege then null; end;
+end $$;
+-- Direct column grants are revoked, so exercise the canonical-bio sync trigger
+-- with the table owner's privileges while auth.uid() is still the teacher.
+reset role;
 update public.teacher_profiles set bio='Visible Arabic' where id='20000000-0000-4000-8000-000000000001';
+set local role authenticated;
 do $$
 begin
   if exists (select 1 from public.teacher_profiles where id='20000000-0000-4000-8000-000000000001' and bio like '%Hidden English%') then

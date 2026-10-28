@@ -18,10 +18,9 @@ begin
   end if;
   if has_column_privilege('authenticated','public.teacher_profiles','cover_path','UPDATE')
      or has_column_privilege('authenticated','public.teacher_profiles','avatar_path','UPDATE')
-     or not has_column_privilege('authenticated','public.teacher_profiles','headline','UPDATE')
-     or not has_column_privilege('authenticated','public.teacher_profiles','bio','UPDATE')
-     or not has_column_privilege('authenticated','public.teacher_profiles','approved','UPDATE') then
-    raise exception 'authenticated column updates must use avatar CAS while withholding cover_path';
+     or has_any_column_privilege('authenticated','public.teacher_profiles','UPDATE')
+     or has_any_column_privilege('authenticated','public.teacher_profiles','INSERT') then
+    raise exception 'authenticated has no direct teacher_profiles writes; profile saves use RPCs';
   end if;
   if has_table_privilege('anon','public.teacher_profiles','SELECT') then
     raise exception 'anonymous users gained raw teacher_profiles access';
