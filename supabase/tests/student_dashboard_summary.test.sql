@@ -15,9 +15,9 @@ update public.teacher_profiles set approved=true where id='99300000-0000-4000-80
 set local session_replication_role=origin;
 
 insert into public.subjects(id,owner_teacher_id,name_ar,name_en,slug) values
- ('99340000-0000-4000-8000-000000000001','99300000-0000-4000-8000-000000000001','رياضيات','SDS math','sds-math');
+ ('99340000-0000-4000-8000-000000000001','99300000-0000-4000-8000-000000000001','رياضيات','SDS math','99340000-0000-4000-8000-000000000001');
 insert into public.education_nodes(id,kind,name_ar,name_en,slug,owner_teacher_id) values
- ('99350000-0000-4000-8000-000000000001','student_category','الصف الأول','SDS grade','sds-grade','99300000-0000-4000-8000-000000000001');
+ ('99350000-0000-4000-8000-000000000001','student_category','الصف الأول','SDS grade','99350000-0000-4000-8000-000000000001','99300000-0000-4000-8000-000000000001');
 insert into public.offerings(id,node_id,subject_id,owner_teacher_id) values
  ('99360000-0000-4000-8000-000000000001','99350000-0000-4000-8000-000000000001','99340000-0000-4000-8000-000000000001','99300000-0000-4000-8000-000000000001');
 
