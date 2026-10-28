@@ -97,7 +97,7 @@ export function classifyEmailError(error: unknown): { outcome: 'retry' | 'failed
   return { outcome: 'retry', code: 'smtp_transient' };
 }
 
-/** Executes at most five jobs, claiming each individually and stopping inside a 120s DB lease. */
+/** Executes up to maxJobs (capped at MAX_EMAIL_JOBS_PER_RUN), claiming each individually, stopping within the time budget and inside a 120s DB lease. */
 export async function runEmailWorker(
   deps: WorkerDeps,
   origin: string,
