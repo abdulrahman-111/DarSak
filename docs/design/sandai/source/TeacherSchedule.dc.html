@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teacher group page, compact schedule</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#b04c16}a:hover{color:#8f3d11}
+.sandak-pet{transform-origin:50% 100%}
+.sandak-done{animation:sandak-hop 1.8s ease-in-out infinite}
+@keyframes sandak-hop{0%,40%,100%{transform:translateY(0)}15%{transform:translateY(-12px)}25%{transform:translateY(0) scaleY(.94)}}
+@media (prefers-reduced-motion: reduce){.sandak-pet{animation:none}}
+button{font:inherit;cursor:pointer}
+</style>
+</helmet>
+<div style="position: relative; width: 1440px; height: 900px; box-sizing: border-box; background: #f6f0e4; font-family: 'Instrument Sans', 'IBM Plex Sans Arabic', Arial, sans-serif; color: #23211e; padding: 40px 80px; display: flex; flex-direction: column; gap: 22px; overflow: hidden">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; gap: 24px">
+    <div>
+      <a href="#" style="font-size: 14px; font-weight: 600">← Back to my groups</a>
+      <h1 style="margin: 8px 0 4px; font-family: 'Bricolage Grotesque', Arial, sans-serif; font-size: 40px; font-weight: 800; color: #0e4a4b">Algebra Foundations <span style="font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; font-weight: 700; font-size: 32px">أساسيات الجبر</span></h1>
+      <p style="margin: 0; color: #4d473f">Published · 11 of 12 seats free · Nasr City · Online</p>
+    </div>
+    <div style="display: flex; gap: 10px">
+      <button type="button" style="min-height: 46px; padding: 0 18px; border-radius: 14px; border: 1px solid #d8ccb8; background: #fffdf8; color: #0e4a4b; font-weight: 700">Edit details</button>
+      <button type="button" style="min-height: 46px; padding: 0 18px; border-radius: 14px; border: 1px solid #b04c16; background: #b04c16; color: #fff; font-weight: 700">Add lesson</button>
+    </div>
+  </div>
+
+  <nav aria-label="Group sections" style="display: flex; gap: 6px; border-bottom: 1px solid #e3d9c8">
+    <a href="#" style="padding: 12px 16px; color: #4d473f; text-decoration: none; font-weight: 600">Overview</a>
+    <a href="#" aria-current="page" style="padding: 12px 16px; color: #0e4a4b; text-decoration: none; font-weight: 700; border-bottom: 3px solid #0e4a4b">Schedule</a>
+    <a href="#" style="padding: 12px 16px; color: #4d473f; text-decoration: none; font-weight: 600">Students <span style="padding: 2px 8px; border-radius: 999px; background: #d5ebe6; color: #0e4a4b; font-size: 12px">1</span></a>
+    <a href="#" style="padding: 12px 16px; color: #4d473f; text-decoration: none; font-weight: 600">Lessons</a>
+    <a href="#" style="padding: 12px 16px; color: #4d473f; text-decoration: none; font-weight: 600">Announcements</a>
+    <a href="#" style="padding: 12px 16px; color: #4d473f; text-decoration: none; font-weight: 600">Assignments</a>
+  </nav>
+
+  <div style="display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px">
+    <section aria-labelledby="weekly-h" style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 16px">
+      <div style="display: flex; justify-content: space-between; align-items: center">
+        <div>
+          <h2 id="weekly-h" style="margin: 0; font-size: 22px; color: #0e4a4b">Weekly times</h2>
+          <p style="margin: 4px 0 0; font-size: 14px; color: #4d473f">Cairo time. Changes apply to lessons generated from now on.</p>
+        </div>
+        <button type="button" style="min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #0e4a4b; background: #0e4a4b; color: #fff; font-weight: 700">+ Add time</button>
+      </div>
+      <table style="width: 100%; border-collapse: collapse; font-size: 15px">
+        <thead>
+          <tr style="text-align: start; color: #4d473f; font-size: 13px">
+            <th scope="col" style="text-align: start; padding: 10px 8px; border-bottom: 1px solid #e3d9c8">Day</th>
+            <th scope="col" style="text-align: start; padding: 10px 8px; border-bottom: 1px solid #e3d9c8">Time</th>
+            <th scope="col" style="text-align: start; padding: 10px 8px; border-bottom: 1px solid #e3d9c8">Next lesson</th>
+            <th scope="col" style="padding: 10px 8px; border-bottom: 1px solid #e3d9c8"><span style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="padding: 14px 8px; border-bottom: 1px solid #efe6d6; font-weight: 700; color: #0e4a4b">Tuesday</td>
+            <td style="padding: 14px 8px; border-bottom: 1px solid #efe6d6">16:00–17:00</td>
+            <td style="padding: 14px 8px; border-bottom: 1px solid #efe6d6; color: #4d473f">Tue 3 Nov</td>
+            <td style="padding: 8px; border-bottom: 1px solid #efe6d6; text-align: end; white-space: nowrap">
+              <button type="button" style="min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #d8ccb8; background: #fffdf8; color: #0e4a4b; font-weight: 600">Edit</button>
+              <button type="button" style="min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #f6e1dc; background: #f6e1dc; color: #9b2c1f; font-weight: 600">Remove</button>
+            </td>
+          </tr>
+          <tr style="background: #f6f0e4">
+            <td style="padding: 12px 8px; font-weight: 700; color: #0e4a4b">
+              <label for="slot-day" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Day</label>
+              <select id="slot-day" style="min-height: 40px; padding: 0 10px; border-radius: 10px; border: 1px solid #d8ccb8; background: #fffdf8; font: inherit"><option>Thursday</option></select>
+            </td>
+            <td style="padding: 12px 8px">
+              <label for="slot-start" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">Start</label>
+              <input id="slot-start" type="text" value="16:00" style="width: 64px; min-height: 40px; padding: 0 8px; border-radius: 10px; border: 1px solid #d8ccb8; background: #fffdf8; font: inherit">
+              –
+              <label for="slot-end" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0)">End</label>
+              <input id="slot-end" type="text" value="17:30" style="width: 64px; min-height: 40px; padding: 0 8px; border-radius: 10px; border: 1px solid #d8ccb8; background: #fffdf8; font: inherit">
+            </td>
+            <td style="padding: 12px 8px; color: #4d473f; font-size: 13px">Editing</td>
+            <td style="padding: 8px; text-align: end; white-space: nowrap">
+              <button type="button" style="min-height: 40px; padding: 0 14px; border-radius: 10px; border: 1px solid #0e4a4b; background: #0e4a4b; color: #fff; font-weight: 700">Save</button>
+              <button type="button" style="min-height: 40px; padding: 0 12px; border-radius: 10px; border: 1px solid #d8ccb8; background: #fffdf8; color: #0e4a4b; font-weight: 600">Cancel</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="margin: 0; padding: 12px 14px; border-radius: 14px; background: #d5ebe6; color: #0e4a4b; font-size: 14px">Summary: <strong>Tue &amp; Thu</strong> · 2 lessons a week · next 8 weeks = 16 lessons, 1 excluded date (6 Nov).</p>
+    </section>
+
+    <section aria-labelledby="week-h" style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; gap: 14px">
+      <h2 id="week-h" style="margin: 0; font-size: 22px; color: #0e4a4b">This week</h2>
+      <div style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; text-align: center">
+        <div style="padding: 10px 0; border-radius: 14px; color: #4d473f"><span style="display: block; font-size: 12px; font-weight: 600">Sat</span><strong style="display: block; font-size: 17px">31</strong></div>
+        <div style="padding: 10px 0; border-radius: 14px; color: #4d473f"><span style="display: block; font-size: 12px; font-weight: 600">Sun</span><strong style="display: block; font-size: 17px">1</strong></div>
+        <div style="padding: 10px 0; border-radius: 14px; color: #4d473f"><span style="display: block; font-size: 12px; font-weight: 600">Mon</span><strong style="display: block; font-size: 17px">2</strong></div>
+        <div style="padding: 10px 0; border-radius: 14px; background: #0e4a4b; color: #fff"><span style="display: block; font-size: 12px; font-weight: 600">Tue</span><strong style="display: block; font-size: 17px">3</strong><span style="display: block; font-size: 11px">16:00</span></div>
+        <div style="padding: 10px 0; border-radius: 14px; color: #4d473f"><span style="display: block; font-size: 12px; font-weight: 600">Wed</span><strong style="display: block; font-size: 17px">4</strong></div>
+        <div style="padding: 10px 0; border-radius: 14px; background: #d5ebe6; color: #0e4a4b"><span style="display: block; font-size: 12px; font-weight: 600">Thu</span><strong style="display: block; font-size: 17px">5</strong><span style="display: block; font-size: 11px">16:00</span></div>
+        <div style="padding: 10px 0; border-radius: 14px; color: #4d473f"><span style="display: block; font-size: 12px; font-weight: 600">Fri</span><strong style="display: block; font-size: 17px">6</strong><span style="display: block; font-size: 11px">Off</span></div>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #4d473f">Week starts Saturday (setting: Saturday / Sunday / Monday). Arabic shows full day names.</p>
+      <div style="padding: 14px; border-radius: 16px; background: #f6f0e4; display: flex; flex-direction: column; gap: 6px">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; color: #b04c16">ROSTER</p>
+        <p style="margin: 0; font-size: 15px">1 accepted · 0 pending · 0 on waitlist</p>
+        <a href="#" style="font-size: 14px; font-weight: 700">Open Students tab</a>
+      </div>
+    </section>
+  </div>
+
+  <div role="status" style="position: absolute; right: 40px; bottom: 32px; display: flex; align-items: flex-end; gap: 10px">
+    <div style="padding: 14px 16px; border-radius: 18px 18px 6px 18px; background: #fffdf8; border: 1px solid #d8ccb8; box-shadow: 0 14px 34px rgba(14, 74, 75, 0.16); margin-bottom: 56px; max-width: 300px">
+      <p style="margin: 0 0 4px; font-size: 13px; font-weight: 700; color: #2c5620">Saved</p>
+      <p style="margin: 0; font-size: 15px; line-height: 1.45">Thursday now ends at 17:30. Future lessons were updated; 1 accepted student was notified.</p>
+    </div>
+    <dc-import name="Pet" mood="done" px="5" hint-size="100px,110px"></dc-import>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

@@ -14,7 +14,7 @@ import {
 import { normalizeSetupStep } from '@/features/teacher/setup-domain';
 import { PublishReviewForm } from '@/features/teacher/publish-form';
 import { parseTeacherReviewStatus } from '@/features/teacher/review-data';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 
 export default async function TeacherGroupSetupPage({
   params,
@@ -26,11 +26,12 @@ export default async function TeacherGroupSetupPage({
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   if (!idSchema.safeParse(id).success) notFound();
-  await requireTeachingAccess(locale);
   const requestedSource = Array.isArray(query.copyScheduleFrom)
     ? query.copyScheduleFrom[0]
     : query.copyScheduleFrom;
-  const data = await teacherGroupSetup(locale, id, requestedSource);
+  const { data } = await loadWithTeachingAccess(locale, () =>
+    teacherGroupSetup(locale, id, requestedSource),
+  );
   if (data.notFound) notFound();
   const ar = locale === 'ar';
   const step = normalizeSetupStep(query.step);

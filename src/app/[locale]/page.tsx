@@ -1,18 +1,22 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
-import { redirect } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react';
 import { ensureLocale, getDictionary } from '@/i18n/config';
 import { pageMetadata } from '@/features/seo/metadata';
 import { seoCopy } from '@/features/seo/copy';
-import { publicGroups } from '@/features/platform/data';
-import { getRequestViewer } from '@/features/platform/request-viewer';
-import { roleHome } from '@/components/platform/access';
+import { landingGroups } from '@/features/platform/data';
+import { localeStaticParams } from '@/i18n/static-params';
 import { GroupCard, SetupCard } from '@/components/ui';
 import { isConfigured } from '@/lib/supabase/server';
 import { publicCopy } from '@/components/public/copy';
 import { WeeklyPreview } from '@/components/public/weekly-preview';
+
+// Static per locale for anonymous visitors, refreshed every 5 minutes. Signed-in students and
+// teachers are redirected to their dashboard in src/proxy.ts before this page is served, and
+// nothing here reads cookies or per-user data.
+export const revalidate = 300;
+export const generateStaticParams = localeStaticParams;
 
 export async function generateMetadata({
   params,
@@ -32,18 +36,9 @@ export async function generateMetadata({
 export default async function Home({ params }: { params: Promise<{ locale: 'ar' | 'en' }> }) {
   const { locale } = await params;
   const configured = isConfigured();
-  if (configured) {
-    const { profile } = await getRequestViewer();
-    if (
-      profile?.status === 'active' &&
-      (profile.role === 'student' || profile.role === 'teacher')
-    ) {
-      redirect(roleHome(locale, profile.role));
-    }
-  }
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
-  const groupResult = configured ? await publicGroups(undefined, 3) : null;
+  const groupResult = configured ? await landingGroups(3) : null;
   const groups = groupResult?.data ?? [];
   const Arrow = locale === 'ar' ? ArrowLeft : ArrowRight;
   const featureIcons = [
@@ -186,7 +181,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
               <GroupCard key={group.id} group={group} locale={locale} t={t} />
             ))}
           </div>
-        ) : groupResult?.error ? (
+        ) : groupResult?.failed ? (
           <div className="rounded-[1.15rem] border border-dashed border-line-strong bg-surface p-8 text-center">
             <p className="text-muted">{c.groupsError}</p>
             <form action={`/${locale}#groups`} className="mt-3">

@@ -3,7 +3,7 @@ import { ensureLocale } from '@/i18n/config';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { teacherGroupSetup } from '@/features/teacher/setup-data';
 import { GroupDetailsForm } from '@/features/teacher/setup-forms';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 import { GroupSetupSteps } from '@/features/teacher/setup-forms';
 import { UnsavedProfileProtection } from '@/features/teacher/unsaved-profile-protection';
 
@@ -15,8 +15,7 @@ export default async function NewTeacherGroupPage({
   const { locale: raw } = await params;
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  await requireTeachingAccess(locale);
-  const data = await teacherGroupSetup(locale);
+  const { data } = await loadWithTeachingAccess(locale, () => teacherGroupSetup(locale));
   return (
     <UnsavedProfileProtection locale={locale} kind="group">
       <ScreenTitle

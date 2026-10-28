@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ensureLocale } from '@/i18n/config';
-import { requireTeachingAccess } from '@/components/platform/access';
+import type { PlatformViewer } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 import { LessonForm } from '@/components/platform/forms';
 import {
   EmptyState,
@@ -43,8 +44,7 @@ export default async function TeacherGroupDetail({
   const [{ locale: raw, id }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  const me = await requireTeachingAccess(locale);
-  const fetchLessons = (page: number) =>
+  const fetchLessons = (page: number, me: PlatformViewer) =>
     me.db
       .from('lessons')
       .select('id,title,starts_at,status,group:groups!inner(teacher_id)', { count: 'exact' })
@@ -53,7 +53,7 @@ export default async function TeacherGroupDetail({
       .order('starts_at', { ascending: false })
       .order('id', { ascending: false })
       .range((page - 1) * STUDENT_PAGE_SIZE, page * STUDENT_PAGE_SIZE - 1);
-  const fetchRoster = (page: number) =>
+  const fetchRoster = (page: number, me: PlatformViewer) =>
     me.db.rpc('group_enrollment_page', {
       p_group_id: id,
       p_offset: (page - 1) * STUDENT_PAGE_SIZE,
@@ -62,8 +62,20 @@ export default async function TeacherGroupDetail({
   const requestedPage = normalizeStudentPage(query.page);
   const maxRosterPage = Math.floor(2_147_483_647 / STUDENT_PAGE_SIZE);
   let rosterPage = Math.min(normalizeStudentPage(query.roster_page), maxRosterPage);
-  const [group, slots, initialLessons, initialStudents, exclusions, announcement, seats, upcoming] =
-    await Promise.all([
+  const {
+    me,
+    data: [
+      group,
+      slots,
+      initialLessons,
+      initialStudents,
+      exclusions,
+      announcement,
+      seats,
+      upcoming,
+    ],
+  } = await loadWithTeachingAccess(locale, me =>
+    Promise.all([
       me.db
         .from('groups')
         .select('id,name,description,status,capacity,location')
@@ -76,8 +88,8 @@ export default async function TeacherGroupDetail({
         .eq('group_id', id)
         .order('weekday')
         .order('start_time'),
-      readCountedPage(requestedPage, STUDENT_PAGE_SIZE, fetchLessons),
-      fetchRoster(rosterPage),
+      readCountedPage(requestedPage, STUDENT_PAGE_SIZE, page => fetchLessons(page, me)),
+      fetchRoster(rosterPage, me),
       me.db
         .from('group_lesson_exclusions')
         .select('local_date')
@@ -98,7 +110,8 @@ export default async function TeacherGroupDetail({
         .gte('starts_at', new Date().toISOString())
         .order('starts_at')
         .limit(200),
-    ]);
+    ]),
+  );
   let page = initialLessons.page;
   const lessons = initialLessons.result;
   const lessonCount = lessons.count ?? 0;
@@ -108,7 +121,7 @@ export default async function TeacherGroupDetail({
   const rosterPageCount = studentPageCount(rosterTotal);
   if (!students.error && rosterPage > rosterPageCount) {
     rosterPage = rosterPageCount;
-    students = await fetchRoster(rosterPage);
+    students = await fetchRoster(rosterPage, me);
   }
   const lessonsFailed = !!lessons.error || lessons.count == null;
   const pageLabels = ar

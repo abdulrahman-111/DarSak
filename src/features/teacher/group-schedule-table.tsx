@@ -190,7 +190,7 @@ export function GroupScheduleTable({
   const summary = summarizeSchedule(slots, locale);
   const day = (weekday: number) => weekdayLabels(locale)[weekday];
   const timeRange = (slot: GroupScheduleRow) => (
-    <span dir="ltr" className="tabular-nums">
+    <span dir="ltr" className="whitespace-nowrap tabular-nums">
       {slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}
     </span>
   );

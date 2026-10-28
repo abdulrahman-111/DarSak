@@ -87,4 +87,73 @@ describe('proxy auth and localization', () => {
     expect(localizeMock).toHaveBeenCalledOnce();
     expect(response.headers.get('x-middleware-rewrite')).toContain('/en/dashboard');
   });
+
+  describe('landing page', () => {
+    function mockSession(claims: unknown, profile: unknown, profileError: unknown = null) {
+      const maybeSingle = vi.fn().mockResolvedValue({ data: profile, error: profileError });
+      const eq = vi.fn(() => ({ maybeSingle }));
+      const select = vi.fn(() => ({ eq }));
+      const from = vi.fn(() => ({ select }));
+      createServerClientMock.mockReturnValue({
+        auth: { getClaims: vi.fn().mockResolvedValue({ data: claims, error: null }) },
+        from,
+      });
+      return { from, eq };
+    }
+    const landing = (path = '/en', cookie = 'sb-x-auth-token=abc') =>
+      proxy(new NextRequest(`https://dars.example${path}`, { headers: { cookie } }));
+
+    it.each([
+      ['student', '/en', '/en/student'],
+      ['teacher', '/ar', '/ar/teacher'],
+      ['student', '/ar/', '/ar/student'],
+    ])('redirects an active %s on %s to %s, private and uncached', async (role, path, target) => {
+      const { eq } = mockSession({ claims: { sub: 'u1' } }, { role, status: 'active' });
+      const response = await landing(path);
+      expect(response.status).toBe(307);
+      expect(new URL(response.headers.get('location')!).pathname).toBe(target);
+      expect(new URL(response.headers.get('location')!).search).toBe('');
+      expect(eq).toHaveBeenCalledWith('id', 'u1');
+      expect(localizeMock).not.toHaveBeenCalled();
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+      expect(response.headers.get('content-security-policy-report-only')).not.toContain('nonce-');
+    });
+
+    it.each([
+      ['pending teacher', { role: 'teacher', status: 'pending' }],
+      ['suspended student', { role: 'student', status: 'suspended' }],
+      ['admin', { role: 'admin', status: 'active' }],
+      ['missing profile', null],
+    ])('serves the landing page to a %s without redirecting', async (_name, profile) => {
+      mockSession({ claims: { sub: 'u1' } }, profile);
+      const response = await landing();
+      expect(response.status).toBe(200);
+      expect(localizeMock).toHaveBeenCalledOnce();
+      expect(response.headers.get('cache-control')).toBe('private, no-store');
+    });
+
+    it('does not look up a profile for anonymous visitors or other paths', async () => {
+      const anon = mockSession(null, null);
+      const response = await landing('/en', '');
+      expect(anon.from).not.toHaveBeenCalled();
+      expect(response.headers.get('cache-control')).toBeNull();
+
+      const other = mockSession({ claims: { sub: 'u1' } }, { role: 'student', status: 'active' });
+      const teachers = await landing('/en/teachers');
+      expect(other.from).not.toHaveBeenCalled();
+      expect(teachers.status).toBe(200);
+    });
+
+    it('falls back to the landing page when the profile lookup throws', async () => {
+      createServerClientMock.mockReturnValue({
+        auth: { getClaims: vi.fn().mockResolvedValue({ data: { claims: { sub: 'u1' } } }) },
+        from: () => {
+          throw new Error('boom');
+        },
+      });
+      const response = await landing();
+      expect(response.status).toBe(200);
+      expect(localizeMock).toHaveBeenCalledOnce();
+    });
+  });
 });

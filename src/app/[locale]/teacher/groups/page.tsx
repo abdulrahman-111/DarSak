@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
+import type { PlatformViewer } from '@/components/platform/access';
 import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
 import { GroupManagementControls } from '@/features/teacher/management-forms';
 import {
@@ -22,8 +23,7 @@ export default async function TeacherGroups({
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
-  const me = await requireTeachingAccess(locale);
-  const fetchGroups = (page: number) =>
+  const fetchGroups = (page: number, me: PlatformViewer) =>
     me.db
       .from('groups')
       .select(
@@ -34,10 +34,12 @@ export default async function TeacherGroups({
       .order('created_at', { ascending: false })
       .order('id', { ascending: false })
       .range((page - 1) * STUDENT_PAGE_SIZE, page * STUDENT_PAGE_SIZE - 1);
-  const { result: groups, page } = await readCountedPage(
-    normalizeStudentPage(query.page),
-    STUDENT_PAGE_SIZE,
-    fetchGroups,
+  const {
+    data: { result: groups, page },
+  } = await loadWithTeachingAccess(locale, me =>
+    readCountedPage(normalizeStudentPage(query.page), STUDENT_PAGE_SIZE, page =>
+      fetchGroups(page, me),
+    ),
   );
   const count = groups.count ?? 0,
     pageCount = studentPageCount(count);
@@ -87,7 +89,7 @@ export default async function TeacherGroups({
           </a>
         </Panel>
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 lg:grid-cols-2">
           {groups.data?.length ? (
             groups.data.map(group => {
               const relation = (
@@ -168,17 +170,19 @@ export default async function TeacherGroups({
               );
             })
           ) : (
-            <EmptyState
-              title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
-              action={{
-                href: `/${locale}/teacher/groups/new`,
-                label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
-              }}
-            >
-              {ar
-                ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
-                : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
-            </EmptyState>
+            <div className="lg:col-span-2">
+              <EmptyState
+                title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
+                action={{
+                  href: `/${locale}/teacher/groups/new`,
+                  label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
+                }}
+              >
+                {ar
+                  ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
+                  : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
+              </EmptyState>
+            </div>
           )}
         </div>
       )}

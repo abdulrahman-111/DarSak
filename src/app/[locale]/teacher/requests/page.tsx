@@ -6,7 +6,7 @@ import { teacherRequests, teacherWaitlist } from '@/features/teacher/data';
 import { StudentPagination } from '@/features/student/pagination';
 import { TeacherRosterFilterForm } from '@/features/teacher/roster-filter-form';
 import { WaitlistPromoteForm } from '@/features/student/waitlist-forms';
-import { requireTeachingAccess } from '@/components/platform/access';
+import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 
 export default async function TeacherRequests({
   params,
@@ -23,18 +23,19 @@ export default async function TeacherRequests({
   const [{ locale: raw }, query] = await Promise.all([params, searchParams]);
   const locale = ensureLocale(raw),
     ar = locale === 'ar';
-  await requireTeachingAccess(locale);
   const view = Array.isArray(query.view) ? query.view[0] : query.view;
   const waitingView = view === 'waiting';
-  const data = waitingView
-    ? {
-        ...(await teacherWaitlist(locale, query.page, query.q, query.group_id)),
-        view: 'waiting' as const,
-      }
-    : {
-        ...(await teacherRequests(locale, query.page, query.q, query.group_id)),
-        view: 'requests' as const,
-      };
+  const { data } = await loadWithTeachingAccess(locale, async () =>
+    waitingView
+      ? {
+          ...(await teacherWaitlist(locale, query.page, query.q, query.group_id)),
+          view: 'waiting' as const,
+        }
+      : {
+          ...(await teacherRequests(locale, query.page, query.q, query.group_id)),
+          view: 'requests' as const,
+        },
+  );
   const copy = ar
     ? {
         eyebrow: 'طلبات الطلاب',
