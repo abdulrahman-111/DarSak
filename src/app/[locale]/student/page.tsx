@@ -1,10 +1,15 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowUpRight, CalendarDays, Clock3, FolderOpen, ArrowRight, BookOpen } from 'lucide-react';
+import { ArrowUpRight, CalendarDays, Clock3, FolderOpen, ArrowRight } from 'lucide-react';
 import { ensureLocale } from '@/i18n/config';
 import { studentDashboard } from '@/features/student/data';
 import { requireViewer } from '@/components/platform/access';
-import { ClassMark, StudentHeading, studentCard } from '@/features/student/workspace-ui';
+import {
+  ClassMark,
+  StudentEmpty,
+  StudentHeading,
+  studentCard,
+} from '@/features/student/workspace-ui';
 import { normalizeTimetableWeek, timetableDayDates } from '@/features/student/timetable-domain';
 import {
   lessonCountdown,
@@ -86,7 +91,7 @@ export default async function StudentDashboard({
                       src="/brand/darsak/favicon.svg"
                       width={38}
                       height={38}
-                      alt="DarSak"
+                      alt=""
                       className="shrink-0 rounded-xl bg-white/10"
                     />
                   </div>
@@ -180,15 +185,24 @@ export default async function StudentDashboard({
                     {data.pendingCount > 0 && (
                       <Link
                         href={`/${locale}/student/classes`}
-                        className="inline-flex items-center gap-1.5 underline underline-offset-4"
+                        className="inline-flex min-h-11 items-center gap-1.5 underline underline-offset-4"
                       >
-                        <Clock3 size={13} />
-                        {data.pendingCount}{' '}
-                        {ar
-                          ? 'طلبات قيد المراجعة'
-                          : data.pendingCount === 1
-                            ? 'request awaiting review'
-                            : 'requests awaiting review'}
+                        <Clock3 size={13} aria-hidden="true" />
+                        {pluralize(
+                          locale,
+                          data.pendingCount,
+                          ar
+                            ? {
+                                one: 'طلب واحد قيد المراجعة',
+                                two: 'طلبان قيد المراجعة',
+                                few: '{n} طلبات قيد المراجعة',
+                                other: '{n} طلبًا قيد المراجعة',
+                              }
+                            : {
+                                one: '{n} request awaiting review',
+                                other: '{n} requests awaiting review',
+                              },
+                        )}
                       </Link>
                     )}
                   </div>
@@ -205,7 +219,7 @@ export default async function StudentDashboard({
                       className="inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
                     >
                       {ar ? 'اقتراحات المجموعات' : 'Group suggestions'}
-                      <ArrowUpRight size={15} />
+                      <ArrowUpRight size={15} aria-hidden="true" className="rtl:-scale-x-100" />
                     </Link>
                     {data.acceptedCount > 0 && (
                       <Link
@@ -213,7 +227,7 @@ export default async function StudentDashboard({
                         className="inline-flex min-h-11 shrink-0 items-center gap-1 text-sm font-semibold text-muted hover:text-teal"
                       >
                         {ar ? 'عرض الكل' : 'View all'}
-                        <ArrowUpRight size={15} />
+                        <ArrowUpRight size={15} aria-hidden="true" className="rtl:-scale-x-100" />
                       </Link>
                     )}
                   </div>
@@ -230,7 +244,8 @@ export default async function StudentDashboard({
                           <ClassMark name={item.group?.name ?? 'D'} />
                           <ArrowUpRight
                             size={17}
-                            className="text-muted transition-transform motion-safe:group-hover:-translate-y-0.5"
+                            aria-hidden="true"
+                            className="text-muted transition-transform motion-safe:group-hover:-translate-y-0.5 rtl:-scale-x-100"
                           />
                         </div>
                         <h3 className="mt-4 break-words font-bold text-teal [overflow-wrap:anywhere]">
@@ -249,18 +264,29 @@ export default async function StudentDashboard({
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-line bg-white p-5">
-                    <p className="flex items-center gap-2 text-sm text-muted">
-                      <BookOpen size={18} />
-                      {data.pendingCount
+                  <StudentEmpty
+                    title={ar ? 'لا توجد مجموعات بعد' : 'No classes yet'}
+                    description={
+                      data.pendingCount
                         ? ar
                           ? 'ستظهر مجموعاتك هنا بعد قبول الطلبات.'
                           : 'Your classes will appear here once your requests are accepted.'
                         : ar
                           ? 'ستظهر مجموعتك الأولى هنا بمجرد قبول انضمامك.'
-                          : 'Your first class will appear here once your enrollment is accepted.'}
-                    </p>
-                  </div>
+                          : 'Your first class will appear here once your enrollment is accepted.'
+                    }
+                    href={`/${locale}/${data.pendingCount ? 'student/classes' : 'teachers'}`}
+                    label={
+                      data.pendingCount
+                        ? ar
+                          ? 'تابع طلباتي'
+                          : 'Track my requests'
+                        : ar
+                          ? 'اكتشف المجموعات'
+                          : 'Find a group'
+                    }
+                    icon="find-a-group"
+                  />
                 )}
               </section>
             </div>
@@ -276,12 +302,12 @@ export default async function StudentDashboard({
                     aria-label={ar ? 'افتح الجدول الدراسي' : 'Open timetable'}
                     className="grid size-11 place-items-center rounded-xl text-teal hover:bg-cream"
                   >
-                    <ArrowUpRight size={18} />
+                    <ArrowUpRight size={18} aria-hidden="true" className="rtl:-scale-x-100" />
                   </Link>
                 </div>
                 <nav
                   aria-label={ar ? 'أيام هذا الأسبوع' : 'Days this week'}
-                  className="mt-4 grid grid-cols-7 gap-0.5 sm:gap-1"
+                  className="mt-4 grid grid-cols-7 gap-0 sm:gap-1"
                 >
                   {days.map(day => (
                     <Link
@@ -295,7 +321,7 @@ export default async function StudentDashboard({
                         }).format(new Date(`${day.date}T12:00:00Z`)) +
                         (lessonDays.has(day.date) ? (ar ? '، يوجد حصة' : ', has a lesson') : '')
                       }
-                      className={`relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[10px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:text-xs ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
+                      className={`relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:text-xs ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
                     >
                       {lessonDays.has(day.date) && (
                         <span
@@ -372,9 +398,17 @@ export default async function StudentDashboard({
                     })}
                   </ul>
                 ) : (
-                  <p className="text-sm leading-6 text-muted">
-                    {ar ? 'لا توجد حصص أخرى مجدولة بعد.' : 'No other lessons are scheduled yet.'}
-                  </p>
+                  <div>
+                    <p className="text-sm leading-6 text-muted">
+                      {ar ? 'لا توجد حصص أخرى مجدولة بعد.' : 'No other lessons are scheduled yet.'}
+                    </p>
+                    <Link
+                      href={`/${locale}/timetable`}
+                      className="mt-1 inline-flex min-h-11 items-center gap-1 text-sm font-semibold text-teal underline underline-offset-4"
+                    >
+                      {ar ? 'افتح الجدول الدراسي' : 'Open timetable'}
+                    </Link>
+                  </div>
                 )}
               </section>
               <Link

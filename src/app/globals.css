@@ -411,3 +411,8 @@ body:has(.sandak-dock) > footer {
     transition: none !important;
   }
 }
+
+/* Arabic is cursive: tracking pulls joined letters apart, so uppercase-style labels keep default spacing. */
+html[lang='ar'] :is(.tracking-wider, .tracking-wide, .tracking-tight, .tracking-widest) {
+  letter-spacing: normal;
+}

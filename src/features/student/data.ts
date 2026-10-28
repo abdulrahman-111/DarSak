@@ -10,6 +10,7 @@ import {
   publicTeachers,
 } from '@/features/platform/data';
 import { normalizeDiscoveryFilters } from '@/features/platform/discovery-domain';
+import { groupAnnouncement } from '@/features/groups/announcement-data';
 import { normalizeStudentPage, STUDENT_PAGE_SIZE, studentPageCount } from './pagination-domain';
 import { parseStudentLearningProfileRow } from './student-profile-domain';
 import { readCountedPage } from '@/lib/supabase/counted-page';
@@ -419,22 +420,30 @@ export async function lessonDetail(locale: Locale, id: string) {
     .maybeSingle();
   if (lesson.error) throw new Error('Lesson lookup failed');
   if (!lesson.data) return null;
-  const membership = await me.db
-    .from('enrollments')
-    .select('id')
-    .eq('student_id', me.id)
-    .eq('group_id', lesson.data.group_id)
-    .eq('status', 'accepted')
-    .maybeSingle();
+  // Membership, materials and the pinned announcement are independent reads, so they share one
+  // round trip. Materials and the announcement are only used when the accepted-membership check
+  // passes, and RLS still scopes every read to the caller.
+  const [membership, materials, announcement] = await Promise.all([
+    me.db
+      .from('enrollments')
+      .select('id')
+      .eq('student_id', me.id)
+      .eq('group_id', lesson.data.group_id)
+      .eq('status', 'accepted')
+      .maybeSingle(),
+    me.db
+      .from('lesson_materials')
+      .select('id,lesson_id,kind,title,url,content,storage_path')
+      .eq('lesson_id', id)
+      .order('created_at'),
+    groupAnnouncement(me.db, lesson.data.group_id),
+  ]);
   if (membership.error || !membership.data) return null;
-  const materials = await me.db
-    .from('lesson_materials')
-    .select('id,lesson_id,kind,title,url,content,storage_path')
-    .eq('lesson_id', id)
-    .order('created_at');
   return {
+    db: me.db,
     lesson: lesson.data as Lesson,
     materials: (materials.data || []) as Material[],
+    announcement,
     error: !!materials.error,
   };
 }

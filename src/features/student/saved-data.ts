@@ -14,17 +14,22 @@ export type SavedGroup = {
 
 export async function savedGroups(locale: Locale, pageInput: unknown = 1) {
   const me = await student(locale);
-  const count = await me.db
-    .from('student_saved_groups')
-    .select('id', { count: 'exact', head: true })
-    .eq('student_id', me.id);
+  // The page read does not depend on the count when the request is in range, so both run
+  // together; only an out-of-range page (rare) costs a second read.
+  const requested = savedGroupOffset(pageInput, Number.MAX_SAFE_INTEGER);
+  const readPage = (offset: number) =>
+    me.db.rpc('student_saved_group_page', { p_offset: offset, p_limit: SAVED_GROUP_PAGE_SIZE });
+  const [count, firstPage] = await Promise.all([
+    me.db
+      .from('student_saved_groups')
+      .select('id', { count: 'exact', head: true })
+      .eq('student_id', me.id),
+    readPage(requested),
+  ]);
   const total = count.count ?? 0;
   const offset = savedGroupOffset(pageInput, total);
   const page = Math.floor(offset / SAVED_GROUP_PAGE_SIZE) + 1;
-  const result = await me.db.rpc('student_saved_group_page', {
-    p_offset: offset,
-    p_limit: SAVED_GROUP_PAGE_SIZE,
-  });
+  const result = offset === requested ? firstPage : await readPage(offset);
   return {
     rows: (result.data ?? []) as SavedGroup[],
     total,

@@ -14,15 +14,14 @@ export async function studentClassWorkspace(
 ) {
   const me = await student(locale);
   if (!idSchema.safeParse(id).success) return null;
-  const overview = await me.db.rpc('student_class_detail', { p_group_id: id });
-  if (overview.error) throw new Error('Student class could not be loaded');
-  if (!overview.data) return null;
-  const group = parseClassDetail(overview.data);
-  if (!group) throw new Error('Invalid class result');
   const view = classView(query.view),
     requestedPage = classPage(query.page),
     lessonView = classLessonView(query.lessons),
     now = new Date().toISOString();
+  // The overview RPC is the access check, but the section reads below are scoped by RLS to the
+  // caller as well, so the ones that only need the group id start together with it instead of
+  // after it. Their results are discarded when the class is not visible to this student.
+  const overviewPromise = me.db.rpc('student_class_detail', { p_group_id: id });
   // Each section loads only the bounded data it needs. No public discovery lookup.
   const nextPromise =
     view === 'overview'
@@ -36,6 +35,46 @@ export async function studentClassWorkspace(
           .order('id')
           .limit(1)
       : Promise.resolve(null);
+  const slotsPromise =
+    view === 'overview'
+      ? me.db
+          .from('group_schedule_slots')
+          .select('id,group_id,weekday,start_time,end_time,timezone')
+          .eq('group_id', id)
+          .order('weekday')
+          .order('start_time')
+          .limit(100)
+      : Promise.resolve(null);
+  const announcementPromise =
+    view === 'overview'
+      ? me.db
+          .from('group_pinned_announcements')
+          .select('body,edited_at')
+          .eq('group_id', id)
+          .maybeSingle()
+      : Promise.resolve(null);
+  const lessonsPromise =
+    view === 'lessons'
+      ? readCountedPage(requestedPage, 20, (p: number) => {
+          let q = me.db
+            .from('lessons')
+            .select('id,group_id,title,starts_at,ends_at,status,notes', { count: 'exact' })
+            .eq('group_id', id);
+          q = lessonView === 'history' ? q.lt('ends_at', now) : q.gte('ends_at', now);
+          return q
+            .order('starts_at', { ascending: lessonView !== 'history' })
+            .order('id')
+            .range((p - 1) * 20, p * 20 - 1);
+        })
+      : Promise.resolve(null);
+  // Never leave an early read unobserved if the access check fails first.
+  for (const early of [nextPromise, slotsPromise, announcementPromise, lessonsPromise])
+    Promise.resolve(early).catch(() => undefined);
+  const overview = await overviewPromise;
+  if (overview.error) throw new Error('Student class could not be loaded');
+  if (!overview.data) return null;
+  const group = parseClassDetail(overview.data);
+  if (!group) throw new Error('Invalid class result');
   let lessons: Lesson[] = [],
     resources: StudentResource[] = [],
     assignments: Awaited<ReturnType<typeof getStudentAssignmentPage>>['rows'] = [],
@@ -43,18 +82,7 @@ export async function studentClassWorkspace(
     total = 0,
     error = false;
   if (view === 'lessons') {
-    const fetch = (p: number) => {
-      let q = me.db
-        .from('lessons')
-        .select('id,group_id,title,starts_at,ends_at,status,notes', { count: 'exact' })
-        .eq('group_id', id);
-      q = lessonView === 'history' ? q.lt('ends_at', now) : q.gte('ends_at', now);
-      return q
-        .order('starts_at', { ascending: lessonView !== 'history' })
-        .order('id')
-        .range((p - 1) * 20, p * 20 - 1);
-    };
-    const counted = await readCountedPage(page, 20, fetch);
+    const counted = (await lessonsPromise)!;
     page = counted.page;
     const result = counted.result;
     total = result.count ?? 0;
@@ -85,15 +113,7 @@ export async function studentClassWorkspace(
   }
   const [next, slots, contacts, announcement, attendance] = await Promise.all([
     nextPromise,
-    view === 'overview'
-      ? me.db
-          .from('group_schedule_slots')
-          .select('id,group_id,weekday,start_time,end_time,timezone')
-          .eq('group_id', id)
-          .order('weekday')
-          .order('start_time')
-          .limit(100)
-      : Promise.resolve(null),
+    slotsPromise,
     (view === 'teacher' || view === 'overview') && group.teacher_available
       ? me.db
           .from('teacher_contacts')
@@ -101,13 +121,7 @@ export async function studentClassWorkspace(
           .eq('teacher_id', group.teacher_id)
           .maybeSingle()
       : Promise.resolve(null),
-    view === 'overview'
-      ? me.db
-          .from('group_pinned_announcements')
-          .select('body,edited_at')
-          .eq('group_id', id)
-          .maybeSingle()
-      : Promise.resolve(null),
+    announcementPromise,
     view === 'lessons' && lessons.length
       ? me.db
           .from('lesson_attendance')

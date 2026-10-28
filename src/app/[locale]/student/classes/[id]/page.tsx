@@ -112,7 +112,7 @@ export default async function StudentClassPage({
       )}
       <nav
         aria-label={ar ? 'أقسام المجموعة' : 'Class sections'}
-        className="mb-6 flex max-w-full gap-1 overflow-x-auto border-b border-line pb-1"
+        className="mb-6 flex max-w-full flex-wrap gap-1 border-b border-line pb-1 md:flex-nowrap md:overflow-x-auto"
       >
         {CLASS_VIEWS.map(key => {
           const Icon = icons[key];
@@ -121,7 +121,7 @@ export default async function StudentClassPage({
               key={key}
               href={classHref(locale, id, key)}
               aria-current={view === key ? 'page' : undefined}
-              className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-t-xl px-4 text-sm font-bold transition-colors ${view === key ? 'border-b-2 border-teal bg-teal/5 text-teal' : 'text-muted hover:bg-white hover:text-teal'}`}
+              className={`inline-flex min-h-12 shrink-0 items-center gap-2 rounded-t-xl px-3 md:px-4 text-sm font-bold transition-colors ${view === key ? 'border-b-2 border-teal bg-teal/5 text-teal' : 'text-muted hover:bg-white hover:text-teal'}`}
             >
               <Icon size={17} aria-hidden="true" />
               {titles[key]}
@@ -174,7 +174,7 @@ export default async function StudentClassPage({
                       className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-xl bg-teal px-4 text-sm font-bold text-white"
                     >
                       {ar ? 'الاستعداد للحصة' : 'Prepare for lesson'}
-                      <ChevronRight size={16} className="rtl:rotate-180" />
+                      <ChevronRight size={16} aria-hidden="true" className="rtl:rotate-180" />
                     </Link>
                   </section>
                 ) : (

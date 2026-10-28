@@ -322,7 +322,7 @@ export default async function StudentMaterials({
                             href={safeLink(resource.url)!}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="break-all font-bold text-orange underline"
+                            className="inline-flex min-h-11 items-center break-all font-bold text-orange underline"
                           >
                             {ar ? 'فتح الرابط' : 'Open resource'}
                           </Link>

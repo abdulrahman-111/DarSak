@@ -1,5 +1,5 @@
-import { WorkspaceLoading } from '@/components/platform/workspace-loading';
+import { StudentRouteLoading } from '@/features/student/route-loading';
 
 export default function Loading() {
-  return <WorkspaceLoading />;
+  return <StudentRouteLoading variant="dashboard" />;
 }
