@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
-import { Panel, ScreenTitle } from '@/components/platform/ui';
+import { EmptyState, Panel, ScreenTitle } from '@/components/platform/ui';
 import { feedbackStatus, type FeedbackRow } from '@/features/feedback/domain';
+import { Chip, Pager } from '@admin/components/ui';
 import { requireAdminActor } from '@admin/lib/access';
 import { AdminFeedbackForm } from '@admin/features/admin/feedback-form';
 
@@ -53,8 +54,11 @@ export default async function AdminFeedbackPage({
                 ) : (
                   <p className="font-bold text-teal">{row.group_name}</p>
                 )}
-                <p className="mt-2 text-sm">
-                  {row.rating} / 5 · {feedbackStatus(row.status ?? '', ar)}
+                <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+                  <span className="font-bold">{row.rating} / 5</span>
+                  <Chip tone={row.status === 'pending' ? 'warn' : 'neutral'}>
+                    {feedbackStatus(row.status ?? '', ar)}
+                  </Chip>
                 </p>
                 <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
                   {row.comment}
@@ -76,28 +80,25 @@ export default async function AdminFeedbackPage({
             ))}
           </div>
           {!data.rows.length && (
-            <Panel>
-              <p>{ar ? 'لا توجد آراء في هذه الصفحة.' : 'No feedback on this page.'}</p>
-            </Panel>
+            <EmptyState>
+              {ar ? 'لا توجد آراء في هذه الصفحة.' : 'No feedback on this page.'}
+            </EmptyState>
           )}
-          <nav className="mt-5 flex gap-5">
-            {page > 1 && (
-              <Link
-                className="inline-flex min-h-11 items-center underline"
-                href={`/${locale}/admin/feedback?page=${page - 1}`}
-              >
-                {ar ? 'السابق' : 'Previous'}
-              </Link>
-            )}
-            {offset + 20 < data.total && (
-              <Link
-                className="inline-flex min-h-11 items-center underline"
-                href={`/${locale}/admin/feedback?page=${page + 1}`}
-              >
-                {ar ? 'التالي' : 'Next'}
-              </Link>
-            )}
-          </nav>
+          <Pager
+            ariaLabel={ar ? 'صفحات الآراء' : 'Feedback pages'}
+            page={page}
+            pageCount={Math.max(page, Math.ceil(data.total / 20))}
+            total={data.total}
+            prevHref={page > 1 ? `/${locale}/admin/feedback?page=${page - 1}` : null}
+            nextHref={
+              offset + 20 < data.total ? `/${locale}/admin/feedback?page=${page + 1}` : null
+            }
+            labels={{
+              previous: ar ? 'السابق' : 'Previous',
+              next: ar ? 'التالي' : 'Next',
+              page: ar ? 'صفحة' : 'Page',
+            }}
+          />
         </>
       )}
     </>

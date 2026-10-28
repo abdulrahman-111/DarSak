@@ -10,6 +10,7 @@ import {
   safeRole,
   safeStatus,
 } from '@admin/features/admin/review-data';
+import { FilterBar, Pager, fieldClass, primaryButtonClass } from '@admin/components/ui';
 import { readCountedPage } from '@/lib/supabase/counted-page';
 
 const PAGE_SIZE = 30;
@@ -122,27 +123,18 @@ export default async function AdminUsers({
   return (
     <>
       <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />
-      <Panel className="mb-5">
+      <FilterBar label={copy.apply}>
         <form
           method="get"
           className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(12rem,1fr)_10rem_10rem_auto]"
         >
           <label className="grid gap-1 text-sm font-semibold">
             {copy.search}
-            <input
-              name="q"
-              maxLength={120}
-              defaultValue={query}
-              className="rounded-xl border border-line bg-cream p-3"
-            />
+            <input name="q" maxLength={120} defaultValue={query} className={fieldClass} />
           </label>
           <label className="grid gap-1 text-sm font-semibold">
             {copy.role}
-            <select
-              name="role"
-              defaultValue={role}
-              className="rounded-xl border border-line bg-cream p-3"
-            >
+            <select name="role" defaultValue={role} className={fieldClass}>
               <option value="all">{copy.all}</option>
               <option value="teacher">{copy.teachers}</option>
               <option value="student">{copy.students}</option>
@@ -151,21 +143,15 @@ export default async function AdminUsers({
           </label>
           <label className="grid gap-1 text-sm font-semibold">
             {copy.status}
-            <select
-              name="status"
-              defaultValue={status}
-              className="rounded-xl border border-line bg-cream p-3"
-            >
+            <select name="status" defaultValue={status} className={fieldClass}>
               <option value="all">{copy.all}</option>
               <option value="active">{copy.active}</option>
               <option value="suspended">{copy.suspended}</option>
             </select>
           </label>
-          <button className="self-end rounded-xl bg-teal px-5 py-3 font-bold text-white">
-            {copy.apply}
-          </button>
+          <button className={`self-end ${primaryButtonClass}`}>{copy.apply}</button>
         </form>
-      </Panel>
+      </FilterBar>
       {profiles.error || metadata.error ? (
         <Panel>
           <p role="alert" className="text-danger">
@@ -231,32 +217,15 @@ export default async function AdminUsers({
               );
             })}
           </div>
-          <nav
-            aria-label={ar ? 'صفحات الحسابات' : 'People pages'}
-            className="mt-6 flex items-center justify-between gap-4"
-          >
-            <span className="text-sm text-muted">
-              {copy.page} {currentPage} {copy.of} {lastPage} · {total}
-            </span>
-            <div className="flex gap-3">
-              {currentPage > 1 && (
-                <Link
-                  className="rounded-xl border border-line px-4 py-2 font-bold"
-                  href={href(currentPage - 1)}
-                >
-                  {copy.prev}
-                </Link>
-              )}
-              {currentPage < lastPage && (
-                <Link
-                  className="rounded-xl border border-line px-4 py-2 font-bold"
-                  href={href(currentPage + 1)}
-                >
-                  {copy.next}
-                </Link>
-              )}
-            </div>
-          </nav>
+          <Pager
+            ariaLabel={ar ? 'صفحات الحسابات' : 'People pages'}
+            page={currentPage}
+            pageCount={lastPage}
+            total={total}
+            prevHref={currentPage > 1 ? href(currentPage - 1) : null}
+            nextHref={currentPage < lastPage ? href(currentPage + 1) : null}
+            labels={{ previous: copy.prev, next: copy.next, page: copy.page }}
+          />
         </>
       ) : (
         <EmptyState>{copy.noResults}</EmptyState>
