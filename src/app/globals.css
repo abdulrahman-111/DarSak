@@ -242,7 +242,7 @@ a {
   }
 }
 
-/* SanDak companion: docked at the inline end (left in RTL), above the mobile tab bar. */
+/* SanDai companion: docked at the inline end (left in RTL), above the mobile tab bar. */
 .sandak-dock {
   position: fixed;
   z-index: 30;

@@ -11,7 +11,7 @@ import type {
 } from '@/features/assistant/domain';
 import type { SandakCopy } from './copy';
 
-/** The SanDak panel: live chat (when configured) and local guided help. Loaded on first open. */
+/** The SanDai panel: live chat (when configured) and local guided help. Loaded on first open. */
 export default function SandakPanel({
   id,
   open,

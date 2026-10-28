@@ -10,7 +10,7 @@ function markup(element: React.ReactElement) {
 }
 
 describe('guided help UI', () => {
-  it('keeps local help available in English and Arabic without live-AI tabs when SanDak is disabled', () => {
+  it('keeps local help available in English and Arabic without live-AI tabs when SanDai is disabled', () => {
     const en = markup(
       createElement(GuidedHelp, {
         locale: 'en',
@@ -32,7 +32,7 @@ describe('guided help UI', () => {
     expect(ar).toContain('ما الذي تريد المساعدة فيه؟');
   });
 
-  it('offers live chat next to local help when SanDak is enabled for a signed-in user', () => {
+  it('offers live chat next to local help when SanDai is enabled for a signed-in user', () => {
     const html = markup(
       createElement(GuidedHelp, {
         locale: 'en',
@@ -94,7 +94,7 @@ describe('guided help UI', () => {
     expect(html).toContain('href="/en/register"');
     expect(html).toContain('For account help, sign in first');
     expect(html).not.toContain('href="/en/reports"');
-    expect(html).not.toContain('SanDak</button>');
+    expect(html).not.toContain('SanDai</button>');
     expect(html).not.toContain('guided-help-question');
   });
 
@@ -102,7 +102,7 @@ describe('guided help UI', () => {
     const en = markup(createElement(ChatPanel, { locale: 'en', available: false }));
     const ar = markup(createElement(ChatPanel, { locale: 'ar', available: false }));
     expect(en).toContain('Live help is unavailable right now. You can use local guidance.');
-    expect(en).toContain('I&#x27;m SanDak, DarSak&#x27;s assistant.');
+    expect(en).toContain('I&#x27;m SanDai, DarSak&#x27;s assistant.');
     expect(ar).toContain('المساعدة المباشرة غير متاحة الآن');
     expect(en).not.toContain('<a ');
     expect(en).not.toContain('<form');

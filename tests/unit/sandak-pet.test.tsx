@@ -7,7 +7,7 @@ import { pageTypeFor } from '@/components/sandak/page-type';
 import en from '../../messages/en.json';
 import ar from '../../messages/ar.json';
 
-describe('SanDak pet sprite', () => {
+describe('SanDai pet sprite', () => {
   it.each(SANDAK_MOODS)('renders the %s mood as one decorative inline SVG of rects', mood => {
     const html = renderToStaticMarkup(<SandakPet mood={mood} />);
     expect(html.match(/<svg/g)).toHaveLength(1);
@@ -51,10 +51,10 @@ describe('SanDak pet sprite', () => {
   });
 });
 
-describe('SanDak styles and copy', () => {
+describe('SanDai styles and copy', () => {
   const css = readFileSync('src/app/globals.css', 'utf8');
 
-  it('animates each mood and disables all SanDak animation under reduced motion', () => {
+  it('animates each mood and disables all SanDai animation under reduced motion', () => {
     for (const mood of SANDAK_MOODS) expect(css).toContain(`.sandak-pet--${mood} .sandak-sprite`);
     const reduced = css.slice(css.lastIndexOf('@media (prefers-reduced-motion: reduce)'));
     expect(reduced).toContain('.sandak-sprite');
