@@ -609,54 +609,43 @@ describe('auth actions', () => {
       expect(createClientMock).not.toHaveBeenCalled();
       expect(isolatedClientMock).not.toHaveBeenCalled();
     });
-    it('rejects a wrong password before touching the original session', async () => {
+    it.each([
+      ['current_password_invalid', /current password is incorrect/i],
+      ['current_password_required', /Enter your current password/],
+      ['reauthentication_needed', /Unable to update your password/],
+    ])('maps updateUser error %s without any extra sign-in', async (code, message) => {
       getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
-      const signOut = vi.fn(async () => ({ error: null }));
-      const signInWithPassword = vi.fn(async () => ({
-        data: { user: null },
-        error: { code: 'invalid_credentials' },
-      }));
-      isolatedClientMock.mockReturnValue({ auth: { signInWithPassword, signOut } });
-      expect((await changePasswordAction('en', null, values('wrong')))?.error).toMatch(
-        /current password is incorrect/i,
-      );
-      expect(signInWithPassword).toHaveBeenCalledWith({
-        email: 'trusted@example.com',
-        password: 'wrong',
+      const signInWithPassword = vi.fn();
+      isolatedClientMock.mockReturnValue({ auth: { signInWithPassword, signOut: vi.fn() } });
+      const updateUser = vi.fn(async () => ({ data: {}, error: { code } }));
+      createClientMock.mockResolvedValue({ auth: { updateUser, signInWithPassword } });
+      expect((await changePasswordAction('en', null, values('wrong')))?.error).toMatch(message);
+      expect(updateUser).toHaveBeenCalledWith({
+        password: 'newpassword123',
+        current_password: 'wrong',
       });
-      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
-      expect(createClientMock).not.toHaveBeenCalled();
+      expect(signInWithPassword).not.toHaveBeenCalled();
+      expect(isolatedClientMock).not.toHaveBeenCalled();
     });
-    it('rejects a successful provider response for a different identity', async () => {
+    it('keeps other update errors on their existing mapping', async () => {
       getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
-      const signOut = vi.fn(async () => ({ error: null }));
-      isolatedClientMock.mockReturnValue({
-        auth: {
-          signInWithPassword: vi.fn(async () => ({ data: { user: { id: 'u2' } }, error: null })),
-          signOut,
-        },
+      createClientMock.mockResolvedValue({
+        auth: { updateUser: vi.fn(async () => ({ data: {}, error: { code: 'same_password' } })) },
       });
       expect((await changePasswordAction('en', null, values('oldpassword')))?.error).toMatch(
-        /current password is incorrect/i,
+        /different from your current one/i,
       );
-      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
-      expect(createClientMock).not.toHaveBeenCalled();
     });
-    it('updates only after successful verification and preserves recovery without current password', async () => {
+    it('verifies through updateUser on the session client and preserves recovery without current password', async () => {
       getVerifiedUserMock.mockResolvedValue({ id: 'u1', email: 'trusted@example.com' });
-      const signOut = vi.fn(async () => ({ error: null }));
-      isolatedClientMock.mockReturnValue({
-        auth: {
-          signInWithPassword: vi.fn(async () => ({ data: { user: { id: 'u1' } }, error: null })),
-          signOut,
-        },
-      });
+      const signInWithPassword = vi.fn();
       const updateUser = vi.fn(async () => ({ data: {}, error: null }));
-      createClientMock.mockResolvedValue({ auth: { updateUser } });
+      createClientMock.mockResolvedValue({ auth: { updateUser, signInWithPassword } });
       expect(
         await redirectTarget(() => changePasswordAction('en', null, values('oldpassword'))),
       ).toBe('/en/dashboard');
-      expect(signOut).toHaveBeenCalledWith({ scope: 'local' });
+      expect(signInWithPassword).not.toHaveBeenCalled();
+      expect(isolatedClientMock).not.toHaveBeenCalled();
       expect(updateUser).toHaveBeenCalledWith({
         password: 'newpassword123',
         current_password: 'oldpassword',
