@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
@@ -111,6 +112,7 @@ function managementError(locale: Locale, raw: string | undefined) {
 }
 
 function refreshManagement(locale: Locale, groupId?: string, lessonId?: string) {
+  invalidatePublicDiscovery();
   revalidateStudentWorkspace();
   revalidateTeacherWorkspace();
   for (const current of ['en', 'ar'] as const) {

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import { profileEntryHasContent, richProfileSchema } from './profile-details-domain';
@@ -37,6 +38,7 @@ function revalidateTeacherProfile(teacherId: string) {
     revalidatePath(`/${locale}/teachers/${teacherId}`);
   }
   revalidatePath('/[locale]/teachers/[id]', 'page');
+  invalidatePublicDiscovery();
 }
 
 export async function saveTeacherProfileDetails(

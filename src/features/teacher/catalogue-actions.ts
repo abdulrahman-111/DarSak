@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { z } from 'zod';
 import { createClient } from '@/lib/supabase/server';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
@@ -60,6 +61,7 @@ function revalidateCatalogue() {
   revalidatePath('/[locale]/teacher/groups/[id]', 'page');
   revalidatePath('/[locale]/teacher/groups/[id]/setup', 'page');
   revalidatePath('/[locale]/teachers/[id]', 'page');
+  invalidatePublicDiscovery();
   revalidatePath('/[locale]/groups/[id]', 'page');
 }
 

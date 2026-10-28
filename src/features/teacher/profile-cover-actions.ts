@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { createClient } from '@/lib/supabase/server';
 import type { Locale } from '@/features/student/domain';
 import type { TeacherProfileActionState } from './profile-actions';
@@ -31,6 +32,7 @@ function revalidateTeacherProfilePaths(locale: Locale, teacherId: string) {
     revalidatePath(`/${currentLocale}/teachers/${teacherId}`);
   }
   revalidatePath('/[locale]/teachers/[id]', 'page');
+  invalidatePublicDiscovery();
 }
 
 async function removeCoverObject(db: Awaited<ReturnType<typeof createClient>>, path: string) {
