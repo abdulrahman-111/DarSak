@@ -107,7 +107,7 @@ describe('student dashboard loader query contract', () => {
     expect(result.lessons.map(lesson => lesson.id)).toEqual(['future-0']);
     expect(result.classes).toEqual(summary.classes);
     // Days outside the displayed week are ignored; order follows the week.
-    expect(result.occupiedDays).toEqual(['2026-10-13', '2026-10-17']);
+    expect(result.occupiedDays).toEqual(['2026-10-13']); // 17 Oct falls in the next Saturday-start week
   });
 
   it('reports an error with empty data when the summary RPC fails', async () => {
