@@ -28,7 +28,7 @@ describe('teacher group template preview', () => {
   it('keeps local drafting explicitly labeled and does not nest or submit the parent form', () => {
     const html = renderToStaticMarkup(<GroupDraftPanel locale="ar" onApply={() => undefined} />);
     expect(html).toContain('خيار القالب المحلي يستخدم نصًا مُعدًا مسبقًا');
-    expect(html).toContain('إنشاء بمساعدة سنداي');
+    expect(html).toContain('إنشاء بمساعدة سندي');
     expect(html).not.toContain('<form');
     expect(html).not.toContain('type="submit"');
   });

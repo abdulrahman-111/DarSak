@@ -50,7 +50,7 @@ export function ChatPanel({
   const t = ar
     ? {
         intro:
-          'أنا سنداي، مساعد درسك. اسأل عن المنصة أو اطلب شرحًا دراسيًا أو أمثلة أو مساعدة في التخطيط.',
+          'أنا سندي، مساعد درسك. اسأل عن المنصة أو اطلب شرحًا دراسيًا أو أمثلة أو مساعدة في التخطيط.',
         unavailable: 'المساعدة المباشرة غير متاحة الآن. يمكنك استخدام الإرشادات المحلية.',
         notice:
           'يُرسل نص رسالتك إلى خدمة Gemini من Google لكتابة الرد. من فضلك لا تضف معلومات شخصية أو خاصة أو حساسة.',
@@ -183,7 +183,7 @@ export function ChatPanel({
   }, []);
 
   return (
-    <section className="grid gap-4" aria-label={ar ? 'محادثة سنداي' : 'SanDai chat'}>
+    <section className="grid gap-4" aria-label={ar ? 'محادثة سندي' : 'SanDai chat'}>
       <p className="text-sm leading-6 text-ink/75">{t.intro}</p>
       {available !== true ? (
         <p className="rounded-xl bg-mint/50 px-3 py-2 text-sm leading-6 text-ink/75" role="status">

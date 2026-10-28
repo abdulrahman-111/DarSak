@@ -63,7 +63,7 @@ describe('global SanDai companion mount', () => {
   it('passes localized copy from the message dictionaries', async () => {
     mocks.isConfigured.mockReturnValue(false);
     expect(html(await SanadLauncher({ locale: 'en' }))).toContain('data-name="SanDai"');
-    expect(html(await SanadLauncher({ locale: 'ar' }))).toContain('data-name="سنداي"');
+    expect(html(await SanadLauncher({ locale: 'ar' }))).toContain('data-name="سندي"');
   });
 
   it.each(['student', 'teacher'] as const)(
