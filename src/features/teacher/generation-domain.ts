@@ -63,6 +63,28 @@ export function summarizeGenerationPreview(
   );
 }
 
+export function groupPreviewRowsByMonth<T extends { local_date: string }>(rows: T[]) {
+  const sorted = [...rows].sort((a, b) => a.local_date.localeCompare(b.local_date));
+  const months: Array<{ month: string; rows: T[] }> = [];
+  for (const row of sorted) {
+    const month = row.local_date.slice(0, 7);
+    const last = months[months.length - 1];
+    if (last?.month === month) last.rows.push(row);
+    else months.push({ month, rows: [row] });
+  }
+  return months;
+}
+
+/** Headline numbers for the preview: lessons that would exist, skipped dates, and clashes. */
+export function previewTotals(rows: Array<{ state: GenerationPreviewState }>) {
+  const summary = summarizeGenerationPreview(rows);
+  return {
+    lessons: rows.length - summary.excluded,
+    excluded: summary.excluded,
+    conflicts: summary.conflicting,
+  };
+}
+
 export function canConfirmGeneration(rows: Array<{ state: GenerationPreviewState }>): boolean {
   return rows.length > 0 && rows.every(row => row.state !== 'conflicting');
 }

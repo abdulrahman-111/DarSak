@@ -178,8 +178,8 @@ describe('student dashboard loader query contract', () => {
       '2026-10-14',
       '2026-10-15',
       '2026-10-16',
-      '2026-10-17',
     ]);
+    // The Saturday-start week is 10 to 16 October; the 17 October lessons belong to the next week.
     const dayQueries = queries.filter(
       query =>
         query.table === 'lessons' &&
