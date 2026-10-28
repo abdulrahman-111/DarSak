@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SanDai pet sprite</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+</style>
+</helmet>
+<div style="{{rootStyle}}" role="img" aria-label="{{label}}">
+  <div class="sandak-pet sandak-{{mood}}" style="{{spriteStyle}}">
+    <sc-for list="{{cells}}" as="cell" hint-placeholder-count="256">
+      <div style="{{cell.style}}"></div>
+    </sc-for>
+  </div>
+  <div aria-hidden="true" style="{{shadowStyle}}"></div>
+  <sc-if value="{{showBadge}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" style="{{badgeStyle}}">{{badgeText}}</div>
+  </sc-if>
+  <sc-if value="{{showDots}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" style="{{dotsStyle}}">
+      <span class="sandak-dot" style="{{dotStyle}}"></span>
+      <span class="sandak-dot sandak-dot-2" style="{{dotStyle}}"></span>
+      <span class="sandak-dot sandak-dot-3" style="{{dotStyle}}"></span>
+    </div>
+  </sc-if>
+  <sc-if value="{{showZ}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" class="sandak-z" style="{{zStyle}}">z<span style="font-size: 1.35em">Z</span></div>
+  </sc-if>
+  <sc-if value="{{showDrop}}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" style="{{dropStyle}}"></div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mood":{"editor":"enum","options":["idle","thinking","needs","done","oops","sleep"],"default":"idle"},"px":{"editor":"int","min":2,"max":20,"default":6},"$preview":{"width":120,"height":140}}'>
+class Component extends DCLogic {
+  renderVals() {
+    var mood = this.props.mood || 'idle';
+    var px = Number(this.props.px) || 6;
+    var colors = {
+      '.': 'transparent', O: '#0e3b3c', B: '#1f6f6b', L: '#6fbfb1', P: '#fff8ec',
+      E: '#0f2324', W: '#ffffff', R: '#b04c16', C: '#e99a6c', Y: '#f2b441', K: '#23211e'
+    };
+    var rows = [
+      '...........K....',
+      '..........YY....',
+      '.........YY.....',
+      '..OOOOOOOOOOOO..',
+      '.OBBBBBBBBBBBBO.',
+      '.OBLLBBBBBBBBBOP',
+      '.OBLBBBBBBBBBBOP',
+      '.OBBBBBBBBBBBBOP',
+      '.OBBBBBBBBBBBBOP',
+      '.OBBBBBBBBBBBBOP',
+      '.OBBBBBBBBBBBBOP',
+      '.OBBBBBBBBBBBBOP',
+      '.OBBBBBBBBBBBBO.',
+      '..OOOOOORROOOOO.',
+      '........RR......',
+      '.......R..R.....'
+    ];
+    var grid = rows.map(function (r) { return r.split(''); });
+    function set(points, ch) { points.forEach(function (p) { grid[p[1]][p[0]] = ch; }); }
+    var cheeks = [[3, 9], [12, 9]];
+    if (mood === 'thinking') {
+      set([[5, 6], [6, 6], [5, 7], [6, 7], [11, 6], [12, 6], [11, 7], [12, 7]], 'E');
+      set([[6, 6], [12, 6]], 'W');
+      set([[8, 10]], 'O');
+    } else if (mood === 'needs') {
+      set([[4, 6], [5, 6], [4, 7], [5, 7], [4, 8], [5, 8], [10, 6], [11, 6], [10, 7], [11, 7], [10, 8], [11, 8]], 'E');
+      set([[5, 6], [11, 6]], 'W');
+      set([[7, 10], [8, 10], [7, 11], [8, 11]], 'O');
+      set(cheeks, 'C');
+    } else if (mood === 'done') {
+      set([[4, 7], [5, 7], [3, 8], [6, 8], [10, 7], [11, 7], [9, 8], [12, 8]], 'E');
+      set([[6, 10], [9, 10], [7, 11], [8, 11]], 'O');
+      set(cheeks, 'C');
+    } else if (mood === 'oops') {
+      set([[3, 6], [5, 6], [4, 7], [3, 8], [5, 8], [10, 6], [12, 6], [11, 7], [10, 8], [12, 8]], 'E');
+      set([[6, 11], [7, 10], [8, 11], [9, 10]], 'O');
+    } else if (mood === 'sleep') {
+      set([[3, 8], [4, 8], [5, 8], [10, 8], [11, 8], [12, 8]], 'E');
+      set([[8, 10]], 'O');
+      set(cheeks, 'C');
+    } else {
+      set([[4, 7], [4, 8], [5, 8], [10, 7], [10, 8], [11, 8]], 'E');
+      set([[5, 7], [11, 7]], 'W');
+      set([[7, 10], [8, 10]], 'O');
+      set(cheeks, 'C');
+    }
+    var cells = [];
+    grid.forEach(function (r) { r.forEach(function (ch) { cells.push({ style: 'background:' + colors[ch] }); }); });
+    var size = px * 16;
+    var labels = {
+      idle: 'SanDai, idle', thinking: 'SanDai, thinking', needs: 'SanDai, needs your answer',
+      done: 'SanDai, task done', oops: 'SanDai, something went wrong', sleep: 'SanDai, sleeping'
+    };
+    var badge = { needs: ['!', '#b04c16'], done: ['✓', '#2c5620'] }[mood];
+    return {
+      mood: mood,
+      label: labels[mood] || labels.idle,
+      cells: cells,
+      rootStyle: 'position:relative;width:' + (size + px * 4) + 'px;height:' + (size + px * 6) + 'px;font-family:"Instrument Sans","IBM Plex Sans Arabic",Arial,sans-serif;color:#0e4a4b',
+      spriteStyle: 'position:absolute;left:' + (px * 2) + 'px;top:' + (px * 2) + 'px;display:grid;grid-template-columns:repeat(16,' + px + 'px);grid-auto-rows:' + px + 'px;width:' + size + 'px;height:' + size + 'px',
+      shadowStyle: 'position:absolute;left:' + (px * 4) + 'px;top:' + (size + px * 3) + 'px;width:' + (size - px * 4) + 'px;height:' + (px * 1.5) + 'px;border-radius:50%;background:rgba(14,74,75,0.16)',
+      showBadge: !!badge,
+      badgeText: badge ? badge[0] : '',
+      badgeStyle: badge ? 'position:absolute;right:0;top:' + (px * 2) + 'px;width:' + (px * 4) + 'px;height:' + (px * 4) + 'px;border-radius:50%;background:' + badge[1] + ';color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:' + Math.round(px * 2.6) + 'px;box-shadow:0 0 0 ' + Math.max(2, Math.round(px / 2)) + 'px #fffdf8' : '',
+      showDots: mood === 'thinking',
+      dotsStyle: 'position:absolute;right:0;top:0;display:flex;gap:' + Math.round(px * 0.6) + 'px;padding:' + Math.round(px * 0.8) + 'px ' + px + 'px;border-radius:' + (px * 2) + 'px;background:#fffdf8;border:' + Math.max(1, Math.round(px / 4)) + 'px solid #d8ccb8',
+      dotStyle: 'display:block;width:' + px + 'px;height:' + px + 'px;border-radius:50%;background:#0e4a4b',
+      showZ: mood === 'sleep',
+      zStyle: 'position:absolute;right:' + px + 'px;top:0;font-weight:800;font-family:"Bricolage Grotesque",Arial,sans-serif;font-size:' + Math.round(px * 2.4) + 'px;color:#4d473f',
+      showDrop: mood === 'oops',
+      dropStyle: 'position:absolute;right:' + (px * 2) + 'px;top:' + (px * 5) + 'px;width:' + (px * 2) + 'px;height:' + (px * 3) + 'px;border-radius:50% 50% 50% 50% / 60% 60% 40% 40%;background:#9fd3e6;border:' + Math.max(1, Math.round(px / 4)) + 'px solid #4a8ea8'
+    };
+  }
+}
+</script>
+</body>
+</html>

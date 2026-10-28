@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Meet SanDai</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&amp;family=Instrument+Sans:wght@400;500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#b04c16}a:hover{color:#8f3d11}
+.sandak-pet{transform-origin:50% 100%}
+.sandak-idle{animation:sandak-bob 2.8s ease-in-out infinite}
+.sandak-thinking{animation:sandak-tilt 1.6s ease-in-out infinite}
+.sandak-needs{animation:sandak-bounce 1s ease-in-out infinite}
+.sandak-done{animation:sandak-hop 1.8s ease-in-out infinite}
+.sandak-oops{animation:sandak-shake 2.4s ease-in-out infinite}
+.sandak-sleep{animation:sandak-breathe 3.6s ease-in-out infinite}
+.sandak-dot{animation:sandak-dot 1.2s ease-in-out infinite}
+.sandak-dot-2{animation-delay:.2s}.sandak-dot-3{animation-delay:.4s}
+.sandak-z{animation:sandak-float 3s ease-in-out infinite}
+@keyframes sandak-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes sandak-tilt{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes sandak-bounce{0%,100%{transform:translateY(0)}40%{transform:translateY(-9px)}60%{transform:translateY(0) scaleY(.96)}}
+@keyframes sandak-hop{0%,40%,100%{transform:translateY(0)}15%{transform:translateY(-12px)}25%{transform:translateY(0) scaleY(.94)}}
+@keyframes sandak-shake{0%,20%,100%{transform:translateX(0)}4%,12%{transform:translateX(-3px)}8%,16%{transform:translateX(3px)}}
+@keyframes sandak-breathe{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.96)}}
+@keyframes sandak-dot{0%,100%{opacity:.25}50%{opacity:1}}
+@keyframes sandak-float{0%,100%{transform:translateY(0);opacity:.6}50%{transform:translateY(-6px);opacity:1}}
+@media (prefers-reduced-motion: reduce){.sandak-pet,.sandak-dot,.sandak-z{animation:none}}
+button{font:inherit;cursor:pointer}
+button:focus-visible{outline:3px solid #b04c16;outline-offset:2px}
+</style>
+</helmet>
+<div style="width: 1440px; height: 1320px; box-sizing: border-box; padding: 64px 72px; background: #f6f0e4; font-family: 'Instrument Sans', 'IBM Plex Sans Arabic', Arial, sans-serif; color: #23211e; display: flex; flex-direction: column; gap: 40px">
+
+  <header style="display: flex; justify-content: space-between; align-items: flex-end; gap: 48px">
+    <div style="display: flex; flex-direction: column; gap: 14px; max-width: 820px">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.12em; color: #b04c16">DARSAK · AI STUDY COMPANION</p>
+      <h1 style="margin: 0; font-family: 'Bricolage Grotesque', Arial, sans-serif; font-weight: 800; font-size: 72px; line-height: 0.95; letter-spacing: -0.02em; color: #0e4a4b">Meet SanDai <span style="font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; font-weight: 700; font-size: 56px; color: #1f6f6b">سندي</span></h1>
+      <p style="margin: 0; font-size: 19px; line-height: 1.5; color: #4d473f">A small companion that lives at the edge of the screen. It never covers your work: it shows what the assistant is doing (thinking, waiting for you, done) and speaks only when it has something useful to say.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 6px; padding: 18px 20px; border-radius: 18px; background: #fffdf8; border: 1px solid #e3d9c8; width: 280px">
+      <p style="margin: 0; font-size: 13px; font-weight: 700; color: #0e4a4b">Character</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.45; color: #4d473f">A pocket notebook: teal cover face, pencil antenna, orange bookmark tail. 16 × 16 pixel sprite, drawn at any whole-pixel scale.</p>
+    </div>
+  </header>
+
+  <section aria-label="Playground" style="display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 0; border-radius: 28px; overflow: hidden; border: 1px solid #e3d9c8; background: #fffdf8; box-shadow: 0 16px 45px rgba(14, 74, 75, 0.08)">
+    <div style="position: relative; height: 460px; background: #d5ebe6; display: flex; align-items: flex-end; justify-content: center; padding-bottom: 40px; box-sizing: border-box">
+      <div style="position: absolute; inset: 24px 24px auto 24px; display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: #0e4a4b">
+        <span>Live preview</span>
+        <span>{{moodLabel}}</span>
+      </div>
+      <div dir="{{dir}}" style="position: absolute; top: 72px; left: 50%; transform: translateX(-12%); width: 380px; box-sizing: border-box; padding: 18px 20px; border-radius: 22px; background: #fffdf8; border: 1px solid #d8ccb8; box-shadow: 0 12px 30px rgba(14, 74, 75, 0.12); display: flex; flex-direction: column; gap: 14px">
+        <p style="margin: 0; font-size: 18px; line-height: 1.45; color: #23211e; font-weight: 500">{{bubble}}</p>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap">
+          <sc-for list="{{actions}}" as="a" hint-placeholder-count="2">
+            <button type="button" style="{{a.style}}">{{a.label}}</button>
+          </sc-for>
+        </div>
+      </div>
+      <dc-import name="Pet" mood="{{mood}}" px="13" hint-size="260px,286px"></dc-import>
+    </div>
+
+    <div style="padding: 36px 40px; display: flex; flex-direction: column; gap: 22px">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px">
+        <h2 style="margin: 0; font-family: 'Bricolage Grotesque', Arial, sans-serif; font-size: 28px; font-weight: 800; color: #0e4a4b">Try the moods</h2>
+        <div role="group" aria-label="Bubble language" style="display: flex; border: 1px solid #d8ccb8; border-radius: 999px; padding: 4px; background: #f6f0e4">
+          <button type="button" onClick="{{setEn}}" style="{{enStyle}}">English</button>
+          <button type="button" onClick="{{setAr}}" style="{{arStyle}}">عربي</button>
+        </div>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px">
+        <sc-for list="{{moods}}" as="m" hint-placeholder-count="6">
+          <button type="button" onClick="{{m.pick}}" aria-pressed="{{m.pressed}}" style="{{m.style}}">
+            <span style="display: block; font-size: 16px; font-weight: 700">{{m.en}}</span>
+            <span style="display: block; font-size: 14px; font-family: 'IBM Plex Sans Arabic', Arial, sans-serif; opacity: 0.85">{{m.ar}}</span>
+          </button>
+        </sc-for>
+      </div>
+      <div style="padding: 18px 20px; border-radius: 18px; background: #f6f0e4; display: flex; flex-direction: column; gap: 6px">
+        <p style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.08em; color: #b04c16">WHEN IT SHOWS</p>
+        <p style="margin: 0; font-size: 16px; line-height: 1.5; color: #23211e">{{when}}</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="states-h" style="display: flex; flex-direction: column; gap: 18px">
+    <h2 id="states-h" style="margin: 0; font-family: 'Bricolage Grotesque', Arial, sans-serif; font-size: 28px; font-weight: 800; color: #0e4a4b">Six states, one sprite</h2>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px">
+      <sc-for list="{{moods}}" as="m" hint-placeholder-count="6">
+        <div style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 20px; padding: 18px 16px; display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center">
+          <dc-import name="Pet" mood="{{m.id}}" px="5" hint-size="100px,110px"></dc-import>
+          <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0e4a4b">{{m.en}} · <span style="font-family: 'IBM Plex Sans Arabic', Arial, sans-serif">{{m.ar}}</span></p>
+          <p style="margin: 0; font-size: 13px; line-height: 1.45; color: #4d473f">{{m.short}}</p>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <section aria-labelledby="rules-h" style="display: flex; flex-direction: column; gap: 18px">
+    <h2 id="rules-h" style="margin: 0; font-family: 'Bricolage Grotesque', Arial, sans-serif; font-size: 28px; font-weight: 800; color: #0e4a4b">How it behaves</h2>
+    <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px">
+      <div style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 8px">
+        <p style="margin: 0; font-size: 17px; font-weight: 700; color: #0e4a4b">Lives in the corner</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4d473f">Docked at the bottom end corner (left in Arabic), above the mobile tab bar. Drag to the other side. Never covers primary buttons or form fields.</p>
+      </div>
+      <div style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 8px">
+        <p style="margin: 0; font-size: 17px; font-weight: 700; color: #0e4a4b">Speaks only when useful</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4d473f">One bubble at a time, at most one unprompted tip per page. Bubbles fade after 8 seconds and never appear while you are typing.</p>
+      </div>
+      <div style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 8px">
+        <p style="margin: 0; font-size: 17px; font-weight: 700; color: #0e4a4b">Shows real state</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4d473f">Thinking only while a request runs. Needs you only when an answer or confirmation is required. Done and Oops always say what happened.</p>
+      </div>
+      <div style="background: #fffdf8; border: 1px solid #e3d9c8; border-radius: 20px; padding: 22px; display: flex; flex-direction: column; gap: 8px">
+        <p style="margin: 0; font-size: 17px; font-weight: 700; color: #0e4a4b">Respects focus</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #4d473f">Hide with one click; sleeps after 2 minutes. Reduced motion turns off all bobbing. Screen readers hear state changes in a polite live region.</p>
+      </div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1320}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { mood: 'needs', lang: 'en' };
+  }
+  renderVals() {
+    var self = this;
+    var mood = this.state.mood;
+    var lang = this.state.lang;
+    var data = [
+      { id: 'idle', en: 'Idle', ar: 'هادئ', short: 'Nothing running. Offers help once, then stays quiet.',
+        when: 'Nothing is running. SanDai offers help once per page, then waits quietly in the corner.',
+        bEn: 'Hi Youssef! Ask me about your lessons, groups or assignments.', bAr: 'أهلاً يوسف! اسألني عن حصصك ومجموعاتك وواجباتك.',
+        aEn: ['Ask SanDai'], aAr: ['اسأل سندي'] },
+      { id: 'thinking', en: 'Thinking', ar: 'يفكّر', short: 'A request is running. Shows the current step.',
+        when: 'An assistant request is running. The bubble names the step it is on, and Stop cancels it.',
+        bEn: 'Reading your week… looking for a good time to review.', bAr: 'أراجع أسبوعك… أبحث عن وقت مناسب للمراجعة.',
+        aEn: ['Stop'], aAr: ['إيقاف'] },
+      { id: 'needs', en: 'Needs you', ar: 'يحتاجك', short: 'Waiting for your answer before it acts.',
+        when: 'SanDai is waiting for your answer or confirmation before it does anything on your behalf.',
+        bEn: 'Algebra Foundations starts Friday at 16:00. Want a 3-question warm-up first?', bAr: 'حصة أساسيات الجبر يوم الجمعة الساعة ٤ م. نراجع ٣ أسئلة سريعة قبلها؟',
+        aEn: ['Start warm-up', 'Later'], aAr: ['ابدأ', 'لاحقًا'] },
+      { id: 'done', en: 'Done', ar: 'تم', short: 'Finished. One-line summary with Open or Undo.',
+        when: 'The task finished. A one-line summary appears with a way to open the result or undo it.',
+        bEn: 'Done! Your warm-up is saved under Algebra Foundations.', bAr: 'تم! حفظت المراجعة في مجموعة أساسيات الجبر.',
+        aEn: ['Open', 'Undo'], aAr: ['افتح', 'تراجع'] },
+      { id: 'oops', en: 'Oops', ar: 'خطأ', short: 'Something failed. Says what, offers Retry.',
+        when: 'Something failed. SanDai says what happened in plain words and offers to try again.',
+        bEn: 'I couldn’t reach DarSak just now. Try again?', bAr: 'تعذّر الاتصال بدرسك الآن. نحاول مرة أخرى؟',
+        aEn: ['Retry'], aAr: ['أعد المحاولة'] },
+      { id: 'sleep', en: 'Sleeping', ar: 'نائم', short: 'Idle 2 minutes or hidden. Click to wake.',
+        when: 'No activity for 2 minutes, or you pressed Hide. One click or tap wakes it up.',
+        bEn: 'Taking a nap. Tap me when you need help.', bAr: 'في استراحة. اضغط عليّ عندما تحتاج مساعدة.',
+        aEn: ['Wake up'], aAr: ['استيقظ'] }
+    ];
+    var current = data.filter(function (d) { return d.id === mood; })[0] || data[0];
+    var pill = 'border-radius: 999px; padding: 8px 16px; font-size: 14px; font-weight: 600; border: 0; ';
+    var labels = lang === 'ar' ? current.aAr : current.aEn;
+    return {
+      mood: mood,
+      dir: lang === 'ar' ? 'rtl' : 'ltr',
+      moodLabel: current.en + ' · ' + current.ar,
+      bubble: lang === 'ar' ? current.bAr : current.bEn,
+      when: current.when,
+      actions: labels.map(function (label, i) {
+        return { label: label, style: 'min-height: 44px; padding: 0 18px; border-radius: 12px; font-size: 15px; font-weight: 700; ' + (i === 0 ? 'background: #0e4a4b; color: #ffffff; border: 1px solid #0e4a4b' : 'background: #fffdf8; color: #0e4a4b; border: 1px solid #d8ccb8') };
+      }),
+      setEn: function () { self.setState({ lang: 'en' }); },
+      setAr: function () { self.setState({ lang: 'ar' }); },
+      enStyle: pill + 'min-height: 36px; ' + (lang === 'en' ? 'background: #0e4a4b; color: #ffffff' : 'background: transparent; color: #0e4a4b'),
+      arStyle: pill + 'min-height: 36px; font-family: "IBM Plex Sans Arabic", Arial, sans-serif; ' + (lang === 'ar' ? 'background: #0e4a4b; color: #ffffff' : 'background: transparent; color: #0e4a4b'),
+      moods: data.map(function (d) {
+        var on = d.id === mood;
+        return {
+          id: d.id, en: d.en, ar: d.ar, short: d.short,
+          pressed: on ? 'true' : 'false',
+          pick: function () { self.setState({ mood: d.id }); },
+          style: 'min-height: 64px; padding: 10px 12px; border-radius: 16px; text-align: start; ' + (on ? 'background: #0e4a4b; color: #ffffff; border: 1px solid #0e4a4b' : 'background: #fffdf8; color: #0e4a4b; border: 1px solid #d8ccb8')
+        };
+      })
+    };
+  }
+}
+</script>
+</body>
+</html>
