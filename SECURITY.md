@@ -13,3 +13,5 @@ The current `main` branch is the maintenance target. Older commits and deploymen
 ## Deployment responsibilities
 
 Operators manage their own infrastructure, secrets, backups, Auth configuration, and dependency updates. Follow [Deployment](docs/DEPLOYMENT.md). Use synthetic data on disposable development stacks, keep service-role keys server-side, and review database grants and row-level security when deploying changes. Never expose the Supabase local development stack or its demo credentials to the internet.
+
+See the [configuration and secrets inventory](docs/security/SECRETS.md) for environment separation, access responsibilities, rotation procedures, and free repository protections. It documents names only and distinguishes pending operator checks from verified controls.
