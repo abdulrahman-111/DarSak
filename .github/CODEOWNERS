@@ -1,0 +1,25 @@
+# Security-sensitive application and infrastructure changes.
+/supabase/migrations/ @abdulrahman-111
+/supabase/functions/ @abdulrahman-111
+/src/lib/security/ @abdulrahman-111
+/src/lib/supabase/ @abdulrahman-111
+/src/features/auth/ @abdulrahman-111
+/src/features/account/ @abdulrahman-111
+/src/features/platform/request-viewer.ts @abdulrahman-111
+/src/features/teacher-access/ @abdulrahman-111
+/src/app/api/auth/ @abdulrahman-111
+/src/proxy.ts @abdulrahman-111
+/apps/admin/src/proxy.ts @abdulrahman-111
+/apps/admin/src/lib/ @abdulrahman-111
+/apps/admin/src/app/*/login/ @abdulrahman-111
+/apps/admin/src/app/*/mfa/ @abdulrahman-111
+/apps/admin/src/features/teacher-access/ @abdulrahman-111
+/.github/ @abdulrahman-111
+/vercel.json @abdulrahman-111
+
+# Account, authentication, and access-control flows.
+/src/app/*/account/ @abdulrahman-111
+/src/app/*/login/ @abdulrahman-111
+/src/app/*/register/ @abdulrahman-111
+/src/app/*/reset-password/ @abdulrahman-111
+/src/app/*/teacher/access/ @abdulrahman-111
