@@ -2,6 +2,8 @@
 
 This is a maintenance roadmap, not a promise of delivery dates. Discuss larger changes in an issue before implementation.
 
+The ordered list of issues to fix from the October 2026 architecture review (features, performance and security) is in [ARCHITECTURE-REVIEW-2026-10.md](ARCHITECTURE-REVIEW-2026-10.md), tracked in [#161](https://github.com/abdulrahman-111/DarSak/issues/161).
+
 ## Release maintenance and remaining verification
 
 - Keep formatting, lint, typecheck, unit tests, production build, and disposable-database checks passing.
