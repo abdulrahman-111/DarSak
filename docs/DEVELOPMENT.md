@@ -4,7 +4,7 @@
 
 - Node.js 24 and npm (matching CI and `package.json`).
 - Git and a Docker-compatible runtime for a local Supabase backend. Allocate the resources recommended by the [Supabase local development guide](https://supabase.com/docs/guides/local-development/cli/getting-started).
-- Supabase CLI 2.120.0 or later for the commands below. Install it using the official guide and check `supabase --version`. CI currently uses the latest CLI.
+- Supabase CLI 2.120.0 or later for the commands below. Install it using the official guide and check `supabase --version`. CI pins the database test stack to Supabase CLI 2.120.0.
 - PostgreSQL's `psql` client for the optional demo and database fixture shell script.
 
 The default path uses a backend on your own machine. No maintainer credentials, linked project, Supabase account, or existing workspace startup scripts are required. If your workspace already has a managed backend, leave it running; use a separate clone, a unique `project_id`, and free ports in `supabase/config.toml` for disposable verification.
@@ -94,6 +94,8 @@ SUPABASE_URL=http://127.0.0.1:54321 SUPABASE_ANON_KEY='replace-with-local-anon-k
 ## Database changes and troubleshooting
 
 Create new migrations with `supabase migration new descriptive_name`. Verify the full sequence with `supabase db reset --local` only on a disposable stack. Never reset a managed, shared, or production project. Apply reviewed changes to an independently owned hosted project using [Deployment](DEPLOYMENT.md).
+
+To upgrade the Supabase CLI used by CI, review the [CLI release notes](https://github.com/supabase/cli/releases), update the `version` in the `Set up Supabase CLI` step of `.github/workflows/ci.yml`, then run and review the full `Database tests` job. Dependabot updates the pinned `supabase/setup-cli` action SHA, but it does not update the CLI version configured by that step, so CLI upgrades need explicit manual review.
 
 - **Docker cannot start:** check the Docker runtime and available resources; inspect the exact CLI error before restarting services.
 - **Ports in use:** stop only your own disposable stack or use separate ports and `project_id` in a separate clone.
