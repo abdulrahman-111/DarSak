@@ -60,7 +60,7 @@ export default async function TeacherAssignmentDetailPage({
       />
       {assignment.instructions && (
         <Panel className="mb-5">
-          <p className="whitespace-pre-wrap break-words text-sm leading-6">
+          <p className="whitespace-pre-wrap wrap-break-word text-sm leading-6">
             {assignment.instructions}
           </p>
         </Panel>

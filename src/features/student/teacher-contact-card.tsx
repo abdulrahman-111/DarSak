@@ -34,7 +34,7 @@ export function StudentTeacherContactCard({
   return (
     <section
       id="teacher-contact"
-      className={`student-contact-card ${welcome ? 'student-contact-card-welcome' : ''} scroll-mt-24 rounded-2xl border border-teal/20 bg-white p-5 shadow-sm`}
+      className={`student-contact-card ${welcome ? 'student-contact-card-welcome' : ''} scroll-mt-24 rounded-2xl border border-teal/20 bg-white p-5 shadow-xs`}
       aria-labelledby="teacher-contact-title"
     >
       {welcome && (
@@ -47,7 +47,7 @@ export function StudentTeacherContactCard({
       <div className="flex items-center gap-4">
         <ClassMark name={teacherName || 'D'} size={52} />
         <div className="min-w-0">
-          <h2 id="teacher-contact-title" className="break-words text-xl font-bold text-teal">
+          <h2 id="teacher-contact-title" className="wrap-break-word text-xl font-bold text-teal">
             {teacherName}
           </h2>
           {teacherHeadline && <p className="mt-1 text-sm text-muted">{teacherHeadline}</p>}

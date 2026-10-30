@@ -197,7 +197,7 @@ export function SandakCompanion({
         <button
           type="button"
           onClick={show}
-          className="sandak-restore inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-teal/30 bg-white/90 px-3 text-sm font-bold text-teal shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
+          className="sandak-restore inline-flex min-h-11 min-w-11 items-center justify-center rounded-full border border-teal/30 bg-white/90 px-3 text-sm font-bold text-teal shadow-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-teal"
         >
           {copy.showLabel}
         </button>
@@ -327,7 +327,7 @@ export function SandakCompanion({
         >
           <span
             aria-hidden="true"
-            className="inline-flex size-6 items-center justify-center rounded-full bg-white/90 text-base leading-none shadow-sm"
+            className="inline-flex size-6 items-center justify-center rounded-full bg-white/90 text-base leading-none shadow-xs"
           >
             ×
           </span>

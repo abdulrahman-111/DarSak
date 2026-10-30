@@ -146,7 +146,7 @@ export function MobileWorkspaceNavigation({
                 setOpen(false);
                 moreRef.current?.focus();
               }}
-              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+              className="inline-flex min-h-11 shrink-0 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-muted hover:bg-cream focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
               aria-label={labels.close}
             >
               <X size={17} aria-hidden="true" />
@@ -165,10 +165,10 @@ export function MobileWorkspaceNavigation({
                     if (!event.defaultPrevented) setOpen(false);
                   }}
                   aria-current={isActivePath(pathname, item.href) ? 'page' : undefined}
-                  className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-teal hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="flex min-h-11 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-teal hover:bg-cream focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                 >
                   <Icon size={18} aria-hidden="true" className="shrink-0" />
-                  <span className="min-w-0 flex-1 break-words">{item.label}</span>
+                  <span className="min-w-0 flex-1 wrap-break-word">{item.label}</span>
                   {isNotifications && unreadCount !== null && unreadCount > 0 && (
                     <span
                       aria-label={`${unreadCount} ${labels.unread}`}
@@ -196,7 +196,7 @@ export function MobileWorkspaceNavigation({
               }}
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
-              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange ${active ? 'text-teal' : 'text-muted hover:text-teal'}`}
+              className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange ${active ? 'text-teal' : 'text-muted hover:text-teal'}`}
             >
               <Icon size={20} aria-hidden="true" />
               <span className="max-w-full truncate text-[11px] font-semibold leading-4">
@@ -212,7 +212,7 @@ export function MobileWorkspaceNavigation({
           aria-controls="mobile-workspace-more"
           aria-current={activeSecondary ? 'page' : undefined}
           onClick={() => setOpen(value => !value)}
-          className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange ${open || activeSecondary ? 'text-teal' : 'text-muted hover:text-teal'}`}
+          className={`flex min-h-14 min-w-0 flex-col items-center justify-center gap-0.5 rounded-xl px-0.5 text-center focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-orange ${open || activeSecondary ? 'text-teal' : 'text-muted hover:text-teal'}`}
         >
           <Ellipsis size={20} aria-hidden="true" />
           <span className="max-w-full truncate text-[11px] font-semibold leading-4">

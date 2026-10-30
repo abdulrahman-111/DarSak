@@ -73,13 +73,13 @@ export async function GroupFeedbackSection({
                 <h3 className="font-bold text-teal">
                   {ar ? 'طالب' : 'Student'} · {row.rating} / 5
                 </h3>
-                <p className="mt-2 whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">
+                <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm [overflow-wrap:anywhere]">
                   {row.comment}
                 </p>
                 {row.reply_public && (
                   <div className="mt-3 rounded-lg bg-cream p-3">
                     <h4 className="font-bold">{ar ? 'رد المعلم' : 'Teacher reply'}</h4>
-                    <p className="mt-2 whitespace-pre-wrap break-words text-sm [overflow-wrap:anywhere]">
+                    <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm [overflow-wrap:anywhere]">
                       {row.reply_public}
                     </p>
                   </div>

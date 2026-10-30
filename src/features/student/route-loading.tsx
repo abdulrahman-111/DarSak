@@ -7,7 +7,7 @@ import { useParams } from 'next/navigation';
  * real page renders (heading, cards, side column) so content replaces it without shifting.
  */
 const bar = 'rounded-lg bg-line/70';
-const card = 'rounded-2xl border border-line bg-white p-5 shadow-sm';
+const card = 'rounded-2xl border border-line bg-white p-5 shadow-xs';
 
 function Heading() {
   return (

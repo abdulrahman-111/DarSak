@@ -1,6 +1,6 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+@config '../../tailwind.config.mjs';
+@source '../';
 
 :root {
   color-scheme: light;
@@ -13,36 +13,45 @@
   --line: #e3d9c8;
 }
 
-* {
-  box-sizing: border-box;
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-instrument-sans), var(--font-ibm-plex-sans-arabic), Arial, sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  ::selection {
+    background: rgba(176, 76, 22, 0.2);
+  }
 }
-html {
-  scroll-behavior: smooth;
-}
-body {
-  margin: 0;
-  background: var(--canvas);
-  color: var(--ink);
-  font-family: var(--font-instrument-sans), var(--font-ibm-plex-sans-arabic), Arial, sans-serif;
-  text-rendering: optimizeLegibility;
-}
-button,
-input,
-textarea,
-select {
-  font: inherit;
-}
-button,
-a {
-  -webkit-tap-highlight-color: transparent;
-}
-a {
-  color: inherit;
-  text-decoration: none;
-}
-::selection {
-  background: rgba(176, 76, 22, 0.2);
-}
+
 :focus-visible {
   outline: 3px solid var(--orange);
   outline-offset: 3px;
@@ -59,6 +68,7 @@ button:disabled:hover {
 form[aria-busy='true'] {
   cursor: progress;
 }
+
 .container {
   width: min(1180px, calc(100% - 32px));
   margin-inline: auto;
@@ -225,20 +235,18 @@ body:has([data-mobile-workspace-nav]) .group-request-bar {
   bottom: calc(64px + env(safe-area-inset-bottom));
   padding-bottom: 0.75rem;
 }
-button,
-a {
-  touch-action: manipulation;
-}
 @media (max-width: 1023px) {
   body:has([data-mobile-workspace-nav]) {
     padding-bottom: calc(64px + env(safe-area-inset-bottom));
   }
 }
-@media (max-width: 767px) {
-  input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
-  select,
-  textarea {
-    font-size: 16px !important;
+@layer base {
+  @media (max-width: 767px) {
+    input:not([type='checkbox']):not([type='radio']):not([type='hidden']),
+    select,
+    textarea {
+      font-size: 16px !important;
+    }
   }
 }
 

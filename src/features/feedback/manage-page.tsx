@@ -48,17 +48,17 @@ export async function ManageFeedbackPage({
                 <p className="mt-2 text-sm">
                   {row.rating} / 5 · {feedbackStatus(row.status ?? '', ar)}
                 </p>
-                <p className="mt-3 whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                <p className="mt-3 whitespace-pre-wrap wrap-break-word [overflow-wrap:anywhere]">
                   {row.comment}
                 </p>
                 {row.reply_public && (
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm">
+                  <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm">
                     {ar ? 'الرد المنشور: ' : 'Published reply: '}
                     {row.reply_public}
                   </p>
                 )}
                 {row.reply_pending && (
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm text-orange">
+                  <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm text-orange">
                     {ar ? 'رد بانتظار المراجعة: ' : 'Reply awaiting review: '}
                     {row.reply_pending}
                   </p>

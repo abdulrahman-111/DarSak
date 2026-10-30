@@ -85,7 +85,7 @@ export function RouteError({ area, retry }: { area: RouteArea; retry: () => void
         <button
           type="button"
           onClick={retryRoute}
-          className="mt-4 min-h-11 rounded-xl bg-teal px-4 py-2.5 font-bold text-white transition hover:bg-[#164d47] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+          className="mt-4 min-h-11 rounded-xl bg-teal px-4 py-2.5 font-bold text-white transition hover:bg-[#164d47] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
         >
           {t.retry}
         </button>

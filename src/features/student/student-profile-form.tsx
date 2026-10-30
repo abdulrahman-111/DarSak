@@ -12,7 +12,7 @@ type Values = {
   school_name: string;
 };
 const control =
-  'mt-2 min-h-12 w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-ink outline-none focus:border-teal focus:ring-2 focus:ring-teal/15';
+  'mt-2 min-h-12 w-full rounded-xl border border-line-strong bg-white px-4 py-3 text-ink outline-hidden focus:border-teal focus:ring-2 focus:ring-teal/15';
 
 export function StudentProfileForm({
   locale,

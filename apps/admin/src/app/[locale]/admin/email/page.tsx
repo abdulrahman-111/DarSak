@@ -227,7 +227,7 @@ export default async function AdminEmailPage({
               {row.state === 'failed' && (
                 <form action={retryEmailJob.bind(null, locale)} className="mt-4">
                   <input type="hidden" name="id" value={row.id} />
-                  <button className="min-h-11 rounded-xl border border-orange px-4 py-2 font-bold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+                  <button className="min-h-11 rounded-xl border border-orange px-4 py-2 font-bold text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
                     {ar ? 'إعادة المحاولة' : 'Retry failed message'}
                   </button>
                 </form>

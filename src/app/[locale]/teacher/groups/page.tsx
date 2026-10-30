@@ -61,7 +61,7 @@ export default async function TeacherGroups({
         action={
           <Link
             href={`/${locale}/teacher/groups/new`}
-            className="inline-flex min-h-11 items-center rounded-xl bg-teal px-5 font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+            className="inline-flex min-h-11 items-center rounded-xl bg-teal px-5 font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
           >
             {ar ? 'إنشاء مجموعة' : 'Create group'}
           </Link>
@@ -112,11 +112,11 @@ export default async function TeacherGroups({
               return (
                 <article
                   key={group.id}
-                  className="student-card rounded-2xl border border-line bg-white p-5 shadow-sm"
+                  className="student-card rounded-2xl border border-line bg-white p-5 shadow-xs"
                 >
                   <Link
                     href={href}
-                    className="block rounded-xl hover:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                    className="block rounded-xl hover:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0">
@@ -132,7 +132,7 @@ export default async function TeacherGroups({
                               )}
                             </p>
                           )}
-                        <h2 className="mt-1 break-words text-xl font-bold text-teal [overflow-wrap:anywhere]">
+                        <h2 className="mt-1 wrap-break-word text-xl font-bold text-teal [overflow-wrap:anywhere]">
                           {group.name}
                         </h2>
                       </div>

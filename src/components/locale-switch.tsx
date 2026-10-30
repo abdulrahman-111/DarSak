@@ -43,7 +43,7 @@ export function LocaleSwitch({
 
   return (
     <Link
-      className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-line-strong px-2 text-xs font-bold text-teal transition hover:bg-[#efe6d5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:gap-1.5 sm:px-3 sm:text-sm"
+      className="inline-flex min-h-11 shrink-0 items-center gap-1 rounded-xl border border-line-strong px-2 text-xs font-bold text-teal transition hover:bg-[#efe6d5] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange sm:gap-1.5 sm:px-3 sm:text-sm"
       href={href}
       hrefLang={otherLocale}
       aria-label={ariaLabel}

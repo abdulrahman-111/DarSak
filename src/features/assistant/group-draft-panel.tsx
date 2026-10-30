@@ -391,7 +391,7 @@ export function GroupDraftPanel({ locale, disabled = false, onApply }: Props) {
                 <button
                   type="button"
                   onClick={() => requestRef.current?.abort()}
-                  className="min-h-11 justify-self-start rounded-xl border px-4 py-2"
+                  className="min-h-11 justify-self-start rounded-xl border border-[#e5e7eb] px-4 py-2"
                 >
                   {t.cancel}
                 </button>

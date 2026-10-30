@@ -18,7 +18,7 @@ function Title() {
 
 function Card({ lines = 2 }: { lines?: number }) {
   return (
-    <div className="rounded-2xl border border-line bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-line bg-white p-5 shadow-xs">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1 space-y-2">
           <div className={`${bar} h-3 w-24`} />

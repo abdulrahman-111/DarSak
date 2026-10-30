@@ -74,7 +74,7 @@ export function TeacherRosterFilterForm({
           {ar ? 'مسح' : 'Clear'}
         </Link>
       </div>
-      <p className="min-w-0 break-words text-xs text-muted [overflow-wrap:anywhere] sm:col-span-full">
+      <p className="min-w-0 wrap-break-word text-xs text-muted [overflow-wrap:anywhere] sm:col-span-full">
         {ar
           ? 'تعرض القائمة أحدث 50 مجموعة مطابقة والمجموعة المختارة إن لم تكن ضمنها. ابحث باسم المجموعة للوصول إلى المجموعات الأقدم.'
           : 'The selector shows the latest 50 matching groups plus your selected group. Search by group name to reach older groups.'}

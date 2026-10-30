@@ -3,7 +3,7 @@ import { useActionState } from 'react';
 import { loginAction, signupAction } from '@/features/auth/actions';
 import { updateProfile, submitReport, requestEnrollment } from '@/features/platform/actions';
 const input =
-  'mt-2 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-none ring-orange focus:ring-2';
+  'mt-2 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-hidden ring-orange focus:ring-2';
 function Feedback({ state }: { state: any }) {
   return state?.error ? (
     <p role="alert" className="mt-3 rounded-xl bg-danger-soft p-3 text-sm text-danger">

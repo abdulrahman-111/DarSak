@@ -37,10 +37,10 @@ export default async function StudentLesson({
       <Suspense
         fallback={
           <Panel className="mb-6">
-            <div aria-hidden="true" className="h-5 w-24 animate-pulse rounded bg-line/70" />
+            <div aria-hidden="true" className="h-5 w-24 animate-pulse rounded-sm bg-line/70" />
             <div
               aria-hidden="true"
-              className="mt-3 h-4 w-56 max-w-full animate-pulse rounded bg-line/70"
+              className="mt-3 h-4 w-56 max-w-full animate-pulse rounded-sm bg-line/70"
             />
           </Panel>
         }
@@ -50,7 +50,7 @@ export default async function StudentLesson({
       {data.lesson.notes && (
         <Panel className="mb-6">
           <h2 className="font-black text-teal">{ar ? 'ملاحظات الحصة' : 'Lesson notes'}</h2>
-          <p className="mt-3 whitespace-pre-wrap break-words text-muted [overflow-wrap:anywhere]">
+          <p className="mt-3 whitespace-pre-wrap wrap-break-word text-muted [overflow-wrap:anywhere]">
             {data.lesson.notes}
           </p>
         </Panel>
@@ -78,11 +78,11 @@ export default async function StudentLesson({
             <div className="grid gap-3">
               {data.materials.map(material => (
                 <div key={material.id} className="min-w-0 rounded-2xl border border-line p-4">
-                  <strong className="break-words text-teal [overflow-wrap:anywhere]">
+                  <strong className="wrap-break-word text-teal [overflow-wrap:anywhere]">
                     {material.title}
                   </strong>
                   {material.kind === 'note' && (
-                    <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
+                    <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                       {material.content}
                     </p>
                   )}

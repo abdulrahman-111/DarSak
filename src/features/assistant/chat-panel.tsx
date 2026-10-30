@@ -206,7 +206,7 @@ export function ChatPanel({
               <p
                 key={`${index}-${message.role}`}
                 dir="auto"
-                className={`whitespace-pre-wrap break-words rounded-2xl p-3 text-sm leading-6 ${message.role === 'assistant' ? 'bg-white' : 'bg-teal/10'}`}
+                className={`whitespace-pre-wrap wrap-break-word rounded-2xl p-3 text-sm leading-6 ${message.role === 'assistant' ? 'bg-white' : 'bg-teal/10'}`}
               >
                 {message.text}
               </p>
@@ -247,7 +247,7 @@ export function ChatPanel({
                 <button
                   type="button"
                   onClick={() => actions.current.stop()}
-                  className="min-h-11 rounded-xl border px-4 py-2"
+                  className="min-h-11 rounded-xl border border-[#e5e7eb] px-4 py-2"
                 >
                   {t.cancel}
                 </button>
@@ -259,7 +259,7 @@ export function ChatPanel({
                     setMessages([]);
                     setError('');
                   }}
-                  className="min-h-11 rounded-xl border px-4 py-2"
+                  className="min-h-11 rounded-xl border border-[#e5e7eb] px-4 py-2"
                 >
                   {t.clear}
                 </button>

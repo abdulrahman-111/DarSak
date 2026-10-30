@@ -37,7 +37,7 @@ export function TeacherRulesPanel({
         <h2 id="teacher-rules-title" className="font-black text-teal">
           {text.title}
         </h2>
-        <p className="mt-1 break-words text-muted [overflow-wrap:anywhere]">{text.intro}</p>
+        <p className="mt-1 wrap-break-word text-muted [overflow-wrap:anywhere]">{text.intro}</p>
       </div>
       <ul className="grid min-w-0 gap-2 sm:grid-cols-3">
         {text.themes.map((theme, index) => {
@@ -48,13 +48,13 @@ export function TeacherRulesPanel({
               className="flex min-w-0 items-start gap-2 rounded-xl border border-teal/10 bg-white p-3 text-sm font-semibold leading-5 text-teal"
             >
               <Icon size={18} aria-hidden="true" className="mt-0.5 shrink-0" />
-              <span className="min-w-0 break-words [overflow-wrap:anywhere]">{theme}</span>
+              <span className="min-w-0 wrap-break-word [overflow-wrap:anywhere]">{theme}</span>
             </li>
           );
         })}
       </ul>
       <details className="group min-w-0 rounded-xl border border-teal/15 bg-white px-3">
-        <summary className="flex min-h-11 list-none cursor-pointer items-center justify-between gap-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+        <summary className="flex min-h-11 list-none cursor-pointer items-center justify-between gap-3 font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
           <span>{text.fullRules}</span>
           <ChevronDown
             size={18}
@@ -64,7 +64,7 @@ export function TeacherRulesPanel({
         </summary>
         <ul className="list-disc space-y-2 pb-3 ps-5">
           {text.rules.map(rule => (
-            <li key={rule} className="break-words [overflow-wrap:anywhere]">
+            <li key={rule} className="wrap-break-word [overflow-wrap:anywhere]">
               {rule}
             </li>
           ))}

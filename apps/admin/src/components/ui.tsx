@@ -3,11 +3,11 @@ import Link from 'next/link';
 /** Admin-only presentation helpers. Presentation only: no data access lives here. */
 
 export const fieldClass =
-  'min-h-11 w-full rounded-xl border border-line bg-cream px-3 py-2.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
+  'min-h-11 w-full rounded-xl border border-line bg-cream px-3 py-2.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange';
 export const primaryButtonClass =
-  'inline-flex min-h-11 items-center justify-center rounded-xl bg-teal px-5 py-2.5 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2';
+  'inline-flex min-h-11 items-center justify-center rounded-xl bg-teal px-5 py-2.5 font-bold text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2';
 export const secondaryButtonClass =
-  'inline-flex min-h-11 items-center justify-center rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-bold text-teal hover:border-orange/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
+  'inline-flex min-h-11 items-center justify-center rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-bold text-teal hover:border-orange/60 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange';
 
 type Tone = 'neutral' | 'ok' | 'warn' | 'danger' | 'info';
 const tones: Record<Tone, string> = {
@@ -49,9 +49,9 @@ export function Disclosure({
   return (
     <details
       open={defaultOpen}
-      className="group min-w-0 rounded-2xl border border-line bg-white shadow-sm"
+      className="group min-w-0 rounded-2xl border border-line bg-white shadow-xs"
     >
-      <summary className="flex min-h-11 cursor-pointer list-none items-start gap-3 rounded-2xl p-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-start gap-3 rounded-2xl p-4 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
         <span aria-hidden="true" className="mt-1 text-teal">
           <span className="inline-block transition-transform group-open:rotate-90 rtl:hidden">
             ▸
@@ -61,11 +61,11 @@ export function Disclosure({
           </span>
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block break-words font-black text-teal [overflow-wrap:anywhere]">
+          <span className="block wrap-break-word font-black text-teal [overflow-wrap:anywhere]">
             {title}
           </span>
           {meta && (
-            <span className="mt-1 block break-words text-sm text-muted [overflow-wrap:anywhere]">
+            <span className="mt-1 block wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
               {meta}
             </span>
           )}
@@ -103,7 +103,7 @@ export function PillLink({
     <Link
       href={href}
       aria-current={current ? 'page' : undefined}
-      className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange ${current ? 'border-teal bg-teal text-white' : 'border-line bg-white text-teal hover:border-teal'}`}
+      className={`inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-bold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange ${current ? 'border-teal bg-teal text-white' : 'border-line bg-white text-teal hover:border-teal'}`}
     >
       {children}
     </Link>

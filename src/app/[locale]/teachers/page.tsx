@@ -141,7 +141,7 @@ export default async function Teachers({
             </p>
             {fullDiscovery && (
               <Link
-                className="mt-3 inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-bold text-orange hover:bg-orange/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                className="mt-3 inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-bold text-orange hover:bg-orange/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                 href={`/${locale}/student/recommendations`}
               >
                 {locale === 'ar'
@@ -169,7 +169,7 @@ export default async function Teachers({
                 <Search size={18} className="shrink-0 text-muted" />
                 <span className="sr-only">{c.searchLabel}</span>
                 <input
-                  className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
+                  className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
                   name="query"
                   maxLength={120}
                   defaultValue={filters.query}
@@ -197,7 +197,7 @@ export default async function Teachers({
                 open={panelFilterCount > 0}
                 className="group rounded-xl border border-line px-3 py-2 md:border-0 md:px-0 md:py-0"
               >
-                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+                <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
                   <SlidersHorizontal aria-hidden="true" size={17} />
                   {locale === 'ar' ? 'تصفية النتائج' : 'More filters'}
                   {activeFilterCount > 0 && (
@@ -216,7 +216,7 @@ export default async function Teachers({
                     <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-line-strong px-3">
                       <span className="sr-only">{c.subject}</span>
                       <select
-                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
+                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
                         name="subject_id"
                         defaultValue={filters.subjectId || ''}
                       >
@@ -231,7 +231,7 @@ export default async function Teachers({
                     <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-line-strong px-3">
                       <span className="sr-only">{c.context}</span>
                       <select
-                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
+                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
                         name="node_id"
                         defaultValue={filters.nodeId || ''}
                       >
@@ -249,7 +249,7 @@ export default async function Teachers({
                       </span>
                       <input
                         aria-describedby="teacher-search-help"
-                        className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
+                        className="min-w-0 flex-1 bg-transparent placeholder:text-muted focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
                         type="search"
                         name="teacher_search"
                         maxLength={80}
@@ -261,7 +261,7 @@ export default async function Teachers({
                       <span className="sr-only">{c.teacherFilter}</span>
                       <select
                         aria-describedby="teacher-search-help"
-                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
+                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
                         name="teacher_id"
                         defaultValue={filters.teacherId || ''}
                       >
@@ -276,7 +276,7 @@ export default async function Teachers({
                     <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-line-strong px-3">
                       <span className="sr-only">{c.weekday}</span>
                       <select
-                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
+                        className="min-w-0 flex-1 bg-transparent focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-inset"
                         name="weekday"
                         defaultValue={filters.weekday === null ? '' : String(filters.weekday)}
                       >
@@ -352,7 +352,7 @@ export default async function Teachers({
                     <Link
                       key={teacher.id}
                       href={`/${locale}/teachers/${teacher.id}`}
-                      className="student-card flex min-w-0 items-center gap-3 rounded-[1.15rem] border border-line bg-surface p-4 text-teal hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                      className="student-card flex min-w-0 items-center gap-3 rounded-[1.15rem] border border-line bg-surface p-4 text-teal hover:border-teal/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                     >
                       <span
                         aria-hidden="true"

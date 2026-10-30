@@ -30,7 +30,7 @@ export function EnrollmentProgress({
           <span className="block text-[10px] uppercase tracking-wide opacity-75">
             {states[index]}
           </span>
-          <span className="mt-1 block break-words">{label}</span>
+          <span className="mt-1 block wrap-break-word">{label}</span>
         </li>
       ))}
     </ol>

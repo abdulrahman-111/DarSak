@@ -390,7 +390,7 @@ export function TeacherProfileForm({
                   <input type="hidden" name="offering_ids" value={offering.id} />
                   <span className="min-w-0 flex-1">
                     <span className="block font-bold text-teal">{getName(subject)}</span>
-                    <span className="mt-1 block break-words text-sm text-muted">
+                    <span className="mt-1 block wrap-break-word text-sm text-muted">
                       {ancestors(node.id)}
                     </span>
                     {archived && (

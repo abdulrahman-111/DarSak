@@ -21,9 +21,11 @@ export function LearningText({
   const lines = learningLines(text);
   if (lines.length === 0) return null;
   if (lines.length === 1)
-    return <p className={`break-words [overflow-wrap:anywhere] ${className}`}>{lines[0]}</p>;
+    return <p className={`wrap-break-word [overflow-wrap:anywhere] ${className}`}>{lines[0]}</p>;
   return (
-    <ul className={`list-disc space-y-1 ps-5 break-words [overflow-wrap:anywhere] ${className}`}>
+    <ul
+      className={`list-disc space-y-1 ps-5 wrap-break-word [overflow-wrap:anywhere] ${className}`}
+    >
       {lines.map((line, i) => (
         <li key={`${i}-${line}`}>{line}</li>
       ))}

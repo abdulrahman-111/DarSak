@@ -239,9 +239,9 @@ export default async function TeacherGroupDetail({
     ['announcements', copy.announcementsNav],
     ['assignments', copy.assignmentsNav],
   ] as const;
-  const sectionClass = 'scroll-mt-6 focus:outline-none';
+  const sectionClass = 'scroll-mt-6 focus:outline-hidden';
   const actionLink =
-    'inline-flex min-h-11 items-center rounded-xl px-4 py-2 font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
+    'inline-flex min-h-11 items-center rounded-xl px-4 py-2 font-bold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange';
 
   return (
     <>
@@ -256,7 +256,7 @@ export default async function TeacherGroupDetail({
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">
             {ar ? 'تفاصيل المجموعة' : 'Group details'}
           </p>
-          <h1 className="break-words text-2xl font-bold tracking-tight text-teal [overflow-wrap:anywhere] sm:text-3xl">
+          <h1 className="wrap-break-word text-2xl font-bold tracking-tight text-teal [overflow-wrap:anywhere] sm:text-3xl">
             {currentGroup.name}
           </h1>
           <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
@@ -296,7 +296,7 @@ export default async function TeacherGroupDetail({
             <li key={anchor}>
               <a
                 href={`#${anchor}`}
-                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-t-xl px-4 font-bold text-teal hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-t-xl px-4 font-bold text-teal hover:bg-cream focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
               >
                 {label}
               </a>

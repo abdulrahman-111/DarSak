@@ -461,7 +461,7 @@ export function GenerationPreviewForm({
                       open={monthIndex === 0 || conflicts > 0}
                       className="group rounded-xl border border-line bg-white"
                     >
-                      <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+                      <summary className="flex min-h-11 cursor-pointer flex-wrap items-center justify-between gap-2 rounded-xl px-4 py-3 font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
                         <span>{monthLabel(group.month)}</span>
                         <span className="text-xs font-semibold text-muted">
                           {countText(locale, group.rows.length, {

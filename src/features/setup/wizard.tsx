@@ -75,7 +75,7 @@ const emptyEntry = (): Entry => ({
   current: false,
 });
 const inputClass =
-  'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
+  'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange';
 
 export function SetupWizard({
   locale,

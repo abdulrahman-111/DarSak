@@ -88,7 +88,7 @@ export default async function AdminGroups({
                   <h2 id={`group-${group.id}`} className="font-black text-teal">
                     <a
                       href={`#group-${group.id}`}
-                      className="underline decoration-transparent hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                      className="underline decoration-transparent hover:decoration-current focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                     >
                       {group.name}
                     </a>
@@ -96,7 +96,7 @@ export default async function AdminGroups({
                   <p className="mt-1 text-sm text-muted">
                     <Link
                       href={`/${locale}/admin/teachers/${group.teacher_id}`}
-                      className="underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                      className="underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                     >
                       {teacherMap.get(group.teacher_id) || '—'}
                     </Link>{' '}
@@ -106,7 +106,7 @@ export default async function AdminGroups({
                 <Status value={group.status} locale={locale} />
               </div>
               <details className="mt-5 border-t border-line pt-3">
-                <summary className="flex min-h-11 cursor-pointer items-center font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+                <summary className="flex min-h-11 cursor-pointer items-center font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
                   {ar ? 'إدارة المجموعة' : 'Manage group'}
                 </summary>
                 <div className="mb-4 mt-3">

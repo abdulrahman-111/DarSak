@@ -75,7 +75,7 @@ export default async function StudentDashboard({
                 />
                 <div className="relative min-w-0">
                   <div className="flex min-w-0 items-start justify-between gap-3">
-                    <p className="flex min-w-0 items-center gap-2 break-words text-xs font-bold uppercase tracking-wider text-white/75 [overflow-wrap:anywhere]">
+                    <p className="flex min-w-0 items-center gap-2 wrap-break-word text-xs font-bold uppercase tracking-wider text-white/75 [overflow-wrap:anywhere]">
                       <span
                         className={`size-2 shrink-0 rounded-full ${live ? 'bg-emerald-300' : 'bg-white/70'}`}
                       />
@@ -97,10 +97,10 @@ export default async function StudentDashboard({
                   </div>
                   {next ? (
                     <>
-                      <p className="mt-4 break-words text-sm text-white/70 [overflow-wrap:anywhere]">
+                      <p className="mt-4 wrap-break-word text-sm text-white/70 [overflow-wrap:anywhere]">
                         {nextGroup}
                       </p>
-                      <h2 className="mt-2 break-words text-2xl font-bold [overflow-wrap:anywhere] sm:text-3xl">
+                      <h2 className="mt-2 wrap-break-word text-2xl font-bold [overflow-wrap:anywhere] sm:text-3xl">
                         {next.title}
                       </h2>
                       <div className="mt-4 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-6 text-white/85">
@@ -111,7 +111,7 @@ export default async function StudentDashboard({
                             {countdown.label}
                           </span>
                         )}
-                        <span className="inline-flex min-w-0 items-center gap-2 break-words [overflow-wrap:anywhere]">
+                        <span className="inline-flex min-w-0 items-center gap-2 wrap-break-word [overflow-wrap:anywhere]">
                           <CalendarDays size={17} aria-hidden="true" className="shrink-0" />
                           {lessonDateTile(next.starts_at, locale).label} ·{' '}
                           {lessonTimeRange(next.starts_at, next.ends_at, locale)}
@@ -133,7 +133,7 @@ export default async function StudentDashboard({
                     </>
                   ) : (
                     <>
-                      <h2 className="mt-4 max-w-lg break-words text-2xl font-bold leading-snug [overflow-wrap:anywhere] sm:mt-5 sm:text-3xl">
+                      <h2 className="mt-4 max-w-lg wrap-break-word text-2xl font-bold leading-snug [overflow-wrap:anywhere] sm:mt-5 sm:text-3xl">
                         {data.acceptedCount
                           ? ar
                             ? 'جاهز للحصة القادمة؟'
@@ -142,7 +142,7 @@ export default async function StudentDashboard({
                             ? 'رحلة تعلم جديدة تبدأ هنا'
                             : 'Your next learning chapter starts here'}
                       </h2>
-                      <p className="mt-3 max-w-lg break-words text-sm leading-7 text-white/80 [overflow-wrap:anywhere]">
+                      <p className="mt-3 max-w-lg wrap-break-word text-sm leading-7 text-white/80 [overflow-wrap:anywhere]">
                         {data.acceptedCount
                           ? ar
                             ? 'لا توجد حصة قادمة الآن. افتح مجموعتك لمراجعة المواد أو متابعة إعلانات المعلم.'
@@ -210,7 +210,7 @@ export default async function StudentDashboard({
               </section>
               <section className="min-w-0">
                 <div className="mb-4 flex min-w-0 flex-wrap items-center justify-between gap-2">
-                  <h2 className="min-w-0 break-words text-lg font-bold text-teal [overflow-wrap:anywhere]">
+                  <h2 className="min-w-0 wrap-break-word text-lg font-bold text-teal [overflow-wrap:anywhere]">
                     {ar ? 'مجموعاتي' : 'My classes'}
                   </h2>
                   <div className="flex shrink-0 flex-wrap items-center gap-3">
@@ -248,10 +248,10 @@ export default async function StudentDashboard({
                             className="text-muted transition-transform motion-safe:group-hover:-translate-y-0.5 rtl:-scale-x-100"
                           />
                         </div>
-                        <h3 className="mt-4 break-words font-bold text-teal [overflow-wrap:anywhere]">
+                        <h3 className="mt-4 wrap-break-word font-bold text-teal [overflow-wrap:anywhere]">
                           {item.group?.name || (ar ? 'مجموعتك التعليمية' : 'Your learning class')}
                         </h3>
-                        <p className="mt-2 break-words text-xs text-muted [overflow-wrap:anywhere]">
+                        <p className="mt-2 wrap-break-word text-xs text-muted [overflow-wrap:anywhere]">
                           {item.group?.status === 'archived'
                             ? ar
                               ? 'سجل التعلم والمواد'
@@ -321,7 +321,7 @@ export default async function StudentDashboard({
                         }).format(new Date(`${day.date}T12:00:00Z`)) +
                         (lessonDays.has(day.date) ? (ar ? '، يوجد حصة' : ', has a lesson') : '')
                       }
-                      className={`relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[11px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:text-xs ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
+                      className={`relative flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 rounded-xl text-[11px] transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange sm:text-xs ${day.date === week.today ? 'bg-teal text-white' : 'text-muted hover:bg-cream'}`}
                     >
                       {lessonDays.has(day.date) && (
                         <span
@@ -381,7 +381,7 @@ export default async function StudentDashboard({
                               </span>
                             </span>
                             <div className="min-w-0 flex-1">
-                              <h3 className="break-words text-sm font-bold text-teal group-hover:underline">
+                              <h3 className="wrap-break-word text-sm font-bold text-teal group-hover:underline">
                                 {lesson.title}
                               </h3>
                               <p className="mt-1 text-xs leading-5 text-muted">

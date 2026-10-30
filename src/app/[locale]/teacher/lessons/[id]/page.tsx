@@ -235,7 +235,7 @@ export default async function TeacherLesson({
                   <div key={material.id} className="min-w-0 rounded-2xl border border-line p-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
-                        <strong className="break-words text-teal [overflow-wrap:anywhere]">
+                        <strong className="wrap-break-word text-teal [overflow-wrap:anywhere]">
                           {material.title}
                         </strong>
                         <span className="ms-2 rounded-lg bg-cream px-2 py-1 text-xs font-bold">
@@ -253,7 +253,7 @@ export default async function TeacherLesson({
                       />
                     </div>
                     {material.kind === 'note' && (
-                      <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
+                      <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                         {material.content}
                       </p>
                     )}

@@ -3,7 +3,7 @@ import { useActionState } from 'react';
 import { deleteAccount, retryAccountDeletion, startGoogleDeletion } from './actions';
 import { Turnstile } from '@/components/auth/turnstile';
 const input =
-  'mt-2 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-none ring-orange focus:ring-2';
+  'mt-2 w-full rounded-2xl border border-line bg-cream px-4 py-3 outline-hidden ring-orange focus:ring-2';
 export function AccountDeletionForm({
   locale,
   text,

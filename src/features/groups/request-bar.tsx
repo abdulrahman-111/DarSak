@@ -61,7 +61,7 @@ export function GroupRequestBar({
           type="button"
           tabIndex={targetVisible ? -1 : 0}
           onClick={jump}
-          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange px-4 text-sm font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 ${detail ? 'shrink-0' : 'w-full'}`}
+          className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-orange px-4 text-sm font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2 ${detail ? 'shrink-0' : 'w-full'}`}
         >
           {label}
           <ArrowDown size={16} aria-hidden="true" />

@@ -79,7 +79,7 @@ export function WorkspaceNavigationSidebar({
             href={item.href}
             exact={item.href === `/${locale}/${role}`}
             activePaths={item.activePaths}
-            className="flex min-h-11 min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream"
+            className="flex min-h-11 min-w-0 items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold text-cream/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cream"
             activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal"
           >
             <Icon size={17} aria-hidden="true" className="shrink-0" />
@@ -91,7 +91,7 @@ export function WorkspaceNavigationSidebar({
       })}
       <details open={activeSecondary} className="group min-w-0">
         <summary
-          className={`flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden ${activeSecondary ? 'bg-white/10 text-white' : 'text-cream/80'}`}
+          className={`flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors hover:bg-white/10 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cream [&::-webkit-details-marker]:hidden ${activeSecondary ? 'bg-white/10 text-white' : 'text-cream/80'}`}
         >
           <Ellipsis size={17} aria-hidden="true" className="shrink-0" />
           <span className="min-w-0 flex-1">{ar ? 'المزيد' : 'More'}</span>
@@ -113,11 +113,11 @@ export function WorkspaceNavigationSidebar({
                 key={item.href}
                 href={item.href}
                 activePaths={item.activePaths}
-                className="flex min-h-11 min-w-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-cream/75 hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream"
+                className="flex min-h-11 min-w-0 items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold text-cream/75 hover:bg-white/10 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-cream"
                 activeClassName="bg-cream text-teal hover:bg-cream hover:text-teal"
               >
                 <Icon size={17} aria-hidden="true" className="shrink-0" />
-                <span className="min-w-0 flex-1 break-words">{item.label}</span>
+                <span className="min-w-0 flex-1 wrap-break-word">{item.label}</span>
                 {notification && unreadCount !== null && unreadCount > 0 && (
                   <span
                     aria-label={ar ? `${unreadCount} غير مقروء` : `${unreadCount} unread`}

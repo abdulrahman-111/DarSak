@@ -74,7 +74,7 @@ export function TeacherReviewPanel({
   if (displayStatus === 'approved')
     return (
       <details className="mb-2 min-w-0 rounded-xl border border-line bg-white px-4 py-2 text-sm">
-        <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+        <summary className="flex cursor-pointer flex-wrap items-center gap-x-3 gap-y-1 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
           <span className="font-bold text-teal">{title}</span>
           <Status value={displayStatus} locale={locale} />
           <span className="font-bold text-teal underline">

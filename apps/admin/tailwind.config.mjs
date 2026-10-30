@@ -1,12 +1,4 @@
-import type { Config } from 'tailwindcss';
-
-export default {
-  content: [
-    './src/**/*.{ts,tsx}',
-    '../../src/components/platform/ui.tsx',
-    '../../src/components/ui.tsx',
-    '../../src/features/student/pagination.tsx',
-  ],
+const config = {
   theme: {
     extend: {
       colors: {
@@ -36,4 +28,6 @@ export default {
     },
   },
   plugins: [],
-} satisfies Config;
+};
+
+export default config;

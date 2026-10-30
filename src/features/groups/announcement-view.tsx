@@ -26,7 +26,7 @@ export function AnnouncementView({
         {ar ? 'إعلان المجموعة' : 'Group announcement'}
       </h2>
       <p className="mt-1 text-xs text-muted">{ar ? `آخر تعديل: ${edited}` : `Edited ${edited}`}</p>
-      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-ink">
+      <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm leading-7 text-ink">
         {announcement.body}
       </p>
     </section>

@@ -150,14 +150,14 @@ export default async function ReportsPage({
           {history.data.map(report => (
             <Panel key={report.id}>
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <h3 className="break-words font-black text-teal [overflow-wrap:anywhere]">
+                <h3 className="wrap-break-word font-black text-teal [overflow-wrap:anywhere]">
                   {report.subject}
                 </h3>
                 <span className="rounded-full bg-teal/10 px-3 py-2 text-sm font-bold text-teal">
                   {reportProgress(report.status, report.reviewed_at, locale)}
                 </span>
               </div>
-              <p className="mt-3 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
+              <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                 {report.description}
               </p>
               {report.public_response && (
@@ -165,7 +165,7 @@ export default async function ReportsPage({
                   <h4 className="font-bold text-teal">
                     {ar ? 'رد فريق الدعم' : 'Support response'}
                   </h4>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
+                  <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                     {report.public_response}
                   </p>
                 </section>
