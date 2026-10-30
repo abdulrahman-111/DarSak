@@ -61,4 +61,4 @@ Rehearse recovery without production exports or real user data:
 4. Verify the restored schema and migration state, expected synthetic records, and a small set of application flows. Check that no real accounts or data entered the exercise, then destroy the disposable target according to its provider's procedure.
 5. Record duration, errors, what the backup included, what it omitted, and the next rehearsal date. Database recovery does not by itself restore Storage objects or Auth provider settings; validate those separately if they are in scope.
 
-This repository does not configure automatic paid backups and this runbook does not claim that a restore rehearsal has been performed.
+This repository does not configure automatic paid backups. The recorded [local database restore rehearsal](ops/RESTORE-REHEARSAL-2026-10-30.md) does not establish hosted recoverability or provider backup/PITR availability.
