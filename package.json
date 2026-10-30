@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "typecheck:admin": "npm run typecheck --workspace @darsak/admin",
     "boundaries": "node scripts/admin-boundary.mjs",
+    "actions:guard": "node scripts/server-action-guard.mjs",
     "test": "vitest run",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
