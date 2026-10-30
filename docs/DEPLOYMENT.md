@@ -35,6 +35,8 @@ Use a new project you control; no access to DarSak's existing backend is needed.
 
 Vercel supplies the schedules in `vercel.json`. Another Next.js host needs its own scheduler for those API routes and equivalent secret headers. The notification-email worker currently has maintainer-specific mailbox configuration in `src/features/email/worker.ts` and `supabase/migrations/20261014181400_transactional_email_outbox.sql`. Leave `GMAIL_APP_PASSWORD` unset on an independent deployment until both sender and administrator notification routing have been adapted and tested. Supabase Auth confirmation/recovery email uses your own SMTP and is independent of that optional worker.
 
+Vercel skips automatic deployments for `dependabot/**` branches to avoid redundant dependency-update previews. GitHub Actions still builds and tests dependency updates; create a manual Vercel preview when a reviewed update needs preview validation, such as before a major migration.
+
 This documents an independently owned hosted Supabase backend. Running Supabase itself on your own production infrastructure needs a separate operational guide; the local CLI stack is for development only.
 
 ## Application environment
