@@ -30,6 +30,13 @@ export const groupDraftInputSchema = z
 
 export type GroupDraftInput = z.infer<typeof groupDraftInputSchema>;
 
+const unsafeDraftText = [
+  /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F]/u,
+  /[\u202A-\u202E\u2066-\u2069]/u,
+  /(?:https?:\/\/|ftp:\/\/|www\.)\S+/iu,
+  /\b[\w.+-]+@[\w.-]+\.[a-z]{2,}\b/iu,
+];
+
 export const groupDraftSchema = z
   .object({
     name: z.string().trim().min(2).max(120),
@@ -38,6 +45,19 @@ export const groupDraftSchema = z
     prerequisites: z.string().trim().max(1500),
   })
   .strict();
+
+/** Additional response checks applied only to provider-generated text. */
+export const generatedGroupDraftSchema = groupDraftSchema.superRefine((draft, context) => {
+  for (const field of ['name', 'description', 'outcomes', 'prerequisites'] as const) {
+    if (unsafeDraftText.some(pattern => pattern.test(draft[field]))) {
+      context.addIssue({
+        code: 'custom',
+        path: [field],
+        message: 'Generated draft contains unsupported control or link text.',
+      });
+    }
+  }
+});
 
 export type GroupDraft = z.infer<typeof groupDraftSchema>;
 
@@ -87,7 +107,12 @@ export type AssistantRequest = z.infer<typeof assistantRequestSchema>;
 export type AssistantSuccess =
   { ok: true; mode: 'chat'; text: string } | { ok: true; mode: 'group_draft'; draft: GroupDraft };
 export type AssistantErrorCode =
-  'invalid_input' | 'unauthenticated' | 'unavailable' | 'rate_limited' | 'provider_unavailable';
+  | 'invalid_input'
+  | 'unauthenticated'
+  | 'unavailable'
+  | 'rate_limited'
+  | 'provider_unavailable'
+  | 'safety_blocked';
 export const assistantChatTextSchema = z.string().trim().min(1).max(6000);
 
 export type GroupDraftResult =

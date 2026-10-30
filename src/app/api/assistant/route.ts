@@ -4,6 +4,7 @@ import {
   type AssistantErrorCode,
   type AssistantSuccess,
 } from '@/features/assistant/domain';
+import { ProviderSafetyBlockedError } from '@/features/assistant/provider-errors';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { checkTeachingAccess } from '@/features/teacher-access/guard';
 import { getGuidanceTopics } from '@/features/assistant/guidance';
@@ -27,6 +28,7 @@ const statusFor: Record<AssistantErrorCode, number> = {
   unavailable: 503,
   rate_limited: 429,
   provider_unavailable: 502,
+  safety_blocked: 422,
 };
 
 function failure(code: AssistantErrorCode) {
@@ -168,7 +170,8 @@ export async function POST(request: NextRequest) {
       };
     }
     return json(result);
-  } catch {
+  } catch (error) {
+    if (error instanceof ProviderSafetyBlockedError) return failure('safety_blocked');
     return failure('provider_unavailable');
   } finally {
     try {
