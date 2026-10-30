@@ -35,7 +35,7 @@ Live AI is enabled if and only if `SANAD_ENABLED=true` and `GEMINI_API_KEY` is s
 
 ### Database
 
-Apply `supabase/migrations/20261028150000_sandak_quota.sql`. It adds private (non-API) counters in `dars_private` and two `SECURITY DEFINER` functions, `sanad_reserve_request` and `sanad_release_request`, granted to `authenticated` only. The application passes the limits above on each reservation; the table `dars_private.sandak_settings` holds the same defaults for callers that pass none. Database tests are in `tests/database/sandak_quota.sql` and `supabase/tests/sandak_quota.test.sql`.
+Apply `supabase/migrations/20261028150000_sandak_quota.sql` and subsequent quota migrations. They add private (non-API) counters in `dars_private` and two `SECURITY DEFINER` functions, `sanad_reserve_request` and `sanad_release_request`, granted to `authenticated` only. `dars_private.sandak_settings` provides the defaults and hard upper ceilings: application or direct RPC callers may request lower limits, but cannot raise them. Database tests are in `tests/database/sandak_quota.sql` and `supabase/tests/sandak_quota.test.sql`.
 
 ## Gemini billing, terms and age
 
@@ -47,7 +47,7 @@ Apply `supabase/migrations/20261028150000_sandak_quota.sql`. It adds private (no
 
 One server request uses the fixed `gemini-3.5-flash-lite` model with a 20-second timeout and no retries. Request bodies are limited to 24 KiB, provider responses to 64 KiB and generation to 2,048 output tokens. A chat sends at most eight messages and 8,000 characters (2,000 per message). The model has no tools, no web access and no database access, and the system prompt refuses secrets, personal data and unsupported actions.
 
-An atomic database reservation enforces, per user: the daily and per-minute limits and one active request; and globally: the daily limit and the concurrency cap. A 45-second lease recovers from crashed workers. Failed provider calls still consume the reserved attempt. Cross-origin requests are rejected. When a quota is reached the user sees a friendly "too many requests" message and the companion shows the oops mood.
+An atomic database reservation contains request volume, enforcing the configured per-user daily and per-minute ceilings and one active request, plus global daily and concurrency ceilings. Caller limits can make these stricter, never looser. A 45-second lease recovers from crashed workers. Failed provider calls still consume the reserved attempt. Cross-origin requests are rejected. When a quota is reached the user sees a friendly "too many requests" message and the companion shows the oops mood.
 
 ## Data handling
 
