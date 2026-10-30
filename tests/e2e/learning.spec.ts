@@ -76,9 +76,10 @@ test('teacher publishes a class, accepts an enrollment request, and unlocks the 
 
   await teacherPage.goto(`/${locale}/teacher/groups/${groupId}`);
   await expect(teacherPage.getByText('E2E Student', { exact: true })).toBeVisible();
-  await teacherPage.getByRole('button', { name: ar ? 'قبول' : 'Accept' }).click();
-  await teacherPage.reload();
   const studentRosterRow = teacherPage.getByText('E2E Student', { exact: true }).locator('..');
+  await teacherPage.getByRole('button', { name: ar ? 'قبول' : 'Accept' }).click();
+  await expect(studentRosterRow).toContainText(ar ? 'مقبول' : 'Accepted');
+  await teacherPage.reload();
   await expect(studentRosterRow).toContainText(ar ? 'مقبول' : 'Accepted');
 
   await studentPage.goto(`/${locale}/student/classes/${groupId}`);
