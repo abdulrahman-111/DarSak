@@ -16,6 +16,8 @@ There is no age gate, adult acknowledgment or tester allowlist. Eligibility is d
 
 Local guided help is authored text that runs on the device. It links only to existing DarSak routes, follows the signed-in role, and never calls a model. Model output is rendered as plain text. Teacher group drafts stay in browser memory until the teacher reviews them and explicitly applies the four displayed fields, then separately saves the ordinary group form. A draft never publishes a group or changes enrollment.
 
+Gemini requests set explicit safety thresholds. A provider prompt or candidate safety block returns a localized request-blocked message and no generated answer. The provider accepts text-only candidate parts and discards Gemini's text signature metadata; unsupported tool, code or multimodal parts fail closed. Provider-generated group-draft fields are rejected if they contain control or bidirectional override/isolate characters, URL-form links, or email addresses. The same checks do not restrict locally authored templates or teacher edits. These are response-contract checks, not a guarantee that a model can resist every harmful prompt.
+
 ## Configuration
 
 All values are server-only. Never put a key in a `NEXT_PUBLIC_` variable, browser code, chat or source control.

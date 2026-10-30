@@ -62,6 +62,7 @@ export function ChatPanel({
         errors: 'تعذر إرسال السؤال. حاول مرة أخرى.',
         rateLimited: 'أرسلت طلبات كثيرة. انتظر قليلًا ثم حاول مرة أخرى.',
         provider: 'المساعدة المباشرة غير متاحة مؤقتًا. حاول لاحقًا.',
+        safetyBlocked: 'لا يمكن لسندي المساعدة في هذا الطلب. جرّب سؤالًا دراسيًا أو أعد صياغته.',
         context: 'قد لا تُرسل الردود الطويلة والرسائل القديمة ضمن سياق السؤال التالي.',
         loading: 'جارٍ إعداد الإجابة…',
       }
@@ -79,6 +80,8 @@ export function ChatPanel({
         errors: 'The question could not be sent. Please try again.',
         rateLimited: 'Too many requests. Wait a moment, then try again.',
         provider: 'Live help is temporarily unavailable. Please try again later.',
+        safetyBlocked:
+          'SanDai cannot help with that request. Try a learning question or rephrase it.',
         context: 'Long replies and older messages may be left out of the next question’s context.',
         loading: 'Preparing an answer…',
       };
@@ -124,7 +127,9 @@ export function ChatPanel({
             ? 'rate_limited'
             : code === 'provider_unavailable'
               ? 'provider_unavailable'
-              : 'request_failed',
+              : code === 'safety_blocked'
+                ? 'safety_blocked'
+                : 'request_failed',
         );
       }
       if (alive.current && !request.signal.aborted) {
@@ -141,7 +146,9 @@ export function ChatPanel({
             ? t.rateLimited
             : failureCode === 'provider_unavailable'
               ? t.provider
-              : t.errors,
+              : failureCode === 'safety_blocked'
+                ? t.safetyBlocked
+                : t.errors,
         );
       } else if (alive.current && cancelRequested.current) {
         setMessages(current => current.slice(0, -1));

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
+import { ProviderSafetyBlockedError } from '@/features/assistant/provider-errors';
 
 const state = vi.hoisted(() => ({
   config: {
@@ -226,6 +227,24 @@ describe('Sanad endpoint guards', () => {
     const response = await POST(request(chat));
     expect(response.status).toBe(502);
     expect(await response.json()).toEqual({ ok: false, code: 'provider_unavailable' });
+    expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
+  });
+
+  it('returns a safety-block response without draft content and releases the quota lease', async () => {
+    mocks.generateGroupDraft.mockRejectedValue(new ProviderSafetyBlockedError());
+    state.viewer.profile.role = 'teacher';
+    const response = await POST(
+      request({
+        mode: 'group_draft',
+        locale: 'en',
+        topic: 'Algebra',
+        level: 'beginner',
+        format: 'online',
+        guidance: '',
+      }),
+    );
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual({ ok: false, code: 'safety_blocked' });
     expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
   });
 });

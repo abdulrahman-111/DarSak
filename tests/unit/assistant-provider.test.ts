@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 import { generateChat, generateGroupDraft } from '@/features/assistant/provider';
+import { ProviderSafetyBlockedError } from '@/features/assistant/provider-errors';
 
 const chat = {
   mode: 'chat' as const,
@@ -38,6 +39,12 @@ describe('Gemini provider response validation', () => {
     expect(sent.systemInstruction.parts[0].text).toContain('study explanations');
     expect(sent.generationConfig.maxOutputTokens).toBe(2048);
     expect(sent.generationConfig.thinkingConfig).toBeUndefined();
+    expect(sent.safetySettings).toEqual([
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ]);
   });
 
   it('sends only the typed messages plus minimal non-sensitive session context', async () => {
@@ -56,12 +63,94 @@ describe('Gemini provider response validation', () => {
 
   it.each([
     ['malformed response JSON', '{'],
-    ['prompt-level safety block', { promptFeedback: { blockReason: 'SAFETY' } }],
-    ['candidate safety block', candidate('blocked', 'SAFETY')],
     ['truncated candidate', candidate('partial', 'MAX_TOKENS')],
   ])('rejects %s', async (_label, payload) => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(payload)));
     await expect(generateChat('server-secret', chat)).rejects.toThrow();
+  });
+
+  it.each([
+    ['prompt-level', { promptFeedback: { blockReason: 'SAFETY' } }],
+    ['candidate-level', candidate('blocked', 'SAFETY')],
+    [
+      'candidate ratings',
+      {
+        candidates: [
+          {
+            finishReason: 'STOP',
+            safetyRatings: [
+              { category: 'HARM_CATEGORY_HATE_SPEECH', probability: 'HIGH', blocked: true },
+            ],
+            content: { parts: [{ text: 'blocked' }] },
+          },
+        ],
+      },
+    ],
+  ])(
+    'types %s safety blocks for the existing localized provider-unavailable contract',
+    async (_label, payload) => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(payload)));
+      await expect(generateChat('server-secret', chat)).rejects.toBeInstanceOf(
+        ProviderSafetyBlockedError,
+      );
+    },
+  );
+
+  it.each([
+    ['function call with text', { functionCall: { name: 'lookup', args: {} }, text: 'answer' }],
+    [
+      'multimodal part with text',
+      { inlineData: { mimeType: 'image/png', data: 'AA==' }, text: 'answer' },
+    ],
+    [
+      'code execution part',
+      { executableCode: { language: 'PYTHON', code: 'print(1)' }, text: 'answer' },
+    ],
+  ])('rejects unsupported candidate part: %s', async (_label, part) => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          response({ candidates: [{ finishReason: 'STOP', content: { parts: [part] } }] }),
+        ),
+    );
+    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider failure');
+  });
+
+  it('accepts ordinary text with Gemini thought signature metadata but never exposes the metadata', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({
+          candidates: [
+            {
+              finishReason: 'STOP',
+              content: {
+                parts: [
+                  { text: 'A fraction has equal parts.', thoughtSignature: 'opaque-signature' },
+                ],
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    await expect(generateChat('server-secret', chat)).resolves.toBe('A fraction has equal parts.');
+  });
+
+  it('rejects thought text even when it accompanies an otherwise valid answer', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        response({
+          candidates: [
+            { finishReason: 'STOP', content: { parts: [{ text: 'internal', thought: true }] } },
+          ],
+        }),
+      ),
+    );
+    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider failure');
   });
 
   it('rejects provider bodies over 64 KiB', async () => {
