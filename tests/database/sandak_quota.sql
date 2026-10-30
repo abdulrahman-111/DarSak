@@ -123,7 +123,7 @@ do $$ declare i int; a uuid; d date:=(clock_timestamp() at time zone 'UTC')::dat
   if (select accepted_requests from dars_private.sandak_user_daily_usage where user_id=auth.uid() and utc_day=d)<>60 then raise exception 'daily count mismatch'; end if;
 end $$;
 
--- Explicit (environment) limits override the defaults, and are clamped to at least one.
+-- Lower explicit limits remain effective; invalid non-positive limits deny.
 delete from dars_private.sandak_user_daily_usage; delete from dars_private.sandak_global_daily_usage;
 delete from dars_private.sandak_request_leases;
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000003';
@@ -131,7 +131,7 @@ do $$ declare a uuid; begin
   a:=public.sanad_reserve_request(5,2,100,5); perform public.sanad_release_request(a);
   a:=public.sanad_reserve_request(5,2,100,5); perform public.sanad_release_request(a);
   if public.sanad_reserve_request(5,2,100,5) is not null then raise exception 'explicit minute limit ignored'; end if;
-  if public.sanad_reserve_request(0,0,0,0) is not null then raise exception 'zero limits did not clamp to one'; end if;
+  if public.sanad_reserve_request(0,0,0,0) is not null then raise exception 'zero limits did not deny'; end if;
 end $$;
 
 -- Global in-flight cap (explicit limit of 3 with three users), then the default global daily limit.
