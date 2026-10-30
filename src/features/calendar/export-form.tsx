@@ -92,10 +92,10 @@ export function CalendarExportForm({
 
   return (
     <details className="mb-6 min-w-0 rounded-2xl border border-line bg-white p-5">
-      <summary className="cursor-pointer font-black text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+      <summary className="cursor-pointer font-black text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
         {copy.title}
       </summary>
-      <p className="mt-2 break-words text-sm text-muted">{copy.note}</p>
+      <p className="mt-2 wrap-break-word text-sm text-muted">{copy.note}</p>
       <form
         onSubmit={submit}
         className="mt-4 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-end"
@@ -133,7 +133,7 @@ export function CalendarExportForm({
       {message && (
         <p
           role={message === copy.success ? 'status' : 'alert'}
-          className="mt-3 break-words text-sm text-muted"
+          className="mt-3 wrap-break-word text-sm text-muted"
         >
           {message}
           {accessDenied && (

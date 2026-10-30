@@ -56,7 +56,7 @@ const tableCopy = (locale: Locale) =>
       };
 
 const btn =
-  'inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange disabled:cursor-wait disabled:opacity-50';
+  'inline-flex min-h-11 items-center justify-center rounded-xl px-4 py-2 text-sm font-bold focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange disabled:cursor-wait disabled:opacity-50';
 
 function PendingButton({
   idle,

@@ -39,7 +39,7 @@ export function EnrollmentDecisionButtons({
     if (prompt && !window.confirm(prompt)) event.preventDefault();
   };
   const danger =
-    'min-h-11 rounded-xl border border-danger/30 bg-white px-3 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
+    'min-h-11 rounded-xl border border-danger/30 bg-white px-3 py-2 text-sm font-bold text-danger transition-colors hover:bg-danger-soft focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange';
   return (
     <form
       action={dispatch}
@@ -53,7 +53,7 @@ export function EnrollmentDecisionButtons({
             name="decision"
             value="accepted"
             disabled={pending}
-            className="min-h-11 rounded-xl bg-teal px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+            className="min-h-11 rounded-xl bg-teal px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
           >
             {pending ? (ar ? 'جارٍ الحفظ…' : 'Saving…') : ar ? 'قبول' : 'Accept'}
           </button>

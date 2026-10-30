@@ -10,6 +10,13 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      # @typescript-eslint/parser 8.70.0 declares TypeScript >=4.8.4 <6.1.0.
+      - dependency-name: typescript
+        versions: ['>=6.1.0']
+      # eslint-plugin-import 2.32.0, eslint-plugin-react 7.37.5 and eslint-plugin-jsx-a11y 6.10.2 peer ranges stop at ESLint 9.
+      - dependency-name: eslint
+        versions: ['>=10.0.0']
 
   - package-ecosystem: github-actions
     directory: /

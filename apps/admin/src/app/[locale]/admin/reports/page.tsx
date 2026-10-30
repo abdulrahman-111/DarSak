@@ -133,7 +133,7 @@ export default async function AdminReports({
               }
               meta={`${report.reporter_name} · ${cairoDate(report.created_at, locale)}`}
             >
-              <p className="whitespace-pre-wrap break-words text-sm text-ink-soft [overflow-wrap:anywhere]">
+              <p className="whitespace-pre-wrap wrap-break-word text-sm text-ink-soft [overflow-wrap:anywhere]">
                 {report.description}
               </p>
               <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">

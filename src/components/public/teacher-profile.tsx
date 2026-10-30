@@ -83,7 +83,7 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
           <TeacherAvatarImage src={view.avatarUrl} name={view.teacher.full_name} size="size-32"/>
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{ar ? 'ملف المعلم' : 'Teacher profile'}</p>
-            <h1 className={`mt-2 break-words text-3xl font-black tracking-tight md:text-4xl ${theme.accent}`}>{view.teacher.full_name}</h1>
+            <h1 className={`mt-2 wrap-break-word text-3xl font-black tracking-tight md:text-4xl ${theme.accent}`}>{view.teacher.full_name}</h1>
             {view.teacher.headline && <p className="mt-2 text-lg text-muted">{view.teacher.headline}</p>}
             {(city || details?.teaching_mode) && <p className="mt-2 text-sm text-muted">{[city && `${labels.city}: ${city}`, details?.teaching_mode && labels.mode[details.teaching_mode]].filter(Boolean).join(' · ')}</p>}
             {details?.languages.length ? <p className="mt-1 text-sm text-muted">{labels.languages}: {details.languages.join(ar ? '، ' : ', ')}</p> : null}

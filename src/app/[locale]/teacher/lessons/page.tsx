@@ -171,13 +171,13 @@ export default async function TeacherLessons({
           <div className="flex flex-wrap items-center gap-2">
             <Link
               href={statusHref({ new: 1, groupId: selectedGroup?.id })}
-              className="inline-flex min-h-11 items-center rounded-xl bg-orange px-4 py-3 font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal hover:bg-orange-deep"
+              className="inline-flex min-h-11 items-center rounded-xl bg-orange px-4 py-3 font-bold text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal hover:bg-orange-deep"
             >
               {copy.add}
             </Link>
             <Link
               href={`/${locale}/teacher/bookings`}
-              className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+              className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
             >
               {copy.bookings}
             </Link>

@@ -34,7 +34,7 @@ function AnnouncementFields({
         readOnly={readOnly || pending}
         onChange={event => setText(event.currentTarget.value)}
         rows={5}
-        className="min-h-32 w-full rounded-xl border border-line bg-white p-3 text-sm leading-6 text-ink focus:outline-none focus:ring-2 focus:ring-teal"
+        className="min-h-32 w-full rounded-xl border border-line bg-white p-3 text-sm leading-6 text-ink focus:outline-hidden focus:ring-2 focus:ring-teal"
         aria-describedby={`announcement-count-${groupId}`}
       />
       <div

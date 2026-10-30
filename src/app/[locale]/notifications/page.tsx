@@ -97,7 +97,7 @@ export default async function NotificationsPage({
                     >
                       <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="break-words font-semibold text-ink">
+                          <p className="wrap-break-word font-semibold text-ink">
                             {summary ?? (ar ? 'تحديث جديد' : 'New update')}
                           </p>
                           <time className="mt-2 block text-sm text-muted" dateTime={row.created_at}>

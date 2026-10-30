@@ -20,7 +20,7 @@ type Props = {
 };
 
 export const inputClass =
-  'mt-2 h-12 w-full rounded-xl border border-line-strong bg-white px-4 text-ink outline-none transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
+  'mt-2 h-12 w-full rounded-xl border border-line-strong bg-white px-4 text-ink outline-hidden transition placeholder:text-muted focus:border-teal focus:ring-2 focus:ring-teal/15';
 
 export function AuthForm({
   locale,
@@ -114,7 +114,7 @@ export function AuthForm({
           {labels.password}
           <span className="mt-2 flex h-12 overflow-hidden rounded-xl border border-line-strong bg-white transition focus-within:border-teal focus-within:ring-2 focus-within:ring-teal/15">
             <input
-              className="min-w-0 flex-1 bg-transparent px-4 outline-none"
+              className="min-w-0 flex-1 bg-transparent px-4 outline-hidden"
               name="password"
               type={passwordVisible ? 'text' : 'password'}
               dir="ltr"

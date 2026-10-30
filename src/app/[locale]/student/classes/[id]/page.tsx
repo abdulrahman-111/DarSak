@@ -193,7 +193,7 @@ export default async function StudentClassPage({
                 <AnnouncementView locale={locale} announcement={data.announcement} />
                 <section className={studentCard}>
                   <h2 className="font-bold text-teal">{ar ? 'عن مجموعتك' : 'About your class'}</h2>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-7 text-muted">
+                  <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm leading-7 text-muted">
                     {group.description ||
                       (ar
                         ? 'لم يضف المعلم وصفًا بعد.'
@@ -275,7 +275,7 @@ export default async function StudentClassPage({
                     {group.location && (
                       <div>
                         <dt className="text-muted">{ar ? 'المكان' : 'Location'}</dt>
-                        <dd className="mt-1 break-words">{group.location}</dd>
+                        <dd className="mt-1 wrap-break-word">{group.location}</dd>
                       </div>
                     )}
                     <div>
@@ -341,7 +341,7 @@ export default async function StudentClassPage({
                           <CalendarDays size={21} />
                         </span>
                         <div className="min-w-0 flex-1">
-                          <h3 className="break-words font-bold text-teal">{lesson.title}</h3>
+                          <h3 className="wrap-break-word font-bold text-teal">{lesson.title}</h3>
                           <p className="mt-1 text-sm text-muted">
                             {cairoDate(lesson.starts_at, locale)}
                           </p>
@@ -408,7 +408,7 @@ export default async function StudentClassPage({
                   {data.resources.map(r => (
                     <article key={r.id} className={studentCard}>
                       <FolderOpen size={22} className="mb-3 text-teal" />
-                      <h3 className="break-words font-bold text-teal">{r.title}</h3>
+                      <h3 className="wrap-break-word font-bold text-teal">{r.title}</h3>
                       <Link
                         href={`/${locale}/student/lessons/${r.lesson_id}`}
                         className="mt-2 inline-flex min-h-11 items-center text-xs text-muted underline"
@@ -416,7 +416,7 @@ export default async function StudentClassPage({
                         {r.lesson_title}
                       </Link>
                       {r.kind === 'note' && (
-                        <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6">
+                        <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm leading-6">
                           {r.content}
                         </p>
                       )}
@@ -511,7 +511,7 @@ export default async function StudentClassPage({
                 <div className="flex items-center gap-4">
                   <ClassMark name={group.teacher_name} size={56} />
                   <div className="min-w-0">
-                    <h2 className="break-words text-xl font-bold text-teal">
+                    <h2 className="wrap-break-word text-xl font-bold text-teal">
                       {group.teacher_name}
                     </h2>
                     <p className="mt-1 text-sm text-muted">{group.teacher_headline}</p>

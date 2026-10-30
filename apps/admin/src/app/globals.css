@@ -1,6 +1,9 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss' source(none);
+@config '../../tailwind.config.mjs';
+@source '../';
+@source '../../../../src/components/platform/ui.tsx';
+@source '../../../../src/components/ui.tsx';
+@source '../../../../src/features/student/pagination.tsx';
 
 :root {
   color-scheme: light;
@@ -12,32 +15,40 @@
   --muted: #6b6358;
   --line: #e3d9c8;
 }
-* {
-  box-sizing: border-box;
-}
-html {
-  scroll-behavior: smooth;
-}
-body {
-  margin: 0;
-  background: var(--canvas);
-  color: var(--ink);
-  font-family: var(--font-instrument-sans), var(--font-ibm-plex-sans-arabic), Arial, sans-serif;
-}
-.display {
-  font-family: var(--font-bricolage-grotesque), var(--font-ibm-plex-sans-arabic), Arial, sans-serif;
-}
-button,
-input {
-  font: inherit;
-}
-a {
-  color: inherit;
-  text-decoration: none;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    margin: 0;
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: var(--font-instrument-sans), var(--font-ibm-plex-sans-arabic), Arial, sans-serif;
+  }
+  button,
+  input {
+    font: inherit;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+  }
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
 }
 :focus-visible {
   outline: 3px solid var(--orange);
   outline-offset: 3px;
+}
+.display {
+  font-family: var(--font-bricolage-grotesque), var(--font-ibm-plex-sans-arabic), Arial, sans-serif;
 }
 .container {
   width: min(1180px, calc(100% - 32px));

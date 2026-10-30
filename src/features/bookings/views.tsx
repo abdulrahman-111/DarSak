@@ -67,7 +67,7 @@ export function SlotList({
         <Panel key={slot.id} className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="break-words font-bold text-teal">{slot.group_name}</h3>
+              <h3 className="wrap-break-word font-bold text-teal">{slot.group_name}</h3>
               {teacher && (
                 <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-bold">
                   {slot.status === 'open'
@@ -123,7 +123,7 @@ export function BookingList({
         <Panel key={booking.id} className="grid gap-3 sm:grid-cols-[1fr_auto] sm:items-start">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="break-words font-bold text-teal">{booking.group_name}</h3>
+              <h3 className="wrap-break-word font-bold text-teal">{booking.group_name}</h3>
               <span className="rounded-full bg-sand px-2.5 py-1 text-xs font-bold">
                 {statusLabel(booking.status, locale)}
               </span>

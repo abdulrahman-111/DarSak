@@ -46,7 +46,7 @@ export default async function StudentClasses({
         action={
           <Link
             href={`/${locale}/teachers`}
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
           >
             {ar ? 'اكتشف مجموعة' : 'Find a class'}
             <ArrowUpRight size={16} aria-hidden="true" className="rtl:-scale-x-100" />
@@ -106,7 +106,7 @@ export default async function StudentClasses({
                         <article key={entry.id} className={studentCard}>
                           <div className="flex flex-wrap items-start justify-between gap-3">
                             <div className="min-w-0">
-                              <h3 className="break-words font-bold text-teal">
+                              <h3 className="wrap-break-word font-bold text-teal">
                                 {entry.group_name || (ar ? 'مجموعة تعليمية' : 'Learning group')}
                               </h3>
                               <p className="mt-1 text-sm text-muted">
@@ -171,7 +171,7 @@ export default async function StudentClasses({
                         locale={locale}
                       />
                     </div>
-                    <h3 className="mt-4 break-words text-lg font-bold text-teal">
+                    <h3 className="mt-4 wrap-break-word text-lg font-bold text-teal">
                       <Link
                         className="inline-flex min-h-11 items-center underline decoration-teal/20 underline-offset-2"
                         href={`/${locale}/student/classes/${e.group_id}`}
@@ -209,7 +209,7 @@ export default async function StudentClasses({
                     <div className="flex items-center gap-3">
                       <ClassMark name={e.group?.name ?? 'D'} />
                       <div className="min-w-0 flex-1">
-                        <h3 className="break-words font-bold text-teal">
+                        <h3 className="wrap-break-word font-bold text-teal">
                           {e.group?.name ||
                             (ar ? 'طلب انضمام لمجموعة' : 'Class enrollment request')}
                         </h3>
@@ -319,7 +319,7 @@ export default async function StudentClasses({
                     <article key={entry.id} className={studentCard}>
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <h3 className="break-words font-bold text-teal">
+                          <h3 className="wrap-break-word font-bold text-teal">
                             {entry.group_name || (ar ? 'مجموعة تعليمية' : 'Learning group')}
                           </h3>
                           <p className="mt-1 text-sm text-muted">

@@ -141,7 +141,7 @@ export default async function Timetable({
         action={
           <Link
             href={`/${locale}/student/bookings`}
-            className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
           >
             {copy.bookings}
           </Link>
@@ -171,7 +171,7 @@ export default async function Timetable({
                 className="flex flex-wrap gap-2"
               >
                 <Link
-                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   href={weekHref(shiftTimetableWeek(week.weekStart, -1), {
                     group: selection.group,
                   })}
@@ -181,14 +181,14 @@ export default async function Timetable({
                 </Link>
                 {!week.isCurrentWeek && (
                   <Link
-                    className="min-h-11 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                    className="min-h-11 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                     href={weekHref(week.today, { group: selection.group })}
                   >
                     {copy.today}
                   </Link>
                 )}
                 <Link
-                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-line px-3 py-2 text-sm font-bold text-teal hover:border-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   href={weekHref(shiftTimetableWeek(week.weekStart, 1), { group: selection.group })}
                 >
                   {copy.next}
@@ -223,7 +223,7 @@ export default async function Timetable({
                     ))}
                   </select>
                 </label>
-                <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-5 py-2 font-bold text-white hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+                <button className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-5 py-2 font-bold text-white hover:bg-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
                   <ListFilter aria-hidden="true" className="h-4 w-4" />
                   {copy.filter}
                 </button>
@@ -296,7 +296,7 @@ export default async function Timetable({
                       </p>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="break-words text-lg font-black text-teal">
+                          <h3 className="wrap-break-word text-lg font-black text-teal">
                             {lesson.title}
                           </h3>
                           <Status value={lesson.status} locale={locale} />
@@ -315,7 +315,7 @@ export default async function Timetable({
                       </div>
                       {lesson.status !== 'cancelled' && (
                         <Link
-                          className="min-h-11 self-center rounded-xl border border-line px-4 py-2 text-center text-sm font-bold text-teal hover:border-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                          className="min-h-11 self-center rounded-xl border border-line px-4 py-2 text-center text-sm font-bold text-teal hover:border-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                           href={`/${locale}/student/lessons/${lesson.id}`}
                         >
                           {copy.open}
@@ -364,7 +364,7 @@ export default async function Timetable({
           </Panel>
           {data.slots.length > 0 && (
             <details className="mt-5 rounded-2xl border border-line bg-white p-5">
-              <summary className="cursor-pointer font-black text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange">
+              <summary className="cursor-pointer font-black text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange">
                 {copy.weekly}
               </summary>
               <p className="mt-2 text-sm text-muted">{copy.weeklyHint}</p>

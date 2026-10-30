@@ -59,7 +59,7 @@ export default async function TeacherDashboard({
             {ar ? 'صلاحية التدريس' : 'Teaching access'}
           </h1>
         </header>
-        <section className="rounded-3xl border border-line bg-white p-5 shadow-sm">
+        <section className="rounded-3xl border border-line bg-white p-5 shadow-xs">
           <p role="alert" className="text-sm text-danger">
             {ar
               ? 'تعذر تحميل لوحة التدريس. حدّث الصفحة أو راجع إعدادات الوصول من حسابك.'
@@ -90,7 +90,7 @@ export default async function TeacherDashboard({
               : 'You can use your account and review your application and notifications while teaching access is paused.'}
           </p>
         </header>
-        <section className="rounded-3xl border border-line bg-white p-5 shadow-sm">
+        <section className="rounded-3xl border border-line bg-white p-5 shadow-xs">
           <h2 className="font-bold text-teal">
             {ar ? 'مراجعة إعدادات الحساب' : 'Review your account settings'}
           </h2>
@@ -226,7 +226,7 @@ export default async function TeacherDashboard({
       <header className="mb-6 flex min-w-0 flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{dateLabel}</p>
-          <h1 className="break-words text-2xl font-bold tracking-tight text-teal sm:text-3xl">
+          <h1 className="wrap-break-word text-2xl font-bold tracking-tight text-teal sm:text-3xl">
             {copy.greeting}, {firstName}
           </h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">{copy.intro}</p>
@@ -234,14 +234,14 @@ export default async function TeacherDashboard({
         <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
           <Link
             href={`/${locale}/teacher/lessons?new=1`}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-teal/15 bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-teal/15 bg-white px-4 text-sm font-bold text-teal transition-colors hover:border-teal/40 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
           >
             <CalendarPlus size={17} aria-hidden="true" />
             {copy.addLesson}
           </Link>
           <Link
             href={`/${locale}/teacher/groups/new`}
-            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-4 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-teal px-4 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
           >
             <Plus size={17} aria-hidden="true" />
             {copy.create}
@@ -250,7 +250,7 @@ export default async function TeacherDashboard({
       </header>
 
       {data.error ? (
-        <section className="rounded-3xl border border-line bg-white p-5 shadow-sm">
+        <section className="rounded-3xl border border-line bg-white p-5 shadow-xs">
           <p role="alert" className="text-sm text-danger">
             {copy.failed}
           </p>
@@ -266,7 +266,7 @@ export default async function TeacherDashboard({
           {pendingCount > 0 && (
             <Link
               href={`/${locale}/teacher/requests`}
-              className="student-card mb-6 flex min-h-14 items-center gap-3 rounded-2xl border border-orange/30 bg-orange/5 px-4 py-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+              className="student-card mb-6 flex min-h-14 items-center gap-3 rounded-2xl border border-orange/30 bg-orange/5 px-4 py-3 text-sm focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
             >
               <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-orange/10 text-orange-deep">
                 <BellRing size={17} aria-hidden="true" />
@@ -307,7 +307,7 @@ export default async function TeacherDashboard({
                   <p className="mt-5 text-sm text-white/75">
                     {lessonGroup(nextLesson) ?? (ar ? 'مجموعتك' : 'Your group')}
                   </p>
-                  <h2 className="mt-2 break-words text-2xl font-bold sm:text-3xl">
+                  <h2 className="mt-2 wrap-break-word text-2xl font-bold sm:text-3xl">
                     {nextLesson.title}
                   </h2>
                   <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm leading-6 text-white/85">
@@ -365,7 +365,7 @@ export default async function TeacherDashboard({
           </section>
 
           <div className="mb-6 grid gap-5 xl:grid-cols-2">
-            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
+            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-xs">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-bold text-teal">{copy.todayHeading}</h2>
                 <Link
@@ -396,7 +396,7 @@ export default async function TeacherDashboard({
                           <div className="min-w-0 flex-1 basis-40">
                             <Link
                               href={`/${locale}/teacher/lessons/${lesson.id}`}
-                              className="block min-h-11 break-words py-1 text-sm font-bold text-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                              className="block min-h-11 wrap-break-word py-1 text-sm font-bold text-teal hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                             >
                               {lesson.title}
                             </Link>
@@ -437,7 +437,7 @@ export default async function TeacherDashboard({
               )}
             </section>
 
-            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm">
+            <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-xs">
               <div className="mb-4 flex items-center justify-between gap-3">
                 <h2 className="text-lg font-bold text-teal">{copy.requestsHeading}</h2>
                 <Link
@@ -454,10 +454,10 @@ export default async function TeacherDashboard({
                     <div key={request.enrollment_id} className="rounded-2xl border border-line p-4">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <strong className="break-words text-sm text-teal">
+                          <strong className="wrap-break-word text-sm text-teal">
                             {request.full_name}
                           </strong>
-                          <p className="mt-1 break-words text-sm text-muted">
+                          <p className="mt-1 wrap-break-word text-sm text-muted">
                             {request.group_name}
                           </p>
                         </div>
@@ -477,7 +477,7 @@ export default async function TeacherDashboard({
             </section>
 
             {laterLessons.length > 0 && (
-              <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm xl:col-span-2">
+              <section className="min-w-0 rounded-2xl border border-line bg-white p-5 shadow-xs xl:col-span-2">
                 <div className="mb-4 flex items-center justify-between gap-3">
                   <h2 className="text-lg font-bold text-teal">{copy.laterHeading}</h2>
                   <Link
@@ -496,7 +496,7 @@ export default async function TeacherDashboard({
                       <li key={lesson.id} className="min-w-0">
                         <Link
                           href={`/${locale}/teacher/lessons/${lesson.id}`}
-                          className="student-card flex h-full min-h-20 min-w-0 items-start gap-3 rounded-xl border border-line p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                          className="student-card flex h-full min-h-20 min-w-0 items-start gap-3 rounded-xl border border-line p-3 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                         >
                           <span className="grid w-12 shrink-0 place-items-center rounded-xl bg-teal/5 py-1.5 text-teal">
                             <span className="sr-only">{tile.fullLabel}</span>
@@ -508,7 +508,7 @@ export default async function TeacherDashboard({
                             </span>
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block break-words text-sm font-bold text-teal [overflow-wrap:anywhere]">
+                            <span className="block wrap-break-word text-sm font-bold text-teal [overflow-wrap:anywhere]">
                               {lesson.title}
                             </span>
                             <span className="mt-1 block text-xs leading-5 text-muted">
@@ -516,7 +516,7 @@ export default async function TeacherDashboard({
                               {lessonTimeRange(lesson.starts_at, lesson.ends_at, locale)}
                             </span>
                             {group && (
-                              <span className="block break-words text-xs leading-5 text-muted [overflow-wrap:anywhere]">
+                              <span className="block wrap-break-word text-xs leading-5 text-muted [overflow-wrap:anywhere]">
                                 {group}
                               </span>
                             )}
@@ -530,7 +530,7 @@ export default async function TeacherDashboard({
             )}
           </div>
           {setupTasks.length > 0 && (
-            <section className="mb-6 min-w-0 rounded-2xl border border-orange/30 bg-white p-5 shadow-sm">
+            <section className="mb-6 min-w-0 rounded-2xl border border-orange/30 bg-white p-5 shadow-xs">
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="flex items-center gap-2 text-lg font-bold text-teal">
@@ -547,7 +547,7 @@ export default async function TeacherDashboard({
                   <li key={task.id}>
                     <Link
                       href={`/${locale}${task.href}`}
-                      className="flex min-h-14 items-center gap-3 rounded-xl border border-line px-3 py-2 text-sm text-teal transition-colors hover:border-teal/30 hover:bg-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                      className="flex min-h-14 items-center gap-3 rounded-xl border border-line px-3 py-2 text-sm text-teal transition-colors hover:border-teal/30 hover:bg-cream focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                     >
                       <span
                         aria-hidden="true"
@@ -609,7 +609,7 @@ export default async function TeacherDashboard({
               <Link
                 key={label}
                 href={href}
-                className={`student-card flex min-h-24 items-center gap-3 rounded-2xl border bg-white p-4 shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange ${attention ? 'border-orange/40 ring-1 ring-orange/15' : 'border-line'}`}
+                className={`student-card flex min-h-24 items-center gap-3 rounded-2xl border bg-white p-4 shadow-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange ${attention ? 'border-orange/40 ring-1 ring-orange/15' : 'border-line'}`}
               >
                 <span
                   className={`grid size-10 shrink-0 place-items-center rounded-xl ${attention ? 'bg-orange/10 text-orange' : 'bg-teal/5 text-teal'}`}

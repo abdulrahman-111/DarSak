@@ -90,10 +90,10 @@ export default async function TeacherStudents({
                   >
                     <div className="flex min-w-0 items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <strong className="block break-words text-teal [overflow-wrap:anywhere]">
+                        <strong className="block wrap-break-word text-teal [overflow-wrap:anywhere]">
                           {row.full_name}
                         </strong>
-                        <p className="mt-1 break-words text-sm text-muted [overflow-wrap:anywhere]">
+                        <p className="mt-1 wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                           {row.group_name}
                         </p>
                       </div>

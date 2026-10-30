@@ -57,7 +57,7 @@ export function StudentAssignments({
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-2">
-                <h2 className="break-words text-lg font-bold text-teal">{assignment.title}</h2>
+                <h2 className="wrap-break-word text-lg font-bold text-teal">{assignment.title}</h2>
                 {assignment.status === 'archived' && (
                   <span className="rounded-full bg-cream px-3 py-1 text-xs font-bold text-muted">
                     {ar ? 'مؤرشف' : 'Archived'}
@@ -71,7 +71,7 @@ export function StudentAssignments({
             </div>
           </div>
           {assignment.instructions && (
-            <p className="whitespace-pre-wrap break-words text-sm leading-6 text-ink">
+            <p className="whitespace-pre-wrap wrap-break-word text-sm leading-6 text-ink">
               {assignment.instructions}
             </p>
           )}
@@ -93,7 +93,7 @@ export function StudentAssignments({
               <h3 className="font-bold text-teal">{ar ? 'تسليمك' : 'Your submission'}</h3>
               <ExternalLink href={assignment.submission.url} label={assignment.submission.url} />
               {assignment.submission.student_note && (
-                <p className="whitespace-pre-wrap break-words text-sm text-muted">
+                <p className="whitespace-pre-wrap wrap-break-word text-sm text-muted">
                   {assignment.submission.student_note}
                 </p>
               )}
@@ -117,7 +117,7 @@ export function StudentAssignments({
                   <p className="text-xs font-bold uppercase text-teal">
                     {ar ? 'ملاحظات خاصة من المعلم' : 'Private teacher feedback'}
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap break-words text-sm leading-6">
+                  <p className="mt-2 whitespace-pre-wrap wrap-break-word text-sm leading-6">
                     {assignment.submission.teacher_feedback}
                   </p>
                 </div>
@@ -190,7 +190,7 @@ export function TeacherAssignmentList({
         >
           <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="break-words text-lg font-bold text-teal">{assignment.title}</h2>
+              <h2 className="wrap-break-word text-lg font-bold text-teal">{assignment.title}</h2>
               <p className="mt-1 text-sm text-muted">
                 {ar ? 'الموعد النهائي: ' : 'Deadline: '}
                 {assignmentDate(assignment.due_at, locale)}
@@ -224,7 +224,7 @@ export function TeacherAssignmentList({
           ) : (
             <>
               {assignment.instructions && (
-                <p className="whitespace-pre-wrap break-words text-sm leading-6">
+                <p className="whitespace-pre-wrap wrap-break-word text-sm leading-6">
                   {assignment.instructions}
                 </p>
               )}
@@ -288,7 +288,7 @@ export function TeacherSubmissionRows({
           >
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
-                <h2 className="break-words font-bold text-teal">{row.student_name}</h2>
+                <h2 className="wrap-break-word font-bold text-teal">{row.student_name}</h2>
                 <p className="mt-1 text-xs text-muted">
                   {row.enrollment_status === 'accepted'
                     ? ar
@@ -315,7 +315,7 @@ export function TeacherSubmissionRows({
             </div>
             <ExternalLink href={row.url} label={row.url} />
             {row.student_note && (
-              <p className="whitespace-pre-wrap break-words rounded-xl bg-cream p-3 text-sm leading-6">
+              <p className="whitespace-pre-wrap wrap-break-word rounded-xl bg-cream p-3 text-sm leading-6">
                 {row.student_note}
               </p>
             )}

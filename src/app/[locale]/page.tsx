@@ -80,14 +80,14 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               href={`/${locale}/teachers`}
-              className="inline-flex min-h-12 items-center gap-2 rounded-[.9rem] bg-orange px-6 font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
+              className="inline-flex min-h-12 items-center gap-2 rounded-[.9rem] bg-orange px-6 font-bold text-white transition hover:-translate-y-0.5 hover:bg-orange-deep focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-teal focus-visible:ring-offset-2"
             >
               {c.findGroup}
               <Arrow size={18} />
             </Link>
             <Link
               href={`/${locale}/register?role=teacher`}
-              className="inline-flex min-h-12 items-center rounded-[.9rem] border-2 border-teal px-6 font-bold text-teal transition hover:bg-teal hover:text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+              className="inline-flex min-h-12 items-center rounded-[.9rem] border-2 border-teal px-6 font-bold text-teal transition hover:bg-teal hover:text-cream focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
             >
               {c.teach}
             </Link>
@@ -134,7 +134,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
                         <Image src={icon} alt="" width={24} height={24} />
                       </span>
                       <h4 className="mt-4 text-lg font-bold leading-snug text-ink">{title}</h4>
-                      <p className="mt-2 break-words text-sm leading-6 text-ink-soft">{body}</p>
+                      <p className="mt-2 wrap-break-word text-sm leading-6 text-ink-soft">{body}</p>
                     </article>
                   );
                 })}
@@ -187,7 +187,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <form action={`/${locale}#groups`} className="mt-3">
               <button
                 type="submit"
-                className="inline-flex min-h-11 items-center rounded-lg px-3 font-bold text-orange underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                className="inline-flex min-h-11 items-center rounded-lg px-3 font-bold text-orange underline underline-offset-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
               >
                 {c.retry}
               </button>
@@ -220,7 +220,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 href={`/${locale}/register?role=teacher`}
-                className="inline-flex min-h-12 items-center rounded-[.9rem] bg-cream px-6 font-bold text-teal transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-teal"
+                className="inline-flex min-h-12 items-center rounded-[.9rem] bg-cream px-6 font-bold text-teal transition hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 focus-visible:ring-offset-teal"
               >
                 {c.teach}
               </Link>
@@ -252,7 +252,7 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
         <div className="mt-6 divide-y divide-line rounded-[1.15rem] border border-line bg-surface px-5 sm:px-7">
           {c.faq.map(([question, answer]) => (
             <details key={question} className="group py-3">
-              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-base font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-4 rounded-lg text-base font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
                 {question}
                 <ChevronDown
                   aria-hidden="true"

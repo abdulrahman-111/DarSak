@@ -18,11 +18,11 @@ export function ScreenTitle({
         {eyebrow && (
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{eyebrow}</p>
         )}
-        <h1 className="break-words text-2xl font-bold tracking-tight text-teal [overflow-wrap:anywhere] sm:text-3xl">
+        <h1 className="wrap-break-word text-2xl font-bold tracking-tight text-teal [overflow-wrap:anywhere] sm:text-3xl">
           {title}
         </h1>
         {description && (
-          <p className="mt-2 max-w-2xl break-words text-sm leading-6 text-muted [overflow-wrap:anywhere]">
+          <p className="mt-2 max-w-2xl wrap-break-word text-sm leading-6 text-muted [overflow-wrap:anywhere]">
             {description}
           </p>
         )}
@@ -43,7 +43,7 @@ export function Panel({
   return (
     <section
       id={id}
-      className={`min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm ${className}`}
+      className={`min-w-0 rounded-2xl border border-line bg-white p-5 shadow-xs ${className}`}
     >
       {children}
     </section>
@@ -76,12 +76,12 @@ export function Metric({
       {hint && <p className="mt-2 text-xs text-orange">{hint}</p>}
     </>
   );
-  const frame = `block min-w-0 rounded-2xl border bg-white p-5 shadow-sm ${attention ? 'border-orange/40 ring-1 ring-orange/15' : 'border-line'}`;
+  const frame = `block min-w-0 rounded-2xl border bg-white p-5 shadow-xs ${attention ? 'border-orange/40 ring-1 ring-orange/15' : 'border-line'}`;
   if (!href) return <section className={frame}>{body}</section>;
   return (
     <Link
       href={href}
-      className={`${frame} student-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange`}
+      className={`${frame} student-card focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange`}
     >
       {body}
     </Link>
@@ -106,7 +106,7 @@ export function UnavailableMetric({
       </p>
       <a
         href={href}
-        className="mt-3 inline-flex min-h-11 items-center font-bold text-orange underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+        className="mt-3 inline-flex min-h-11 items-center font-bold text-orange underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
       >
         {retry}
       </a>
@@ -117,7 +117,7 @@ export function QuickAction({ href, children }: { href: string; children: React.
   return (
     <Link
       href={href}
-      className="flex min-h-11 min-w-0 items-center justify-center break-words rounded-xl border border-line bg-white px-4 py-3 text-center text-sm font-bold text-teal transition-colors hover:border-orange/60 hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+      className="flex min-h-11 min-w-0 items-center justify-center wrap-break-word rounded-xl border border-line bg-white px-4 py-3 text-center text-sm font-bold text-teal transition-colors hover:border-orange/60 hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
     >
       {children}
     </Link>
@@ -143,7 +143,7 @@ export function EmptyState({
       {action && (
         <Link
           href={action.href}
-          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal px-4 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
+          className="mt-4 inline-flex min-h-11 items-center justify-center rounded-xl bg-teal px-4 text-sm font-bold text-white transition-colors hover:bg-teal/90 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2"
         >
           {action.label}
         </Link>
@@ -221,12 +221,14 @@ export function RowLink({
   return (
     <Link
       href={href}
-      className="flex min-h-11 min-w-0 items-center gap-4 rounded-2xl border border-line bg-white p-4 transition-colors hover:border-orange/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+      className="flex min-h-11 min-w-0 items-center gap-4 rounded-2xl border border-line bg-white p-4 transition-colors hover:border-orange/50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
     >
       <span className="min-w-0 flex-1">
-        <strong className="block break-words text-teal [overflow-wrap:anywhere]">{title}</strong>
+        <strong className="block wrap-break-word text-teal [overflow-wrap:anywhere]">
+          {title}
+        </strong>
         {meta && (
-          <span className="mt-1 block break-words text-sm text-muted [overflow-wrap:anywhere]">
+          <span className="mt-1 block wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
             {meta}
           </span>
         )}

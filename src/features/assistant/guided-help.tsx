@@ -93,7 +93,7 @@ export function GuidedHelp({
                 maxLength={160}
                 onChange={event => setQuestion(event.target.value.slice(0, 160))}
                 dir="auto"
-                className="min-w-0 flex-1 rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm text-ink outline-none focus:border-teal focus:ring-2 focus:ring-teal/20"
+                className="min-w-0 flex-1 rounded-xl border border-ink/20 bg-white px-3 py-2 text-sm text-ink outline-hidden focus:border-teal focus:ring-2 focus:ring-teal/20"
                 placeholder={
                   ar ? 'مثال: كيف أغيّر كلمة المرور؟' : 'For example: How do I change my password?'
                 }

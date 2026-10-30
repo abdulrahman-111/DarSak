@@ -11,7 +11,7 @@ import {
 } from './actions';
 
 const control =
-  'min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-none focus:ring-2 focus:ring-teal';
+  'min-h-11 w-full min-w-0 max-w-full rounded-xl border border-line bg-white px-3 py-2 text-sm text-ink focus:outline-hidden focus:ring-2 focus:ring-teal';
 const button =
   'inline-flex min-h-11 items-center justify-center rounded-xl bg-teal px-5 py-3 font-bold text-white disabled:opacity-60';
 
@@ -130,7 +130,7 @@ export function AssignmentForm({
       </label>
       <p
         id={`assignment-resource-help-${scope}`}
-        className="break-words text-xs leading-5 text-muted"
+        className="wrap-break-word text-xs leading-5 text-muted"
       >
         {ar
           ? 'حتى 2048 حرفًا. أضف تعليمات أو رابط مورد واحدًا على الأقل. تأكد من ضبط صلاحية Drive للطلاب المقبولين.'
@@ -241,7 +241,7 @@ export function StudentSubmissionForm({
           aria-describedby={`submission-url-help-${assignment.id}`}
         />
       </label>
-      <p id={`submission-url-help-${assignment.id}`} className="break-words text-xs text-muted">
+      <p id={`submission-url-help-${assignment.id}`} className="wrap-break-word text-xs text-muted">
         {ar ? 'رابط HTTP أو HTTPS حتى 2048 حرفًا.' : 'HTTP or HTTPS link, up to 2,048 characters.'}
       </p>
       <label

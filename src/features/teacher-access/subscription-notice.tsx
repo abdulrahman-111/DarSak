@@ -53,7 +53,7 @@ export function TeacherSubscriptionNotice({
       <span className="mb-3 inline-flex max-w-full shrink-0 whitespace-normal rounded-full bg-[#e0eeec] px-3 py-1 text-xs font-black text-teal sm:mb-0">
         {copy.free}
       </span>
-      <div className="min-w-0 break-words [overflow-wrap:anywhere]">
+      <div className="min-w-0 wrap-break-word [overflow-wrap:anywhere]">
         <h2 className="font-black text-teal">{copy.title}</h2>
         <p className="mt-1">{copy.details}</p>
         {signedInTeacher && (

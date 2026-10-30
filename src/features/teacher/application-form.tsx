@@ -30,7 +30,7 @@ export function TeacherApplicationForm({
   );
   const locked = ['submitted', 'approved'].includes(application.status);
   const input =
-    'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange';
+    'mt-1 min-h-12 w-full rounded-xl border border-line bg-white px-3 py-2 text-base text-ink focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange';
   const fieldError = (name: string) =>
     state?.fieldErrors?.[name] ? (
       <p className="mt-1 text-sm text-danger">

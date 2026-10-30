@@ -8,7 +8,7 @@ export function SetupCard({ t }: { t: Record<string, string> }) {
   return (
     <div className="rounded-3xl border border-orange/30 bg-orange/10 p-6">
       <h2 className="text-xl font-bold">{t.setupTitle}</h2>
-      <p className="mt-2 break-words text-muted [overflow-wrap:anywhere]">{t.setupText}</p>
+      <p className="mt-2 wrap-break-word text-muted [overflow-wrap:anywhere]">{t.setupText}</p>
       <code className="mt-4 block rounded-xl bg-white/70 p-3 text-sm">.env.local</code>
     </div>
   );
@@ -95,7 +95,7 @@ export function GroupCard({
           {full ? c.noSeats : c.published}
         </span>
       </div>
-      <h3 className="mt-4 break-words text-xl font-bold leading-tight text-teal [overflow-wrap:anywhere]">
+      <h3 className="mt-4 wrap-break-word text-xl font-bold leading-tight text-teal [overflow-wrap:anywhere]">
         {group.name}
       </h3>
       {group.description && (

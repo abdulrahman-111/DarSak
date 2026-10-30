@@ -22,7 +22,7 @@ export function SavedGroupForm({
       <button
         type="submit"
         disabled={pending}
-        className="min-h-11 w-full rounded-xl bg-cream px-4 py-3 font-bold text-teal transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 disabled:opacity-60"
+        className="min-h-11 w-full rounded-xl bg-cream px-4 py-3 font-bold text-teal transition hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange focus-visible:ring-offset-2 disabled:opacity-60"
       >
         {pending
           ? ar

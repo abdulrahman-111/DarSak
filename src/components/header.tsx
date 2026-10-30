@@ -78,7 +78,7 @@ export function HeaderView({
         <div className="container relative flex min-h-16 flex-nowrap items-center gap-1 py-2 md:gap-5">
           <Link
             href={homeHref}
-            className="flex min-w-0 shrink items-center rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="flex min-w-0 shrink items-center rounded-xs focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
             aria-label={`${t.brand} · ${t.home}`}
           >
             <Image
@@ -102,7 +102,7 @@ export function HeaderView({
             >
               {showDiscovery && (
                 <ActiveLink
-                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   activeClassName="text-orange underline underline-offset-4"
                   href={`/${locale}/teachers`}
                 >
@@ -112,7 +112,7 @@ export function HeaderView({
               {/* A call to action, not a section: it never shows as the current page (it used to light up on every /register page). */}
               {!me && !loading && (
                 <Link
-                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   href={`/${locale}/register?role=teacher`}
                 >
                   {t.teachOnDarsak}
@@ -121,7 +121,7 @@ export function HeaderView({
               {activeRole && (
                 <ActiveLink
                   exact
-                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   activeClassName="text-orange underline underline-offset-4"
                   href={dashboardHref}
                 >
@@ -130,7 +130,7 @@ export function HeaderView({
               )}
               {me && (
                 <ActiveLink
-                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   activeClassName="text-orange underline underline-offset-4"
                   href={`/${locale}/account`}
                 >
@@ -139,7 +139,7 @@ export function HeaderView({
               )}
               {reportsHref && (
                 <ActiveLink
-                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center rounded-lg px-1 transition-colors hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   activeClassName="text-orange underline underline-offset-4"
                   href={reportsHref}
                 >
@@ -155,7 +155,7 @@ export function HeaderView({
               <details className={`relative lg:hidden ${me ? '' : 'order-last'}`}>
                 <summary
                   aria-label={locale === 'ar' ? 'القائمة' : 'Menu'}
-                  className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border border-line-strong text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden"
+                  className="grid size-11 cursor-pointer list-none place-items-center rounded-xl border border-line-strong text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden"
                 >
                   <Menu size={17} aria-hidden="true" />
                 </summary>
@@ -232,7 +232,7 @@ export function HeaderView({
                 <button
                   aria-label={t.logout}
                   title={t.logout}
-                  className="grid size-11 place-items-center rounded-xl border border-line-strong text-sm font-bold text-teal transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:inline-flex sm:h-11 sm:w-auto sm:min-w-0 sm:items-center sm:gap-2 sm:px-3"
+                  className="grid size-11 place-items-center rounded-xl border border-line-strong text-sm font-bold text-teal transition-colors hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange sm:inline-flex sm:h-11 sm:w-auto sm:min-w-0 sm:items-center sm:gap-2 sm:px-3"
                 >
                   <LogOut size={17} aria-hidden="true" className="sm:hidden" />
                   <span className="sr-only sm:not-sr-only">{t.logout}</span>
@@ -241,7 +241,7 @@ export function HeaderView({
             ) : (
               <>
                 <Link
-                  className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-bold text-teal transition-colors hover:text-orange focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+                  className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl px-2 text-sm font-bold text-teal transition-colors hover:text-orange focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
                   href={`/${locale}/login`}
                 >
                   <span className="sm:hidden">{locale === 'ar' ? 'دخول' : 'Log in'}</span>
@@ -249,7 +249,7 @@ export function HeaderView({
                 </Link>
                 <Link
                   aria-label={t.register}
-                  className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl bg-orange px-3 text-sm font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:px-4 sm:text-sm"
+                  className="inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-xl bg-orange px-3 text-sm font-bold text-white transition-colors hover:bg-orange-deep focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange sm:px-4 sm:text-sm"
                   href={`/${locale}/register`}
                 >
                   <span className="sm:hidden">{locale === 'ar' ? 'ابدأ' : 'Join'}</span>

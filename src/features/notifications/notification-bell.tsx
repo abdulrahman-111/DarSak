@@ -50,7 +50,7 @@ export function NotificationBell({
       href={href}
       aria-label={shown ? `${label}, ${count} ${unreadLabel}` : label}
       title={label}
-      className="relative hidden size-11 place-items-center rounded-xl border border-line-strong text-teal transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange lg:grid"
+      className="relative hidden size-11 place-items-center rounded-xl border border-line-strong text-teal transition-colors hover:bg-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange lg:grid"
     >
       <Bell size={17} aria-hidden="true" />
       {shown && (

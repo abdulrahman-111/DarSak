@@ -135,10 +135,10 @@ export default async function TeacherRequests({
                     <Panel key={row.id} className="min-w-0">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <h2 className="break-words font-bold text-teal [overflow-wrap:anywhere]">
+                          <h2 className="wrap-break-word font-bold text-teal [overflow-wrap:anywhere]">
                             {row.student_name || (ar ? 'طالب' : 'Student')}
                           </h2>
-                          <p className="mt-1 break-words text-sm text-muted [overflow-wrap:anywhere]">
+                          <p className="mt-1 wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                             {row.group_name || (ar ? 'مجموعة غير متاحة' : 'Unavailable group')}
                           </p>
                           <p className="mt-1 text-xs text-muted">
@@ -170,10 +170,10 @@ export default async function TeacherRequests({
                     <Panel key={row.enrollment_id} className="min-w-0">
                       <div className="flex min-w-0 items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <h2 className="break-words font-bold text-teal [overflow-wrap:anywhere]">
+                          <h2 className="wrap-break-word font-bold text-teal [overflow-wrap:anywhere]">
                             {row.full_name}
                           </h2>
-                          <p className="mt-1 break-words text-sm text-muted [overflow-wrap:anywhere]">
+                          <p className="mt-1 wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                             {row.group_name}
                           </p>
                         </div>

@@ -62,7 +62,7 @@ export default async function StudentRecommendationsPage({
         action={
           <Link
             href={`/${locale}/account/learning-profile#matching-preferences`}
-            className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 text-sm font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange"
+            className="inline-flex min-h-11 items-center rounded-xl border border-line bg-white px-4 py-3 text-sm font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
           >
             {copy.updatePreferences}
           </Link>

@@ -81,7 +81,7 @@ describe('student enrollment guidance', () => {
     expect(markup).toContain('Up next');
     expect(markup).toContain('aria-current="step"');
     expect(markup).toContain(
-      '<span class="block text-[10px] uppercase tracking-wide opacity-75">Up next</span><span class="mt-1 block break-words">Contact teacher',
+      '<span class="block text-[10px] uppercase tracking-wide opacity-75">Up next</span><span class="mt-1 block wrap-break-word">Contact teacher',
     );
   });
 

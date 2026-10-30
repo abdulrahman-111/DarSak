@@ -299,10 +299,10 @@ export default async function StudentMaterials({
                     >
                       <div className="flex min-w-0 flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <h2 className="break-words font-black text-teal [overflow-wrap:anywhere]">
+                          <h2 className="wrap-break-word font-black text-teal [overflow-wrap:anywhere]">
                             {resource.title}
                           </h2>
-                          <p className="mt-1 break-words text-sm text-muted [overflow-wrap:anywhere]">
+                          <p className="mt-1 wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                             {resource.group_name} · {resource.lesson_title} ·{' '}
                             {cairoDate(resource.starts_at, locale)}
                           </p>
@@ -312,7 +312,7 @@ export default async function StudentMaterials({
                         </span>
                       </div>
                       {resource.kind === 'note' && resource.content && (
-                        <p className="mt-3 whitespace-pre-wrap break-words text-sm text-muted [overflow-wrap:anywhere]">
+                        <p className="mt-3 whitespace-pre-wrap wrap-break-word text-sm text-muted [overflow-wrap:anywhere]">
                           {resource.content}
                         </p>
                       )}

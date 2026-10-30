@@ -18,7 +18,7 @@ export function StudentHeading({
         {eyebrow && (
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-muted">{eyebrow}</p>
         )}
-        <h1 className="break-words text-2xl font-bold tracking-tight text-teal sm:text-3xl">
+        <h1 className="wrap-break-word text-2xl font-bold tracking-tight text-teal sm:text-3xl">
           {title}
         </h1>
         {description && (
@@ -75,4 +75,4 @@ export function StudentEmpty({
     </div>
   );
 }
-export const studentCard = 'min-w-0 rounded-2xl border border-line bg-white p-5 shadow-sm';
+export const studentCard = 'min-w-0 rounded-2xl border border-line bg-white p-5 shadow-xs';

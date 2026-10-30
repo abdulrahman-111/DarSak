@@ -52,7 +52,7 @@ export function DayStrip({
       <div
         ref={rail}
         dir={locale === 'ar' ? 'rtl' : 'ltr'}
-        className="max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth pb-1 focus-visible:outline-none"
+        className="max-w-full snap-x snap-mandatory overflow-x-auto overscroll-x-contain scroll-smooth pb-1 focus-visible:outline-hidden"
       >
         <div className="grid min-w-[34rem] grid-cols-7 gap-2 sm:min-w-0">
           {items.map(item => (
@@ -63,7 +63,7 @@ export function DayStrip({
               aria-label={`${item.label}, ${item.dateLabel}${item.selected ? `, ${selectedLabel}` : item.current ? `, ${currentLabel}` : ''}`}
               aria-current={item.selected ? 'date' : undefined}
               data-initial-day={item.selected || item.current ? item.date : undefined}
-              className={`relative flex min-h-16 min-w-0 snap-start flex-col items-start justify-center gap-0.5 rounded-xl border p-2 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange sm:p-3 ${item.selected ? `border-teal ${selectedStyle}` : item.current ? 'border-orange bg-orange/5 text-teal' : 'border-line bg-white text-teal hover:border-orange/60'}`}
+              className={`relative flex min-h-16 min-w-0 snap-start flex-col items-start justify-center gap-0.5 rounded-xl border p-2 text-start focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange sm:p-3 ${item.selected ? `border-teal ${selectedStyle}` : item.current ? 'border-orange bg-orange/5 text-teal' : 'border-line bg-white text-teal hover:border-orange/60'}`}
             >
               <strong className="block max-w-full truncate text-xs font-bold sm:text-sm">
                 {item.label}

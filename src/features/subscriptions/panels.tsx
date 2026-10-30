@@ -46,7 +46,7 @@ export function TeacherPlanPanel({
   const ar = locale === 'ar';
   if (error || !status)
     return (
-      <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-line bg-white p-5 shadow-xs">
         <h2 className="text-xl font-black text-teal">
           {ar ? 'الخطة والاستخدام' : 'Teaching plan and usage'}
         </h2>
@@ -60,7 +60,7 @@ export function TeacherPlanPanel({
   const freePhase = !canAssignPlan(status);
   const activePlan = status.plan_active ? status.plan_code : 'free';
   return (
-    <section className="rounded-2xl border border-line bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-line bg-white p-5 shadow-xs">
       <h2 className="text-xl font-black text-teal">
         {ar ? 'الخطة والاستخدام' : 'Teaching plan and usage'}
       </h2>

@@ -13,7 +13,7 @@ export function FilterDisclosure({
 }) {
   return (
     <details className="rounded-xl border border-line bg-white p-3 md:border-0 md:bg-transparent md:p-0">
-      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl font-bold text-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
+      <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-xl font-bold text-teal focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-orange [&::-webkit-details-marker]:hidden">
         <SlidersHorizontal aria-hidden="true" size={18} />
         <span>{label}</span>
         {activeCount > 0 && (
