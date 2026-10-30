@@ -1,0 +1,9 @@
+export async function newlyAddedAction(itemId: string) {
+  const db = await createClient();
+  return db.from('items').select('id').eq('id', itemId);
+}
+
+async function privateHelper() {
+  const db = await createClient();
+  return db.from('items').select('id');
+}
