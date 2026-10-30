@@ -122,6 +122,7 @@ export function GroupDraftPanel({ locale, disabled = false, onApply }: Props) {
         generate: 'إنشاء مسودة باستخدام سندي',
         unavailable: 'المساعدة المباشرة غير متاحة الآن. يمكنك استخدام القالب المحلي.',
         aiError: 'تعذر إنشاء المسودة. حاول مرة أخرى.',
+        aiSafetyBlocked: 'لا يمكن لسندي المساعدة في هذا الطلب. جرّب موضوعًا دراسيًا أو أعد صياغته.',
         cancel: 'إلغاء الطلب',
       }
     : {
@@ -167,6 +168,8 @@ export function GroupDraftPanel({ locale, disabled = false, onApply }: Props) {
         generate: 'Generate draft with SanDai',
         unavailable: 'Live help is unavailable right now. You can use the local template.',
         aiError: 'The draft could not be generated. Please try again.',
+        aiSafetyBlocked:
+          'SanDai cannot help with that request. Try a learning topic or rephrase it.',
         cancel: 'Cancel request',
       };
 
@@ -205,6 +208,7 @@ export function GroupDraftPanel({ locale, disabled = false, onApply }: Props) {
     emitSandakStatus('pending', 'draft');
     const controller = new AbortController();
     requestRef.current = controller;
+    let safetyBlocked = false;
     try {
       const response = await fetch('/api/assistant', {
         method: 'POST',
@@ -213,6 +217,16 @@ export function GroupDraftPanel({ locale, disabled = false, onApply }: Props) {
         body: JSON.stringify({ mode: 'group_draft', ...result.data }),
       });
       const payload = await response.json();
+      safetyBlocked = payload?.code === 'safety_blocked';
+      if (
+        (payload?.code === 'provider_unavailable' || safetyBlocked) &&
+        previewSource === 'sanad'
+      ) {
+        // Do not leave a previous generated answer presented as the result of a blocked call.
+        setPreview(null);
+        setPreviewMessage('');
+        setPreviewError('');
+      }
       if (!response.ok || payload?.ok !== true || payload.mode !== 'group_draft')
         throw new Error('request_failed');
       const draft = groupDraftSchema.safeParse(payload.draft);
@@ -227,7 +241,7 @@ export function GroupDraftPanel({ locale, disabled = false, onApply }: Props) {
       }
     } catch {
       if (aliveRef.current && !controller.signal.aborted) {
-        setAiError(t.aiError);
+        setAiError(safetyBlocked ? t.aiSafetyBlocked : t.aiError);
         emitSandakStatus('error', 'draft');
       } else if (aliveRef.current) emitSandakStatus('idle', 'draft');
     } finally {
