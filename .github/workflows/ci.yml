@@ -122,3 +122,106 @@ jobs:
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup
+
+  browser-e2e:
+    name: Browser workflows
+    runs-on: ubuntu-latest
+    needs: database
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Set up Supabase CLI
+        uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
+        with:
+          version: 2.120.0
+
+      - name: Start fresh local Supabase
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 1
+          SUPABASE_USE_SLIM_IMAGES: 1
+        run: supabase start
+
+      - name: Serve local Edge Functions
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 1
+          SUPABASE_USE_SLIM_IMAGES: 1
+        run: |
+          nohup supabase functions serve > "$RUNNER_TEMP/supabase-functions.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/supabase-functions.pid"
+
+      - name: Wait for the delete-account function worker
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 1
+          SUPABASE_USE_SLIM_IMAGES: 1
+        run: |
+          node --input-type=module <<'NODE'
+          import { execFileSync } from 'node:child_process';
+
+          const status = JSON.parse(execFileSync('supabase', ['status', '--output', 'json'], { encoding: 'utf8' }));
+          const endpoint = new URL('/functions/v1/delete-account', status.API_URL);
+          const anonKey = status.ANON_KEY ?? status.PUBLISHABLE_KEY;
+          if (typeof anonKey !== 'string' || !anonKey) {
+            throw new Error('Supabase status did not provide a local anon or publishable key.');
+          }
+          let lastStatus = 'no response';
+          for (let attempt = 0; attempt < 90; attempt += 1) {
+            try {
+              const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { apikey: anonKey, 'content-type': 'application/json' },
+                body: JSON.stringify({ operation: 'status' }),
+              });
+              lastStatus = String(response.status);
+              const body = await response.json().catch(() => null);
+              // This response is produced by delete-account's handler after it
+              // parses the request. A gateway JWT rejection alone is not readiness.
+              if (response.status === 401 && body?.error === 'unauthorized') process.exit(0);
+              if (response.status !== 502 && response.status !== 503) {
+                lastStatus += ` (${JSON.stringify(body)})`;
+              }
+            } catch (error) {
+              lastStatus = error instanceof Error ? error.message : String(error);
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          throw new Error(`delete-account worker did not return its handler-level unauthenticated response (last result: ${lastStatus}).`);
+          NODE
+
+      - name: Build and run browser workflows
+        env:
+          E2E_SUPABASE_WORKDIR: .
+          E2E_PORT: 3000
+          SUPABASE_TELEMETRY_DISABLED: 1
+          SUPABASE_USE_SLIM_IMAGES: 1
+        run: npm run e2e
+
+      - name: Upload browser failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-failures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .playwright/results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop local Supabase
+        if: always()
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 1
+          SUPABASE_USE_SLIM_IMAGES: 1
+        run: supabase stop --no-backup
