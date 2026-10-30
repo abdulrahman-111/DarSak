@@ -1,0 +1,8 @@
+export async function unvalidatedAction(itemId: string) {
+  const db = await createClient();
+  const {
+    data: { user },
+  } = await db.auth.getUser();
+  if (!user) return;
+  return db.from('items').update({ id: itemId });
+}
