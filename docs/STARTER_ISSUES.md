@@ -12,6 +12,8 @@ These starter issues are published and open to contributors. Comment on an issue
 
 **Acceptance:** A pull request fixes every missing or unclear step encountered and includes the commands run, results, and remaining limitations. No maintainer credentials or existing workspace scripts are used.
 
+**Automated baseline:** [Fresh-clone CI evidence](ops/FRESH-CLONE-VERIFICATION-2026-10-30.md) records what clean hosted runners verify and what still requires an independent human run; CI does not count as an outside contribution.
+
 ## 2. Review Arabic and English enrollment messages — [#77](https://github.com/abdulrahman-111/DarSak/issues/77)
 
 **Suggested labels:** translation, good first issue
