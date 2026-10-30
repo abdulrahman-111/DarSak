@@ -15,6 +15,8 @@ export const nodeSchema = z.object({
   slug: z
     .string()
     .trim()
+    // Hyphens separate disjoint alphanumeric runs, so the repeated groups are unambiguous.
+    // eslint-disable-next-line security/detect-unsafe-regex
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/)
     .max(100),
   kind: z.enum(nodeKinds),
