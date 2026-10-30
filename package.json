@@ -20,6 +20,7 @@
     "boundaries": "node scripts/admin-boundary.mjs",
     "actions:guard": "node scripts/server-action-guard.mjs",
     "test": "vitest run",
+    "e2e": "node tests/e2e/support/run.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -36,6 +37,7 @@
     "zod": "4.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "1.64.0",
     "@types/node": "26.6.2",
     "@types/nodemailer": "8.0.2",
     "@types/react": "19.3.0",

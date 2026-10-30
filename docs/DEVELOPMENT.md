@@ -71,6 +71,21 @@ This opt-in transaction creates three confirmed synthetic accounts, an approved 
 
 Sign in through the app, visit the teacher group and student timetable, open the resource link, and switch languages. Use separate browser profiles for simultaneous roles. These accounts are for local exploration and screenshots only; never load them on a hosted instance or expose this stack publicly. The seed is intentionally one-shot: a repeated run fails atomically rather than overwriting edited accounts. To rebuild only your disposable stack, run `supabase db reset --local`, then load the demo again. A reset erases its existing local data.
 
+## Browser workflows
+
+Browser workflows use Playwright against a production build and a dedicated local Supabase project. Node 24, Docker, PostgreSQL's `psql` client, and Supabase CLI 2.120.0 are required. Start a fresh local stack in a separate clone or isolated Supabase workdir; do not point the harness at a shared or hosted database. The seed is one-shot per database and creates synthetic accounts and records for four isolated browser projects.
+
+```sh
+npm ci
+npx playwright install chromium
+supabase start
+E2E_SUPABASE_WORKDIR=/path/to/isolated/DarSak npm run e2e
+```
+
+`E2E_SUPABASE_WORKDIR` defaults to the current directory. `E2E_PORT` defaults to `3000`; set it when another local app uses that port. The runner reads the local API URL, anon key, and database URL from `supabase status --output json`, and refuses to seed unless the app, API, and database URLs use loopback hosts. It builds Next.js with temporary process environment values, starts the production server for Playwright, and does not write `.env.local` or upload authentication state. The E2E-specific storage states and results stay under the ignored `.playwright/` directory. For a locally installed Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable.
+
+Use a fresh isolated database for each run. Resetting a database erases its data; only run `supabase db reset --local` from the dedicated disposable E2E workdir. Google sign-in is disabled for the run, and all test accounts are inserted directly into the local database, so the seed does not send email.
+
 ## Verify changes
 
 ```sh
