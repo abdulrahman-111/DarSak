@@ -161,13 +161,11 @@ jobs:
       - name: Start fresh local Supabase
         env:
           SUPABASE_TELEMETRY_DISABLED: 1
-          SUPABASE_USE_SLIM_IMAGES: 1
         run: supabase start
 
       - name: Serve local Edge Functions
         env:
           SUPABASE_TELEMETRY_DISABLED: 1
-          SUPABASE_USE_SLIM_IMAGES: 1
         run: |
           nohup supabase functions serve > "$RUNNER_TEMP/supabase-functions.log" 2>&1 &
           echo "$!" > "$RUNNER_TEMP/supabase-functions.pid"
@@ -175,7 +173,6 @@ jobs:
       - name: Wait for the delete-account function worker
         env:
           SUPABASE_TELEMETRY_DISABLED: 1
-          SUPABASE_USE_SLIM_IMAGES: 1
         run: |
           node --input-type=module <<'NODE'
           import { execFileSync } from 'node:child_process';
@@ -215,7 +212,6 @@ jobs:
           E2E_SUPABASE_WORKDIR: .
           E2E_PORT: 3000
           SUPABASE_TELEMETRY_DISABLED: 1
-          SUPABASE_USE_SLIM_IMAGES: 1
         run: npm run e2e
 
       - name: Upload browser failure artifacts
@@ -231,5 +227,4 @@ jobs:
         if: always()
         env:
           SUPABASE_TELEMETRY_DISABLED: 1
-          SUPABASE_USE_SLIM_IMAGES: 1
         run: supabase stop --no-backup
