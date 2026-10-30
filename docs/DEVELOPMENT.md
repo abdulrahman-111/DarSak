@@ -79,8 +79,23 @@ Browser workflows use Playwright against a production build and a dedicated loca
 npm ci
 npx playwright install chromium
 supabase start
+```
+
+In a second terminal, from the same isolated clone/workdir, serve the local Edge Function and leave this terminal open while the browser workflows run:
+
+```sh
+supabase functions serve
+```
+
+If the disposable stack is in a separate workdir, change to that same path in both terminals and set `E2E_SUPABASE_WORKDIR` to it when running the test.
+
+Back in the first terminal, run the browser workflows:
+
+```sh
 E2E_SUPABASE_WORKDIR=/path/to/isolated/DarSak npm run e2e
 ```
+
+The local `delete-account` function is required by the account-deletion browser flow. The command serves the repository's local function against this stack; it does not configure SMTP or contact an external email provider.
 
 `E2E_SUPABASE_WORKDIR` defaults to the current directory. `E2E_PORT` defaults to `3000`; set it when another local app uses that port. The runner reads the local API URL, anon key, and database URL from `supabase status --output json`, and refuses to seed unless the app, API, and database URLs use loopback hosts. It builds Next.js with temporary process environment values, starts the production server for Playwright, and does not write `.env.local` or upload authentication state. The E2E-specific storage states and results stay under the ignored `.playwright/` directory. For a locally installed Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable.
 
