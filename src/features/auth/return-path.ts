@@ -84,7 +84,7 @@ export function loginRedirectPath(
   return `/${locale}/dashboard`;
 }
 
-const AUTH_NEXT_PATTERN = /^\/(?:ar|en)(?:\/[A-Za-z0-9\-_/]*)?$/;
+const AUTH_NEXT_PATTERN = /^\/(?:ar|en)(?:\/[A-Za-z0-9\-_/]*|)$/;
 
 /** Sanitize the `next` of an auth callback: local, locale-prefixed paths only. */
 export function safeAuthNext(candidate: unknown, fallbackLocale: Locale): string {

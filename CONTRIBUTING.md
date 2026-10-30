@@ -22,7 +22,7 @@ npm test
 npm run build
 ```
 
-For database changes, create a new migration with the Supabase CLI and test the entire migration sequence on a disposable local stack. Run the database checks documented in [Development](docs/DEVELOPMENT.md). Keep row-level security, grants, and Arabic/English behavior in review scope. Never reset a shared database to test a contribution.
+For database changes, create a new migration with the Supabase CLI and test the entire migration sequence on a disposable local stack. Run `supabase test db` as documented in [Development](docs/DEVELOPMENT.md); this includes the catalog security guard and the persona access matrix for core tables. For every new table or RPC, add explicit role expectations and matching matrix assertions; add catalog allow-list entries only for justified exceptions, with a reason beside each entry. Keep row-level security, grants, and Arabic/English behavior in review scope. Never reset a shared database to test a contribution.
 
 Use `npm ci` and commit the lockfile when intentionally changing dependencies. Do not include environment files, credentials, production data, or generated build output. Keep third-party notices when adding or changing assets.
 
