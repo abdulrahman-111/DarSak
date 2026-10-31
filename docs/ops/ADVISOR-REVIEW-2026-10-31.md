@@ -1,0 +1,9 @@
+# Supabase advisor review — 31 October 2026
+
+Production Supabase advisor results were reviewed for issues #103 and #155. The performance advisor reported only informational unused-index findings. No multiple permissive policy or unindexed foreign key findings were returned. Keep the indexes in place until real traffic is observed as part of #152; do not drop them based on the advisor result alone. Supabase documents this check as [`0005_unused_index`](https://supabase.com/docs/guides/database/database-linter?lint=0005_unused_index).
+
+The security advisor reported expected findings for private RLS tables with no client-facing policy, intentionally callable `SECURITY DEFINER` APIs, and disabled Auth leaked-password protection. Private tables fail closed and have no direct `anon` or `authenticated` grants. The catalog guard test in [`zz_catalog_guard.test.sql`](../../supabase/tests/zz_catalog_guard.test.sql) checks fixed function `search_path` values, rejects `PUBLIC` execution, and leaves explicit `anon`/`authenticated` API grants available. The related database policy and foreign-key regression coverage is in [`db_hardening.test.sql`](../../supabase/tests/db_hardening.test.sql).
+
+Leaked-password protection remains disabled because Supabase requires the Pro plan for this setting and the current decision excludes paid upgrades. Existing signup, recovery and password-change validation still enforces the application's 8–72 character range, and Supabase's weak-password rejection remains in effect. These checks do not provide leaked-password-list comparison. See [Supabase Auth password strength and leaked-password protection](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+
+This is a point-in-time record of the advisor output and the #103 plan decision; it does not mark broader security work complete. Issues #155 and #156 remain separate follow-ups.

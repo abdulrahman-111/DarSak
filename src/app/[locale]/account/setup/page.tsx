@@ -1,9 +1,20 @@
+import type { Metadata } from 'next';
+import { privatePageMetadata } from '@/features/seo/private-page-metadata';
 import { ensureLocale } from '@/i18n/config';
 import { AccountPageFrame } from '@/features/account/account-page-frame';
 import { accountSetupData } from '@/features/setup/data';
 import { SetupWizard } from '@/features/setup/wizard';
 import { TeacherSubscriptionNotice } from '@/features/teacher-access/subscription-notice';
 import { getRequestViewer } from '@/features/platform/request-viewer';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return privatePageMetadata(ensureLocale(locale), '/account/setup');
+}
 
 export default async function AccountSetupPage({
   params,

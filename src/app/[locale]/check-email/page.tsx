@@ -1,8 +1,19 @@
+import type { Metadata } from 'next';
+import { privatePageMetadata } from '@/features/seo/private-page-metadata';
 import Link from 'next/link';
 import { getDictionary } from '@/i18n/config';
 import { AuthAside } from '@/components/auth/auth-aside';
 import { authCopy } from '@/components/auth/copy';
 import { ResendConfirmationForm, VerifySignupCodeForm } from '@/components/auth/password-forms';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return privatePageMetadata(locale === 'ar' ? 'ar' : 'en', '/check-email');
+}
 
 export default async function CheckEmail({
   params,

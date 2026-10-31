@@ -8,7 +8,7 @@ import { seoAlternates, type SeoLocale } from '@/features/seo/metadata';
 export const revalidate = 3600;
 
 const locales: SeoLocale[] = ['ar', 'en'];
-const staticPaths = ['', '/teachers', '/help', '/privacy', '/terms', '/login', '/register'];
+const staticPaths = ['', '/teachers', '/help', '/privacy', '/terms'];
 const GROUP_PAGE = 50;
 const MAX_GROUP_PAGES = 20;
 

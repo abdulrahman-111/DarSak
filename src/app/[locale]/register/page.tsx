@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
-import { pageMetadata } from '@/features/seo/metadata';
-import { seoCopy } from '@/features/seo/copy';
+import { privatePageMetadata } from '@/features/seo/private-page-metadata';
 import Link from 'next/link';
 import { ensureLocale, getDictionary } from '@/i18n/config';
 import { AuthAside } from '@/components/auth/auth-aside';
@@ -16,7 +15,7 @@ export async function generateMetadata({
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
   const locale = ensureLocale((await params).locale);
-  return pageMetadata({ locale, path: '/register', ...seoCopy[locale].register });
+  return privatePageMetadata(locale, '/register');
 }
 
 export default async function Register({
