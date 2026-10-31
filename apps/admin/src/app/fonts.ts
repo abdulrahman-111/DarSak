@@ -19,8 +19,6 @@ export const bricolageGrotesque = localFont({
 export const ibmPlexSansArabic = localFont({
   src: [
     { path: './fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2', weight: '400' },
-    { path: './fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2', weight: '500' },
-    { path: './fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2', weight: '600' },
     { path: './fonts/ibm-plex-sans-arabic-arabic-700-normal.woff2', weight: '700' },
   ],
   display: 'swap',
