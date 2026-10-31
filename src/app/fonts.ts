@@ -28,22 +28,12 @@ export const bricolageGrotesque = localFont({
   adjustFontFallback: false,
 });
 
-/** Arabic text for both body and headings. */
+/** Arabic glyphs; the Unicode range lets the browser load this face only when needed. */
 export const ibmPlexSansArabic = localFont({
   src: [
     {
       path: './fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2',
       weight: '400',
-      style: 'normal',
-    },
-    {
-      path: './fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2',
-      weight: '500',
-      style: 'normal',
-    },
-    {
-      path: './fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2',
-      weight: '600',
       style: 'normal',
     },
     {
@@ -53,7 +43,7 @@ export const ibmPlexSansArabic = localFont({
     },
   ],
   display: 'swap',
-  // Only Arabic code points use this face, so English pages never download it.
+  // Routes that render glyphs in this range may load this face, regardless of locale.
   declarations: [
     {
       prop: 'unicode-range',
