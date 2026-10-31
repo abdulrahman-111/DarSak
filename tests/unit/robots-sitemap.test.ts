@@ -17,16 +17,20 @@ describe('robots', () => {
   it('allows public routes, blocks private areas and points to the sitemap', () => {
     const result = robots();
     const rule = Array.isArray(result.rules) ? result.rules[0] : result.rules;
-    expect(rule.allow).toBe('/');
+    expect(rule.allow).toEqual(['/', '/ar/account/setup$', '/en/account/setup$']);
     expect(rule.disallow).toEqual([
       '/*/student',
-      '/*/teacher',
+      '/ar/teacher$',
+      '/ar/teacher/',
+      '/en/teacher$',
+      '/en/teacher/',
       '/*/account',
       '/*/notifications',
       '/*/reports',
       '/*/dashboard',
       '/api/',
     ]);
+    expect(rule.disallow).not.toContain('/*/teacher');
     expect(result.sitemap).toBe('https://darsak.example/sitemap.xml');
   });
 });
@@ -53,8 +57,11 @@ describe('sitemap', () => {
     const urls = (await sitemap()).map(entry => entry.url);
     expect(rpc).not.toHaveBeenCalled();
     expect(urls).toContain('https://darsak.example/ar');
-    expect(urls).toContain('https://darsak.example/en/teachers');
+    expect(urls).toContain('https://darsak.example/ar/teachers');
     expect(urls).toContain('https://darsak.example/ar/privacy');
+    expect(urls).not.toContain('https://darsak.example/en/login');
+    expect(urls).not.toContain('https://darsak.example/ar/register');
+    expect(urls).toContain('https://darsak.example/en/teachers');
     expect(urls.every(url => !url.includes('/groups/'))).toBe(true);
     expect(new Set(urls).size).toBe(urls.length);
   });
@@ -75,6 +82,10 @@ describe('sitemap', () => {
       ar: 'https://darsak.example/ar/groups/g1',
       en: 'https://darsak.example/en/groups/g1',
     });
+    expect(entries.find(e => e.url.endsWith('/ar/teachers/t1'))?.alternates?.languages).toEqual({
+      ar: 'https://darsak.example/ar/teachers/t1',
+      en: 'https://darsak.example/en/teachers/t1',
+    });
   });
 
   it('falls back to static routes when a public RPC fails', async () => {
@@ -82,6 +93,6 @@ describe('sitemap', () => {
     vi.stubEnv('NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY', 'anon');
     rpc.mockResolvedValue({ data: null, error: new Error('down') });
     const urls = (await sitemap()).map(entry => entry.url);
-    expect(urls).toHaveLength(14);
+    expect(urls).toHaveLength(10);
   });
 });

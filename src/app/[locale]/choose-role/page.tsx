@@ -1,7 +1,18 @@
+import type { Metadata } from 'next';
+import { privatePageMetadata } from '@/features/seo/private-page-metadata';
 import { redirect } from 'next/navigation';
 import { createClient, getVerifiedUser } from '@/lib/supabase/server';
 import { authCopy } from '@/components/auth/copy';
 import { chooseGoogleRoleAction } from '@/features/auth/actions';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  return privatePageMetadata(locale === 'ar' ? 'ar' : 'en', '/choose-role');
+}
 
 export default async function ChooseGoogleRolePage({
   params,

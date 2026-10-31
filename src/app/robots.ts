@@ -3,7 +3,10 @@ import { siteUrl } from '@/lib/supabase/config';
 
 const privatePaths = [
   '/*/student',
-  '/*/teacher',
+  '/ar/teacher$',
+  '/ar/teacher/',
+  '/en/teacher$',
+  '/en/teacher/',
   '/*/account',
   '/*/notifications',
   '/*/reports',
@@ -14,7 +17,13 @@ const privatePaths = [
 export default function robots(): MetadataRoute.Robots {
   const origin = siteUrl();
   return {
-    rules: [{ userAgent: '*', allow: '/', disallow: privatePaths }],
+    rules: [
+      {
+        userAgent: '*',
+        allow: ['/', '/ar/account/setup$', '/en/account/setup$'],
+        disallow: privatePaths,
+      },
+    ],
     sitemap: `${origin}/sitemap.xml`,
     host: origin,
   };

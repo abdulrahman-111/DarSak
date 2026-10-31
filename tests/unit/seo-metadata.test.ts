@@ -1,9 +1,29 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { pageMetadata, seoAlternates, seoTitle, snippet } from '@/features/seo/metadata';
+import { privatePageMetadata } from '@/features/seo/private-page-metadata';
 
 afterEach(() => vi.unstubAllEnvs());
 
 describe('seo metadata helpers', () => {
+  it('marks localized authentication and account setup metadata noindex', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://darsak.example');
+    for (const locale of ['ar', 'en'] as const) {
+      for (const path of [
+        '/login',
+        '/register',
+        '/check-email',
+        '/choose-role',
+        '/forgot-password',
+        '/reset-password',
+        '/account/setup',
+      ]) {
+        const meta = privatePageMetadata(locale, path);
+        expect(meta.alternates?.canonical).toBe(`https://darsak.example/${locale}${path}`);
+        expect(meta.robots).toEqual({ index: false, follow: false });
+      }
+    }
+  });
+
   it('builds canonical and hreflang alternates from the site origin', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://darsak.example/');
     expect(seoAlternates('en', '/teachers')).toEqual({
