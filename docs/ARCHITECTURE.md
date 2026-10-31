@@ -16,6 +16,8 @@ Supabase Auth handles email/password accounts and the optional Google provider. 
 
 Students can discover public teacher and group profiles, request enrollment, and access class lessons and resources after enrollment. Teacher contact details are available only to students with accepted enrollment. Admins review teacher applications, manage the education catalogue, and handle reports. Newly shared lesson resources must be links; new notes and file resources are rejected. Existing legacy binary objects remain readable and removable. Teacher applications may include an optional Google Drive CV link.
 
+See [Caching](CACHING.md) for the public discovery cache boundaries, request-local viewer lookup, and private workspace cache behavior.
+
 Teacher plan quota enforcement is disabled by default and only takes effect when its database configuration enables it and its effective date has arrived.
 
 ## Authentication and email
