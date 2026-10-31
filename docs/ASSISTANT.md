@@ -18,6 +18,12 @@ Local guided help is authored text that runs on the device. It links only to exi
 
 Gemini requests set explicit safety thresholds. A provider prompt or candidate safety block returns a localized request-blocked message and no generated answer. The provider accepts text-only candidate parts and discards Gemini's text signature metadata; unsupported tool, code or multimodal parts fail closed. Provider-generated group-draft fields are rejected if they contain control or bidirectional override/isolate characters, URL-form links, or email addresses. The same checks do not restrict locally authored templates or teacher edits. These are response-contract checks, not a guarantee that a model can resist every harmful prompt.
 
+## Offline assistant evaluation baseline
+
+`npm run eval:assistant` checks an 80-case synthetic English/Arabic corpus and the provider transport and response contracts using a local mocked transport. The corpus has 10 categories with four variants in each language. Its expected behaviors are rubrics for a possible future evaluation; they are not measured outcomes. The mocked adapter responses verify request separation and schema handling only. They do not show that Gemini refuses harmful requests or answers safely. The report records `NO_LIVE_MODEL_EVALUATION`; no live model, API key, external grader, or user content is involved.
+
+Any future live evaluation needs a separate, explicitly controlled run with its own review of data, provider terms, and evaluation criteria. Keep live outputs and judgments distinct from this offline contract baseline; do not infer safety quality or refusal rates from the synthetic corpus or mocked responses.
+
 ## Configuration
 
 All values are server-only. Never put a key in a `NEXT_PUBLIC_` variable, browser code, chat or source control.
