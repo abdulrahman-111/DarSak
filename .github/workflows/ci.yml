@@ -149,7 +149,6 @@ jobs:
   browser-e2e:
     name: Browser workflows
     runs-on: ubuntu-latest
-    needs: database
     timeout-minutes: 15
 
     steps:

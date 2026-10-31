@@ -180,7 +180,7 @@ test('warmed student pages do not survive a same-browser logout, account switch,
   }
 });
 
-test('guest and wrong-role navigation never exposes a seeded student class or lesson', async ({
+test('guest navigation denies student routes and wrong-role navigation returns to the teacher workspace', async ({
   browser,
 }) => {
   const project = test.info().project.name;
@@ -204,16 +204,27 @@ test('guest and wrong-role navigation never exposes a seeded student class or le
       const page = await context.newPage();
       for (const route of routes) {
         await page.goto(route);
-        await expect(page.getByText('E2E mathematics group', { exact: true })).toHaveCount(0);
-        await expect(page.getByText('E2E upcoming lesson', { exact: true })).toHaveCount(0);
-        await expect(page.getByText('E2E algebra resource', { exact: true })).toHaveCount(0);
         if (!storageState) {
+          // Wait for the settled guest denial before checking the entire DOM, including hidden text.
           await expect(page).toHaveURL(new RegExp(`/${locale}/login$`));
           await expect(page.locator('input[name="email"]')).toBeVisible();
+          await expect(page.getByText('E2E mathematics group', { exact: true })).toHaveCount(0);
+          await expect(page.getByText('E2E upcoming lesson', { exact: true })).toHaveCount(0);
+          await expect(page.getByText('E2E algebra resource', { exact: true })).toHaveCount(0);
         } else {
+          // A teacher may legitimately see their own seeded lesson on their dashboard.
+          // The destination and role shell prove that the requested student route was denied.
           await expect(page).toHaveURL(new RegExp(`/${locale}/teacher/?$`));
           // The teacher loading skeleton has no heading; wait for the settled dashboard itself.
           await expect(page.locator('main h1')).toBeVisible();
+          await expect(
+            page.locator(
+              `nav[aria-label="${locale === 'ar' ? 'تنقل الطالب' : 'Student navigation'}"]`,
+            ),
+          ).toHaveCount(0);
+          await expect(
+            page.locator(`[data-mobile-workspace-nav] a[href^="/${locale}/student/"]`),
+          ).toHaveCount(0);
         }
       }
     } finally {
