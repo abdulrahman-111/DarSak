@@ -5,6 +5,7 @@
 // Optional authenticated captures: --student-state PATH --teacher-state PATH
 // State files are read only and are never copied into output.
 import fs from 'node:fs/promises';
+import os from 'node:os';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 
@@ -23,7 +24,12 @@ if (!['http:', 'https:'].includes(origin.protocol) || origin.username || origin.
   throw new Error('Base URL must use HTTP(S) and contain no credentials.');
 if (!['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname))
   throw new Error('Only loopback base URLs are allowed.');
-const outputDir = path.resolve(args.output ?? '/tmp/dars-roadmap-work/font-measurements');
+if (args.output !== undefined && (typeof args.output !== 'string' || args.output.length === 0))
+  throw new Error('--output must be a non-empty path.');
+const outputDir =
+  args.output === undefined
+    ? await fs.mkdtemp(path.join(os.tmpdir(), 'darsak-font-measure-'))
+    : path.resolve(args.output);
 const { chromium } = require('@playwright/test');
 const routes = [
   { name: 'landing-en-desktop', route: '/en', width: 1280, height: 900, locale: 'en-US' },
@@ -113,7 +119,7 @@ const routes = [
     mobile: true,
   },
 ];
-await fs.mkdir(outputDir, { recursive: true });
+if (args.output !== undefined) await fs.mkdir(outputDir, { mode: 0o700 });
 const browser = await chromium.launch({
   ...((args.browser ?? process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH)
     ? { executablePath: args.browser ?? process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH }
@@ -192,9 +198,12 @@ try {
       }))
       .catch(() => ({}));
     const fontResponses = [...fonts.values()];
-    await page
-      .screenshot({ path: path.join(outputDir, `${route.name}.png`), fullPage: true })
-      .catch(() => {});
+    const screenshot = await page.screenshot({ fullPage: true }).catch(() => null);
+    if (screenshot)
+      await fs.writeFile(path.join(outputDir, `${route.name}.png`), screenshot, {
+        flag: 'wx',
+        mode: 0o600,
+      });
     results.push({
       route: route.name,
       path: route.route,
@@ -229,5 +238,6 @@ await fs.writeFile(
     null,
     2,
   ) + '\n',
+  { flag: 'wx', mode: 0o600 },
 );
 console.log(`Wrote ${results.length} route measurements to ${outputDir}`);

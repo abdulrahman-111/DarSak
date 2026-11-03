@@ -44,4 +44,9 @@ node scripts/measure-font-payload.mjs \
   --output /tmp/font-measurements
 ```
 
+The output path must name a new directory under an existing parent that is not
+writable by untrusted users; the helper creates it with private permissions and
+refuses to reuse an existing path.
+Without `--output`, it creates a private temporary directory automatically.
+
 This is a narrow font payload change. Lighthouse targets, field CLS, dashboard JavaScript reduction, repeated cold-load measurements, and the broader #154 criteria remain open; this phase does not close #154.
