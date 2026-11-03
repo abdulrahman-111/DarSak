@@ -20,6 +20,7 @@
     "boundaries": "node scripts/admin-boundary.mjs",
     "actions:guard": "node scripts/server-action-guard.mjs",
     "test": "vitest run",
+    "eval:assistant": "node scripts/assistant-offline-eval.mjs && vitest run tests/unit/assistant-eval.test.ts tests/unit/assistant-provider.test.ts",
     "e2e": "node tests/e2e/support/run.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
