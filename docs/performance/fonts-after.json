@@ -1,0 +1,438 @@
+{
+  "capturedAt": "2026-10-31T18:13:14.951Z",
+  "build": "Two-face local production build.",
+  "baseOrigin": "http://127.0.0.1:3184",
+  "throttle": {
+    "latencyMs": 150,
+    "downloadKbps": 1600,
+    "uploadKbps": 750
+  },
+  "results": [
+    {
+      "route": "landing-en-desktop",
+      "path": "/en",
+      "finalPath": "/en",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "cls": 0.0003999506632486979,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        }
+      ]
+    },
+    {
+      "route": "landing-ar-desktop",
+      "path": "/ar",
+      "finalPath": "/ar",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "cls": 0.014854096836513944,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_400_normal.0a8jtlzovcn2x.woff2",
+          "encodedTransferBytes": 43466,
+          "encodedBodyBytes": 42848,
+          "decodedBodyBytes": 42848
+        }
+      ]
+    },
+    {
+      "route": "landing-en-mobile",
+      "path": "/en",
+      "finalPath": "/en",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "cls": 0.001007778524568354,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        }
+      ]
+    },
+    {
+      "route": "landing-ar-mobile",
+      "path": "/ar",
+      "finalPath": "/ar",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "cls": 0.00009235425363225306,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_400_normal.0a8jtlzovcn2x.woff2",
+          "encodedTransferBytes": 43466,
+          "encodedBodyBytes": 42848,
+          "decodedBodyBytes": 42848
+        }
+      ]
+    },
+    {
+      "route": "student-dashboard-en-desktop",
+      "path": "/en/student",
+      "finalPath": "/en/student",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "cls": 0.0005382563273111979,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        }
+      ]
+    },
+    {
+      "route": "student-dashboard-en-mobile",
+      "path": "/en/student",
+      "finalPath": "/en/student",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "cls": 0.002528236458853471,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        }
+      ]
+    },
+    {
+      "route": "teacher-dashboard-en-desktop",
+      "path": "/en/teacher",
+      "finalPath": "/en/teacher",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "cls": 0.0005782751719156901,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        }
+      ]
+    },
+    {
+      "route": "teacher-dashboard-en-mobile",
+      "path": "/en/teacher",
+      "finalPath": "/en/teacher",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "cls": 0.002528236458853471,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        }
+      ]
+    },
+    {
+      "route": "student-dashboard-ar-desktop",
+      "path": "/ar/student",
+      "finalPath": "/ar/student",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "cls": 0.0023895451015896268,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_400_normal.0a8jtlzovcn2x.woff2",
+          "encodedTransferBytes": 43466,
+          "encodedBodyBytes": 42848,
+          "decodedBodyBytes": 42848
+        }
+      ]
+    },
+    {
+      "route": "student-dashboard-ar-mobile",
+      "path": "/ar/student",
+      "finalPath": "/ar/student",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "cls": 0.05789200131769422,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_400_normal.0a8jtlzovcn2x.woff2",
+          "encodedTransferBytes": 43466,
+          "encodedBodyBytes": 42848,
+          "decodedBodyBytes": 42848
+        }
+      ]
+    },
+    {
+      "route": "teacher-dashboard-ar-desktop",
+      "path": "/ar/teacher",
+      "finalPath": "/ar/teacher",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 1280,
+        "height": 900
+      },
+      "documentWidth": 1280,
+      "viewportWidth": 1280,
+      "cls": 0.00042704243130154074,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_400_normal.0a8jtlzovcn2x.woff2",
+          "encodedTransferBytes": 43466,
+          "encodedBodyBytes": 42848,
+          "decodedBodyBytes": 42848
+        }
+      ]
+    },
+    {
+      "route": "teacher-dashboard-ar-mobile",
+      "path": "/ar/teacher",
+      "finalPath": "/ar/teacher",
+      "navigationStatus": 200,
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "documentWidth": 390,
+      "viewportWidth": 390,
+      "cls": 0.00003849739016851166,
+      "fonts": [
+        {
+          "basename": "instrument_sans_latin_wght_normal.p.3h2wr6o8p949u.woff2",
+          "encodedTransferBytes": 30710,
+          "encodedBodyBytes": 30092,
+          "decodedBodyBytes": 30092
+        },
+        {
+          "basename": "bricolage_grotesque_latin_wght_normal.p.1iqnhac4m3hwo.woff2",
+          "encodedTransferBytes": 41962,
+          "encodedBodyBytes": 41344,
+          "decodedBodyBytes": 41344
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_400_normal.0a8jtlzovcn2x.woff2",
+          "encodedTransferBytes": 43466,
+          "encodedBodyBytes": 42848,
+          "decodedBodyBytes": 42848
+        },
+        {
+          "basename": "ibm_plex_sans_arabic_arabic_700_normal.0ej1b3dc64qt2.woff2",
+          "encodedTransferBytes": 44898,
+          "encodedBodyBytes": 44280,
+          "decodedBodyBytes": 44280
+        }
+      ]
+    }
+  ]
+}
