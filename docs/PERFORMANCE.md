@@ -40,8 +40,7 @@ To reproduce locally, start the production app at a loopback URL and provide exi
 node scripts/measure-font-payload.mjs \
   --base-url http://127.0.0.1:3184 \
   --student-state "$STUDENT_STATE_PATH" \
-  --teacher-state "$TEACHER_STATE_PATH" \
-  --output /tmp/font-measurements
+  --teacher-state "$TEACHER_STATE_PATH"
 ```
 
 The output path must name a new directory under an existing parent that is not
