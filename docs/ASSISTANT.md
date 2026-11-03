@@ -22,14 +22,14 @@ Gemini requests set explicit safety thresholds. A provider prompt or candidate s
 
 All values are server-only. Never put a key in a `NEXT_PUBLIC_` variable, browser code, chat or source control.
 
-| Variable                   | Required | Default     | Purpose                                         |
-| -------------------------- | -------- | ----------- | ----------------------------------------------- |
-| `SANAD_ENABLED`            | Yes      | unset (off) | Must be exactly `true` to enable live AI.       |
-| `GEMINI_API_KEY`           | Yes      | unset       | Google Gemini API key.                          |
-| `SANAD_USER_DAILY_LIMIT`   | No       | `60`        | Accepted requests per user per UTC day.         |
-| `SANAD_USER_MINUTE_LIMIT`  | No       | `10`        | Accepted requests per user per UTC minute.      |
-| `SANAD_GLOBAL_DAILY_LIMIT` | No       | `3000`      | Accepted requests across all users per UTC day. |
-| `SANAD_GLOBAL_CONCURRENCY` | No       | `10`        | Requests in flight across all users.            |
+| Variable                   | Required | Default     | Purpose                                                                            |
+| -------------------------- | -------- | ----------- | ---------------------------------------------------------------------------------- |
+| `SANAD_ENABLED`            | Yes      | unset (off) | Must be exactly `true` to enable live AI.                                          |
+| `GEMINI_API_KEY`           | Yes      | unset       | Google Gemini API key.                                                             |
+| `SANAD_USER_DAILY_LIMIT`   | No       | `60`        | Accepted requests per user per UTC day; default database setting is 60.            |
+| `SANAD_USER_MINUTE_LIMIT`  | No       | `10`        | Accepted requests per user per UTC minute; default database setting is 10.         |
+| `SANAD_GLOBAL_DAILY_LIMIT` | No       | `3000`      | Accepted requests across all users per UTC day; default database setting is 3,000. |
+| `SANAD_GLOBAL_CONCURRENCY` | No       | `10`        | Requests in flight across all users; default database setting is 10.               |
 
 Live AI is enabled if and only if `SANAD_ENABLED=true` and `GEMINI_API_KEY` is set. Anything else fails closed: the API returns "unavailable" without contacting the provider and the companion keeps showing local guided help. Limit variables must be whole numbers from 1 to 100000; unset or invalid values fall back to the defaults.
 
@@ -37,7 +37,7 @@ Live AI is enabled if and only if `SANAD_ENABLED=true` and `GEMINI_API_KEY` is s
 
 ### Database
 
-Apply `supabase/migrations/20261028150000_sandak_quota.sql` and subsequent quota migrations. They add private (non-API) counters in `dars_private` and two `SECURITY DEFINER` functions, `sanad_reserve_request` and `sanad_release_request`, granted to `authenticated` only. `dars_private.sandak_settings` provides the defaults and hard upper ceilings: application or direct RPC callers may request lower limits, but cannot raise them. Database tests are in `tests/database/sandak_quota.sql` and `supabase/tests/sandak_quota.test.sql`.
+Apply `supabase/migrations/20261028150000_sandak_quota.sql` and subsequent quota migrations. They add private (non-API) counters in `dars_private` and two `SECURITY DEFINER` functions, `sanad_reserve_request` and `sanad_release_request`, granted to `authenticated` only. `dars_private.sandak_settings` stores operator-configurable database settings (up to 100,000 for counts and 1,000 for concurrency); these values are the ceilings for application and RPC caller limits. Current defaults are 60/user/day, 10/user/minute, 3,000/global/day, and 10 global in flight. Caller limits may lower the configured settings, never raise them. Database tests are in `tests/database/sandak_quota.sql` and `supabase/tests/sandak_quota.test.sql`.
 
 ## Gemini billing, terms and age
 
@@ -49,7 +49,7 @@ Apply `supabase/migrations/20261028150000_sandak_quota.sql` and subsequent quota
 
 One server request uses the fixed `gemini-3.5-flash-lite` model with a 20-second timeout and no retries. Request bodies are limited to 24 KiB, provider responses to 64 KiB and generation to 2,048 output tokens. A chat sends at most eight messages and 8,000 characters (2,000 per message). The model has no tools, no web access and no database access, and the system prompt refuses secrets, personal data and unsupported actions.
 
-An atomic database reservation contains request volume, enforcing the configured per-user daily and per-minute ceilings and one active request, plus global daily and concurrency ceilings. Caller limits can make these stricter, never looser. A 45-second lease recovers from crashed workers. Failed provider calls still consume the reserved attempt. Cross-origin requests are rejected. When a quota is reached the user sees a friendly "too many requests" message and the companion shows the oops mood.
+An atomic database reservation contains request volume, enforcing the configured per-user daily and per-minute limits and one active request per user, plus global daily and concurrency limits. Current database settings default to 60 accepted requests per user per UTC day, 10 per user per UTC minute, 3,000 across all users per UTC day, and 10 requests in flight globally; each user can have one request in flight. Operators can change the database settings within their schema bounds. Application and RPC caller limits can lower the current settings, never raise them. A 45-second lease recovers from crashed workers. Failed provider calls still consume the reserved attempt. Cross-origin requests are rejected. When a quota is reached the user sees a friendly "too many requests" message and the companion shows the oops mood.
 
 ## Data handling
 

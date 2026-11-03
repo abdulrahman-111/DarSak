@@ -32,7 +32,16 @@ const statusFor: Record<AssistantErrorCode, number> = {
 };
 
 function failure(code: AssistantErrorCode) {
-  return json({ ok: false, code }, statusFor[code]);
+  return NextResponse.json(
+    { ok: false, code },
+    {
+      status: statusFor[code],
+      headers: {
+        ...HEADERS,
+        ...(code === 'rate_limited' ? { 'Retry-After': '60' } : {}),
+      },
+    },
+  );
 }
 
 async function readBoundedJson(request: NextRequest): Promise<unknown | null> {
