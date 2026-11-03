@@ -260,6 +260,64 @@ select is((select student_note from public.assignment_submissions where id='155a
 select is((select revision from public.assignment_submissions where id='155a0000-0000-4000-8000-000000000001'),
   2,'submission RPC incremented the revision');
 
+-- Cross-user mutations must fail even when the request fields and target rows are otherwise valid.
+-- Each negative case is paired with an owner control and a persisted-state check.
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000001',true);
+select throws_ok($$select public.submit_assignment_link('15590000-0000-4000-8000-000000000002','https://example.test/cross-user-submission','cross-user attempt',0)$$,
+  '42501',null,'student A cannot submit for student B group');
+reset role;
+select is((select count(*)::integer from public.assignment_submissions where assignment_id='15590000-0000-4000-8000-000000000002' and student_id='15500000-0000-4000-8000-000000000001'),
+  0,'cross-user assignment submission leaves no row');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000002',true);
+select is(public.submit_assignment_link('15590000-0000-4000-8000-000000000002','https://example.test/authorized-submission','student B submission',1),
+  '155a0000-0000-4000-8000-000000000002'::uuid,'student B can submit for own group');
+reset role;
+select is((select url from public.assignment_submissions where id='155a0000-0000-4000-8000-000000000002'),
+  'https://example.test/authorized-submission','authorized student submission persists');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000003',true);
+select public.review_assignment_submission('155a0000-0000-4000-8000-000000000001','teacher A feedback',2);
+select is((select teacher_feedback from public.assignment_submissions where id='155a0000-0000-4000-8000-000000000001'),
+  'teacher A feedback','teacher A review control persists feedback');
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000004',true);
+select throws_ok($$select public.review_assignment_submission('155a0000-0000-4000-8000-000000000001','teacher B overwrite',2)$$,
+  '42501',null,'teacher B cannot review teacher A submission');
+reset role;
+select is((select teacher_feedback from public.assignment_submissions where id='155a0000-0000-4000-8000-000000000001'),
+  'teacher A feedback','cross-user review leaves feedback unchanged');
+select is((select revision from public.assignment_submissions where id='155a0000-0000-4000-8000-000000000001'),
+  2,'cross-user review leaves revision unchanged');
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000004',true);
+select throws_ok($$select public.decide_booking('155c0000-0000-4000-8000-000000000001',true)$$,
+  '42501',null,'teacher B cannot decide teacher A booking');
+reset role;
+select is((select status from public.booking_requests where id='155c0000-0000-4000-8000-000000000001'),
+  'pending','cross-user booking decision leaves teacher A request pending');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000004',true);
+select public.decide_booking('155c0000-0000-4000-8000-000000000002',false);
+select is((select status from public.booking_requests where id='155c0000-0000-4000-8000-000000000002'),
+  'declined','teacher B can decide own booking request');
+reset role;
+
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000001',true);
+select public.mark_notification_read('15580000-0000-4000-8000-000000000002');
+reset role;
+select is((select read_at from public.user_notifications where id='15580000-0000-4000-8000-000000000002'),
+  null::timestamptz,'student A cannot mark student B notification read');
+set local role authenticated;
+select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000002',true);
+select public.mark_notification_read('15580000-0000-4000-8000-000000000002');
+reset role;
+select ok((select read_at is not null from public.user_notifications where id='15580000-0000-4000-8000-000000000002'),
+  'student B can mark own notification read');
+
 -- A suspended student has accepted rows, but active-account gates block protected RPCs.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000005',true);
