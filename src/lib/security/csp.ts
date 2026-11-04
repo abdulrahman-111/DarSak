@@ -7,7 +7,8 @@
  */
 
 /** Directives that are always enforced via the static header, independent of CSP_ENFORCE. */
-export const BASELINE_CSP = "frame-ancestors 'none'; base-uri 'self'; object-src 'none'";
+export const BASELINE_CSP =
+  "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; worker-src 'self'";
 
 export const HSTS = 'max-age=31536000';
 
@@ -95,6 +96,7 @@ export function buildCsp({
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "object-src 'none'",
+    "worker-src 'self'",
   ];
   if (upgradeInsecure) directives.push('upgrade-insecure-requests');
   return directives.join('; ');

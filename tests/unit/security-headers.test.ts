@@ -13,7 +13,8 @@ describe('global security response headers', () => {
       'x-content-type-options': 'nosniff',
       'x-frame-options': 'DENY',
       'referrer-policy': 'strict-origin-when-cross-origin',
-      'content-security-policy': "frame-ancestors 'none'; base-uri 'self'; object-src 'none'",
+      'content-security-policy':
+        "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; worker-src 'self'",
       'strict-transport-security': 'max-age=31536000',
       'permissions-policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
     });

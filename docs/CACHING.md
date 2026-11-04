@@ -1,5 +1,7 @@
 # Caching and private workspace data
 
+The optional, user-enabled [PWA worker](PWA.md) caches only allowlisted public static assets. It never caches pages, API responses or React Server Component responses; failed navigation returns fixed generic offline text.
+
 DarSak shares only visitor-independent public discovery reads across requests. The public teacher,
 group, teacher-choice, and education-catalogue reads in `src/features/platform/data.ts` use a
 60-second Next cache tagged `public-discovery`. Failed or unusable cached reads are not retained;
