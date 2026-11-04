@@ -151,8 +151,10 @@ jobs:
 
   browser-e2e:
     name: Browser workflows
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
+    env:
+      PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
 
     steps:
       - name: Check out code
@@ -167,8 +169,10 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
-      - name: Install Playwright Chromium
-        run: npx playwright install --with-deps chromium
+      - name: Verify hosted runner Chrome
+        run: |
+          test -x "$PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH"
+          "$PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH" --version
 
       - name: Set up Supabase CLI
         uses: supabase/setup-cli@45a513f8c64c0bc8e0e3dfe572b5c95be85f6359 # v3.0.1
