@@ -22,18 +22,19 @@ to:
 read_at=read_at
 ```
 
-The `opening a seeded notification marks it read and clears its badge after reload` test failed as expected at its `read_at` non-null assertion. After restoring the function byte-for-byte, the notification test passed.
+The `opening a seeded notification marks it read and clears its badge after reload` test failed as expected at its `read_at` non-null assertion. After restoring the function, the notification test passed.
 
-To make cross-student lesson authorization fail, temporarily change the `lesson_read` policy from:
-
-```sql
-using(public.is_group_member(group_id) or public.is_group_owner(group_id) or public.current_role()='admin')
-```
-
-to:
+To make cross-student lesson authorization fail, temporarily add a separate permissive policy:
 
 ```sql
-using(true)
+create policy e2e_negative_lesson_read on public.lessons
+for select to authenticated using (true);
 ```
 
-The `an outsider cannot see another student’s class, lesson, or private resource` test failed as expected at the outsider's direct PostgREST lesson query, receiving the foreign lesson instead of an empty result. After removing the temporary policy and confirming no such policy remained, the security test passed. Both restored browser checks passed together (2/2, no retries).
+Then remove only that temporary policy:
+
+```sql
+drop policy e2e_negative_lesson_read on public.lessons;
+```
+
+The `an outsider cannot see another student’s class, lesson, or private resource` test failed as expected at the outsider's direct PostgREST lesson query, receiving the foreign lesson instead of an empty result. The existing `lesson_read` policy was left unchanged; after dropping the temporary policy, the security test passed. Both restored browser checks passed together (2/2, no retries).
