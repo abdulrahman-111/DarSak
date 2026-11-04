@@ -79,12 +79,14 @@ function SlotEditor({
   locale,
   groupId,
   slot,
+  idPrefix,
   closeHref,
   onSaved,
 }: {
   locale: Locale;
   groupId: string;
   slot: GroupScheduleRow | null;
+  idPrefix: string;
   closeHref: string;
   onSaved: (message: string) => void;
 }) {
@@ -106,21 +108,20 @@ function SlotEditor({
       router.replace(closeHref, { scroll: false });
     }
   }, [state, onSaved, router, closeHref]);
-  const prefix = slot?.id ?? 'new';
   return (
     <form
       action={action}
       onReset={event => event.preventDefault()}
-      aria-labelledby={`slot-editor-${prefix}-title`}
+      aria-labelledby={`slot-editor-${idPrefix}-title`}
       className="grid gap-3 rounded-2xl border border-teal/40 bg-cream p-4"
     >
-      <h3 id={`slot-editor-${prefix}-title`} className="font-bold text-teal">
+      <h3 id={`slot-editor-${idPrefix}-title`} className="font-bold text-teal">
         {slot ? c.editing : c.newTitle}
       </h3>
       <input type="hidden" name="group_id" value={groupId} />
       {slot && <input type="hidden" name="slot_id" value={slot.id} />}
       <SlotFields
-        idPrefix={prefix}
+        idPrefix={idPrefix}
         locale={locale}
         weekday={weekday}
         start={start}
@@ -257,6 +258,7 @@ export function GroupScheduleTable({
                           locale={locale}
                           groupId={groupId}
                           slot={slot}
+                          idPrefix={`desktop-${slot.id}`}
                           closeHref={closeHref}
                           onSaved={text => setNotice({ text, id: Date.now() })}
                         />
@@ -311,6 +313,7 @@ export function GroupScheduleTable({
                     locale={locale}
                     groupId={groupId}
                     slot={slot}
+                    idPrefix={`mobile-${slot.id}`}
                     closeHref={closeHref}
                     onSaved={text => setNotice({ text, id: Date.now() })}
                   />
@@ -360,6 +363,7 @@ export function GroupScheduleTable({
             locale={locale}
             groupId={groupId}
             slot={null}
+            idPrefix="new"
             closeHref={closeHref}
             onSaved={text => setNotice({ text, id: Date.now() })}
           />

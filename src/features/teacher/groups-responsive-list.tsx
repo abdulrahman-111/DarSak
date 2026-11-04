@@ -142,7 +142,9 @@ export function TeacherGroupsResponsiveList({
               <div className="flex min-w-0 items-start justify-between gap-4">
                 <div className="min-w-0">
                   {group.subject && (
-                    <p className="text-sm font-bold text-orange">{group.subject}</p>
+                    <p className="min-w-0 break-words text-sm font-bold text-orange [overflow-wrap:anywhere]">
+                      {group.subject}
+                    </p>
                   )}
                   <h2 className="mt-1 wrap-break-word text-xl font-bold text-teal [overflow-wrap:anywhere]">
                     {group.name}
@@ -153,7 +155,7 @@ export function TeacherGroupsResponsiveList({
               {group.description && (
                 <p className="mt-3 line-clamp-2 text-sm text-muted">{group.description}</p>
               )}
-              <p className="mt-4 text-sm text-muted">
+              <p className="mt-4 min-w-0 break-words text-sm text-muted [overflow-wrap:anywhere]">
                 {group.location ? `${group.location} · ` : ''}
                 {ar ? 'السعة' : 'Capacity'} {group.capacity}
               </p>

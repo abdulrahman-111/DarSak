@@ -34,7 +34,16 @@ test('weekly schedule editor remains usable at 320px', async ({ teacherPage }, t
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
   }
   await edit.click();
-  await expect(teacherPage.getByLabel(ar ? 'وقت البداية' : 'Start time')).toBeVisible();
+  const existingEditor = teacherPage.getByRole('form', {
+    name: ar ? 'تعديل موعد' : 'Editing time',
+  });
+  await expect(existingEditor).toBeVisible();
+  await expect(existingEditor.getByLabel(ar ? 'وقت البداية' : 'Start time')).toBeVisible();
+  const duplicateIds = await teacherPage.evaluate(() => {
+    const ids = [...document.querySelectorAll('[id]')].map(element => element.id);
+    return ids.filter((id, index) => ids.indexOf(id) !== index);
+  });
+  expect(duplicateIds).toEqual([]);
   await expect
     .poll(() => teacherPage.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(320);
