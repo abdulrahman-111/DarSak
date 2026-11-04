@@ -125,11 +125,27 @@ test('warmed student pages do not survive a same-browser logout, account switch,
       page.locator('form button[type="submit"]').click(),
     ]);
   };
-  const assertNoMemberData = async () => {
-    await expect(page.getByText('E2E mathematics group', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('E2E upcoming lesson', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('E2E algebra resource', { exact: true })).toHaveCount(0);
-    await expect(page.getByText('E2E Student', { exact: true })).toHaveCount(0);
+  const assertNoMemberData = async (phase: string, backStep: string) => {
+    const pathname = new URL(page.url()).pathname
+      .replace(ids.groupId, '[group-id]')
+      .replace(ids.futureLessonId, '[lesson-id]');
+    const message = `${phase} (${backStep}) at ${pathname}`;
+    await expect(page.getByText('E2E upcoming lesson', { exact: true }), message).toHaveCount(0);
+    await expect(page.getByText('E2E algebra resource', { exact: true }), message).toHaveCount(0);
+    await expect(page.getByText('E2E Student', { exact: true }), message).toHaveCount(0);
+    await expect(
+      page.getByRole('navigation', {
+        name: locale === 'ar' ? 'أقسام المجموعة' : 'Class sections',
+        exact: true,
+        includeHidden: true,
+      }),
+      message,
+    ).toHaveCount(0);
+    if (/^\/(ar|en)\/student(?:\/|$)/.test(pathname)) {
+      await expect(page.getByText('E2E mathematics group', { exact: true }), message).toHaveCount(
+        0,
+      );
+    }
   };
 
   try {
@@ -161,7 +177,7 @@ test('warmed student pages do not survive a same-browser logout, account switch,
     await expect(page.locator('input[name="email"]')).toBeVisible();
     await loginAs(actors.outsider.email, actors.outsider.password);
     await expect(page).toHaveURL(new RegExp(`/${locale}/student/?$`));
-    await assertNoMemberData();
+    await assertNoMemberData('after account switch', 'initial');
 
     // Browser back revisits routes warmed as member A; require a settled denial with no stale content.
     const warmRoutesSeen = new Set<string>();
@@ -169,7 +185,7 @@ test('warmed student pages do not survive a same-browser logout, account switch,
       const previousUrl = page.url();
       await page.goBack();
       if (page.url() === previousUrl) break;
-      await assertNoMemberData();
+      await assertNoMemberData('browser back', String(step + 1));
       const pathname = new URL(page.url()).pathname;
       if (pathname === classHref || pathname === lessonHref) warmRoutesSeen.add(pathname);
       if (warmRoutesSeen.has(classHref) && warmRoutesSeen.has(lessonHref)) break;

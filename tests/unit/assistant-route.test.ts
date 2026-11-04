@@ -126,6 +126,7 @@ describe('Sanad endpoint guards', () => {
     const req = request(chat);
     const response = await POST(req);
     expect(response.status).toBe(200);
+    expect(response.headers.has('Retry-After')).toBe(false);
     expect(await response.json()).toEqual({ ok: true, mode: 'chat', text: 'hello' });
     expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
     const topics = mocks.generateChat.mock.calls[0][2] as string;
@@ -180,6 +181,8 @@ describe('Sanad endpoint guards', () => {
     state.reservation = { lease: null, failed: false };
     const response = await POST(request(chat));
     expect(response.status).toBe(429);
+    expect(response.headers.get('Retry-After')).toBe('60');
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
     expect(await response.json()).toEqual({ ok: false, code: 'rate_limited' });
     expect(mocks.generateChat).not.toHaveBeenCalled();
   });
@@ -226,6 +229,7 @@ describe('Sanad endpoint guards', () => {
     mocks.generateChat.mockRejectedValue(new Error('raw provider secret error'));
     const response = await POST(request(chat));
     expect(response.status).toBe(502);
+    expect(response.headers.has('Retry-After')).toBe(false);
     expect(await response.json()).toEqual({ ok: false, code: 'provider_unavailable' });
     expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
   });
@@ -244,6 +248,7 @@ describe('Sanad endpoint guards', () => {
       }),
     );
     expect(response.status).toBe(422);
+    expect(response.headers.has('Retry-After')).toBe(false);
     expect(await response.json()).toEqual({ ok: false, code: 'safety_blocked' });
     expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
   });
