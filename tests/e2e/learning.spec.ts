@@ -3,6 +3,66 @@ import { fixtureData } from './support/data';
 
 test.setTimeout(120_000);
 
+test('teacher creates a manual lesson and it remains in the calendar after reload', async ({
+  teacherPage,
+}, testInfo) => {
+  const locale = testInfo.project.name.startsWith('ar-') ? 'ar' : 'en';
+  const ar = locale === 'ar';
+  const { groupId } = fixtureData(testInfo.project.name).ids;
+  const lessonTitle = `E2E manual lesson ${testInfo.project.name} ${Date.now()}`;
+  const start = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  start.setHours(10, 0, 0, 0);
+  const end = new Date(start.getTime() + 60 * 60 * 1000);
+  const dateTime = (value: Date) =>
+    `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}T${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+
+  await teacherPage.goto(`/${locale}/teacher/lessons?new=1`);
+  const group = teacherPage.getByLabel(ar ? 'المجموعة' : 'Group');
+  await expect(group.locator(`option[value="${groupId}"]`)).toBeAttached();
+  await group.selectOption(groupId);
+  await teacherPage.getByRole('button', { name: ar ? 'تطبيق' : 'Apply' }).click();
+  await teacherPage.getByLabel(ar ? 'عنوان الحصة' : 'Lesson title').fill(lessonTitle);
+  await teacherPage.getByLabel(ar ? 'البداية' : 'Starts').fill(dateTime(start));
+  await teacherPage.getByLabel(ar ? 'النهاية' : 'Ends').fill(dateTime(end));
+  await teacherPage.getByLabel(ar ? 'ملاحظات' : 'Notes').fill('Created manually in the browser.');
+  const lessonForm = teacherPage
+    .getByLabel(ar ? 'عنوان الحصة' : 'Lesson title')
+    .locator('xpath=ancestor::form[1]');
+  await teacherPage.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }).click();
+  await expect(lessonForm.getByRole('status')).toHaveText(ar ? 'تم الحفظ.' : 'Saved.');
+  await teacherPage.goto(`/${locale}/teacher/lessons?view=all`);
+  await expect(teacherPage.getByRole('link', { name: new RegExp(lessonTitle) })).toBeVisible();
+  await teacherPage.reload();
+  await expect(teacherPage.getByRole('link', { name: new RegExp(lessonTitle) })).toBeVisible();
+});
+
+test('teacher replies to published student feedback and sees the pending reply after reload', async ({
+  teacherPage,
+}, testInfo) => {
+  const locale = testInfo.project.name.startsWith('ar-') ? 'ar' : 'en';
+  const ar = locale === 'ar';
+  const reply = `E2E teacher reply ${testInfo.project.name} ${Date.now()}`;
+  await teacherPage.goto(`/${locale}/teacher/feedback`);
+  await expect(
+    teacherPage.getByText('Synthetic approved feedback for the teacher reply browser workflow.', {
+      exact: true,
+    }),
+  ).toBeVisible();
+  await teacherPage
+    .getByLabel(ar ? 'رد المعلم (حتى ١٥٠٠ حرف)' : 'Teacher reply (up to 1,500 characters)')
+    .fill(reply);
+  const form = teacherPage
+    .getByLabel(ar ? 'رد المعلم (حتى ١٥٠٠ حرف)' : 'Teacher reply (up to 1,500 characters)')
+    .locator('xpath=ancestor::form[1]');
+  await form.getByRole('button', { name: ar ? 'حفظ' : 'Save' }).click();
+  await expect(form.getByRole('status')).toContainText(
+    ar ? 'تخضع التقييمات والردود للمراجعة' : 'Feedback and replies are reviewed',
+  );
+  await expect(teacherPage.getByText(reply, { exact: true })).toBeVisible();
+  await teacherPage.reload();
+  await expect(teacherPage.getByText(reply, { exact: true })).toBeVisible();
+});
+
 test('teacher publishes a class, accepts an enrollment request, and unlocks the private class', async ({
   teacherPage,
   studentPage,
