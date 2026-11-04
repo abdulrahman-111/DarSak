@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { ensureLocale } from '@/i18n/config';
 import { loadWithTeachingAccess } from '@/features/teacher/teaching-access-gate';
 import type { PlatformViewer } from '@/components/platform/access';
-import { EmptyState, Panel, ScreenTitle, Status } from '@/components/platform/ui';
-import { GroupManagementControls } from '@/features/teacher/management-forms';
+import { EmptyState, Panel, ScreenTitle } from '@/components/platform/ui';
+import { TeacherGroupsResponsiveList } from '@/features/teacher/groups-responsive-list';
 import {
   normalizeStudentPage,
   STUDENT_PAGE_SIZE,
@@ -44,6 +44,26 @@ export default async function TeacherGroups({
   const count = groups.count ?? 0,
     pageCount = studentPageCount(count);
   const failed = !!groups.error || groups.count == null;
+  const groupItems = (groups.data ?? []).map(group => {
+    const relation = (Array.isArray(group.offering) ? group.offering[0] : group.offering) as {
+      subject?:
+        | { name_ar: string | null; name_en: string | null }
+        | { name_ar: string | null; name_en: string | null }[]
+        | null;
+    } | null;
+    const subject = relation
+      ? Array.isArray(relation.subject)
+        ? relation.subject[0]
+        : relation.subject
+      : null;
+    const subjectName = subject
+      ? catalogueDisplayName(
+          { name_ar: subject.name_ar ?? '', name_en: subject.name_en ?? '' },
+          locale,
+        )
+      : '';
+    return { ...group, subject: subjectName || null };
+  });
   const pageLabels = ar
     ? { previous: 'السابق', next: 'التالي', page: 'صفحة' }
     : { previous: 'Previous', next: 'Next', page: 'Page' };
@@ -88,102 +108,23 @@ export default async function TeacherGroups({
             {ar ? 'إعادة المحاولة' : 'Try again'}
           </a>
         </Panel>
+      ) : groupItems.length ? (
+        <TeacherGroupsResponsiveList groups={groupItems} locale={locale} />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          {groups.data?.length ? (
-            groups.data.map(group => {
-              const relation = (
-                Array.isArray(group.offering) ? group.offering[0] : group.offering
-              ) as {
-                subject?:
-                  | { name_ar: string | null; name_en: string | null }
-                  | { name_ar: string | null; name_en: string | null }[]
-                  | null;
-              } | null;
-              const subject = relation
-                ? Array.isArray(relation.subject)
-                  ? relation.subject[0]
-                  : relation.subject
-                : null;
-              const href =
-                group.status === 'draft'
-                  ? `/${locale}/teacher/groups/${group.id}/setup?step=details`
-                  : `/${locale}/teacher/groups/${group.id}`;
-              return (
-                <article
-                  key={group.id}
-                  className="student-card rounded-2xl border border-line bg-white p-5 shadow-xs"
-                >
-                  <Link
-                    href={href}
-                    className="block rounded-xl hover:outline-hidden focus-visible:ring-2 focus-visible:ring-orange"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="min-w-0">
-                        {subject &&
-                          catalogueDisplayName(
-                            { name_ar: subject.name_ar ?? '', name_en: subject.name_en ?? '' },
-                            locale,
-                          ) && (
-                            <p className="text-sm font-bold text-orange">
-                              {catalogueDisplayName(
-                                { name_ar: subject.name_ar ?? '', name_en: subject.name_en ?? '' },
-                                locale,
-                              )}
-                            </p>
-                          )}
-                        <h2 className="mt-1 wrap-break-word text-xl font-bold text-teal [overflow-wrap:anywhere]">
-                          {group.name}
-                        </h2>
-                      </div>
-                      <Status value={group.status} locale={locale} />
-                    </div>
-                    {group.description && (
-                      <p className="mt-3 line-clamp-2 text-sm text-muted">{group.description}</p>
-                    )}
-                    <p className="mt-4 text-sm text-muted">
-                      {group.location ? `${group.location} · ` : ''}
-                      {ar ? 'السعة' : 'Capacity'} {group.capacity}
-                    </p>
-                    <p className="mt-4 text-sm font-bold text-teal">
-                      {group.status === 'draft'
-                        ? ar
-                          ? 'استئناف الإعداد ←'
-                          : 'Resume setup →'
-                        : group.status === 'archived'
-                          ? ar
-                            ? 'عرض السجل ←'
-                            : 'View history →'
-                          : ar
-                            ? 'إدارة المجموعة ←'
-                            : 'Manage group →'}
-                    </p>
-                  </Link>
-                  <div className="mt-4 border-t border-line pt-4">
-                    <GroupManagementControls
-                      locale={locale}
-                      groupId={group.id}
-                      status={group.status}
-                    />
-                  </div>
-                </article>
-              );
-            })
-          ) : (
-            <div className="lg:col-span-2">
-              <EmptyState
-                title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
-                action={{
-                  href: `/${locale}/teacher/groups/new`,
-                  label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
-                }}
-              >
-                {ar
-                  ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
-                  : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
-              </EmptyState>
-            </div>
-          )}
+          <div className="lg:col-span-2">
+            <EmptyState
+              title={ar ? 'لا توجد مجموعات بعد' : 'No groups yet'}
+              action={{
+                href: `/${locale}/teacher/groups/new`,
+                label: ar ? 'أنشئ أول مجموعة' : 'Create your first group',
+              }}
+            >
+              {ar
+                ? 'المجموعة هي ما يراه الطلاب ويطلبون الانضمام إليه. ابدأ بمسودة، وأضف جدولها، ثم انشرها.'
+                : 'A group is what students discover and ask to join. Start a draft, add its schedule, then publish it.'}
+            </EmptyState>
+          </div>
         </div>
       )}
       {!failed && (
