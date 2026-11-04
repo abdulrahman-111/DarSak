@@ -45,6 +45,7 @@ describe('buildCsp', () => {
       "'self' https://proj.supabase.co wss://proj.supabase.co",
     );
     expect(directive(policy, 'img-src')).toBe("'self' data: blob: https://proj.supabase.co");
+    expect(directive(policy, 'worker-src')).toBe("'self'");
   });
 
   it('allows Turnstile and Google sign-in origins and keeps the baseline directives', () => {

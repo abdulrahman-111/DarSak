@@ -4,6 +4,8 @@ import { localeStaticParams } from '@/i18n/static-params';
 import { GuidancePageView } from '@/features/help/page';
 import { guidanceContent } from '@/features/help/content';
 import { pageMetadata } from '@/features/seo/metadata';
+import { getDictionary } from '@/i18n/config';
+import { InstallControl } from '@/features/pwa/install-control';
 
 // Public copy with no per-user data: prerendered for both locales and refreshed hourly.
 export const revalidate = 3600;
@@ -21,5 +23,17 @@ export async function generateMetadata({
 
 export default async function Page({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  return <GuidancePageView kind="help" locale={ensureLocale(locale)} />;
+  const currentLocale = ensureLocale(locale);
+  const dictionary = await getDictionary(currentLocale);
+  return (
+    <>
+      <GuidancePageView kind="help" locale={currentLocale} />
+      <section className="container mb-12 rounded-2xl border border-line bg-surface p-6 sm:p-8">
+        <h2 className="mb-4 text-xl font-bold text-teal">
+          {currentLocale === 'ar' ? 'تثبيت درسك' : 'Install DarSak'}
+        </h2>
+        <InstallControl locale={currentLocale} copy={dictionary.pwa} />
+      </section>
+    </>
+  );
 }
