@@ -51,10 +51,14 @@ test('weekly schedule editor remains usable at 320px', async ({ teacherPage }, t
     .toBeLessThanOrEqual(320);
 
   await teacherPage.getByRole('link', { name: ar ? /إضافة موعد/ : /Add time/ }).click();
-  const weekday = teacherPage.getByLabel(ar ? 'اليوم' : 'Weekday');
-  const start = teacherPage.getByLabel(ar ? 'وقت البداية' : 'Start time');
-  const end = teacherPage.getByLabel(ar ? 'وقت النهاية' : 'End time');
-  const save = teacherPage.getByRole('button', { name: ar ? 'حفظ الموعد' : 'Save time' });
+  const newEditor = teacherPage.getByRole('form', {
+    name: ar ? 'موعد أسبوعي جديد' : 'New weekly time',
+  });
+  await expect(newEditor).toBeVisible();
+  const weekday = newEditor.getByLabel(ar ? 'اليوم' : 'Weekday');
+  const start = newEditor.getByLabel(ar ? 'وقت البداية' : 'Start time');
+  const end = newEditor.getByLabel(ar ? 'وقت النهاية' : 'End time');
+  const save = newEditor.getByRole('button', { name: ar ? 'حفظ الموعد' : 'Save time' });
   await expect(weekday).toBeVisible();
   await start.fill('10:00');
   await end.fill('11:00');
