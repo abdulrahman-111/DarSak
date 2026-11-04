@@ -77,7 +77,7 @@ export function CopyLessonForm({
           ))}
         </select>
       </label>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3">
         <label className="text-sm font-bold">
           {ar ? 'البداية بتوقيت القاهرة' : 'Starts (Cairo time)'}
           <input name="starts_local" type="datetime-local" required className={control} />
