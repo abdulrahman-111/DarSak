@@ -58,6 +58,30 @@ describe('seo metadata helpers', () => {
     expect(meta.robots).toBeUndefined();
   });
 
+  it('uses explicit entity image routes while retaining canonical hreflang alternates', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://darsak.example');
+    const meta = pageMetadata({
+      locale: 'en',
+      path: '/teachers/abc',
+      title: 'Teacher',
+      description: 'Public profile',
+      imagePath: '/teachers/abc/opengraph-image',
+    });
+    expect(meta.alternates).toEqual({
+      canonical: 'https://darsak.example/en/teachers/abc',
+      languages: {
+        ar: 'https://darsak.example/ar/teachers/abc',
+        en: 'https://darsak.example/en/teachers/abc',
+      },
+    });
+    expect(meta.openGraph?.images).toEqual([
+      { url: 'https://darsak.example/en/teachers/abc/opengraph-image', width: 1200, height: 630 },
+    ]);
+    expect(meta.twitter?.images).toEqual([
+      'https://darsak.example/en/teachers/abc/opengraph-image',
+    ]);
+  });
+
   it('can use a full title and mark a page noindex', () => {
     const meta = pageMetadata({
       locale: 'en',

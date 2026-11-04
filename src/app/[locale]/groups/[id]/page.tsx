@@ -17,7 +17,8 @@ import {
 } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
 import { pageMetadata, snippet } from '@/features/seo/metadata';
-import { publicGroupDetail } from '@/features/platform/data';
+import { publicGroupSeo } from '@/features/seo/public-entity-data';
+import { groupJsonLd, safeJsonLd } from '@/features/seo/structured-data';
 import { publicCopy } from '@/components/public/copy';
 import { isConfigured } from '@/lib/supabase/server';
 import { classDetail, enrollmentForGroup } from '@/features/student/data';
@@ -34,6 +35,7 @@ import { getRequestViewer } from '@/features/platform/request-viewer';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
 import { AnnouncementView } from '@/features/groups/announcement-view';
 import { summarizeSchedule } from '@/features/groups/schedule-summary';
+
 export const maxDuration = 40;
 
 export async function generateMetadata({
@@ -53,21 +55,17 @@ export async function generateMetadata({
     noIndex: true,
   });
   if (!isConfigured() || !idSchema.safeParse(id).success) return fallback;
-  // Same memoized public lookup the page uses for the group, so no extra fetch.
-  const { data: group, error } = await publicGroupDetail(id);
-  if (error || !group || group.status !== 'published') return fallback;
-  const subject = group.offering?.subject
-    ? catalogueDisplayName(group.offering.subject, locale)
-    : '';
-  const teacher = group.teacher?.full_name ?? '';
-  const generated = ar
-    ? `مجموعة${subject ? ` ${subject}` : ''}${teacher ? ` مع ${teacher}` : ''}${group.location ? ` — ${group.location}` : ''} على درسك.`
-    : `${subject ? `${subject} group` : 'Group'}${teacher ? ` with ${teacher}` : ''}${group.location ? ` — ${group.location}` : ''} on DarSak.`;
+  // Only the cookie-less public projection is used for search metadata.
+  const result = await publicGroupSeo(locale, id);
+  if (result.kind !== 'found') return fallback;
+  const group = result.data;
+  const generated = ar ? `مجموعة ${group.subject} على درسك.` : `${group.subject} group on DarSak.`;
   return pageMetadata({
     locale,
     path: `/groups/${id}`,
-    title: subject ? `${group.name} — ${subject}` : group.name,
+    title: `${group.name} — ${group.subject}`,
     description: snippet(group.description) || generated,
+    imagePath: `/groups/${id}/opengraph-image`,
   });
 }
 
@@ -80,6 +78,9 @@ export default async function GroupDetail({
 }) {
   const { locale, id } = await params;
   if (!isConfigured()) notFound();
+  if (!idSchema.safeParse(id).success) notFound();
+  const seoPromise = publicGroupSeo(locale, id);
+  const detail = await classDetail(id);
 
   const query = await searchParams;
   const requestedOffset = Number(query?.feedback);
@@ -87,7 +88,6 @@ export default async function GroupDetail({
     Number.isSafeInteger(requestedOffset) && requestedOffset >= 0 ? requestedOffset : 0;
   const t = await getDictionary(locale);
   const c = publicCopy[locale];
-  const detail = await classDetail(id);
   const requestViewer = await getRequestViewer();
   const activeViewer = !!requestViewer.user && requestViewer.profile?.status === 'active';
   if (!detail || detail.group.status !== 'published') notFound();
@@ -96,7 +96,7 @@ export default async function GroupDetail({
   const me = requestViewer.user
     ? { user: requestViewer.user, profile: requestViewer.profile }
     : null;
-  const [announcement, enrollment, saved, learning, waitlistEntry] = await Promise.all([
+  const followUpReads = Promise.all([
     activeViewer ? groupAnnouncement(requestViewer.db, id) : Promise.resolve(null),
     me?.profile?.role === 'student' ? enrollmentForGroup(id) : Promise.resolve(null),
     activeViewer && me?.profile?.role === 'student' ? savedGroupStatus(id) : Promise.resolve(false),
@@ -110,6 +110,10 @@ export default async function GroupDetail({
           .maybeSingle()
           .then(result => result.data as { id: string; status: string } | null)
       : Promise.resolve(null),
+  ]);
+  const [[announcement, enrollment, saved, learning, waitlistEntry], seo] = await Promise.all([
+    followUpReads,
+    seoPromise,
   ]);
   const BackArrow = locale === 'ar' ? ArrowRight : ArrowLeft;
   const subject = data.offering?.subject
@@ -137,6 +141,12 @@ export default async function GroupDetail({
 
   return (
     <div className="min-h-[72vh] bg-cream">
+      {seo.kind === 'found' && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(groupJsonLd(locale, seo.data)) }}
+        />
+      )}
       <section className="container py-10 md:py-16">
         <Link
           className="mb-8 inline-flex items-center gap-2 text-sm font-bold text-orange"

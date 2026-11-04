@@ -7,6 +7,8 @@ import { idSchema } from '@/features/student/domain';
 import { ensureLocale } from '@/i18n/config';
 import Link from 'next/link';
 import { pageMetadata, snippet } from '@/features/seo/metadata';
+import { publicTeacherSeo } from '@/features/seo/public-entity-data';
+import { safeJsonLd, teacherJsonLd } from '@/features/seo/structured-data';
 
 export async function generateMetadata({
   params,
@@ -25,12 +27,9 @@ export async function generateMetadata({
       : 'View this teacher’s profile and groups on DarSak.',
     noIndex: true,
   });
-  if (!idSchema.safeParse(id).success) return fallback;
-  const data = await publicTeacherDetail(locale, id);
-  const view = data.visitor;
-  if (data.error || !view) return fallback;
-  const { full_name: name, headline } = view.teacher;
-  const subjects = [...new Set(view.specializations.map(item => item.subject))].slice(0, 4);
+  const result = await publicTeacherSeo(locale, id);
+  if (result.kind !== 'found') return fallback;
+  const { name, headline, subjects } = result.data;
   const taught = subjects.join(ar ? '، ' : ', ');
   const description = snippet(
     [
@@ -51,6 +50,7 @@ export async function generateMetadata({
     path: `/teachers/${id}`,
     title: headline ? `${name} — ${headline}` : name,
     description,
+    imagePath: `/teachers/${id}/opengraph-image`,
   });
 }
 
@@ -63,7 +63,10 @@ export default async function PublicTeacherPage({
   const locale = ensureLocale(raw);
   const ar = locale === 'ar';
   if (!idSchema.safeParse(id).success) notFound();
-  const data = await publicTeacherDetail(locale, id);
+  const [seo, data] = await Promise.all([
+    publicTeacherSeo(locale, id),
+    publicTeacherDetail(locale, id),
+  ]);
   if (data.error)
     return (
       <section className="container py-12">
@@ -83,10 +86,18 @@ export default async function PublicTeacherPage({
   if (!data.visitor) notFound();
 
   return (
-    <TeacherProfile
-      view={data.visitor}
-      locale={locale}
-      backLabel={ar ? 'العودة إلى اكتشف' : 'Back to discover'}
-    />
+    <>
+      {seo.kind === 'found' && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(teacherJsonLd(locale, seo.data)) }}
+        />
+      )}
+      <TeacherProfile
+        view={data.visitor}
+        locale={locale}
+        backLabel={ar ? 'العودة إلى اكتشف' : 'Back to discover'}
+      />
+    </>
   );
 }

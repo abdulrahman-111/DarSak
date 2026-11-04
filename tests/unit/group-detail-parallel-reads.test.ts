@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
   viewer: vi.fn(),
   announcement: vi.fn(),
   learning: vi.fn(),
+  seo: vi.fn(),
 }));
 
 vi.mock('server-only', () => ({}));
@@ -29,6 +30,7 @@ vi.mock('@/features/student/data', () => ({
 vi.mock('@/features/student/saved-data', () => ({ savedGroupStatus: mocks.saved }));
 vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.viewer }));
 vi.mock('@/features/groups/announcement-data', () => ({ groupAnnouncement: mocks.announcement }));
+vi.mock('@/features/seo/public-entity-data', () => ({ publicGroupSeo: mocks.seo }));
 vi.mock('@/features/teacher/group-learning-data', () => ({ groupLearningDetails: mocks.learning }));
 vi.mock('@/features/teacher/group-learning-view', () => ({ GroupLearningView: () => null }));
 vi.mock('@/features/feedback/group-section', () => ({ GroupFeedbackSection: () => null }));
@@ -38,12 +40,17 @@ vi.mock('@/features/student/saved-form', () => ({ SavedGroupForm: () => null }))
 vi.mock('@/features/student/overlap-warning', () => ({ StudentOverlapWarning: () => null }));
 vi.mock('@/features/groups/announcement-view', () => ({ AnnouncementView: () => null }));
 vi.mock('@/features/student/share-domain', () => ({ canSharePublicGroup: () => true }));
-vi.mock('@/features/student/domain', () => ({ canRequest: () => true }));
+vi.mock('@/features/student/domain', async importOriginal => ({
+  ...(await importOriginal<typeof import('@/features/student/domain')>()),
+  canRequest: () => true,
+}));
 vi.mock('@/features/teacher/catalogue-domain', () => ({
   catalogueDisplayName: () => 'Mathematics',
 }));
 
 import GroupDetail from '@/app/[locale]/groups/[id]/page';
+
+const GROUP_ID = '11111111-1111-4111-8111-111111111111';
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -56,6 +63,7 @@ function deferred<T>() {
 describe('public group detail independent reads', () => {
   beforeEach(() => {
     for (const mock of Object.values(mocks)) mock.mockReset();
+    mocks.seo.mockResolvedValue({ kind: 'missing' });
   });
 
   it('starts learning, announcement, enrollment, saved-status, and waitlist reads together for an active student', async () => {
@@ -73,7 +81,7 @@ describe('public group detail independent reads', () => {
     waitlistQuery.eq.mockReturnValue(waitlistQuery);
     mocks.classDetail.mockResolvedValue({
       group: {
-        id: 'group-1',
+        id: GROUP_ID,
         name: 'Algebra',
         status: 'published',
         offering: null,
@@ -115,8 +123,14 @@ describe('public group detail independent reads', () => {
       return learning.promise;
     });
 
-    const result = GroupDetail({ params: Promise.resolve({ locale: 'en', id: 'group-1' }) });
-    for (let i = 0; i < 8; i++) await Promise.resolve();
+    const seo = deferred<unknown>();
+    mocks.seo.mockReturnValue(seo.promise);
+    const result = GroupDetail({ params: Promise.resolve({ locale: 'en', id: GROUP_ID }) });
+    await vi.waitFor(() => {
+      expect(started).toEqual(
+        new Set(['announcement', 'enrollment', 'saved', 'learning', 'waitlist']),
+      );
+    });
     expect(started).toEqual(
       new Set(['announcement', 'enrollment', 'saved', 'learning', 'waitlist']),
     );
@@ -125,6 +139,7 @@ describe('public group detail independent reads', () => {
     saved.resolve(false);
     announcement.resolve(null);
     learning.resolve({ data: {}, error: null });
+    seo.resolve({ kind: 'missing' });
     await expect(result).resolves.toBeTruthy();
   });
 
@@ -133,7 +148,7 @@ describe('public group detail independent reads', () => {
     [
       'unpublished',
       {
-        group: { id: 'group-1', name: 'Draft', status: 'draft', offering: null },
+        group: { id: GROUP_ID, name: 'Draft', status: 'draft', offering: null },
         slots: [],
         teacher: null,
         publiclyEligible: false,
@@ -147,7 +162,7 @@ describe('public group detail independent reads', () => {
       db: {},
     });
     await expect(
-      GroupDetail({ params: Promise.resolve({ locale: 'en', id: 'group-1' }) }),
+      GroupDetail({ params: Promise.resolve({ locale: 'en', id: GROUP_ID }) }),
     ).rejects.toThrow('notFound');
     expect(mocks.announcement).not.toHaveBeenCalled();
     expect(mocks.enrollment).not.toHaveBeenCalled();
