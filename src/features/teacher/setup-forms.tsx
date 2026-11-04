@@ -785,8 +785,8 @@ export function SlotFields({
 }) {
   const t = scheduleCopy(locale);
   return (
-    <div className="grid gap-3 sm:grid-cols-3">
-      <div>
+    <div className="grid min-w-0 gap-3 sm:grid-cols-3">
+      <div className="min-w-0">
         <label htmlFor={`slot-${idPrefix}-weekday`} className="block text-sm font-bold">
           {t.weekday}
         </label>
@@ -798,7 +798,7 @@ export function SlotFields({
           onChange={event => onWeekday(Number(event.target.value))}
           required
           aria-invalid={!!invalid?.weekday}
-          className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
+          className="mt-2 block w-full min-w-0 max-w-full rounded-xl border border-line bg-cream p-3"
         >
           {weekdayOptionOrder.map(value => (
             <option key={value} value={value}>
@@ -807,7 +807,7 @@ export function SlotFields({
           ))}
         </select>
       </div>
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`slot-${idPrefix}-start`} className="block text-sm font-bold">
           {t.start}
         </label>
@@ -819,10 +819,10 @@ export function SlotFields({
           onChange={event => onStart(event.target.value)}
           required
           aria-invalid={!!invalid?.start_time}
-          className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
+          className="mt-2 block w-full min-w-0 max-w-full rounded-xl border border-line bg-cream p-3"
         />
       </div>
-      <div>
+      <div className="min-w-0">
         <label htmlFor={`slot-${idPrefix}-end`} className="block text-sm font-bold">
           {t.end}
         </label>
@@ -834,7 +834,7 @@ export function SlotFields({
           onChange={event => onEnd(event.target.value)}
           required
           aria-invalid={!!invalid?.end_time}
-          className="mt-2 block w-full rounded-xl border border-line bg-cream p-3"
+          className="mt-2 block w-full min-w-0 max-w-full rounded-xl border border-line bg-cream p-3"
         />
       </div>
     </div>
@@ -864,9 +864,13 @@ function ScheduleSlotEditor({
   );
 
   return (
-    <li className="rounded-2xl border border-line bg-white p-4">
+    <li className="min-w-0 rounded-2xl border border-line bg-white p-4">
       <h3 className="mb-3 font-bold text-teal">{weekdayLabels(locale)[weekday]}</h3>
-      <form action={action} onReset={event => event.preventDefault()} className="grid gap-3">
+      <form
+        action={action}
+        onReset={event => event.preventDefault()}
+        className="grid min-w-0 gap-3"
+      >
         <input type="hidden" name="group_id" value={groupId} />
         <input type="hidden" name="slot_id" value={slot.id} />
         <SlotFields
@@ -927,7 +931,7 @@ function AddScheduleSlotForm({ locale, groupId }: { locale: Locale; groupId: str
     <form
       action={action}
       onReset={event => event.preventDefault()}
-      className="mt-5 grid gap-4 rounded-2xl bg-cream p-4"
+      className="mt-5 grid min-w-0 gap-4 rounded-2xl bg-cream p-4"
     >
       <h3 className="font-bold text-teal">{t.add}</h3>
       <input type="hidden" name="group_id" value={groupId} />
@@ -985,9 +989,13 @@ function ProposedScheduleSlotForm({
   );
   const idPrefix = `proposal-${groupId}-${index}`;
   return (
-    <li className="rounded-2xl border border-orange/40 bg-orange/5 p-4">
+    <li className="min-w-0 rounded-2xl border border-orange/40 bg-orange/5 p-4">
       <h4 className="mb-3 font-bold text-teal">{weekdayLabels(locale)[weekday]}</h4>
-      <form action={action} onReset={event => event.preventDefault()} className="grid gap-3">
+      <form
+        action={action}
+        onReset={event => event.preventDefault()}
+        className="grid min-w-0 gap-3"
+      >
         <input type="hidden" name="group_id" value={groupId} />
         <SlotFields
           idPrefix={idPrefix}
@@ -1042,7 +1050,7 @@ export function WeeklyScheduleStepForm({
     ? `&copyScheduleFrom=${encodeURIComponent(copyScheduleFrom)}`
     : '';
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       <div>
         <h2 className="text-xl font-black text-teal">{t.title}</h2>
         <p className="mt-1 text-sm text-muted">
@@ -1057,16 +1065,16 @@ export function WeeklyScheduleStepForm({
       {scheduleProposal && (
         <aside
           aria-label={t.proposal}
-          className="grid gap-3 rounded-2xl border border-orange/30 bg-orange/5 p-4"
+          className="grid min-w-0 gap-3 rounded-2xl border border-orange/30 bg-orange/5 p-4"
         >
           <div>
-            <h3 className="font-black text-teal">
+            <h3 className="break-words font-black text-teal [overflow-wrap:anywhere]">
               {t.proposal} “{scheduleProposal.sourceName}”
             </h3>
             <p className="mt-1 text-sm text-muted">{t.proposalHint}</p>
           </div>
           {scheduleProposal.slots.length ? (
-            <ul className="grid gap-3">
+            <ul className="grid min-w-0 gap-3">
               {scheduleProposal.slots.map((slot, index) => (
                 <ProposedScheduleSlotForm
                   key={`${slot.weekday}:${slot.start_time}:${index}`}
@@ -1118,7 +1126,7 @@ export function WeeklyScheduleEditor({
 }) {
   const t = scheduleCopy(locale);
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       <p className="mt-1 text-sm text-muted">{t.description}</p>
       <ScheduleSlotsEditor locale={locale} groupId={groupId} slots={slots} />
     </section>
@@ -1140,7 +1148,7 @@ function ScheduleSlotsEditor({
     FormData
   >(deleteScheduleSlot.bind(null, locale), null);
   return (
-    <section className="grid gap-4">
+    <section className="grid min-w-0 gap-4">
       {deleteState?.error && (
         <p role="alert" className="rounded-xl bg-danger-soft p-3 text-sm text-danger">
           {deleteState.error}
@@ -1156,7 +1164,7 @@ function ScheduleSlotsEditor({
         </p>
       )}
       {slots.length ? (
-        <ul className="grid gap-3">
+        <ul className="grid min-w-0 gap-3">
           {slots.map(slot => (
             <ScheduleSlotEditor
               key={slot.id}
