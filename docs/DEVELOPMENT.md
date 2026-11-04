@@ -99,6 +99,8 @@ The local `delete-account` function is required by the account-deletion browser 
 
 `E2E_SUPABASE_WORKDIR` defaults to the current directory. `E2E_PORT` defaults to `3000`; set it when another local app uses that port. The runner reads the local API URL, anon key, and database URL from `supabase status --output json`, and refuses to seed unless the app, API, and database URLs use loopback hosts. It builds Next.js with temporary process environment values, starts the production server for Playwright, and does not write `.env.local` or upload authentication state. The E2E-specific storage states and results stay under the ignored `.playwright/` directory. For a locally installed Chromium, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` to its executable.
 
+Browser CI uses the hosted Ubuntu 24.04 image's preinstalled Google Chrome with the pinned Playwright client. Its browser version follows runner-image updates rather than Playwright's bundled Chromium revision; browser protocol failures remain test failures with no download fallback or retry.
+
 Use a fresh isolated database for each run. Resetting a database erases its data; only run `supabase db reset --local` from the dedicated disposable E2E workdir. Google sign-in is disabled for the run, and all test accounts are inserted directly into the local database, so the seed does not send email.
 
 ## Verify changes
