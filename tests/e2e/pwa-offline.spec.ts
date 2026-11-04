@@ -53,6 +53,28 @@ test('offline navigation never replays private pages or caches API and RSC respo
     await expect
       .poll(() => studentPage.evaluate(() => Boolean(navigator.serviceWorker.controller)))
       .toBe(true);
+    const assetResponse = await studentPage.evaluate(async () => {
+      const response = await fetch('/brand/darsak/favicon.svg', { cache: 'reload' });
+      return {
+        status: response.status,
+        contentType: response.headers.get('content-type') ?? '',
+      };
+    });
+    expect(assetResponse.status).toBe(200);
+    expect(assetResponse.contentType).toContain('image/svg+xml');
+    await expect
+      .poll(() =>
+        studentPage.evaluate(async () => {
+          const assetUrl = new URL('/brand/darsak/favicon.svg', location.origin).href;
+          for (const name of await caches.keys()) {
+            if (!name.startsWith('darsak-pwa-static-')) continue;
+            const cache = await caches.open(name);
+            if (await cache.match(assetUrl)) return true;
+          }
+          return false;
+        }),
+      )
+      .toBe(true);
     await studentPage.goto(privatePath);
     await expect(studentPage.getByText(privateContent, { exact: true })).toBeVisible();
 
