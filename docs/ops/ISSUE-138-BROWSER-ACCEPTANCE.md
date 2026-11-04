@@ -10,19 +10,7 @@ The current suite does not prove a lapsed teacher cannot continue teaching, or a
 
 Both controls were run on 2026-11-04 against a loopback local database and a production build in Chromium, using the EN desktop project. The temporary mutations were applied to the isolated database only and were removed before rerunning the checks. The app harness refuses non-loopback targets; no shared or hosted database was used.
 
-To make the notification read persistence assertion fail, temporarily change the assignment inside `mark_notification_read` from:
-
-```sql
-read_at=coalesce(read_at,statement_timestamp())
-```
-
-to:
-
-```sql
-read_at=read_at
-```
-
-The `opening a seeded notification marks it read and clears its badge after reload` test failed as expected at its `read_at` non-null assertion. After restoring the function, the notification test passed.
+To make the notification read persistence assertion fail, the control replaced the body of `mark_notification_read` with `BEGIN RETURN; END`, preserving its UUID parameter, void return type, security-definer setting, and search path. The `opening a seeded notification marks it read and clears its badge after reload` test failed as expected at its `read_at` non-null assertion. The original function was restored and the notification test passed.
 
 To make cross-student lesson authorization fail, temporarily add a separate permissive policy:
 
