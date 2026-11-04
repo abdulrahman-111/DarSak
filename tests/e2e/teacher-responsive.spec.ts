@@ -88,7 +88,7 @@ test('teacher groups use a table on desktop and cards on mobile', async ({
     `/${locale}/teacher/groups/${groupId}`,
   );
   const fixtureRow = table.getByRole('row').filter({
-    has: table.getByRole('link', { name: groupName, exact: true }),
+    has: teacherPage.getByRole('link', { name: groupName, exact: true }),
   });
   await expect(
     fixtureRow.getByRole('link', { name: ar ? 'إدارة المجموعة ←' : 'Manage group →' }),
