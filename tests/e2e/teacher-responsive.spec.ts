@@ -24,7 +24,9 @@ test('weekly schedule editor remains usable at 320px', async ({ teacherPage }, t
   expect(rowWidths.scrollWidth).toBeLessThanOrEqual(rowWidths.clientWidth);
   const existingRow = scheduleRows.locator('li').first();
   const edit = existingRow.getByRole('link', { name: ar ? /^تعديل:/ : /^Edit:/ });
-  const remove = existingRow.getByRole('button', { name: ar ? /^حذف:/ : /^Remove:/ });
+  const remove = existingRow.getByRole('button', {
+    name: ar ? /^حذف الموعد:/ : /^Remove time:/,
+  });
   await expect(edit).toBeVisible();
   await expect(remove).toBeVisible();
   for (const action of [edit, remove]) {
@@ -85,11 +87,16 @@ test('teacher groups use a table on desktop and cards on mobile', async ({
     'href',
     `/${locale}/teacher/groups/${groupId}`,
   );
+  const fixtureRow = table.getByRole('row').filter({
+    has: table.getByRole('link', { name: groupName, exact: true }),
+  });
   await expect(
-    table.getByRole('link', { name: ar ? 'إدارة المجموعة ←' : 'Manage group →' }),
+    fixtureRow.getByRole('link', { name: ar ? 'إدارة المجموعة ←' : 'Manage group →' }),
   ).toBeVisible();
   await expect(
-    table.getByRole('button', { name: ar ? 'إلغاء / أرشفة المجموعة' : 'Cancel / archive group' }),
+    fixtureRow.getByRole('button', {
+      name: ar ? 'إلغاء / أرشفة المجموعة' : 'Cancel / archive group',
+    }),
   ).toBeVisible();
 
   await teacherPage.setViewportSize({ width: 320, height: 844 });
