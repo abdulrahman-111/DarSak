@@ -41,6 +41,7 @@ export function pageMetadata({
   description,
   fullTitle = false,
   noIndex = false,
+  imagePath,
 }: {
   locale: SeoLocale;
   path?: string;
@@ -49,9 +50,14 @@ export function pageMetadata({
   /** Use `title` as-is instead of appending the brand name. */
   fullTitle?: boolean;
   noIndex?: boolean;
+  /** Entity-specific share card route, without a leading locale segment. */
+  imagePath?: string;
 }): Metadata {
   const alternates = seoAlternates(locale, path);
-  const imageUrl = shareImage(locale).url;
+  const entityImage = imagePath
+    ? { url: `${siteUrl()}${localePath(locale, imagePath)}`, width: 1200, height: 630 }
+    : shareImage(locale);
+  const imageUrl = entityImage.url;
   const finalTitle = fullTitle ? title : seoTitle(locale, title);
   return {
     title: finalTitle,
@@ -65,7 +71,7 @@ export function pageMetadata({
       locale: openGraphLocale[locale],
       alternateLocale: openGraphLocale[locale === 'ar' ? 'en' : 'ar'],
       type: 'website',
-      images: [shareImage(locale)],
+      images: [entityImage],
     },
     twitter: { card: 'summary_large_image', title: finalTitle, description, images: [imageUrl] },
     ...(noIndex ? { robots: { index: false, follow: false } } : {}),
