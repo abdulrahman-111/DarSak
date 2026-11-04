@@ -160,12 +160,22 @@ export async function teacherGroupSetup(
   if (!groupResult.data) return { ...empty, catalogue };
 
   const group = groupResult.data;
+  const catalogueOffering = offerings.find(row => row.id === group.offering_id);
+  const catalogueSubject = catalogueOffering
+    ? subjects.find(row => row.id === catalogueOffering.subject_id)
+    : undefined;
+  const catalogueNode = catalogueOffering
+    ? nodes.find(row => row.id === catalogueOffering.node_id)
+    : undefined;
+  const hasCompleteSavedCatalogue = !!(catalogueOffering && catalogueSubject && catalogueNode);
   const [savedOfferingResult, proposalSlotsResult] = await Promise.all([
-    me.db
-      .from('offerings')
-      .select('id,owner_teacher_id,archived_at,node_id,subject_id')
-      .eq('id', group.offering_id)
-      .maybeSingle(),
+    hasCompleteSavedCatalogue
+      ? Promise.resolve({ data: catalogueOffering, error: null })
+      : me.db
+          .from('offerings')
+          .select('id,owner_teacher_id,archived_at,node_id,subject_id')
+          .eq('id', group.offering_id)
+          .maybeSingle(),
     proposalId && sourceGroupResult.data
       ? me.db
           .from('group_schedule_slots')
@@ -181,18 +191,23 @@ export async function teacherGroupSetup(
   if (savedOffering.owner_teacher_id !== null && savedOffering.owner_teacher_id !== me.id)
     return { ...empty, error: errorCopy(locale) };
 
-  const [savedSubjectResult, savedNodeResult] = await Promise.all([
-    me.db
-      .from('subjects')
-      .select('id,owner_teacher_id,archived_at,name_ar,name_en')
-      .eq('id', savedOffering.subject_id)
-      .maybeSingle(),
-    me.db
-      .from('education_nodes')
-      .select('id,owner_teacher_id,archived_at,parent_id,kind,name_ar,name_en')
-      .eq('id', savedOffering.node_id)
-      .maybeSingle(),
-  ]);
+  const [savedSubjectResult, savedNodeResult] = hasCompleteSavedCatalogue
+    ? [
+        { data: catalogueSubject, error: null },
+        { data: catalogueNode, error: null },
+      ]
+    : await Promise.all([
+        me.db
+          .from('subjects')
+          .select('id,owner_teacher_id,archived_at,name_ar,name_en')
+          .eq('id', savedOffering.subject_id)
+          .maybeSingle(),
+        me.db
+          .from('education_nodes')
+          .select('id,owner_teacher_id,archived_at,parent_id,kind,name_ar,name_en')
+          .eq('id', savedOffering.node_id)
+          .maybeSingle(),
+      ]);
   if (
     savedSubjectResult.error ||
     savedNodeResult.error ||
