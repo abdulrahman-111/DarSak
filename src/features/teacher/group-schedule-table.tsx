@@ -226,82 +226,126 @@ export function GroupScheduleTable({
         </p>
       )}
       {slots.length ? (
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-start text-sm">
-            <caption className="sr-only">{`${t.title}. ${t.timezone}`}</caption>
-            <thead>
-              <tr className="border-b border-line text-start text-xs font-bold uppercase tracking-wide text-muted">
-                <th scope="col" className="py-2 pe-3 text-start font-bold">
-                  {c.day}
-                </th>
-                <th scope="col" className="py-2 pe-3 text-start font-bold">
-                  {c.time}
-                </th>
-                <th scope="col" className="hidden py-2 pe-3 text-start font-bold md:table-cell">
-                  {c.next}
-                </th>
-                {!readOnly && (
-                  <th scope="col" className="py-2 text-end font-bold">
-                    <span className="sr-only">{c.actions}</span>
+        <>
+          <div className="hidden overflow-x-auto sm:block">
+            <table className="w-full border-collapse text-start text-sm">
+              <caption className="sr-only">{`${t.title}. ${t.timezone}`}</caption>
+              <thead>
+                <tr className="border-b border-line text-start text-xs font-bold uppercase tracking-wide text-muted">
+                  <th scope="col" className="py-2 pe-3 text-start font-bold">
+                    {c.day}
                   </th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {slots.map(slot =>
-                editingSlot?.id === slot.id ? (
-                  <tr key={slot.id} className="border-b border-line">
-                    <td colSpan={readOnly ? 3 : 4} className="py-3">
-                      <SlotEditor
-                        locale={locale}
-                        groupId={groupId}
-                        slot={slot}
-                        closeHref={closeHref}
-                        onSaved={text => setNotice({ text, id: Date.now() })}
-                      />
-                    </td>
-                  </tr>
-                ) : (
-                  <tr key={slot.id} className="border-b border-line align-middle">
-                    <th scope="row" className="py-2 pe-3 text-start font-bold text-teal">
-                      {day(slot.weekday)}
-                      <span className="mt-0.5 block text-xs font-normal text-muted md:hidden">
-                        {slot.next ?? c.none}
-                      </span>
+                  <th scope="col" className="py-2 pe-3 text-start font-bold">
+                    {c.time}
+                  </th>
+                  <th scope="col" className="hidden py-2 pe-3 text-start font-bold md:table-cell">
+                    {c.next}
+                  </th>
+                  {!readOnly && (
+                    <th scope="col" className="py-2 text-end font-bold">
+                      <span className="sr-only">{c.actions}</span>
                     </th>
-                    <td className="py-2 pe-3">{timeRange(slot)}</td>
-                    <td className="hidden py-2 pe-3 text-muted md:table-cell">
-                      {slot.next ?? c.none}
-                    </td>
-                    {!readOnly && (
-                      <td className="py-2 text-end">
-                        <div className="flex flex-wrap justify-end gap-1">
-                          <Link
-                            href={hrefFor(slot.id)}
-                            aria-label={`${c.edit}: ${day(slot.weekday)} ${slot.start_time.slice(0, 5)}`}
-                            className={`${btn} text-teal underline`}
-                          >
-                            {c.edit}
-                          </Link>
-                          <form action={deleteAction} onReset={event => event.preventDefault()}>
-                            <input type="hidden" name="group_id" value={groupId} />
-                            <input type="hidden" name="slot_id" value={slot.id} />
-                            <RemoveButton
-                              label={`${t.remove}: ${day(slot.weekday)} ${slot.start_time.slice(0, 5)}`}
-                              idle={ar ? 'حذف' : 'Remove'}
-                              busy={t.removing}
-                              otherPending={deletePending}
-                            />
-                          </form>
-                        </div>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {slots.map(slot =>
+                  editingSlot?.id === slot.id ? (
+                    <tr key={slot.id} className="border-b border-line">
+                      <td colSpan={readOnly ? 3 : 4} className="py-3">
+                        <SlotEditor
+                          locale={locale}
+                          groupId={groupId}
+                          slot={slot}
+                          closeHref={closeHref}
+                          onSaved={text => setNotice({ text, id: Date.now() })}
+                        />
                       </td>
+                    </tr>
+                  ) : (
+                    <tr key={slot.id} className="border-b border-line align-middle">
+                      <th scope="row" className="py-2 pe-3 text-start font-bold text-teal">
+                        {day(slot.weekday)}
+                        <span className="mt-0.5 block text-xs font-normal text-muted md:hidden">
+                          {slot.next ?? c.none}
+                        </span>
+                      </th>
+                      <td className="py-2 pe-3">{timeRange(slot)}</td>
+                      <td className="hidden py-2 pe-3 text-muted md:table-cell">
+                        {slot.next ?? c.none}
+                      </td>
+                      {!readOnly && (
+                        <td className="py-2 text-end">
+                          <div className="flex flex-wrap justify-end gap-1">
+                            <Link
+                              href={hrefFor(slot.id)}
+                              aria-label={`${c.edit}: ${day(slot.weekday)} ${slot.start_time.slice(0, 5)}`}
+                              className={`${btn} text-teal underline`}
+                            >
+                              {c.edit}
+                            </Link>
+                            <form action={deleteAction} onReset={event => event.preventDefault()}>
+                              <input type="hidden" name="group_id" value={groupId} />
+                              <input type="hidden" name="slot_id" value={slot.id} />
+                              <RemoveButton
+                                label={`${t.remove}: ${day(slot.weekday)} ${slot.start_time.slice(0, 5)}`}
+                                idle={ar ? 'حذف' : 'Remove'}
+                                busy={t.removing}
+                                otherPending={deletePending}
+                              />
+                            </form>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  ),
+                )}
+              </tbody>
+            </table>
+          </div>
+          <ul className="grid min-w-0 gap-3 sm:hidden">
+            {slots.map(slot => (
+              <li key={slot.id} className="min-w-0 rounded-xl border border-line bg-cream p-3">
+                {editingSlot?.id === slot.id ? (
+                  <SlotEditor
+                    locale={locale}
+                    groupId={groupId}
+                    slot={slot}
+                    closeHref={closeHref}
+                    onSaved={text => setNotice({ text, id: Date.now() })}
+                  />
+                ) : (
+                  <>
+                    <h3 className="font-bold text-teal">{day(slot.weekday)}</h3>
+                    <p className="mt-1 text-sm">{timeRange(slot)}</p>
+                    <p className="mt-1 text-xs text-muted">{slot.next ?? c.none}</p>
+                    {!readOnly && (
+                      <div className="mt-3 flex flex-wrap gap-2 border-t border-line pt-3">
+                        <Link
+                          href={hrefFor(slot.id)}
+                          aria-label={`${c.edit}: ${day(slot.weekday)} ${slot.start_time.slice(0, 5)}`}
+                          className={`${btn} text-teal underline`}
+                        >
+                          {c.edit}
+                        </Link>
+                        <form action={deleteAction} onReset={event => event.preventDefault()}>
+                          <input type="hidden" name="group_id" value={groupId} />
+                          <input type="hidden" name="slot_id" value={slot.id} />
+                          <RemoveButton
+                            label={`${t.remove}: ${day(slot.weekday)} ${slot.start_time.slice(0, 5)}`}
+                            idle={ar ? 'حذف' : 'Remove'}
+                            busy={t.removing}
+                            otherPending={deletePending}
+                          />
+                        </form>
+                      </div>
                     )}
-                  </tr>
-                ),
-              )}
-            </tbody>
-          </table>
-        </div>
+                  </>
+                )}
+              </li>
+            ))}
+          </ul>
+        </>
       ) : (
         <p className="rounded-xl bg-cream p-4 text-sm text-muted">{t.empty}</p>
       )}

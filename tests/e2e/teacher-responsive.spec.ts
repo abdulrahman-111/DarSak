@@ -15,6 +15,30 @@ test('weekly schedule editor remains usable at 320px', async ({ teacherPage }, t
     .poll(() => teacherPage.evaluate(() => document.documentElement.scrollWidth))
     .toBeLessThanOrEqual(320);
 
+  const scheduleRows = teacherPage.locator('#schedule ul').first();
+  await expect(scheduleRows).toBeVisible();
+  const rowWidths = await scheduleRows.evaluate(element => ({
+    scrollWidth: element.scrollWidth,
+    clientWidth: element.clientWidth,
+  }));
+  expect(rowWidths.scrollWidth).toBeLessThanOrEqual(rowWidths.clientWidth);
+  const existingRow = scheduleRows.locator('li').first();
+  const edit = existingRow.getByRole('link', { name: ar ? /^تعديل:/ : /^Edit:/ });
+  const remove = existingRow.getByRole('button', { name: ar ? /^حذف:/ : /^Remove:/ });
+  await expect(edit).toBeVisible();
+  await expect(remove).toBeVisible();
+  for (const action of [edit, remove]) {
+    const bounds = await action.boundingBox();
+    expect(bounds).not.toBeNull();
+    expect(bounds!.x).toBeGreaterThanOrEqual(0);
+    expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(320);
+  }
+  await edit.click();
+  await expect(teacherPage.getByLabel(ar ? 'وقت البداية' : 'Start time')).toBeVisible();
+  await expect
+    .poll(() => teacherPage.evaluate(() => document.documentElement.scrollWidth))
+    .toBeLessThanOrEqual(320);
+
   await teacherPage.getByRole('link', { name: ar ? /إضافة موعد/ : /Add time/ }).click();
   const weekday = teacherPage.getByLabel(ar ? 'اليوم' : 'Weekday');
   const start = teacherPage.getByLabel(ar ? 'وقت البداية' : 'Start time');
