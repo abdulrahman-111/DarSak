@@ -1,6 +1,15 @@
 {
   "brand": "DarSak",
   "tagline": "Find the right teacher. Learn with purpose.",
+  "pwa": {
+    "installLabel": "Install DarSak",
+    "preparing": "Preparing offline access…",
+    "installed": "DarSak is ready to install or open from your home screen.",
+    "dismissed": "You can install DarSak later from your browser menu.",
+    "iosInstructions": "In Safari, tap Share, then Add to Home Screen.",
+    "browserInstructions": "Open your browser menu and choose Install app or Add to Home Screen.",
+    "error": "Offline access could not be prepared. Check your connection and try again."
+  },
   "home": "Home",
   "discover": "Find teachers & groups",
   "login": "Log in",

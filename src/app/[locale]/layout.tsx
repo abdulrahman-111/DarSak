@@ -20,7 +20,11 @@ export async function generateMetadata({
     metadataBase: new URL(siteUrl()),
     title: t.brand,
     description: t.tagline,
-    icons: { icon: '/brand/darsak/favicon.svg' },
+    manifest: `/${ensureLocale(raw)}/manifest.webmanifest`,
+    icons: {
+      icon: '/brand/darsak/favicon.svg',
+      apple: [{ url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+    },
   };
 }
 
