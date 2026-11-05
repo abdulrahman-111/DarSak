@@ -32,6 +32,30 @@ export function groupJsonLd(locale: SeoLocale, group: GroupSeo) {
   };
 }
 
+const brandName: Record<SeoLocale, string> = { ar: 'درسك', en: 'DarSak' };
+
+export function organizationJsonLd(locale: SeoLocale) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    '@id': `${siteUrl()}/#organization`,
+    name: brandName[locale],
+    url: siteUrl(),
+    logo: `${siteUrl()}/brand/darsak/english-header-lockup.svg`,
+  };
+}
+
+export function websiteJsonLd(locale: SeoLocale) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    '@id': `${siteUrl()}${localePath(locale)}/#website`,
+    name: brandName[locale],
+    url: `${siteUrl()}${localePath(locale)}`,
+    inLanguage: locale,
+  };
+}
+
 /** Safe for a JSON-LD script text node, including script-breaking and JS separators. */
 export function safeJsonLd(value: unknown) {
   return JSON.stringify(value)

@@ -1,11 +1,25 @@
 import { test, expect } from './support/fixtures';
 import { fixtureData } from './support/data';
 
-test('public teacher and group pages expose JSON-LD and valid share cards', async ({
+test('landing and public entity pages expose localized JSON-LD and valid share cards', async ({
   outsiderPage,
 }, testInfo) => {
   const locale = testInfo.project.name.startsWith('ar-') ? 'ar' : 'en';
   const { ids } = fixtureData(testInfo.project.name);
+  await outsiderPage.goto(`/${locale}`);
+  await expect(outsiderPage.locator('html')).toHaveAttribute('lang', locale);
+  await expect(outsiderPage.locator('html')).toHaveAttribute(
+    'dir',
+    locale === 'ar' ? 'rtl' : 'ltr',
+  );
+  const landingGraph = JSON.parse(
+    (await outsiderPage.locator('script[type="application/ld+json"]').textContent()) ?? 'null',
+  );
+  expect(landingGraph['@graph'].map((entity: { '@type': string }) => entity['@type'])).toEqual([
+    'Organization',
+    'WebSite',
+  ]);
+  expect(landingGraph['@graph'][1].url).toMatch(new RegExp(`/${locale}$`));
   for (const [path, id, expectedType] of [
     [`/${locale}/teachers/${ids.teacherId}`, ids.teacherId, 'Person'],
     [`/${locale}/groups/${ids.groupId}`, ids.groupId, 'Course'],
@@ -47,6 +61,35 @@ test('public teacher and group pages expose JSON-LD and valid share cards', asyn
     );
     expect(uppercaseDimensions.getUint32(16)).toBe(1200);
     expect(uppercaseDimensions.getUint32(20)).toBe(630);
+
+    const typePath = expectedType === 'Person' ? 'teachers' : 'groups';
+    await outsiderPage.goto(`/${locale}/${typePath}/${id.toUpperCase()}`);
+    const normalizedPath = `/${locale}/${typePath}/${id}`;
+    await expect(outsiderPage.locator('link[rel="canonical"]')).toHaveAttribute(
+      'href',
+      new RegExp(`${normalizedPath}$`),
+    );
+    for (const alternateLocale of ['ar', 'en'] as const) {
+      await expect(
+        outsiderPage.locator(`link[rel="alternate"][hreflang="${alternateLocale}"]`),
+      ).toHaveAttribute('href', new RegExp(`/${alternateLocale}/${typePath}/${id}$`));
+    }
+    await expect(outsiderPage.locator('meta[property="og:url"]')).toHaveAttribute(
+      'content',
+      new RegExp(`${normalizedPath}$`),
+    );
+    await expect(outsiderPage.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      new RegExp(`${normalizedPath}/opengraph-image$`),
+    );
+    await expect(outsiderPage.locator('meta[name="twitter:image"]')).toHaveAttribute(
+      'content',
+      new RegExp(`${normalizedPath}/opengraph-image$`),
+    );
+    const normalizedJsonLd = JSON.parse(
+      (await outsiderPage.locator('script[type="application/ld+json"]').textContent()) ?? 'null',
+    );
+    expect(normalizedJsonLd.url).toContain(normalizedPath);
   }
 
   for (const entity of ['teachers', 'groups'] as const) {

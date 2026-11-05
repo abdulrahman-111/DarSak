@@ -86,3 +86,25 @@ export function snippet(text: string | null | undefined, max = 160) {
   const space = cut.lastIndexOf(' ');
   return `${(space > max * 0.6 ? cut.slice(0, space) : cut).trimEnd()}…`;
 }
+
+export function teacherFallbackDescription(
+  locale: SeoLocale,
+  teacher: { name: string; headline: string | null; subjects: string[] },
+) {
+  const details = [teacher.name, teacher.headline].filter(Boolean).join(' — ');
+  if (locale === 'ar') {
+    const subjects = teacher.subjects.join('، ');
+    return `${details} يدرّس${subjects ? ` ${subjects}` : ''} على درسك. تصفّح مجموعاته واطلب مقعدًا.`;
+  }
+  const subjects = teacher.subjects.join(', ');
+  return `${details} teaches${subjects ? ` ${subjects}` : ''} on DarSak. Browse their groups and request a seat.`;
+}
+
+export function groupFallbackDescription(
+  locale: SeoLocale,
+  group: { name: string; subject: string },
+) {
+  return locale === 'ar'
+    ? `${group.name}: مجموعة ${group.subject} على درسك.`
+    : `${group.name}: ${group.subject} group on DarSak.`;
+}

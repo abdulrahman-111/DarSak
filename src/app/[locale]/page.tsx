@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { ArrowLeft, ArrowRight, CheckCircle2, ChevronDown } from 'lucide-react';
 import { ensureLocale, getDictionary } from '@/i18n/config';
 import { pageMetadata } from '@/features/seo/metadata';
+import { organizationJsonLd, safeJsonLd, websiteJsonLd } from '@/features/seo/structured-data';
 import { seoCopy } from '@/features/seo/copy';
 import { landingGroups } from '@/features/platform/data';
 import { localeStaticParams } from '@/i18n/static-params';
@@ -58,6 +59,15 @@ export default async function Home({ params }: { params: Promise<{ locale: 'ar' 
 
   return (
     <div className="bg-cream">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: safeJsonLd({
+            '@context': 'https://schema.org',
+            '@graph': [organizationJsonLd(locale), websiteJsonLd(locale)],
+          }),
+        }}
+      />
       <section className="container grid gap-10 py-10 md:grid-cols-[1.05fr_.95fr] md:items-center md:py-20 lg:gap-16">
         <div className="landing-intro">
           <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.14em] text-teal">

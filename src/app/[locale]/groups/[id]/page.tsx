@@ -16,7 +16,7 @@ import {
   Users,
 } from 'lucide-react';
 import { getDictionary } from '@/i18n/config';
-import { pageMetadata, snippet } from '@/features/seo/metadata';
+import { groupFallbackDescription, pageMetadata, snippet } from '@/features/seo/metadata';
 import { publicGroupSeo } from '@/features/seo/public-entity-data';
 import { groupJsonLd, safeJsonLd } from '@/features/seo/structured-data';
 import { publicCopy } from '@/components/public/copy';
@@ -59,13 +59,15 @@ export async function generateMetadata({
   const result = await publicGroupSeo(locale, id);
   if (result.kind !== 'found') return fallback;
   const group = result.data;
-  const generated = ar ? `مجموعة ${group.subject} على درسك.` : `${group.subject} group on DarSak.`;
+  const canonicalId = group.id;
   return pageMetadata({
     locale,
-    path: `/groups/${id}`,
+    path: `/groups/${canonicalId}`,
     title: `${group.name} — ${group.subject}`,
-    description: snippet(group.description) || generated,
-    imagePath: `/groups/${id}/opengraph-image`,
+    description:
+      snippet(group.description) ||
+      groupFallbackDescription(locale, { name: group.name, subject: group.subject }),
+    imagePath: `/groups/${canonicalId}/opengraph-image`,
   });
 }
 
