@@ -71,7 +71,15 @@ function sqlLiteral(value: string) {
 function runLocalSql(databaseUrl: string, sql: string) {
   const result = spawnSync(
     'psql',
-    [databaseUrl, '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--tuples-only', '--no-align'],
+    [
+      databaseUrl,
+      '--no-psqlrc',
+      '--set',
+      'ON_ERROR_STOP=1',
+      '--quiet',
+      '--tuples-only',
+      '--no-align',
+    ],
     { input: sql, encoding: 'utf8', env: process.env },
   );
   if (result.error || result.status !== 0)
@@ -86,6 +94,18 @@ export async function insertLiveNotification(projectName: string): Promise<strin
   const eventKey = `e2e:live-notification:${randomUUID()}`;
   const title = `E2E live notification ${id}`;
   const sql = `
+begin;
+do $$ begin
+  perform 1 from auth.users u
+    join public.profiles p on p.id = u.id
+    where u.id = ${sqlLiteral(actor.id)}
+      and u.email = ${sqlLiteral(actor.email)}
+      and p.role = 'student'
+    for share of u, p;
+  if not found then
+    raise exception 'Live notification fixture identity mismatch' using errcode = '42501';
+  end if;
+end $$;
 with inserted as (
   insert into public.user_notifications (id, recipient_id, kind, event_key, payload)
   values (
@@ -95,6 +115,7 @@ with inserted as (
   returning id
 )
 select id from inserted;
+commit;
 `;
   if (runLocalSql(databaseUrl, sql) !== id)
     throw new Error('The live notification insert did not affect exactly one expected row.');
@@ -110,11 +131,24 @@ export async function deleteLiveNotification(projectName: string, id: string): P
     throw new Error('Refusing to delete a notification that this helper did not insert.');
   const deleted = runLocalSql(
     databaseUrl,
-    `with deleted as (
+    `begin;
+do $$ begin
+  perform 1 from auth.users u
+    join public.profiles p on p.id = u.id
+    where u.id = ${sqlLiteral(actor.id)}
+      and u.email = ${sqlLiteral(actor.email)}
+      and p.role = 'student'
+    for share of u, p;
+  if not found then
+    raise exception 'Live notification fixture identity mismatch' using errcode = '42501';
+  end if;
+end $$;
+with deleted as (
   delete from public.user_notifications where id = ${sqlLiteral(id)} and recipient_id = ${sqlLiteral(actor.id)}
   returning 1
 )
-select count(*) from deleted;`,
+select count(*) from deleted;
+commit;`,
   );
   if (deleted !== '1')
     throw new Error('The targeted live notification cleanup did not delete one row.');

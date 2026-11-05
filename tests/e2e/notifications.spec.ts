@@ -1,5 +1,6 @@
 import { test, expect, fixtureData } from './support/fixtures';
 import { deleteLiveNotification, insertLiveNotification } from './support/local-db';
+import { isPostgresChangesReadyFrame } from './support/realtime-readiness';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
@@ -23,7 +24,6 @@ async function tokenFor(
 }
 
 function waitForRealtimeAck(page: import('@playwright/test').Page, userId: string) {
-  const expectedTopic = `realtime:user-notifications:${userId}`;
   let dispose = () => undefined;
   const promise = new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(
@@ -32,28 +32,7 @@ function waitForRealtimeAck(page: import('@playwright/test').Page, userId: strin
     );
     const onWebSocket = (socket: import('@playwright/test').WebSocket) => {
       socket.on('framereceived', ({ payload }) => {
-        let frame: unknown;
-        try {
-          frame = JSON.parse(String(payload));
-        } catch {
-          return;
-        }
-        let topic: unknown;
-        let event: unknown;
-        let body: unknown;
-        if (Array.isArray(frame)) {
-          [, , topic, event, body] = frame;
-        } else if (frame && typeof frame === 'object') {
-          ({ topic, event, payload: body } = frame as Record<string, unknown>);
-        }
-        if (
-          topic !== expectedTopic ||
-          event !== 'phx_reply' ||
-          !body ||
-          typeof body !== 'object' ||
-          (body as Record<string, unknown>).status !== 'ok'
-        )
-          return;
+        if (!isPostgresChangesReadyFrame(String(payload), userId)) return;
         clearTimeout(timeout);
         page.off('websocket', onWebSocket);
         resolve();
