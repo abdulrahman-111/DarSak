@@ -103,8 +103,11 @@ select set_config('request.jwt.claim.sub','99500000-0000-4000-8000-000000000003'
 select throws_ok($$select public.teacher_catalogue_choices()$$,'42501',null,'students are denied');
 select set_config('request.jwt.claim.sub','99500000-0000-4000-8000-000000000005',true);
 select throws_ok($$select public.teacher_catalogue_choices()$$,'42501',null,'suspended teachers are denied');
+select set_config('request.jwt.claims','{"sub":"99500000-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}',true);
 select set_config('request.jwt.claim.sub','99500000-0000-4000-8000-000000000004',true);
 select throws_ok($$select public.teacher_catalogue_choices()$$,'42501',null,'admins are denied');
+select set_config('request.jwt.claims','{}',true);
+set local request.jwt.claims = '{}';
 reset role;
 
 select * from finish();

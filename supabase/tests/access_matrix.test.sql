@@ -222,6 +222,7 @@ select is(pg_temp.matrix_row_ids('public.assignment_submissions'),array[]::text[
 select is(pg_temp.matrix_row_ids('public.booking_slots'),array[]::text[],'pending teacher cannot read booking slots');
 select is(pg_temp.matrix_row_ids('public.booking_requests'),array[]::text[],'pending teacher cannot read booking requests');
 
+select set_config('request.jwt.claims','{"sub":"15500000-0000-4000-8000-000000000007","role":"authenticated","aal":"aal2"}',true);
 select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000007',true);
 select is(pg_temp.matrix_row_ids('public.profiles'),array['15500000-0000-4000-8000-000000000001', '15500000-0000-4000-8000-000000000002', '15500000-0000-4000-8000-000000000003', '15500000-0000-4000-8000-000000000004', '15500000-0000-4000-8000-000000000005', '15500000-0000-4000-8000-000000000006', '15500000-0000-4000-8000-000000000007']::text[],'admin reads all profiles');
 select is(pg_temp.matrix_row_ids('public.groups'),array['15540000-0000-4000-8000-000000000001', '15540000-0000-4000-8000-000000000002', '15540000-0000-4000-8000-000000000003']::text[],'admin reads all groups');
@@ -234,6 +235,8 @@ select is(pg_temp.matrix_row_ids('public.group_assignments'),array[]::text[],'ad
 select is(pg_temp.matrix_row_ids('public.assignment_submissions'),array[]::text[],'admin cannot read student submissions through row access');
 select is(pg_temp.matrix_row_ids('public.booking_slots'),array[]::text[],'admin cannot read private booking slots through row access');
 select is(pg_temp.matrix_row_ids('public.booking_requests'),array[]::text[],'admin cannot read private booking requests through row access');
+select set_config('request.jwt.claims','{}',true);
+set local request.jwt.claims = '{}';
 reset role;
 
 -- Important direct writes remain closed; supported changes go through checked RPCs.

@@ -80,6 +80,7 @@ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 do $$
 declare v_response jsonb; v_updated timestamptz;
@@ -113,6 +114,7 @@ reset role;
 -- An existing pending review cannot approve a new draft through either the
 -- canonical admin RPC or the compatibility boolean path.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000003';
 do $$
 declare v_request uuid;
@@ -125,8 +127,10 @@ begin
     if sqlerrm='admin approved an unsubmitted application' then raise; end if;
   end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 do $$
 begin
@@ -156,6 +160,7 @@ end $$;
 
 -- Legacy CV validation remains scoped to its owner; new binary uploads are blocked.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 do $$
 begin
@@ -182,6 +187,7 @@ update public.teacher_profiles set headline='Experienced language tutor',avatar_
 insert into public.teacher_specializations(teacher_id,offering_id)
 select '7c000000-0000-4000-8000-000000000001',id from public.offerings order by id limit 1;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 select public.save_teacher_profile_details(
  '{"about":{"ar":"هذه نبذة تعريفية طويلة ومفصلة عن خبرة المعلم وطريقته في مساعدة الطلاب على التعلم بثقة ووضوح.","en":"This is a detailed teacher biography with enough information about their work and the way they help learners build confidence."},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[{"id":"qualification-1","title":{"ar":"شهادة تعليم","en":"Teaching certificate"},"organization":{"ar":"جامعة القاهرة","en":"Cairo University"},"description":{"ar":"","en":""},"start_year":null,"end_year":2020,"current":false}],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":"online","layout":"classic","palette":"teal","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,0
@@ -225,12 +231,14 @@ begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000003';
 do $$
 begin
   if not public.can_read_teacher_application_cv('7c000000-0000-4000-8000-000000000001/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf') then raise exception 'active admin cannot read submitted CV'; end if;
   if (select count(*) from storage.objects where bucket_id='teacher-applications' and name='7c000000-0000-4000-8000-000000000001/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.pdf')<>1 then raise exception 'active admin cannot download submitted CV'; end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 do $$
 begin
@@ -244,6 +252,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000002';
 do $$
 begin
@@ -254,6 +263,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000003';
 do $$
 declare v_request uuid;
@@ -270,9 +280,11 @@ begin
     raise exception 'stale change request accepted';
   exception when sqlstate '40001' then null; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';
 do $$
 declare v_updated timestamptz; v_response jsonb;
@@ -290,6 +302,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000003';
 do $$
 declare v_request uuid;
@@ -301,6 +314,7 @@ begin
     raise exception 'approval did not sync to teacher and application';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

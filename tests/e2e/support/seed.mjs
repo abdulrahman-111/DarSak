@@ -129,12 +129,14 @@ select gen_random_uuid(),id,id::text,jsonb_build_object('sub',id::text,'email',e
 set local role service_role;
 update public.profiles set role='admin' where id=${sqlLiteral(admin.id)};
 select set_config('request.jwt.claim.sub',${sqlLiteral(admin.id)},true);
+select set_config('request.jwt.claims',${sqlLiteral(JSON.stringify({ sub: admin.id, role: 'authenticated', aal: 'aal2' }))},true);
 reset role;
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(teacher.id)} where teacher_id=${sqlLiteral(teacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(teacher.id)};
 update public.teacher_profiles set headline='Synthetic E2E teacher' where id=${sqlLiteral(teacher.id)};
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(accessTeacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(accessTeacher.id)};
+select set_config('request.jwt.claims','{}',true);
 update public.teacher_profiles set headline='Synthetic E2E access teacher' where id=${sqlLiteral(accessTeacher.id)};
 update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)});
 insert into public.teacher_specializations(teacher_id,offering_id)

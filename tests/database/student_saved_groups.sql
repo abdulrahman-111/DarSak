@@ -29,10 +29,12 @@ select '7d100000-0000-4000-8000-000000000001','7d000000-0000-4000-8000-000000000
 insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time)
 values('7d200000-0000-4000-8000-000000000001','7d100000-0000-4000-8000-000000000001',1,'09:00','10:00');
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000001';
 select public.publish_group('7d100000-0000-4000-8000-000000000001',null,null);
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000002';
 do $$ declare v_rows record; begin
   perform public.save_student_group('7d100000-0000-4000-8000-000000000001');
@@ -44,6 +46,7 @@ do $$ declare v_rows record; begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000003';
 do $$ begin
   if (select count(*) from public.student_saved_groups)<>0 then raise exception 'foreign student read another shortlist'; end if;
@@ -51,19 +54,23 @@ do $$ begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000001';
 do $$ begin
   begin perform public.save_student_group('7d100000-0000-4000-8000-000000000001'); raise exception 'teacher saved a student group'; exception when others then if sqlerrm='teacher saved a student group' then raise; end if; end;
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000005';
 do $$ begin
   begin perform public.save_student_group('7d100000-0000-4000-8000-000000000001'); raise exception 'admin saved a student group'; exception when others then if sqlerrm='admin saved a student group' then raise; end if; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 update public.groups set status='archived' where id='7d100000-0000-4000-8000-000000000001';
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000002';
 do $$ declare v_rows record; begin
   select * into v_rows from public.student_saved_group_page(0,20);
@@ -76,6 +83,7 @@ set local session_replication_role=replica;
 update public.profiles set status='suspended' where id='7d000000-0000-4000-8000-000000000002';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000002';
 do $$ begin
   if (select count(*) from public.student_saved_groups)<>0 then raise exception 'suspended student retained direct shortlist access'; end if;

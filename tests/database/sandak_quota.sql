@@ -48,6 +48,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000007","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000007';
 do $$ begin
   if public.sanad_reserve_request() is not null then raise exception 'suspended user reserved'; end if;
@@ -57,12 +58,15 @@ do $$ begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000008","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000008';
 do $$ begin
   if public.sanad_reserve_request() is not null then raise exception 'admin reserved'; end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$ begin
   if public.sanad_reserve_request() is not null then raise exception 'missing auth.uid reserved'; end if;
@@ -71,6 +75,7 @@ reset role;
 
 -- Any active student or teacher is eligible without an allowlist.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000006","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000006';
 do $$ declare a uuid; begin
   a:=public.sanad_reserve_request();
@@ -80,6 +85,7 @@ end $$;
 reset role;
 
 -- Lease ownership, single in-flight request per user, expiry, and no refund.
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000001';
 do $$ declare a uuid; b uuid; n integer; begin
   a:=public.sanad_reserve_request();
@@ -104,6 +110,7 @@ end $$;
 -- isolates the daily assertion from the minute cap.
 delete from dars_private.sandak_user_daily_usage;
 delete from dars_private.sandak_global_daily_usage; delete from dars_private.sandak_request_leases;
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000002';
 do $$ declare i int; a uuid; begin
   for i in 1..10 loop
@@ -112,6 +119,7 @@ do $$ declare i int; a uuid; begin
   end loop;
   if public.sanad_reserve_request() is not null then raise exception '11th minute request accepted'; end if;
 end $$;
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000001';
 do $$ declare i int; a uuid; d date:=(clock_timestamp() at time zone 'UTC')::date; begin
   for i in 1..60 loop
@@ -126,6 +134,7 @@ end $$;
 -- Lower explicit limits remain effective; invalid non-positive limits deny.
 delete from dars_private.sandak_user_daily_usage; delete from dars_private.sandak_global_daily_usage;
 delete from dars_private.sandak_request_leases;
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000003';
 do $$ declare a uuid; begin
   a:=public.sanad_reserve_request(5,2,100,5); perform public.sanad_release_request(a);
@@ -151,6 +160,7 @@ delete from dars_private.sandak_request_leases; delete from dars_private.sandak_
 delete from dars_private.sandak_user_daily_usage;
 insert into dars_private.sandak_global_daily_usage(utc_day,accepted_requests)
 values ((clock_timestamp() at time zone 'UTC')::date,2999);
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000005","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000005';
 do $$ declare a uuid; begin
  a:=public.sanad_reserve_request(); if a is null then raise exception 'global 3000th request denied'; end if;
@@ -169,6 +179,7 @@ insert into dars_private.sandak_global_daily_usage(utc_day,accepted_requests)
 values ((clock_timestamp() at time zone 'UTC')::date-1,3000);
 insert into dars_private.sandak_request_leases(user_id,expires_at)
 values ('a8200000-0000-4000-8000-000000000004',clock_timestamp()+interval '45 seconds');
+set local request.jwt.claims = '{"sub":"a8200000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='a8200000-0000-4000-8000-000000000004';
 do $$ declare a uuid; d date:=(clock_timestamp() at time zone 'UTC')::date; begin
   if public.sanad_reserve_request() is not null then raise exception 'active lease did not survive UTC day rollover'; end if;

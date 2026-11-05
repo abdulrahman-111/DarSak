@@ -104,11 +104,14 @@ reset role;
 
 -- Admin: writes the shared catalogue.
 set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"99300000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}',true);
 select set_config('request.jwt.claim.sub','99300000-0000-4000-8000-000000000003',true);
 select lives_ok($$insert into public.subjects(id,name_ar,name_en,slug) values('99390000-0000-4000-8000-000000000001','فيزياء','Hardening physics','hardening-physics')$$,'admin inserts a shared subject');
 select lives_ok($$update public.subjects set name_en='Hardening physics 2' where id='99390000-0000-4000-8000-000000000001'$$,'admin updates a shared subject');
 select lives_ok($$delete from public.subjects where id='99390000-0000-4000-8000-000000000001'$$,'admin deletes a shared subject');
 select lives_ok($$insert into public.education_nodes(kind,name_ar,name_en,slug) values('system','نظام','Hardening system','hardening-system')$$,'admin inserts a shared education node');
+select set_config('request.jwt.claims','{}',true);
+set local request.jwt.claims = '{}';
 reset role;
 
 select * from finish();
