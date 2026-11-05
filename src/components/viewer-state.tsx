@@ -11,6 +11,7 @@ let verifiedSnapshot: ViewerState | null = null;
 let workspaceHint: { token: number; value: WorkspaceViewerHint } | null = null;
 let nextHintToken = 0;
 let lastFetchAt = 0;
+let lastFetchFailed = false;
 let sequence = 0;
 const listeners = new Set<() => void>();
 
@@ -71,7 +72,13 @@ export function registerWorkspaceViewerHint(value: WorkspaceViewerHint) {
     sequence += 1;
     workspaceHint = null;
     verifiedSnapshot = null;
+    lastFetchFailed = false;
     publish(ANONYMOUS_VIEWER);
+    return () => undefined;
+  }
+  if (verifiedSnapshot && !verifiedSnapshot.signedIn) {
+    workspaceHint = null;
+    publish(verifiedSnapshot);
     return () => undefined;
   }
   const token = ++nextHintToken;
@@ -86,7 +93,7 @@ export function registerWorkspaceViewerHint(value: WorkspaceViewerHint) {
       verifiedSnapshot.activeRole !== value.role
     ) {
       verifiedSnapshot = null;
-      publish(null);
+      publish(lastFetchFailed ? hintedViewer(value) : null);
     }
   }
 
@@ -108,6 +115,7 @@ export async function refreshViewerState() {
     sequence += 1;
     workspaceHint = null;
     verifiedSnapshot = null;
+    lastFetchFailed = false;
     publish(ANONYMOUS_VIEWER);
     return;
   }
@@ -121,6 +129,7 @@ export async function refreshViewerState() {
     const next = body;
     if (current !== sequence) return;
     verifiedSnapshot = next;
+    lastFetchFailed = false;
     if (
       !next.signedIn ||
       !next.userId ||
@@ -133,6 +142,7 @@ export async function refreshViewerState() {
     publish(next);
   } catch {
     if (current !== sequence) return;
+    lastFetchFailed = true;
     const hint = workspaceHint?.value;
     const currentVerified =
       hint && verifiedSnapshot?.userId === hint.userId && verifiedSnapshot.activeRole === hint.role

@@ -36,11 +36,13 @@ function response(body: ViewerState, ok = true) {
 }
 
 describe('client viewer state races', () => {
-  beforeEach(() => {
-    vi.stubGlobal('document', { cookie: 'sb-access-token=present' });
+  beforeEach(async () => {
+    vi.stubGlobal('document', { cookie: '' });
     vi.stubGlobal('window', {
       sessionStorage: { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() },
     });
+    await refreshViewerState();
+    document.cookie = 'sb-access-token=present';
   });
 
   afterEach(() => {
@@ -126,6 +128,19 @@ describe('client viewer state races', () => {
     expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
   });
 
+  it('does not let a late shell hint override an authoritative anonymous API response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(ANONYMOUS_VIEWER)));
+    await refreshViewerState();
+    registerWorkspaceViewerHint({
+      userId: student.userId!,
+      role: 'student',
+      name: 'Late Shell Student',
+      unreadCount: 1,
+    });
+
+    expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
+  });
+
   it('falls back to the current authorized shell on an unavailable endpoint with AI disabled', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(ANONYMOUS_VIEWER, false)));
     registerWorkspaceViewerHint({
@@ -164,6 +179,23 @@ describe('client viewer state races', () => {
     expect(getViewerStateSnapshot()).toMatchObject({
       userId: student.userId,
       fullName: 'Shell Student',
+      assistant: { aiEnabled: false },
+    });
+  });
+
+  it('applies a server shell hint that mounts after the viewer request has failed', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('network down')));
+    await refreshViewerState();
+    registerWorkspaceViewerHint({
+      userId: student.userId!,
+      role: 'student',
+      name: 'Late Shell Student',
+      unreadCount: 7,
+    });
+
+    expect(getViewerStateSnapshot()).toMatchObject({
+      userId: student.userId,
+      fullName: 'Late Shell Student',
       assistant: { aiEnabled: false },
     });
   });
