@@ -12,7 +12,13 @@ async function actorPage(
   browser: import('@playwright/test').Browser,
   projectName: string,
   baseURL: string | undefined,
-  actor: 'teacher' | 'student' | 'outsider' | 'passwordStudent' | 'notificationStudent',
+  actor:
+    | 'teacher'
+    | 'student'
+    | 'outsider'
+    | 'passwordStudent'
+    | 'notificationStudent'
+    | 'liveNotificationStudent',
 ): Promise<ActorPage> {
   const mobile = projectName.endsWith('mobile');
   const context = await browser.newContext({
@@ -31,6 +37,7 @@ export const test = base.extend<{
   outsiderPage: Page;
   passwordPage: Page;
   notificationPage: Page;
+  liveNotificationPage: Page;
 }>({
   teacherPage: async ({ browser }, provide, testInfo) => {
     const fixture = await actorPage(
@@ -78,6 +85,16 @@ export const test = base.extend<{
       testInfo.project.name,
       process.env.E2E_BASE_URL ?? testInfo.project.use.baseURL,
       'notificationStudent',
+    );
+    await provide(fixture.page);
+    await fixture.context.close();
+  },
+  liveNotificationPage: async ({ browser }, provide, testInfo) => {
+    const fixture = await actorPage(
+      browser,
+      testInfo.project.name,
+      process.env.E2E_BASE_URL ?? testInfo.project.use.baseURL,
+      'liveNotificationStudent',
     );
     await provide(fixture.page);
     await fixture.context.close();

@@ -4,17 +4,32 @@ import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 const projects = ['en-desktop', 'ar-desktop', 'en-mobile', 'ar-mobile'];
-const actorNames = ['teacher', 'student', 'outsider', 'passwordStudent', 'notificationStudent'];
+const actorNames = [
+  'teacher',
+  'student',
+  'outsider',
+  'passwordStudent',
+  'notificationStudent',
+  'liveNotificationStudent',
+];
+const actorIndexes = {
+  teacher: 1,
+  student: 2,
+  outsider: 3,
+  passwordStudent: 4,
+  notificationStudent: 5,
+  liveNotificationStudent: 7,
+};
 const password = 'E2E-local-only-2026!';
 const uuid = (kind, projectIndex, actorIndex = 0) =>
   `e2e${String(kind).padStart(5, '0')}-0000-4000-8000-${String(projectIndex).padStart(4, '0')}${String(actorIndex).padStart(8, '0')}`;
 
 function fixtureData(projectName, projectIndex) {
   const actors = Object.fromEntries(
-    actorNames.map((name, index) => [
+    actorNames.map(name => [
       name,
       {
-        id: uuid(0, projectIndex, index + 1),
+        id: uuid(0, projectIndex, actorIndexes[name]),
         email: `${name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}+${projectName}@e2e.invalid`,
         password,
       },
@@ -52,13 +67,27 @@ function sqlLiteral(value) {
 
 function seedSql(projectName, projectIndex) {
   const data = fixtureData(projectName, projectIndex);
-  const { teacher, student, outsider, passwordStudent, notificationStudent } = data.actors;
+  const {
+    teacher,
+    student,
+    outsider,
+    passwordStudent,
+    notificationStudent,
+    liveNotificationStudent,
+  } = data.actors;
   const admin = {
     id: uuid(0, projectIndex, 6),
     email: `seed-admin+${projectName}@e2e.invalid`,
   };
   const users = [
-    ...[teacher, student, outsider, passwordStudent, notificationStudent].map((actor, index) => {
+    ...[
+      teacher,
+      student,
+      outsider,
+      passwordStudent,
+      notificationStudent,
+      liveNotificationStudent,
+    ].map((actor, index) => {
       const role = index === 0 ? 'teacher' : 'student';
       const fullName = [
         'E2E Teacher',
@@ -66,6 +95,7 @@ function seedSql(projectName, projectIndex) {
         'E2E Outsider',
         'E2E Password Student',
         'E2E Notification Student',
+        'E2E Live Notification Student',
       ][index];
       return `('00000000-0000-0000-0000-000000000000', ${sqlLiteral(actor.id)}, 'authenticated', 'authenticated', ${sqlLiteral(actor.email)}, crypt(${sqlLiteral(password)}, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', ${sqlLiteral(JSON.stringify({ full_name: fullName, requested_role: role }))}::jsonb, now(), now(), '', '', '', '', '', '')`;
     }),
@@ -77,6 +107,7 @@ function seedSql(projectName, projectIndex) {
     outsider.id,
     passwordStudent.id,
     notificationStudent.id,
+    liveNotificationStudent.id,
     admin.id,
   ]
     .map(sqlLiteral)
@@ -93,7 +124,7 @@ reset role;
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(teacher.id)} where teacher_id=${sqlLiteral(teacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(teacher.id)};
 update public.teacher_profiles set headline='Synthetic E2E teacher' where id=${sqlLiteral(teacher.id)};
-update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)});
+update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)});
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(teacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)

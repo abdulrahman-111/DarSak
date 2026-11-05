@@ -7,7 +7,13 @@ import { useSyncExternalStore } from 'react';
  */
 let live: number | null = null;
 const listeners = new Set<() => void>();
+const insertListeners = new Set<(id: string) => void>();
 const emit = () => listeners.forEach(listener => listener());
+
+export function subscribeToLiveNotificationInserts(listener: (id: string) => void) {
+  insertListeners.add(listener);
+  return () => void insertListeners.delete(listener);
+}
 
 export function setLiveUnread(value: number | null) {
   if (live === value) return;
@@ -71,6 +77,7 @@ export function subscribeToUnreadInserts(client: RealtimeClientLike, userId: str
         if (!id || seen.has(id) || row.read_at) return;
         seen.add(id);
         bumpLiveUnread();
+        insertListeners.forEach(listener => listener(id));
       },
     )
     .subscribe(status => {

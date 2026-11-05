@@ -4,6 +4,7 @@ import { requireViewer } from '@/components/platform/access';
 import { PlatformShell } from '@/components/platform/shell';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
 import { markAllNotificationsRead, markNotificationRead } from '@/features/notifications/actions';
+import { InboxLiveRefresh } from '@/features/notifications/inbox-live-refresh';
 import {
   MarkViewedOnOpen,
   NotificationSubmit,
@@ -42,6 +43,7 @@ export default async function NotificationsPage({
   const retry = `/${locale}/notifications${offset ? `?offset=${offset}` : ''}`;
   return (
     <PlatformShell locale={locale} role={me.role} name={me.fullName} unreadCount={unreadCount}>
+      <InboxLiveRefresh />
       <div className="grid min-w-0 gap-6">
         <ScreenTitle
           eyebrow={ar ? 'حسابك' : 'Your account'}
