@@ -76,6 +76,9 @@ jobs:
       - name: Unit tests
         run: npm test
 
+      - name: Validate generated browser fixtures
+        run: node tests/e2e/support/seed.test.mjs
+
       - name: Cache Next.js build
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
