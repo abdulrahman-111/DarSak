@@ -128,6 +128,10 @@ export function registerWorkspaceViewerHint(value: WorkspaceViewerHint) {
     (previous !== null && (previous.userId !== value.userId || previous.role !== value.role)) ||
     verifiedIdentityMismatch;
   const requestWasInvalidated = identityChanged && hasCurrentRequest(stamp);
+  if (verifiedIdentityMismatch) {
+    verifiedSnapshot = null;
+    verifiedSessionStamp = null;
+  }
   if (identityChanged) {
     sequence += 1;
     inFlight = null;

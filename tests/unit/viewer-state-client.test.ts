@@ -306,4 +306,38 @@ describe('client viewer state races', () => {
 
     expect(getViewerStateSnapshot()).toEqual(student);
   });
+
+  it('does not restore verified teacher access after a failed role downgrade and hint cleanup', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response(teacher))
+      .mockRejectedValueOnce(new Error('network down'));
+    vi.stubGlobal('fetch', fetchMock);
+    await refreshViewerState();
+    const cleanupTeacher = registerWorkspaceViewerHint({
+      userId: teacher.userId!,
+      role: 'teacher',
+      name: 'Verified Session Teacher',
+      unreadCount: 3,
+    });
+    await refreshViewerState();
+    const cleanupStudent = registerWorkspaceViewerHint({
+      userId: student.userId!,
+      role: 'student',
+      name: 'Current Student',
+      unreadCount: 5,
+    });
+    expect(getViewerStateSnapshot()).toMatchObject({
+      userId: student.userId,
+      activeRole: 'student',
+      fullName: 'Current Student',
+      unreadCount: 5,
+      assistant: { access: null, key: 'guest', aiEnabled: false },
+    });
+    cleanupStudent();
+    cleanupTeacher();
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
+  });
 });
