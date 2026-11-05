@@ -70,7 +70,7 @@ export function LessonForm({
           className={control}
         />
       </label>
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3">
         <label className="text-sm font-bold">
           {locale === 'ar' ? 'البداية' : 'Starts'}
           <input

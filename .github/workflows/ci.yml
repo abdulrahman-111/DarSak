@@ -115,8 +115,11 @@ jobs:
 
       # A throwaway local stack on the runner: every migration is applied from
       # scratch, then seed.sql. Nothing here can reach the hosted project.
+      # Studio, Postgres metadata, logging, vector and pooler services are not used by these tests.
       - name: Start local Supabase
-        run: supabase start
+        env:
+          SUPABASE_TELEMETRY_DISABLED: 1
+        run: supabase start --exclude studio,postgres-meta,logflare,vector,supavisor
 
       - name: Contract tests (pgTAP)
         run: supabase test db
@@ -189,7 +192,7 @@ jobs:
       - name: Start fresh local Supabase
         env:
           SUPABASE_TELEMETRY_DISABLED: 1
-        run: supabase start
+        run: supabase start --exclude studio,postgres-meta,logflare,vector,supavisor
 
       - name: Serve local Edge Functions
         env:

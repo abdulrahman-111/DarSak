@@ -53,6 +53,7 @@ export function fixtureData(projectName: string) {
       endedLessonId: uuid(2, projectIndex, 2),
       assignmentId: uuid(3, projectIndex),
       notificationId: uuid(4, projectIndex),
+      feedbackId: uuid(5, projectIndex),
     },
   };
 }

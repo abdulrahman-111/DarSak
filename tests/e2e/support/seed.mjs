@@ -27,6 +27,7 @@ function fixtureData(projectName, projectIndex) {
     endedLessonId: uuid(2, projectIndex, 2),
     assignmentId: uuid(3, projectIndex),
     notificationId: uuid(4, projectIndex),
+    feedbackId: uuid(5, projectIndex),
   };
 }
 
@@ -103,16 +104,21 @@ select public.publish_group(${sqlLiteral(data.groupId)},null,null);
 insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
 values(${sqlLiteral(data.groupId)},'Solve algebra problems','Grade 10','online',150,'month','Practice materials');
 insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.groupId)},${sqlLiteral(student.id)},'accepted');
+insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},'accepted');
 insert into public.lessons(id,group_id,title,starts_at,ends_at,notes) values
 (${sqlLiteral(data.futureLessonId)},${sqlLiteral(data.groupId)},'E2E upcoming lesson',now()+interval '7 days',now()+interval '7 days 1 hour','Synthetic future lesson'),
 (${sqlLiteral(data.endedLessonId)},${sqlLiteral(data.groupId)},'E2E completed lesson',now()-interval '7 days',now()-interval '7 days'+interval '1 hour','Synthetic ended lesson');
+insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by)
+values(${sqlLiteral(data.endedLessonId)},${sqlLiteral(notificationStudent.id)},'present',${sqlLiteral(teacher.id)});
 insert into public.lesson_materials(lesson_id,kind,title,url,uploaded_by) values(${sqlLiteral(data.futureLessonId)},'link','E2E algebra resource','https://en.wikipedia.org/wiki/Elementary_algebra',${sqlLiteral(teacher.id)});
 insert into public.group_assignments(id,group_id,title,instructions,resource_url,due_at) values(${sqlLiteral(data.assignmentId)},${sqlLiteral(data.groupId)},'E2E algebra assignment','Complete the practice questions.','https://en.wikipedia.org/wiki/Algebra',now()+interval '14 days');
 insert into public.user_notifications(id,recipient_id,kind,event_key,payload) values(${sqlLiteral(data.notificationId)},${sqlLiteral(notificationStudent.id)},'lesson_rescheduled','e2e:${projectName}:lesson-notice',jsonb_build_object('lesson_id',${sqlLiteral(data.futureLessonId)},'group_id',${sqlLiteral(data.groupId)},'group_name','E2E mathematics group','title','E2E upcoming lesson','starts_at',now()+interval '7 days','ends_at',now()+interval '7 days 1 hour'));
+insert into dars_private.group_feedback(id,group_id,student_id,rating,comment,status)
+values(${sqlLiteral(data.feedbackId)},${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},5,'Synthetic approved feedback for the teacher reply browser workflow.','approved');
 reset role;
 do $$ begin
  if not exists(select 1 from public.groups where id=${sqlLiteral(data.groupId)} and status='published') then raise exception 'E2E group seed failed: starter offering missing'; end if;
- if (select count(*) from public.enrollments where group_id=${sqlLiteral(data.groupId)} and status='accepted')<>1 then raise exception 'E2E enrollment seed failed'; end if;
+ if (select count(*) from public.enrollments where group_id=${sqlLiteral(data.groupId)} and student_id=${sqlLiteral(student.id)} and status='accepted')<>1 then raise exception 'E2E enrollment seed failed'; end if;
 end $$;
 commit;
 `;
