@@ -10,6 +10,7 @@ const actors: ActorName[] = [
   'passwordStudent',
   'notificationStudent',
   'liveNotificationStudent',
+  'accessTeacher',
 ];
 
 export default async function globalSetup(config: FullConfig) {

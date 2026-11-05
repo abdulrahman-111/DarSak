@@ -11,6 +11,7 @@ const actorNames = [
   'passwordStudent',
   'notificationStudent',
   'liveNotificationStudent',
+  'accessTeacher',
 ];
 const actorIndexes = {
   teacher: 1,
@@ -19,6 +20,7 @@ const actorIndexes = {
   passwordStudent: 4,
   notificationStudent: 5,
   liveNotificationStudent: 7,
+  accessTeacher: 8,
 };
 const password = 'E2E-local-only-2026!';
 const uuid = (kind, projectIndex, actorIndex = 0) =>
@@ -74,6 +76,7 @@ function seedSql(projectName, projectIndex) {
     passwordStudent,
     notificationStudent,
     liveNotificationStudent,
+    accessTeacher,
   } = data.actors;
   const admin = {
     id: uuid(0, projectIndex, 6),
@@ -88,7 +91,7 @@ function seedSql(projectName, projectIndex) {
       notificationStudent,
       liveNotificationStudent,
     ].map((actor, index) => {
-      const role = index === 0 ? 'teacher' : 'student';
+      const role = index === 0 || index === 6 ? 'teacher' : 'student';
       const fullName = [
         'E2E Teacher',
         'E2E Student',
@@ -96,6 +99,7 @@ function seedSql(projectName, projectIndex) {
         'E2E Password Student',
         'E2E Notification Student',
         'E2E Live Notification Student',
+        'E2E Access Teacher',
       ][index];
       return `('00000000-0000-0000-0000-000000000000', ${sqlLiteral(actor.id)}, 'authenticated', 'authenticated', ${sqlLiteral(actor.email)}, crypt(${sqlLiteral(password)}, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', ${sqlLiteral(JSON.stringify({ full_name: fullName, requested_role: role }))}::jsonb, now(), now(), '', '', '', '', '', '')`;
     }),
@@ -108,6 +112,7 @@ function seedSql(projectName, projectIndex) {
     passwordStudent.id,
     notificationStudent.id,
     liveNotificationStudent.id,
+    accessTeacher.id,
     admin.id,
   ]
     .map(sqlLiteral)
@@ -124,12 +129,22 @@ reset role;
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(teacher.id)} where teacher_id=${sqlLiteral(teacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(teacher.id)};
 update public.teacher_profiles set headline='Synthetic E2E teacher' where id=${sqlLiteral(teacher.id)};
+update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(accessTeacher.id)};
+select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(accessTeacher.id)};
+update public.teacher_profiles set headline='Synthetic E2E access teacher' where id=${sqlLiteral(accessTeacher.id)};
 update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)});
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(teacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
+insert into public.teacher_specializations(teacher_id,offering_id)
+select ${sqlLiteral(accessTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
 select ${sqlLiteral(data.groupId)},${sqlLiteral(teacher.id)},id,'E2E mathematics group','Synthetic browser workflow group.',20,'draft','Online'
 from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
+insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
+select ${sqlLiteral(data.accessTeacherGroupId)},${sqlLiteral(accessTeacher.id)},id,'E2E access control group','Dedicated teaching access withdrawal fixture.',8,'draft','Online'
+from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
+insert into public.lessons(id,group_id,title,starts_at,ends_at,notes)
+values(${sqlLiteral(data.accessTeacherLessonId)},${sqlLiteral(data.accessTeacherGroupId)},'E2E access fixture lesson',now()+interval '8 days',now()+interval '8 days 1 hour','Dedicated access withdrawal route fixture');
 insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.groupId)},1,'16:00','17:00');
 select public.publish_group(${sqlLiteral(data.groupId)},null,null);
 insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
