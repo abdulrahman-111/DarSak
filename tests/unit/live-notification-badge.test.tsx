@@ -53,6 +53,9 @@ describe('live unread subscription', () => {
     setLiveUnread(2);
     const fake = fakeClient();
     subscribeToUnreadInserts(fake.client, 'user-1');
+    expect(fake.raw.channel).toHaveBeenCalledWith('user-notifications:user-1', {
+      config: { postgres_changes_options: { wait: true } },
+    });
     expect(fake.filters[0]).toEqual({
       event: 'INSERT',
       schema: 'public',

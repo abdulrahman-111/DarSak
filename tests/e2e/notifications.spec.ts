@@ -27,7 +27,7 @@ function waitForRealtimeAck(page: import('@playwright/test').Page, userId: strin
   let dispose = () => undefined;
   const promise = new Promise<void>((resolve, reject) => {
     const timeout = setTimeout(
-      () => reject(new Error('Timed out waiting for Realtime join acknowledgement.')),
+      () => reject(new Error('Timed out waiting for confirmed Realtime postgres_changes binding.')),
       20_000,
     );
     const onWebSocket = (socket: import('@playwright/test').WebSocket) => {

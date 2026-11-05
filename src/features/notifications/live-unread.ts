@@ -48,7 +48,10 @@ export type RealtimeChannelLike = {
   subscribe: (callback?: (status: string) => void) => RealtimeChannelLike;
 };
 export type RealtimeClientLike = {
-  channel: (name: string) => RealtimeChannelLike;
+  channel: (
+    name: string,
+    options?: { config?: { postgres_changes_options?: { wait?: boolean } } },
+  ) => RealtimeChannelLike;
   removeChannel: (channel: RealtimeChannelLike) => unknown;
   rpc: (name: string) => PromiseLike<{ data: unknown; error: unknown }>;
 };
@@ -62,7 +65,9 @@ export function subscribeToUnreadInserts(client: RealtimeClientLike, userId: str
   const seen = new Set<string>();
   let connectedBefore = false;
   const channel = client
-    .channel(`user-notifications:${userId}`)
+    .channel(`user-notifications:${userId}`, {
+      config: { postgres_changes_options: { wait: true } },
+    })
     .on(
       'postgres_changes',
       {

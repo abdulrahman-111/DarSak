@@ -15,12 +15,25 @@ export function isPostgresChangesReadyFrame(frameText: string, userId: string) {
     ({ topic, event, payload } = frame as Record<string, unknown>);
   }
 
+  const data = payload as Record<string, unknown> | null;
+  const response = data?.response as Record<string, unknown> | undefined;
+  const bindings = response?.postgres_changes;
+
   return (
     topic === `realtime:user-notifications:${userId}` &&
-    event === 'system' &&
-    !!payload &&
-    typeof payload === 'object' &&
-    (payload as Record<string, unknown>).extension === 'postgres_changes' &&
-    (payload as Record<string, unknown>).status === 'ok'
+    event === 'phx_reply' &&
+    data?.status === 'ok' &&
+    Array.isArray(bindings) &&
+    bindings.some(binding => {
+      if (!binding || typeof binding !== 'object') return false;
+      const filter = binding as Record<string, unknown>;
+      return (
+        filter.id !== undefined &&
+        filter.event === 'INSERT' &&
+        filter.schema === 'public' &&
+        filter.table === 'user_notifications' &&
+        filter.filter === `recipient_id=eq.${userId}`
+      );
+    })
   );
 }
