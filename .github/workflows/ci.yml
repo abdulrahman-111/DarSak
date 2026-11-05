@@ -47,6 +47,12 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
 
+      - name: Audit installed dependency graph
+        run: npm audit --audit-level=moderate
+
+      - name: Verify ESLint parser project-service compatibility
+        run: node tests/integration/eslint-parser-compat.mjs
+
       - name: Fetch server action scan base
         env:
           ACTION_SCAN_BASE: ${{ github.base_ref || 'main' }}
