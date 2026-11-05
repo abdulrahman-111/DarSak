@@ -102,7 +102,11 @@ test('teaching access withdrawal blocks reads and a previously open lesson write
       await accessTeacherPage
         .getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' })
         .click();
-      await expect(accessTeacherPage.getByRole('alert')).toHaveText(
+      const lessonFormAlert = accessTeacherPage
+        .locator('form')
+        .filter({ has: lessonForm(accessTeacherPage, locale) })
+        .getByRole('alert');
+      await expect(lessonFormAlert).toHaveText(
         ar
           ? 'انتهت صلاحية التدريس. جدّد الوصول من صفحة صلاحية التدريس.'
           : 'Teaching access has expired. Renew access from the teaching access page.',
