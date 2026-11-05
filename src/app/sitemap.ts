@@ -11,6 +11,9 @@ const locales: SeoLocale[] = ['ar', 'en'];
 const staticPaths = ['', '/teachers', '/help', '/privacy', '/terms'];
 const GROUP_PAGE = 50;
 const MAX_GROUP_PAGES = 20;
+const TEACHER_PAGE = 50;
+// Deliberate 1,000-entity cap; add sitemap-index coverage as either public catalog approaches it.
+const MAX_TEACHER_PAGES = 20;
 
 function entriesFor(path: string, priority: number): MetadataRoute.Sitemap {
   return locales.map(locale => {
@@ -53,9 +56,19 @@ async function publicIds(
     groups.push(...rows.map(row => row.id));
     if (rows.length < GROUP_PAGE) break;
   }
-  const { data, error } = await db.rpc('public_teachers');
-  if (error) throw error;
-  return { groups, teachers: ((data ?? []) as PublicRow[]).map(row => row.id) };
+  const teachers: string[] = [];
+  for (let page = 0; page < MAX_TEACHER_PAGES; page += 1) {
+    const { data, error } = await db
+      .rpc('public_teachers')
+      .select('id')
+      .order('id', { ascending: true })
+      .range(page * TEACHER_PAGE, page * TEACHER_PAGE + TEACHER_PAGE - 1);
+    if (error) throw error;
+    const rows = (data ?? []) as PublicRow[];
+    teachers.push(...rows.map(row => row.id));
+    if (rows.length < TEACHER_PAGE) break;
+  }
+  return { groups: [...new Set(groups)], teachers: [...new Set(teachers)] };
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

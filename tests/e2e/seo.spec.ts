@@ -1,6 +1,181 @@
 import { test, expect } from './support/fixtures';
 import { fixtureData } from './support/data';
 
+test('anonymous public routes, sitemap XML and raw crawler HTML expose consistent SEO metadata', async ({
+  page,
+}, testInfo) => {
+  const locale = testInfo.project.name.startsWith('ar-') ? 'ar' : 'en';
+  const { ids } = fixtureData(testInfo.project.name);
+  const paths = [
+    `/${locale}`,
+    `/${locale}/teachers`,
+    `/${locale}/help`,
+    `/${locale}/privacy`,
+    `/${locale}/terms`,
+    `/${locale}/teachers/${ids.teacherId}`,
+    `/${locale}/groups/${ids.groupId}`,
+  ];
+  let canonicalOrigin = '';
+  for (const path of paths) {
+    const response = await page.goto(path);
+    expect(response?.status(), path).toBe(200);
+    expect(new URL(page.url()).pathname.replace(/\/$/, ''), 'route must not redirect').toBe(path);
+    await expect(page.locator('html')).toHaveAttribute('lang', locale);
+    await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
+    const canonical = await page.locator('link[rel="canonical"]').getAttribute('href');
+    expect(canonical).toBeTruthy();
+    canonicalOrigin ||= new URL(canonical!).origin;
+    const route = path.slice(`/${locale}`.length);
+    const normalizedPath = route || '';
+    expect(canonical).toBe(`${canonicalOrigin}/${locale}${normalizedPath}`);
+    for (const alternateLocale of ['ar', 'en'] as const) {
+      await expect(
+        page.locator(`link[rel="alternate"][hreflang="${alternateLocale}"]`),
+      ).toHaveAttribute('href', `${canonicalOrigin}/${alternateLocale}${normalizedPath}`);
+    }
+    await expect(page.locator('meta[property="og:url"]')).toHaveAttribute('content', canonical!);
+    await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+      'content',
+      (await page.locator('title').textContent()) ?? '',
+    );
+    await expect(page.locator('meta[property="og:description"]')).toHaveAttribute(
+      'content',
+      (await page.locator('meta[name="description"]').getAttribute('content')) ?? '',
+    );
+    await expect(page.locator('meta[property="og:locale"]')).toHaveAttribute(
+      'content',
+      locale === 'ar' ? 'ar_EG' : 'en_US',
+    );
+    const expectedImage = path.includes('/teachers/')
+      ? `${canonicalOrigin}${path}/opengraph-image`
+      : path.includes('/groups/')
+        ? `${canonicalOrigin}${path}/opengraph-image`
+        : `${canonicalOrigin}/${locale}/opengraph-image`;
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+      'content',
+      expectedImage,
+    );
+    await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+      'content',
+      'summary_large_image',
+    );
+    await expect(page.locator('meta[name="twitter:image"]')).toHaveAttribute(
+      'content',
+      expectedImage,
+    );
+    const noindex = await page
+      .locator('meta[name="robots"]')
+      .evaluateAll(tags => tags.some(tag => tag.getAttribute('content')?.includes('noindex')));
+    expect(noindex, `${path} should be indexable`).toBe(false);
+  }
+
+  const robotsResponse = await page.request.get('/robots.txt');
+  expect(robotsResponse.status()).toBe(200);
+  const robots = await robotsResponse.text();
+  expect(robots).toContain(`Sitemap: ${canonicalOrigin}/sitemap.xml`);
+
+  const sitemapObservations: Array<{
+    elapsedMs: number;
+    cacheControl: string | null;
+    status: number;
+  }> = [];
+  let sitemapText = '';
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const started = Date.now();
+    const response = await page.request.get('/sitemap.xml');
+    sitemapObservations.push({
+      elapsedMs: Date.now() - started,
+      cacheControl: response.headers()['cache-control'] ?? null,
+      status: response.status(),
+    });
+    expect(response.status()).toBe(200);
+    if (attempt === 0) sitemapText = await response.text();
+  }
+  await testInfo.attach('anonymous-sitemap-request-observations.json', {
+    body: JSON.stringify(sitemapObservations, null, 2),
+    contentType: 'application/json',
+  });
+  const xml = await page.evaluate(
+    source => new DOMParser().parseFromString(source, 'application/xml'),
+    sitemapText,
+  );
+  expect(xml.querySelector('parsererror')).toBeNull();
+  const sitemapRows = [
+    ...xml.getElementsByTagNameNS('http://www.sitemaps.org/schemas/sitemap/0.9', 'url'),
+  ].map(row => {
+    const loc =
+      row.getElementsByTagNameNS('http://www.sitemaps.org/schemas/sitemap/0.9', 'loc')[0]
+        ?.textContent ?? '';
+    const alternates = [...row.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link')]
+      .filter(link => link.getAttribute('rel') === 'alternate')
+      .map(link => ({ locale: link.getAttribute('hreflang'), href: link.getAttribute('href') }));
+    return { loc, alternates };
+  });
+  const locations = sitemapRows.map(row => row.loc);
+  expect(new Set(locations).size).toBe(locations.length);
+  for (const staticPath of ['', '/teachers', '/help', '/privacy', '/terms']) {
+    for (const otherLocale of ['ar', 'en']) {
+      expect(locations).toContain(`${canonicalOrigin}/${otherLocale}${staticPath || ''}`);
+    }
+  }
+  for (const [kind, id] of [
+    ['teachers', ids.teacherId],
+    ['groups', ids.groupId],
+  ] as const) {
+    for (const otherLocale of ['ar', 'en']) {
+      expect(locations).toContain(`${canonicalOrigin}/${otherLocale}/${kind}/${id}`);
+    }
+  }
+  expect(
+    locations.some(location =>
+      /\/(login|register|account|student|teacher|dashboard)(\/|$)/.test(new URL(location).pathname),
+    ),
+  ).toBe(false);
+  for (const row of sitemapRows) {
+    const pathname = new URL(row.loc).pathname;
+    const match = pathname.match(/^\/(ar|en)(\/.*)?$/);
+    expect(match).toBeTruthy();
+    const path = match?.[2] ?? '';
+    expect(row.alternates).toEqual(
+      expect.arrayContaining([
+        { locale: 'ar', href: `${canonicalOrigin}/ar${path}` },
+        { locale: 'en', href: `${canonicalOrigin}/en${path}` },
+      ]),
+    );
+  }
+
+  for (const path of [
+    `/${locale}/teachers/${ids.teacherId}`,
+    `/${locale}/groups/${ids.groupId}`,
+  ] as const) {
+    for (const userAgent of [
+      'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+      'WhatsApp/2.24.8.85 A',
+    ]) {
+      const raw = await page.request.get(path, { headers: { 'user-agent': userAgent } });
+      expect(raw.status()).toBe(200);
+      const html = await raw.text();
+      expect(html).toContain('rel="canonical"');
+      expect(html).toContain('property="og:title"');
+      expect(html).toContain('property="og:description"');
+      expect(html).toContain(`${canonicalOrigin}${path}`);
+      expect(html).toContain('type="application/ld+json"');
+      const schemaText = html.match(
+        /<script type="application\/ld\+json">([\s\S]*?)<\/script>/,
+      )?.[1];
+      expect(schemaText).toBeTruthy();
+      const schema = JSON.parse(schemaText!.replaceAll('&quot;', '"').replaceAll('&#x27;', "'"));
+      const keys = (value: unknown): string[] =>
+        value && typeof value === 'object'
+          ? Object.entries(value).flatMap(([key, child]) => [key.toLowerCase(), ...keys(child)])
+          : [];
+      for (const privateField of ['telephone', 'email', 'contactpoint', 'whatsapp']) {
+        expect(keys(schema)).not.toContain(privateField);
+      }
+    }
+  }
+});
+
 test('landing and public entity pages expose localized JSON-LD and valid share cards', async ({
   page,
   outsiderPage,
