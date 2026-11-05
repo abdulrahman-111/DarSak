@@ -25,10 +25,12 @@ const teacher: ViewerState = {
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>(done => {
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 
 function response(body: ViewerState, ok = true) {
@@ -42,7 +44,7 @@ describe('client viewer state races', () => {
       sessionStorage: { getItem: vi.fn(), setItem: vi.fn(), removeItem: vi.fn() },
     });
     await refreshViewerState();
-    document.cookie = 'sb-access-token=present';
+    document.cookie = 'sb-access-token=session-a';
   });
 
   afterEach(() => {
@@ -52,10 +54,8 @@ describe('client viewer state races', () => {
 
   it('does not republish a delayed signed-in response after logout', async () => {
     const pending = deferred<Response>();
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockReturnValueOnce(pending.promise).mockRejectedValueOnce(new Error('network down')),
-    );
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(pending.promise));
+    const request = refreshViewerState();
     registerWorkspaceViewerHint({
       userId: student.userId!,
       role: 'student',
@@ -63,7 +63,6 @@ describe('client viewer state races', () => {
       unreadCount: 1,
     });
 
-    const request = refreshViewerState();
     document.cookie = '';
     await refreshViewerState();
     registerWorkspaceViewerHint({
@@ -78,42 +77,34 @@ describe('client viewer state races', () => {
     expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
   });
 
-  it('does not publish a delayed response from the previous workspace identity', async () => {
+  it('lets a healthy same-session request settle when the first streamed shell hint mounts', async () => {
     const pending = deferred<Response>();
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockReturnValueOnce(pending.promise).mockRejectedValueOnce(new Error('network down')),
-    );
-    const unregisterStudent = registerWorkspaceViewerHint({
+    const fetchMock = vi.fn().mockReturnValue(pending.promise);
+    vi.stubGlobal('fetch', fetchMock);
+
+    const request = refreshViewerState();
+    registerWorkspaceViewerHint({
       userId: student.userId!,
       role: 'student',
       name: 'Shell Student',
       unreadCount: 1,
     });
-    const request = refreshViewerState();
-
-    registerWorkspaceViewerHint({
-      userId: teacher.userId!,
-      role: 'teacher',
-      name: 'Shell Teacher',
-      unreadCount: 0,
-    });
-    unregisterStudent();
     pending.resolve(response(student));
     await request;
-    expect(getViewerStateSnapshot()).toBeNull();
-    await refreshViewerState();
 
-    expect(getViewerStateSnapshot()).toMatchObject({
-      userId: teacher.userId,
-      activeRole: 'teacher',
-      fullName: 'Shell Teacher',
-      assistant: { aiEnabled: false },
-    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(getViewerStateSnapshot()).toEqual(student);
   });
 
   it('uses a valid anonymous API response as authoritative and clears the shell hint', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(ANONYMOUS_VIEWER)));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(response(ANONYMOUS_VIEWER))
+        .mockRejectedValueOnce(new Error('network down')),
+    );
+    await refreshViewerState();
     registerWorkspaceViewerHint({
       userId: student.userId!,
       role: 'student',
@@ -121,15 +112,19 @@ describe('client viewer state races', () => {
       unreadCount: 1,
     });
 
-    await refreshViewerState();
-    vi.mocked(fetch).mockRejectedValueOnce(new Error('network down'));
     await refreshViewerState();
 
     expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
   });
 
   it('does not let a late shell hint override an authoritative anonymous API response', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response(ANONYMOUS_VIEWER)));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(response(ANONYMOUS_VIEWER))
+        .mockRejectedValueOnce(new Error('network down')),
+    );
     await refreshViewerState();
     registerWorkspaceViewerHint({
       userId: student.userId!,
@@ -137,6 +132,96 @@ describe('client viewer state races', () => {
       name: 'Late Shell Student',
       unreadCount: 1,
     });
+
+    await refreshViewerState();
+    expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
+  });
+
+  it('uses a new authorized shell hint after the auth cookie stamp changes', async () => {
+    const failingRead = deferred<Response>();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(response(ANONYMOUS_VIEWER))
+      .mockReturnValueOnce(failingRead.promise);
+    vi.stubGlobal('fetch', fetchMock);
+    await refreshViewerState();
+    document.cookie = 'sb-access-token=session-b';
+    registerWorkspaceViewerHint({
+      userId: teacher.userId!,
+      role: 'teacher',
+      name: 'Session B Teacher',
+      unreadCount: 4,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    failingRead.reject(new Error('network down'));
+    await failingRead.promise.catch(() => undefined);
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(getViewerStateSnapshot()).toMatchObject({
+      userId: teacher.userId,
+      activeRole: 'teacher',
+      fullName: 'Session B Teacher',
+      unreadCount: 4,
+      assistant: { aiEnabled: false },
+    });
+  });
+
+  it('rejects an old session response and keeps the new session hint through stale cleanup', async () => {
+    const pendingA = deferred<Response>();
+    const pendingB = deferred<Response>();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockReturnValueOnce(pendingA.promise).mockReturnValueOnce(pendingB.promise),
+    );
+    const requestA = refreshViewerState();
+    const cleanupA = registerWorkspaceViewerHint({
+      userId: student.userId!,
+      role: 'student',
+      name: 'Session A Student',
+      unreadCount: 2,
+    });
+
+    document.cookie = 'sb-access-token=session-b';
+    registerWorkspaceViewerHint({
+      userId: teacher.userId!,
+      role: 'teacher',
+      name: 'Session B Teacher',
+      unreadCount: 4,
+    });
+    cleanupA();
+    pendingB.resolve(response(teacher));
+    await pendingB.promise;
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(getViewerStateSnapshot()).toEqual(teacher);
+    pendingA.resolve(response(student));
+    await requestA;
+
+    expect(getViewerStateSnapshot()).toEqual(teacher);
+  });
+
+  it('settles guest state on logout and keeps a same-user prop refresh from stranding a read', async () => {
+    const pending = deferred<Response>();
+    vi.stubGlobal('fetch', vi.fn().mockReturnValue(pending.promise));
+    const cleanupOldHint = registerWorkspaceViewerHint({
+      userId: student.userId!,
+      role: 'student',
+      name: 'Shell Student',
+      unreadCount: 1,
+    });
+    const request = refreshViewerState();
+    registerWorkspaceViewerHint({
+      userId: student.userId!,
+      role: 'student',
+      name: 'Updated Shell Student',
+      unreadCount: 5,
+    });
+    cleanupOldHint();
+    document.cookie = '';
+    await refreshViewerState();
+    pending.resolve(response(student));
+    await request;
 
     expect(getViewerStateSnapshot()).toEqual(ANONYMOUS_VIEWER);
   });
@@ -208,6 +293,7 @@ describe('client viewer state races', () => {
         .mockResolvedValueOnce(response(student))
         .mockRejectedValueOnce(new Error('network down')),
     );
+    const request = refreshViewerState();
     registerWorkspaceViewerHint({
       userId: student.userId!,
       role: 'student',
@@ -215,7 +301,7 @@ describe('client viewer state races', () => {
       unreadCount: 7,
     });
 
-    await refreshViewerState();
+    await request;
     await refreshViewerState();
 
     expect(getViewerStateSnapshot()).toEqual(student);

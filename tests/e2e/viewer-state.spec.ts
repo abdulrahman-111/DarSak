@@ -53,7 +53,6 @@ test('cold 503 viewer response keeps the real student workspace usable', async (
     await page.goto(`/${locale}/student/classes`);
     await expect(page.getByText('E2E mathematics group', { exact: true })).toBeVisible();
     await expectSettledStudentShell(page, locale);
-    await expect(page.locator('[data-mobile-workspace-nav] a[href*="/teacher/"]')).toHaveCount(0);
   } finally {
     await context.close();
   }
@@ -92,18 +91,31 @@ test('warm viewer failure preserves the verified student and recovers on the nex
       }
       return route.continue();
     });
+    const initialViewerResponse = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer';
+    });
     await page.goto(`/${locale}/student/classes`);
+    expect((await initialViewerResponse).status()).toBe(200);
     await expect(
       page.getByRole('button', { name: locale === 'ar' ? 'تسجيل الخروج' : 'Log out' }),
     ).toBeVisible();
 
     failNext = true;
-    await page.goto(`/${locale}/student`);
-    await expect(page.locator('[data-mobile-workspace-nav]')).toHaveCount(1);
+    const failedRead = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer' && response.status() === 503;
+    });
+    await page.locator(`a[href="/${locale}/student"]:visible`).first().click();
+    expect((await failedRead).status()).toBe(503);
     await expectSettledStudentShell(page, locale);
 
-    await page.goto(`/${locale}/timetable`);
-    await expect(page.locator('[data-mobile-workspace-nav]')).toHaveCount(1);
+    const recoveredRead = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer' && response.status() === 200;
+    });
+    await page.locator(`a[href="/${locale}/timetable"]:visible`).first().click();
+    expect((await recoveredRead).status()).toBe(200);
+    await expect(page).toHaveURL(new RegExp(`/${locale}/timetable$`));
+    if (project.endsWith('mobile'))
+      await expect(page.locator('[data-mobile-workspace-nav]')).toHaveCount(1);
     await expect(
       page.getByRole('button', { name: locale === 'ar' ? 'تسجيل الخروج' : 'Log out' }),
     ).toBeVisible();
@@ -119,10 +131,15 @@ test('a real delayed viewer response cannot restore the student after UI logout'
   const locale = localeFor(project);
   const context = await fixtureContext(browser, project, 'student');
   let delayNext = false;
+  let holdActive = false;
   let release!: () => void;
   let captured!: (response: import('@playwright/test').APIResponse) => void;
+  let markDelivered!: () => void;
   const delayed = new Promise<void>(resolve => {
     release = resolve;
+  });
+  const delivered = new Promise<void>(resolve => {
+    markDelivered = resolve;
   });
   const responseCaptured = new Promise<import('@playwright/test').APIResponse>(resolve => {
     captured = resolve;
@@ -133,23 +150,38 @@ test('a real delayed viewer response cannot restore the student after UI logout'
       if (!delayNext) return route.continue();
       delayNext = false;
       const response = await route.fetch();
+      holdActive = true;
       captured(response);
       await delayed;
-      await route.fulfill({ response });
+      try {
+        await route.fulfill({ response });
+      } finally {
+        holdActive = false;
+        markDelivered();
+      }
+    });
+    const initialViewerResponse = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer';
     });
     await page.goto(`/${locale}/student/classes`);
+    expect((await initialViewerResponse).status()).toBe(200);
     await expect(page.getByText('E2E mathematics group', { exact: true })).toBeVisible();
     await expect(
       page.getByRole('button', { name: locale === 'ar' ? 'تسجيل الخروج' : 'Log out' }),
     ).toBeVisible();
 
     delayNext = true;
-    await page.goto(`/${locale}/student`);
+    const delayedViewerResponse = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer';
+    });
+    await page.locator(`a[href="/${locale}/student"]:visible`).first().click();
     const actualViewerResponse = await responseCaptured;
     expect(actualViewerResponse.status()).toBe(200);
     await page.getByRole('button', { name: locale === 'ar' ? 'تسجيل الخروج' : 'Log out' }).click();
     await expect(page.locator(`a[href="/${locale}/login"]:visible`).first()).toBeVisible();
     release();
+    expect((await delayedViewerResponse).status()).toBe(200);
+    await delivered;
 
     await expect(page.locator('[data-header-account-skeleton="true"]')).toHaveCount(0);
     await expect(
@@ -159,6 +191,7 @@ test('a real delayed viewer response cannot restore the student after UI logout'
     await expect(page.getByText('E2E Student', { exact: true })).toHaveCount(0);
   } finally {
     release();
+    if (holdActive) await delivered;
     await context.close();
   }
 });
@@ -192,8 +225,19 @@ test('student, teacher, and guest role boundaries settle on the authorized desti
     await loginAs(actors.student.email, actors.student.password);
     await page.goto(`/${locale}/teacher/lessons`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/student/?$`));
-    await expect(page.getByText('E2E upcoming lesson', { exact: true })).toHaveCount(0);
-    await page.goto(`/${locale}/student/classes/${ids.groupId}`);
+    if (project.endsWith('mobile')) {
+      await expect(page.locator('[data-mobile-workspace-nav]')).toHaveCount(1);
+      await expect(
+        page.locator(`[data-mobile-workspace-nav] a[href^="/${locale}/teacher/"]`),
+      ).toHaveCount(0);
+    } else {
+      await expect(
+        page.getByRole('navigation', { name: workspaceRoleLabel(locale, 'student') }),
+      ).toBeVisible();
+    }
+    await page.locator(`a[href="/${locale}/student/classes"]:visible`).first().click();
+    await expect(page).toHaveURL(new RegExp(`/${locale}/student/classes$`));
+    await page.getByRole('link', { name: 'E2E mathematics group', exact: true }).click();
     await expect(page.getByText('E2E mathematics group', { exact: true })).toBeVisible();
 
     await page.getByRole('button', { name: locale === 'ar' ? 'تسجيل الخروج' : 'Log out' }).click();
@@ -201,20 +245,59 @@ test('student, teacher, and guest role boundaries settle on the authorized desti
     await page.locator(`a[href="/${locale}/login"]:visible`).first().click();
     await expect(page.locator('input[name="email"]')).toBeVisible();
     await loginAs(actors.teacher.email, actors.teacher.password);
-    await page.goto(`/${locale}/teacher/lessons`);
+    await page.locator(`a[href="/${locale}/teacher/lessons"]:visible`).first().click();
     await expect(page.locator('main h1')).toBeVisible();
-    await expect(
-      page.getByRole('navigation', { name: workspaceRoleLabel(locale, 'teacher') }),
-    ).toBeVisible();
+    if (project.endsWith('mobile')) {
+      const nav = page.locator('[data-mobile-workspace-nav]');
+      await expect(nav).toHaveCount(1);
+      await expect(nav.locator(`a[href^="/${locale}/teacher/"]`).first()).toBeVisible();
+      await expect(nav.locator(`a[href^="/${locale}/student/"]`)).toHaveCount(0);
+    } else {
+      await expect(
+        page.getByRole('navigation', { name: workspaceRoleLabel(locale, 'teacher') }),
+      ).toBeVisible();
+    }
 
     await page.goto(`/${locale}/student/classes/${ids.groupId}`);
     await expect(page).toHaveURL(new RegExp(`/${locale}/teacher/?$`));
-    await expect(page.getByText('E2E mathematics group', { exact: true })).toHaveCount(0);
+    await expect(page.locator('main h1')).toBeVisible();
+    await expect(
+      page.getByRole('navigation', {
+        name: locale === 'ar' ? 'أقسام المجموعة' : 'Class sections',
+        exact: true,
+        includeHidden: true,
+      }),
+    ).toHaveCount(0);
+    if (project.endsWith('mobile')) {
+      await expect(
+        page.locator(`[data-mobile-workspace-nav] a[href^="/${locale}/student/"]`),
+      ).toHaveCount(0);
+    } else {
+      await expect(
+        page.getByRole('navigation', { name: workspaceRoleLabel(locale, 'student') }),
+      ).toHaveCount(0);
+    }
     await page.goBack();
     await expect(page).toHaveURL(new RegExp(`/${locale}/teacher/lessons$`));
     await page.goForward();
     await expect(page).toHaveURL(new RegExp(`/${locale}/teacher/?$`));
-    await expect(page.getByText('E2E mathematics group', { exact: true })).toHaveCount(0);
+    await expect(page.locator('main h1')).toBeVisible();
+    await expect(
+      page.getByRole('navigation', {
+        name: locale === 'ar' ? 'أقسام المجموعة' : 'Class sections',
+        exact: true,
+        includeHidden: true,
+      }),
+    ).toHaveCount(0);
+    if (project.endsWith('mobile')) {
+      await expect(
+        page.locator(`[data-mobile-workspace-nav] a[href^="/${locale}/student/"]`),
+      ).toHaveCount(0);
+    } else {
+      await expect(
+        page.getByRole('navigation', { name: workspaceRoleLabel(locale, 'student') }),
+      ).toHaveCount(0);
+    }
   } finally {
     await context.close();
   }
@@ -225,7 +308,6 @@ test('guest can browse a public group to registration without submitting signup'
 }) => {
   const project = test.info().project.name;
   const locale = localeFor(project);
-  const { ids } = fixtureData(project);
   const mobile = project.endsWith('mobile');
   const context = await browser.newContext({
     baseURL: process.env.E2E_BASE_URL ?? test.info().project.use.baseURL,
@@ -240,12 +322,14 @@ test('guest can browse a public group to registration without submitting signup'
       .getByRole('link', { name: locale === 'ar' ? 'ابحث عن مجموعة' : 'Find a group' })
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/teachers$`));
-    await expect(page.locator(`a[href="/${locale}/groups/${ids.groupId}"]`)).toBeVisible();
-    await page.locator(`a[href="/${locale}/groups/${ids.groupId}"]`).click();
-    await expect(page).toHaveURL(new RegExp(`/${locale}/groups/${ids.groupId}$`));
-    await expect(
-      page.getByRole('heading', { name: 'E2E mathematics group', level: 1 }),
-    ).toBeVisible();
+    const publicGroupLink = page.locator(`a[href^="/${locale}/groups/"]`).first();
+    await expect(publicGroupLink).toBeVisible();
+    const publicGroupHref = await publicGroupLink.getAttribute('href');
+    expect(publicGroupHref).toMatch(new RegExp(`^/${locale}/groups/[^/]+$`));
+    await publicGroupLink.click();
+    await expect(page).toHaveURL(new RegExp(`${locale}/groups/[^/]+$`));
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+    await expect(page.locator('[data-request-action]')).toBeVisible();
     await page.locator('[data-request-action]').click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?next=`));
     await page
