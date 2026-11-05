@@ -1,7 +1,8 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const projects = ['en-desktop', 'ar-desktop', 'en-mobile', 'ar-mobile'];
 const actorNames = [
@@ -40,8 +41,10 @@ function fixtureData(projectName, projectIndex) {
   return {
     actors,
     groupId: uuid(1, projectIndex),
+    accessTeacherGroupId: uuid(1, projectIndex, 8),
     futureLessonId: uuid(2, projectIndex, 1),
     endedLessonId: uuid(2, projectIndex, 2),
+    accessTeacherLessonId: uuid(2, projectIndex, 8),
     assignmentId: uuid(3, projectIndex),
     notificationId: uuid(4, projectIndex),
     feedbackId: uuid(5, projectIndex),
@@ -67,7 +70,7 @@ function sqlLiteral(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-function seedSql(projectName, projectIndex) {
+export function seedSql(projectName, projectIndex) {
   const data = fixtureData(projectName, projectIndex);
   const {
     teacher,
@@ -90,6 +93,7 @@ function seedSql(projectName, projectIndex) {
       passwordStudent,
       notificationStudent,
       liveNotificationStudent,
+      accessTeacher,
     ].map((actor, index) => {
       const role = index === 0 || index === 6 ? 'teacher' : 'student';
       const fullName = [
@@ -170,27 +174,31 @@ commit;
 `;
 }
 
-const databaseUrl = process.env.E2E_DATABASE_URL;
-if (!databaseUrl) throw new Error('E2E_DATABASE_URL is required.');
-assertLoopbackDatabaseUrl(databaseUrl);
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (invokedDirectly) {
+  const databaseUrl = process.env.E2E_DATABASE_URL;
+  if (!databaseUrl) throw new Error('E2E_DATABASE_URL is required.');
+  assertLoopbackDatabaseUrl(databaseUrl);
 
-const scratchDir = await mkdtemp(join(tmpdir(), 'darsak-e2e-seed-'));
-try {
-  for (const [index, projectName] of projects.entries()) {
-    const sqlFile = join(scratchDir, `${projectName}.sql`);
-    await writeFile(sqlFile, seedSql(projectName, index + 1), { mode: 0o600 });
-    const result = spawnSync(
-      'psql',
-      [databaseUrl, '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--file', sqlFile],
-      {
-        stdio: 'inherit',
-        env: process.env,
-      },
-    );
-    if (result.error) throw result.error;
-    if (result.status !== 0)
-      throw new Error(`Seeding ${projectName} failed with status ${result.status}.`);
+  const scratchDir = await mkdtemp(join(tmpdir(), 'darsak-e2e-seed-'));
+  try {
+    for (const [index, projectName] of projects.entries()) {
+      const sqlFile = join(scratchDir, `${projectName}.sql`);
+      await writeFile(sqlFile, seedSql(projectName, index + 1), { mode: 0o600 });
+      const result = spawnSync(
+        'psql',
+        [databaseUrl, '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--file', sqlFile],
+        {
+          stdio: 'inherit',
+          env: process.env,
+        },
+      );
+      if (result.error) throw result.error;
+      if (result.status !== 0)
+        throw new Error(`Seeding ${projectName} failed with status ${result.status}.`);
+    }
+  } finally {
+    await rm(scratchDir, { recursive: true, force: true });
   }
-} finally {
-  await rm(scratchDir, { recursive: true, force: true });
 }
