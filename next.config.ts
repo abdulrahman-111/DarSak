@@ -2,6 +2,13 @@ import type { NextConfig } from 'next';
 import { BASELINE_CSP, HSTS } from './src/lib/security/csp';
 
 const nextConfig: NextConfig = {
+  ...(process.env.VERCEL === '1'
+    ? {
+        outputFileTracingExcludes: {
+          '*': ['node_modules/@img/*linuxmusl*/**', 'node_modules/@img/sharp-wasm32/**'],
+        },
+      }
+    : {}),
   reactStrictMode: true,
   async headers() {
     return [
