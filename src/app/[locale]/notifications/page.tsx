@@ -42,7 +42,13 @@ export default async function NotificationsPage({
   const unreadCount = page?.unread ?? null;
   const retry = `/${locale}/notifications${offset ? `?offset=${offset}` : ''}`;
   return (
-    <PlatformShell locale={locale} role={me.role} name={me.fullName} unreadCount={unreadCount}>
+    <PlatformShell
+      locale={locale}
+      role={me.role}
+      userId={me.id}
+      name={me.fullName}
+      unreadCount={unreadCount}
+    >
       <InboxLiveRefresh />
       <div className="grid min-w-0 gap-6">
         <ScreenTitle

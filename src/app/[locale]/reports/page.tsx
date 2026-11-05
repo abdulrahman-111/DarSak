@@ -119,7 +119,7 @@ export default async function ReportsPage({
   const failed = !!history.error || history.count == null;
   const labels = { page: copy.page, previous: copy.previous, next: copy.next };
   return (
-    <PlatformShell locale={locale} role={profile.role} name={profile.full_name}>
+    <PlatformShell locale={locale} role={profile.role} userId={user.id} name={profile.full_name}>
       <ScreenTitle eyebrow={copy.eyebrow} title={copy.title} description={copy.intro} />
       <Panel className="mb-7">
         <ProblemReportForm locale={locale} />

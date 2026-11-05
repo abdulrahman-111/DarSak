@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { WorkspaceNavigationSidebar } from '@/components/workspace-navigation-sidebar';
+import { WorkspaceViewerSync } from '@/components/viewer-state';
 type PublicWorkspaceRole = 'student' | 'teacher';
 
 export type NavItem = {
@@ -87,12 +88,14 @@ export function platformNavigation(locale: string, role: PublicWorkspaceRole): N
 export function PlatformShell({
   locale,
   role,
+  userId,
   name,
   unreadCount = null,
   children,
 }: {
   locale: string;
   role: PublicWorkspaceRole;
+  userId?: string;
   name: string;
   unreadCount?: number | null;
   children: React.ReactNode;
@@ -100,46 +103,51 @@ export function PlatformShell({
   const ar = locale === 'ar';
   const items = platformNavigation(locale, role);
   return (
-    <div className="container grid grid-cols-1 gap-3 py-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:py-8">
-      <aside className="hidden max-h-[calc(100dvh-8rem)] min-w-0 overflow-y-auto rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:block lg:p-4">
-        <Link
-          href={`/${locale}/${role}`}
-          aria-label={ar ? 'درسك' : 'DarSak'}
-          className="hidden items-center gap-3 px-3 py-3 lg:flex"
-        >
-          <Image
-            src="/brand/darsak/favicon.svg"
-            alt={ar ? 'درسك' : 'DarSak'}
-            width={40}
-            height={40}
-            className="size-10 rounded-xl"
+    <>
+      {userId ? (
+        <WorkspaceViewerSync userId={userId} role={role} name={name} unreadCount={unreadCount} />
+      ) : null}
+      <div className="container grid grid-cols-1 gap-3 py-4 lg:grid-cols-[220px_minmax(0,1fr)] lg:items-start lg:gap-7 lg:py-8">
+        <aside className="hidden max-h-[calc(100dvh-8rem)] min-w-0 overflow-y-auto rounded-[1.75rem] bg-teal p-3 text-cream lg:sticky lg:top-24 lg:block lg:p-4">
+          <Link
+            href={`/${locale}/${role}`}
+            aria-label={ar ? 'درسك' : 'DarSak'}
+            className="hidden items-center gap-3 px-3 py-3 lg:flex"
+          >
+            <Image
+              src="/brand/darsak/favicon.svg"
+              alt={ar ? 'درسك' : 'DarSak'}
+              width={40}
+              height={40}
+              className="size-10 rounded-xl"
+            />
+            <span>
+              <strong className="block text-lg">{ar ? 'درسك' : 'DarSak'}</strong>
+              <small className="text-cream/65">
+                {role === 'teacher'
+                  ? ar
+                    ? 'مساحة المعلم'
+                    : 'Teacher space'
+                  : ar
+                    ? 'مساحة الطالب'
+                    : 'Student space'}
+              </small>
+            </span>
+          </Link>
+          <WorkspaceNavigationSidebar
+            locale={locale}
+            role={role}
+            unreadCount={unreadCount}
+            items={items}
           />
-          <span>
-            <strong className="block text-lg">{ar ? 'درسك' : 'DarSak'}</strong>
-            <small className="text-cream/65">
-              {role === 'teacher'
-                ? ar
-                  ? 'مساحة المعلم'
-                  : 'Teacher space'
-                : ar
-                  ? 'مساحة الطالب'
-                  : 'Student space'}
-            </small>
-          </span>
-        </Link>
-        <WorkspaceNavigationSidebar
-          locale={locale}
-          role={role}
-          unreadCount={unreadCount}
-          items={items}
-        />
-        <div className="mt-5 hidden rounded-2xl bg-black/10 px-3 py-3 text-sm lg:block">
-          <span className="block truncate font-bold">{name}</span>
-          <span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span>
-        </div>
-      </aside>
-      <div className="min-w-0">{children}</div>
-    </div>
+          <div className="mt-5 hidden rounded-2xl bg-black/10 px-3 py-3 text-sm lg:block">
+            <span className="block truncate font-bold">{name}</span>
+            <span className="text-cream/60">{ar ? 'توقيت القاهرة' : 'Africa/Cairo'}</span>
+          </div>
+        </aside>
+        <div className="min-w-0">{children}</div>
+      </div>
+    </>
   );
 }
 

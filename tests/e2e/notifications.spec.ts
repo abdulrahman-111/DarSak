@@ -88,6 +88,7 @@ test('a notification arrives in the open inbox, is marked read, and remains scop
   const ownerToken = await tokenFor(liveNotificationPage, 'liveNotificationStudent');
   const otherToken = await tokenFor(liveNotificationPage, 'student');
   const ack = waitForRealtimeAck(liveNotificationPage, actors.liveNotificationStudent.id);
+  let viewerUnavailable = true;
   let insertedId: string | null = null;
   const rowFor = async (token: string, id: string) => {
     const response = await liveNotificationPage.request.get(
@@ -98,6 +99,11 @@ test('a notification arrives in the open inbox, is marked read, and remains scop
     return (await response.json()) as { id: string; read_at: string | null }[];
   };
   try {
+    await liveNotificationPage.route('**/api/viewer', route => {
+      if (!viewerUnavailable) return route.continue();
+      viewerUnavailable = false;
+      return route.fulfill({ status: 503, body: 'unavailable' });
+    });
     await liveNotificationPage.goto(`/${locale}/notifications`);
     await expect(
       liveNotificationPage.getByText(
@@ -140,6 +146,7 @@ test('a notification arrives in the open inbox, is marked read, and remains scop
     expect(otherResponse.ok()).toBeTruthy();
     expect(JSON.stringify(await otherResponse.json())).not.toContain(insertedId);
 
+    await liveNotificationPage.unroute('**/api/viewer');
     await liveNotificationPage.reload();
     await expect(liveNotificationPage.getByText(new RegExp(title), { exact: false })).toBeVisible();
     await expect(
