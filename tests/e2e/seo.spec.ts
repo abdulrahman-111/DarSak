@@ -2,18 +2,16 @@ import { test, expect } from './support/fixtures';
 import { fixtureData } from './support/data';
 
 test('landing and public entity pages expose localized JSON-LD and valid share cards', async ({
+  page,
   outsiderPage,
 }, testInfo) => {
   const locale = testInfo.project.name.startsWith('ar-') ? 'ar' : 'en';
   const { ids } = fixtureData(testInfo.project.name);
-  await outsiderPage.goto(`/${locale}`);
-  await expect(outsiderPage.locator('html')).toHaveAttribute('lang', locale);
-  await expect(outsiderPage.locator('html')).toHaveAttribute(
-    'dir',
-    locale === 'ar' ? 'rtl' : 'ltr',
-  );
+  await page.goto(`/${locale}`);
+  await expect(page.locator('html')).toHaveAttribute('lang', locale);
+  await expect(page.locator('html')).toHaveAttribute('dir', locale === 'ar' ? 'rtl' : 'ltr');
   const landingGraph = JSON.parse(
-    (await outsiderPage.locator('script[type="application/ld+json"]').textContent()) ?? 'null',
+    (await page.locator('script[type="application/ld+json"]').textContent()) ?? 'null',
   );
   expect(landingGraph['@graph'].map((entity: { '@type': string }) => entity['@type'])).toEqual([
     'Organization',
