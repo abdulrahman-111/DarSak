@@ -95,22 +95,20 @@ test('anonymous public routes, sitemap XML and raw crawler HTML expose consisten
     body: JSON.stringify(sitemapObservations, null, 2),
     contentType: 'application/json',
   });
-  const xml = await page.evaluate(
-    source => new DOMParser().parseFromString(source, 'application/xml'),
-    sitemapText,
-  );
-  expect(xml.querySelector('parsererror')).toBeNull();
-  const sitemapRows = [
-    ...xml.getElementsByTagNameNS('http://www.sitemaps.org/schemas/sitemap/0.9', 'url'),
-  ].map(row => {
-    const loc =
-      row.getElementsByTagNameNS('http://www.sitemaps.org/schemas/sitemap/0.9', 'loc')[0]
-        ?.textContent ?? '';
-    const alternates = [...row.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link')]
-      .filter(link => link.getAttribute('rel') === 'alternate')
-      .map(link => ({ locale: link.getAttribute('hreflang'), href: link.getAttribute('href') }));
-    return { loc, alternates };
-  });
+  const sitemapDocument = await page.evaluate(source => {
+    const xml = new DOMParser().parseFromString(source, 'application/xml');
+    const sitemapNamespace = 'http://www.sitemaps.org/schemas/sitemap/0.9';
+    const rows = [...xml.getElementsByTagNameNS(sitemapNamespace, 'url')].map(row => {
+      const loc = row.getElementsByTagNameNS(sitemapNamespace, 'loc')[0]?.textContent ?? '';
+      const alternates = [...row.getElementsByTagNameNS('http://www.w3.org/1999/xhtml', 'link')]
+        .filter(link => link.getAttribute('rel') === 'alternate')
+        .map(link => ({ locale: link.getAttribute('hreflang'), href: link.getAttribute('href') }));
+      return { loc, alternates };
+    });
+    return { parseError: xml.querySelector('parsererror') !== null, rows };
+  }, sitemapText);
+  expect(sitemapDocument.parseError).toBe(false);
+  const sitemapRows = sitemapDocument.rows;
   const locations = sitemapRows.map(row => row.loc);
   expect(new Set(locations).size).toBe(locations.length);
   for (const staticPath of ['', '/teachers', '/help', '/privacy', '/terms']) {

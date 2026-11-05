@@ -16,8 +16,8 @@ import { generateMetadata as termsMetadata } from '@/app/[locale]/terms/page';
 import { generateMetadata as teacherMetadata } from '@/app/[locale]/teachers/[id]/page';
 import { generateMetadata as groupMetadata } from '@/app/[locale]/groups/[id]/page';
 
-const teacherId = '11111111-1111-4111-8111-111111111111';
-const groupId = '22222222-2222-4222-8222-222222222222';
+const teacherId = 'abcdefab-cdef-4abc-8def-abcdefabcdef';
+const groupId = 'fedcbafe-dcba-4fed-8cba-fedcbafedcba';
 const origin = 'https://darsak.example';
 
 beforeEach(() => {
@@ -105,6 +105,9 @@ describe('actual public route metadata exports', () => {
         `/teachers/${teacherId}`,
         `${origin}/${locale}/teachers/${teacherId}/opengraph-image`,
       );
+      expect(teacher.alternates?.canonical).not.toBe(
+        `${origin}/${locale}/teachers/${teacherId.toUpperCase()}`,
+      );
       expect(teacher.title).toContain('Nadia Teacher');
       expect(teacher.openGraph?.images).toEqual([
         expect.objectContaining({
@@ -123,6 +126,9 @@ describe('actual public route metadata exports', () => {
         locale,
         `/groups/${groupId}`,
         `${origin}/${locale}/groups/${groupId}/opengraph-image`,
+      );
+      expect(group.alternates?.canonical).not.toBe(
+        `${origin}/${locale}/groups/${groupId.toUpperCase()}`,
       );
       expect(group.description).toBe('A clear description supplied by the group.');
       expect(group.title).toContain('Algebra basics');
