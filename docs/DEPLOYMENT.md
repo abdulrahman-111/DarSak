@@ -2,6 +2,21 @@
 
 The application and database deploy separately. Vercel hosts the Next.js app and scheduled API routes. Supabase provides Auth, Postgres, Storage, and the account-deletion Edge Function.
 
+## Function trace measurements
+
+Both Next.js apps set narrow output tracing exclusions only when `VERCEL=1`. They omit Sharp's musl and WebAssembly package variants while retaining the Linux glibc Sharp and libvips packages used by Vercel, as well as Next.js assets such as `next/og`. The administrator app also excludes these variants from its hoisted root `node_modules`. Other hosts keep their existing tracing behavior.
+
+To reproduce the CI measurement locally, build each app with Vercel tracing enabled and inspect its generated NFT manifests:
+
+```sh
+VERCEL=1 npm run build
+node scripts/measure-function-traces.mjs .next
+VERCEL=1 npm run build:admin
+node scripts/measure-function-traces.mjs apps/admin/.next
+```
+
+The report counts NFT manifests, sums trace references per manifest, counts unique traced files and bytes, identifies the largest manifest, reports missing entries, and summarizes Sharp variants. Missing entries fail the command. Results depend on the machine, installed platform packages, build, and routes included in the manifests. They are useful for comparing traces produced by the same build process, but they are not Vercel's billed storage measurement and do not predict an immediate change to the rolling usage card. Existing deployment history and rollback candidates are retained; verify quota changes in Vercel after deployment.
+
 The administrator portal is a separate production-only Vercel application sharing the live Supabase project. Its canonical URL, production environment allowlist, authentication boundary, and operational notes are documented in the [administrator portal guide](../apps/admin/README.md). The portal does not have a staging or preview deployment, and deploying it requires no schema change. Keep Meet and AI pilots on staging; do not promote the whole staging branch to production.
 
 ## Deploy to your own Supabase project
