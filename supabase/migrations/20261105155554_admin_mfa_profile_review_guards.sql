@@ -1,3 +1,5 @@
+begin;
+
 -- Restrict existing profile and review helpers to the MFA-qualified active-admin role.
 -- The current_role() gate is established by the companion admin MFA boundary migration.
 
@@ -360,3 +362,5 @@ begin
 end;
 $$;
 revoke all on function dars_private.sync_legacy_teacher_bio() from public, anon, authenticated;
+
+commit;
