@@ -67,6 +67,7 @@ do $$ begin
   begin perform public.save_student_group('7d100000-0000-4000-8000-000000000001'); raise exception 'admin saved a student group'; exception when others then if sqlerrm='admin saved a student group' then raise; end if; end;
 end $$;
 set local request.jwt.claims = '{}';
+set local request.jwt.claim.sub = '';
 reset role;
 update public.groups set status='archived' where id='7d100000-0000-4000-8000-000000000001';
 set local role authenticated;

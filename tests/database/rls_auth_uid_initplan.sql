@@ -66,10 +66,10 @@ begin
         'user_notifications_own_active_read'
       )
       and regexp_count(p.qual, 'auth\.uid\s*\(') <> case p.policyname
-        when 'lesson_attendance_private_read' then 7
+        when 'lesson_attendance_private_read' then 6
         when 'student_saved_groups_read_own' then 2
         when 'student_saved_groups_delete_own' then 2
-        when 'teacher_applications_authorized_read' then 3
+        when 'teacher_applications_authorized_read' then 2
         when 'user_notifications_own_active_read' then 1
       end
   ) then raise exception 'a targeted RLS predicate lost or added an auth.uid() reference'; end if;
