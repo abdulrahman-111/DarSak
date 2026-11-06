@@ -28,6 +28,7 @@ export async function OptionalWorkspaceLayout({
     <PlatformShell
       locale={locale}
       role={profile.role}
+      userId={user.id}
       name={profile.full_name}
       unreadCount={unreadCount}
     >

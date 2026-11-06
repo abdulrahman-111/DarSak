@@ -24,7 +24,7 @@ async function TeacherShell({
 }) {
   const me = await requireViewer(locale, 'teacher');
   return (
-    <PlatformShell locale={locale} role="teacher" name={me.fullName}>
+    <PlatformShell locale={locale} role="teacher" userId={me.id} name={me.fullName}>
       <TeacherSubscriptionNotice locale={locale} signedInTeacher compact />
       {children}
     </PlatformShell>

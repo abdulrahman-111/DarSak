@@ -133,7 +133,13 @@ export default async function Timetable({
   };
 
   return (
-    <PlatformShell locale={locale} role="student" name={me.fullName} unreadCount={unreadCount}>
+    <PlatformShell
+      locale={locale}
+      role="student"
+      userId={me.id}
+      name={me.fullName}
+      unreadCount={unreadCount}
+    >
       <ScreenTitle
         eyebrow={copy.timezone}
         title={copy.title}

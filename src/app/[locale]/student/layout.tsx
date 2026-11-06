@@ -16,7 +16,7 @@ async function StudentShell({
 }) {
   const me = await requireViewer(locale, 'student');
   return (
-    <PlatformShell locale={locale} role="student" name={me.fullName}>
+    <PlatformShell locale={locale} role="student" userId={me.id} name={me.fullName}>
       {children}
     </PlatformShell>
   );

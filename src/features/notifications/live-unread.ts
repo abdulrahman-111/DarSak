@@ -7,7 +7,13 @@ import { useSyncExternalStore } from 'react';
  */
 let live: number | null = null;
 const listeners = new Set<() => void>();
+const insertListeners = new Set<(id: string) => void>();
 const emit = () => listeners.forEach(listener => listener());
+
+export function subscribeToLiveNotificationInserts(listener: (id: string) => void) {
+  insertListeners.add(listener);
+  return () => void insertListeners.delete(listener);
+}
 
 export function setLiveUnread(value: number | null) {
   if (live === value) return;
@@ -42,7 +48,10 @@ export type RealtimeChannelLike = {
   subscribe: (callback?: (status: string) => void) => RealtimeChannelLike;
 };
 export type RealtimeClientLike = {
-  channel: (name: string) => RealtimeChannelLike;
+  channel: (
+    name: string,
+    options?: { config?: { postgres_changes_options?: { wait?: boolean } } },
+  ) => RealtimeChannelLike;
   removeChannel: (channel: RealtimeChannelLike) => unknown;
   rpc: (name: string) => PromiseLike<{ data: unknown; error: unknown }>;
 };
@@ -56,7 +65,9 @@ export function subscribeToUnreadInserts(client: RealtimeClientLike, userId: str
   const seen = new Set<string>();
   let connectedBefore = false;
   const channel = client
-    .channel(`user-notifications:${userId}`)
+    .channel(`user-notifications:${userId}`, {
+      config: { postgres_changes_options: { wait: true } },
+    })
     .on(
       'postgres_changes',
       {
@@ -71,6 +82,7 @@ export function subscribeToUnreadInserts(client: RealtimeClientLike, userId: str
         if (!id || seen.has(id) || row.read_at) return;
         seen.add(id);
         bumpLiveUnread();
+        insertListeners.forEach(listener => listener(id));
       },
     )
     .subscribe(status => {
