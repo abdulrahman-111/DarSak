@@ -1,5 +1,6 @@
 import { test, expect, fixtureData } from './support/fixtures';
 import { moderateRatingsFeedback, ratingsFixtureState } from './support/local-db';
+import { publicCopy } from '@/components/public/copy';
 
 function localeFor(project: string) {
   return project.startsWith('ar-') ? 'ar' : 'en';
@@ -193,14 +194,35 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   const freshnessStarted = Date.now();
   const deadline = Math.min(65_000, Math.max(0, minuteBoundary - freshnessStarted) + 8_000);
   await expect(async () => {
-    await discovery.goto(`/${locale}/teachers`);
+    const response = await discovery.goto(`/${locale}/teachers`);
+    expect(response?.status()).toBe(200);
+    // `goto` can return on Next's streamed loading segment while the async page
+    // still awaits the viewer and discovery reads. Wait for the real route content.
+    await expect(
+      discovery.getByRole('heading', { level: 1, name: publicCopy[locale].browseTitle }),
+    ).toBeVisible();
     const freshCard = ratingsGroupCard(discovery, locale, ids.ratingsGroupId);
-    // This summary is server-rendered with the listing response. Snapshot it without
-    // locator auto-waits, which could consume the 8s freshness window on stale HTML.
+    // The summary is server-rendered. Snapshot it immediately after route readiness.
     const cardTexts = await freshCard.evaluateAll(cards =>
       cards.map(card => (card as HTMLElement).innerText),
     );
-    expect(cardTexts).toHaveLength(1);
+    const diagnostic =
+      cardTexts.length === 1
+        ? ''
+        : JSON.stringify({
+            visibleGroups: await discovery.getByRole('article').evaluateAll(articles =>
+              articles.map(article => ({
+                title: article.querySelector('h3')?.textContent,
+                links: Array.from(article.querySelectorAll('a[href]')).map(link =>
+                  link.getAttribute('href'),
+                ),
+              })),
+            ),
+            fullDiscoveryFilters: await discovery
+              .getByLabel(locale === 'ar' ? 'ترتيب حسب' : 'Sort by')
+              .count(),
+          });
+    expect(cardTexts, diagnostic).toHaveLength(1);
     expect(cardTexts[0]).toContain(locale === 'ar' ? '٤٫٠' : '4.0 / 5');
     expect(cardTexts[0]).toContain(locale === 'ar' ? 'عدد التقييمات: ٤' : 'Rating count: 4');
     expect(Date.now()).toBeGreaterThanOrEqual(minuteBoundary);
