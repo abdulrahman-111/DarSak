@@ -379,11 +379,19 @@ export default async function TeacherGroupDetail({
                   ? 'يظهر للطلاب المقبولين قبل موعد الحصة. يمكن تخصيص رابط لكل حصة.'
                   : 'Accepted students can join from each lesson. A lesson can have its own link.'}
               </p>
-              <GroupMeetingForm
-                locale={locale}
-                groupId={id}
-                meetingUrl={meetingSettings?.meeting_url ?? null}
-              />
+              {meetingSettings ? (
+                <GroupMeetingForm
+                  locale={locale}
+                  groupId={id}
+                  meetingUrl={meetingSettings.meeting_url}
+                />
+              ) : (
+                <p role="alert" className="text-sm text-danger">
+                  {ar
+                    ? 'تعذر تحميل إعداد رابط الاجتماع. حدّث الصفحة قبل إجراء أي تغييرات.'
+                    : 'Could not load meeting link settings. Refresh before making changes.'}
+                </p>
+              )}
             </Panel>
           )}
         </section>

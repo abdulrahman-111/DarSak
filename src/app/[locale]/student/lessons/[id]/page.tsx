@@ -22,6 +22,7 @@ export default async function StudentLesson({
   const data = await lessonDetail(locale, id);
   if (!data) notFound();
   const meetingUrls = await meetingLinks(data.db, [data.lesson.id]);
+  const renderNow = new Date().getTime();
   return (
     <>
       <Link
@@ -43,6 +44,7 @@ export default async function StudentLesson({
             locale={locale}
             lesson={data.lesson}
             meetingUrl={meetingUrls[data.lesson.id] ?? null}
+            initialNow={renderNow}
           />
         </Panel>
       )}

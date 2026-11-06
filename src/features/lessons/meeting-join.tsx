@@ -41,22 +41,37 @@ export function MeetingJoin({
   locale,
   lesson,
   meetingUrl,
+  initialNow,
 }: {
   locale: string;
   lesson: MeetingJoinLesson;
   meetingUrl: string | null;
+  initialNow: number;
 }) {
-  const [now, setNow] = useState(() => Date.now());
+  const [now, setNow] = useState(() => initialNow);
   const state = meetingJoinState(lesson, meetingUrl, now);
   const startsAt = new Date(lesson.starts_at).getTime();
 
   useEffect(() => {
+    const browserState = meetingJoinState(
+      {
+        starts_at: lesson.starts_at,
+        ends_at: lesson.ends_at,
+        status: lesson.status,
+      },
+      meetingUrl,
+      Date.now(),
+    );
+    if (browserState !== state) {
+      const timer = setTimeout(() => setNow(Date.now()), 0);
+      return () => clearTimeout(timer);
+    }
     return scheduleMeetingJoinBoundary(
       { starts_at: lesson.starts_at, ends_at: lesson.ends_at },
       state,
       () => setNow(Date.now()),
     );
-  }, [lesson.ends_at, lesson.starts_at, meetingUrl, now, state]);
+  }, [lesson.ends_at, lesson.starts_at, lesson.status, meetingUrl, now, state]);
 
   if (state === 'hidden') return null;
   if (state === 'before') {

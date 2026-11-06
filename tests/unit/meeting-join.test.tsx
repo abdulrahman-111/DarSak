@@ -42,12 +42,23 @@ describe('private meeting join', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2027-01-01T09:45:00.000Z'));
     const html = renderToStaticMarkup(
-      createElement(MeetingJoin, { locale: 'en', lesson, meetingUrl }),
+      createElement(MeetingJoin, { locale: 'en', lesson, meetingUrl, initialNow: Date.now() }),
     );
     expect(html).toContain('Join meeting · meet.google.com');
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
     expect(html).toContain('min-h-11');
+  });
+
+  it('uses the serialized server time for its first render before reconciling the browser clock', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(lesson.starts_at));
+    const initialNow = new Date(lesson.starts_at).getTime() - 15 * 60_000 - 1;
+    const html = renderToStaticMarkup(
+      createElement(MeetingJoin, { locale: 'en', lesson, meetingUrl, initialNow }),
+    );
+    expect(html).toContain('opens 15 minutes before the lesson');
+    expect(html).not.toContain('<a ');
   });
 
   it('formats the before-start message in Cairo time across a Cairo midnight', () => {
@@ -59,7 +70,12 @@ describe('private meeting join', () => {
       ends_at: '2026-11-06T23:30:00.000Z',
     };
     const html = renderToStaticMarkup(
-      createElement(MeetingJoin, { locale: 'en', lesson: overnight, meetingUrl }),
+      createElement(MeetingJoin, {
+        locale: 'en',
+        lesson: overnight,
+        meetingUrl,
+        initialNow: Date.now(),
+      }),
     );
     expect(html).toContain('7 Nov 2026');
     expect(html).toContain('Cairo time');

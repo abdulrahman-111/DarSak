@@ -137,6 +137,7 @@ export default async function StudentDashboard({
                         locale={locale}
                         lesson={next}
                         meetingUrl={meetingUrls[next.id] ?? null}
+                        initialNow={now.getTime()}
                       />
                     </>
                   ) : (

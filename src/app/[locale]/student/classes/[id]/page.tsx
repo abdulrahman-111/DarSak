@@ -49,6 +49,7 @@ export default async function StudentClassPage({
   const data = await studentClassWorkspace(locale, id, query);
   if (!data) notFound();
   const meetingUrls = data.next ? await meetingLinks(data.me.db, [data.next.id]) : {};
+  const renderNow = new Date().getTime();
   const { group, view } = data,
     base = `/${locale}/student/classes/${id}`;
   const titles = ar
@@ -183,6 +184,7 @@ export default async function StudentClassPage({
                       locale={locale}
                       lesson={data.next}
                       meetingUrl={meetingUrls[data.next.id] ?? null}
+                      initialNow={renderNow}
                     />
                   </section>
                 ) : (
