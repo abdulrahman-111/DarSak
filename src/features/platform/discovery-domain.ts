@@ -68,7 +68,9 @@ export function normalizeDiscoveryFilters(input: DiscoveryFilterInput): Discover
     query: rawQuery.slice(0, MAX_QUERY_LENGTH),
     page: pageNumber(input),
     sort: firstValue(input, 'sort') === 'rating' ? 'rating' : 'default',
-    minRating: /^[1-5]$/.test(firstValue(input, 'min_rating')) ? Number(firstValue(input, 'min_rating')) : null,
+    minRating: /^[1-5]$/.test(firstValue(input, 'min_rating'))
+      ? Number(firstValue(input, 'min_rating'))
+      : null,
   };
 }
 

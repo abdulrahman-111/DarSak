@@ -78,7 +78,10 @@ describe('public discovery filter normalization', () => {
     expect(rated).toMatchObject({ sort: 'rating', minRating: 4 });
     expect(discoverySearchParams(rated).toString()).toBe('sort=rating&min_rating=4&page=2');
     expect(discoveryRpcArgs(rated)).toMatchObject({ p_sort: 'rating', p_min_rating: 4 });
-    expect(normalizeDiscoveryFilters({ sort: 'newest', min_rating: '6' })).toMatchObject({ sort: 'default', minRating: null });
+    expect(normalizeDiscoveryFilters({ sort: 'newest', min_rating: '6' })).toMatchObject({
+      sort: 'default',
+      minRating: null,
+    });
   });
 
   it('accepts first query values and ignores malformed duplicates', () => {
