@@ -10,6 +10,19 @@ function ratingsGroupCard(page: import('@playwright/test').Page, locale: string,
   return page.getByRole('article').filter({ has: groupLink });
 }
 
+async function openAdvancedFilters(page: import('@playwright/test').Page, locale: string) {
+  const summary = page
+    .locator('details')
+    .locator('summary')
+    .filter({ hasText: locale === 'ar' ? 'تصفية النتائج' : 'More filters' });
+  if (
+    !(await summary.locator('xpath=..').evaluate(element => (element as HTMLDetailsElement).open))
+  ) {
+    await summary.click();
+  }
+  await expect(page.getByLabel(locale === 'ar' ? 'ترتيب حسب' : 'Sort by')).toBeVisible();
+}
+
 async function profileRating(page: import('@playwright/test').Page, locale: string) {
   // TeacherProfile places the heading and header RatingSummary in the same div;
   // group cards later in the page also contain summaries for the same teacher.
@@ -48,6 +61,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   await expect(
     groupCard.getByText(locale === 'ar' ? 'عدد التقييمات: ٣' : 'Rating count: 3'),
   ).toBeVisible();
+  await openAdvancedFilters(discovery, locale);
   await discovery.getByLabel(locale === 'ar' ? 'ترتيب حسب' : 'Sort by').selectOption('rating');
   await discovery
     .getByLabel(locale === 'ar' ? 'الحد الأدنى لتقييم المعلم' : 'Minimum teacher rating')
@@ -175,6 +189,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
     ).toBeVisible();
     expect(Date.now()).toBeGreaterThanOrEqual(minuteBoundary);
   }).toPass({ timeout: deadline, intervals: [1_500, 2_500, 4_000] });
+  await openAdvancedFilters(discovery, locale);
   await discovery
     .getByLabel(locale === 'ar' ? 'الحد الأدنى لتقييم المعلم' : 'Minimum teacher rating')
     .selectOption('5');
