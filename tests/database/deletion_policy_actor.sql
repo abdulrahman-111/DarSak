@@ -5,13 +5,25 @@ begin;
 -- attribution FK. Policy values and append-only history remain intact.
 insert into auth.users(id,aud,role,email,raw_app_meta_data,raw_user_meta_data)
 values
- ('71600000-0000-4000-8000-000000000001','authenticated','authenticated','policy-actor@test.invalid','{"provider":"email"}','{}'),
- ('71600000-0000-4000-8000-000000000002','authenticated','authenticated','policy-remaining@test.invalid','{"provider":"email"}','{}');
+ ('71600000-0000-4000-8000-000000000001','authenticated','authenticated','policy-actor@test.invalid','{"provider":"google"}','{}'),
+ ('71600000-0000-4000-8000-000000000002','authenticated','authenticated','policy-remaining@test.invalid','{"provider":"google"}','{}');
+
+-- Google identities stay pending in the auth trigger; seed the domain profiles
+-- directly so these account-deletion actors remain eligible active admins.
+delete from dars_private.pending_google_signups where user_id in (
+ '71600000-0000-4000-8000-000000000001','71600000-0000-4000-8000-000000000002'
+);
 
 insert into public.profiles(id,full_name,role,status) values
  ('71600000-0000-4000-8000-000000000001','Policy Actor','admin','active'),
  ('71600000-0000-4000-8000-000000000002','Remaining Policy Admin','admin','active');
 
+select set_config('request.jwt.claims',jsonb_build_object(
+  'sub','71600000-0000-4000-8000-000000000002',
+  'role','authenticated',
+  'aal','aal2',
+  'amr',jsonb_build_array(jsonb_build_object('method','totp','timestamp',extract(epoch from clock_timestamp())::bigint))
+)::text,true);
 select set_config('request.jwt.claim.sub','71600000-0000-4000-8000-000000000002',true);
 update public.profiles set status='suspended'
 where role='admin' and status='active'
