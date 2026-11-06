@@ -24,6 +24,7 @@ describe('lesson meeting URLs', () => {
     expect(isMeetingUrl('https://meet.school.example/room', ['school.example'])).toBe(false);
     expect(isMeetingUrl('https://school.example/room', ['*.example'])).toBe(false);
     expect(isMeetingUrl('https://school.example/room', ['https://school.example'])).toBe(false);
+    expect(isMeetingUrl('https://*.example/room', ['*.example'])).toBe(false);
   });
 
   it('treats blank values as absent and rejects whitespace and controls', () => {
@@ -61,8 +62,11 @@ describe('lesson meeting URLs', () => {
       'https://ｍｅｅｔ.google.com/room',
       'https://xn--e1afmkfd.example/room',
       `https://meet.google.com/${'a'.repeat(500)}`,
+      `https://meet.google.com/${'é'.repeat(100)}`,
     ]) {
       expect(isMeetingUrl(value)).toBe(false);
     }
+
+    expect(parseMeetingUrl('https://meet.google.com/é')).toBe('https://meet.google.com/%C3%A9');
   });
 });

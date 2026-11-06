@@ -43,14 +43,17 @@ export function parseMeetingUrl(
   const host = url.hostname.toLowerCase();
   // URL converts IDNs to punycode. Reject those and IP literals explicitly so
   // provider matching never depends on browser IDN rendering or IP formatting.
-  if (host.includes('xn--') || isIpLiteral(host) || host.endsWith('.')) return null;
+  if (!isValidHostname(host) || host.includes('xn--') || isIpLiteral(host)) return null;
 
+  const canonicalUrl = url.toString();
   if (
     EXACT_MEETING_HOSTS.has(host) ||
     isSubdomainOf(host, MEETING_DOMAIN_ROOTS) ||
-    extraHosts.some(extraHost => host === extraHost.toLowerCase())
+    extraHosts.some(
+      extraHost => isValidConfiguredHostname(extraHost) && host === extraHost.toLowerCase(),
+    )
   ) {
-    return url.toString();
+    return canonicalUrl.length <= MAX_MEETING_URL_LENGTH ? canonicalUrl : null;
   }
 
   return null;
@@ -65,4 +68,27 @@ function isSubdomainOf(host: string, roots: readonly string[]): boolean {
 
 function isIpLiteral(host: string): boolean {
   return host.startsWith('[') || /^\d{1,3}(?:\.\d{1,3}){3}$/u.test(host);
+}
+
+function isValidHostname(host: string): boolean {
+  return (
+    host.length <= 253 &&
+    host
+      .split('.')
+      .every(
+        label =>
+          label.length >= 1 &&
+          label.length <= 63 &&
+          /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/iu.test(label),
+      )
+  );
+}
+
+function isValidConfiguredHostname(host: string): boolean {
+  const normalizedHost = host.toLowerCase();
+  return (
+    isValidHostname(normalizedHost) &&
+    !normalizedHost.includes('xn--') &&
+    !isIpLiteral(normalizedHost)
+  );
 }
