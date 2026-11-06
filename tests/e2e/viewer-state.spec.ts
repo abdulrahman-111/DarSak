@@ -333,6 +333,7 @@ test('guest can browse a public group to registration without submitting signup'
     await page.locator('[data-request-action]').click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/login\\?next=`));
     await page
+      .getByRole('main')
       .getByRole('link', { name: locale === 'ar' ? 'إنشاء حساب' : 'Create account' })
       .click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/register$`));
