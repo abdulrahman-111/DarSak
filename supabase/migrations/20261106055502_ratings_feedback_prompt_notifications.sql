@@ -22,12 +22,34 @@ set search_path=pg_catalog,public,dars_private
 as $$ select pg_advisory_xact_lock(hashtextextended('feedback-prompt:'||p_group::text||':'||p_student::text,0)) $$;
 revoke all on function dars_private.feedback_prompt_pair_lock(uuid,uuid) from public,anon,authenticated,service_role;
 
+-- Parent profile rows must precede any group/feedback/pair lock that can later
+-- insert a ledger or notification FK. Acquire all discovered parents in one
+-- UUID order; a missing group still locks the caller's student parent.
+create or replace function dars_private.lock_feedback_profile_parents(
+  p_group_id uuid,p_student_id uuid,p_include_admins boolean default false
+) returns uuid language plpgsql volatile security definer
+set search_path=pg_catalog,public,dars_private
+as $$
+declare v_teacher uuid;
+begin
+  if p_group_id is not null then
+    select g.teacher_id into v_teacher from public.groups g where g.id=p_group_id;
+  end if;
+  perform p.id from public.profiles p
+    where p.id=p_student_id or p.id=v_teacher
+       or (p_include_admins and p.role='admin' and p.status='active')
+    order by p.id for key share of p;
+  return v_teacher;
+end $$;
+revoke all on function dars_private.lock_feedback_profile_parents(uuid,uuid,boolean) from public,anon,authenticated,service_role;
+
 create or replace function dars_private.ensure_feedback_prompt(p_group_id uuid,p_student_id uuid)
 returns void language plpgsql volatile security definer
 set search_path=pg_catalog,public,dars_private
 as $$
 declare v_inserted integer:=0;
 begin
+  perform dars_private.lock_feedback_profile_parents(null,p_student_id,false);
   -- Existing group writers (including save_group_feedback) acquire this row
   -- before the pair lock. Holding it also serializes lesson/enrollment state.
   perform 1 from public.groups where id=p_group_id for update;
@@ -79,6 +101,7 @@ as $$
 declare v_uid uuid:=auth.uid(); v_group uuid;
 begin
   if v_uid is null or public.current_role() is distinct from 'student'::public.user_role then return; end if;
+  perform dars_private.lock_feedback_profile_parents(null,v_uid,false);
   -- Reconcile currently accepted groups (including legacy attendance) and all
   -- durable prompt decisions so visibility/access changes clean pending rows.
   for v_group in
@@ -178,6 +201,110 @@ create trigger feedback_notifications_produce
 after insert or update on dars_private.group_feedback
 for each row execute function dars_private.feedback_notifications_produce();
 
+-- Preserve the canonical save path while acquiring notification FK parents
+-- before the existing group → feedback → student/group-pair lock sequence.
+create or replace function public.save_group_feedback(p_group_id uuid,p_rating integer,p_comment text,p_expected_version bigint default 0)
+returns bigint language plpgsql security definer set search_path=pg_catalog,public as $$
+declare v_old dars_private.group_feedback; v_next bigint; v_discovered_teacher uuid; v_locked_teacher uuid;
+begin
+ if public.current_role() is distinct from 'student'::public.user_role then raise exception 'student required' using errcode='42501'; end if;
+ v_discovered_teacher:=dars_private.lock_feedback_profile_parents(p_group_id,auth.uid(),true);
+ select teacher_id into v_locked_teacher from public.groups where id=p_group_id for update;
+ if found and v_locked_teacher is distinct from v_discovered_teacher then
+   raise exception 'group changed; retry feedback submission' using errcode='40001';
+ end if;
+ if not dars_private.feedback_eligible(p_group_id,auth.uid()) then raise exception 'accepted attendance required' using errcode='42501'; end if;
+ select * into v_old from dars_private.group_feedback where group_id=p_group_id and student_id=auth.uid() for update;
+ if coalesce(v_old.version,0) is distinct from p_expected_version then raise exception 'feedback changed' using errcode='40001'; end if;
+ insert into dars_private.group_feedback(group_id,student_id,rating,comment)values(p_group_id,auth.uid(),p_rating,btrim(p_comment))
+ on conflict(group_id,student_id)do update set rating=excluded.rating,comment=excluded.comment,status='pending',reply_pending='',reply_public='',version=group_feedback.version+1,updated_at=clock_timestamp()
+ returning version into v_next;return v_next;
+end $$;
+
+create or replace function public.teacher_reply_feedback(p_id uuid,p_reply text,p_expected_version bigint) returns bigint
+language plpgsql security definer set search_path=pg_catalog,public as $$
+declare v_group uuid; v_student uuid; v_discovered_teacher uuid; v_locked_teacher uuid; v_next bigint;
+begin
+ select group_id,student_id into v_group,v_student from dars_private.group_feedback where id=p_id;
+ v_discovered_teacher:=dars_private.lock_feedback_profile_parents(v_group,v_student,true);
+ select g.teacher_id into v_locked_teacher
+   from public.groups g join public.teacher_profiles t on t.id=g.teacher_id
+   where g.id=v_group and g.teacher_id=auth.uid() and g.status='published' and t.approved
+     and public.current_role()='teacher' and dars_private.teacher_has_access(auth.uid())
+   for update of g;
+ if not found then raise exception 'active approved owner required' using errcode='42501'; end if;
+ if v_locked_teacher is distinct from v_discovered_teacher then
+   raise exception 'group changed; retry feedback reply' using errcode='40001';
+ end if;
+ if p_reply is null or length(btrim(p_reply)) not between 1 and 1500 then raise exception 'invalid reply' using errcode='22023'; end if;
+ update dars_private.group_feedback set reply_pending=btrim(p_reply),version=version+1,updated_at=clock_timestamp()
+   where id=p_id and status='approved' and version=p_expected_version returning version into v_next;
+ if v_next is null then raise exception 'feedback changed' using errcode='40001'; end if;return v_next;
+end $$;
+
+create or replace function public.moderate_group_feedback(p_id uuid,p_decision text,p_note text,p_expected_version bigint) returns bigint
+language plpgsql security definer set search_path=pg_catalog,public as $$
+declare v_row dars_private.group_feedback; v_next bigint; v_group uuid; v_student uuid;
+begin
+ if public.current_role() is distinct from 'admin'::public.user_role then raise exception 'active admin required' using errcode='42501'; end if;
+ if p_decision is null or p_decision not in ('approve','hide','approve_reply','hide_reply') or length(coalesce(p_note,''))>1500 then raise exception 'invalid moderation' using errcode='22023'; end if;
+ select group_id,student_id into v_group,v_student from dars_private.group_feedback where id=p_id;
+ perform dars_private.lock_feedback_profile_parents(v_group,v_student,true);
+ select * into v_row from dars_private.group_feedback where id=p_id for update;
+ if not found or v_row.version is distinct from p_expected_version then raise exception 'feedback changed' using errcode='40001'; end if;
+ if v_row.group_id is distinct from v_group or v_row.student_id is distinct from v_student then
+   raise exception 'feedback changed; retry moderation' using errcode='40001';
+ end if;
+ if v_row.status='withdrawn' then raise exception 'feedback withdrawn' using errcode='22023'; end if;
+ if p_decision='approve_reply' and (v_row.status<>'approved' or v_row.reply_pending='') then raise exception 'no pending reply' using errcode='22023'; end if;
+ update dars_private.group_feedback set
+   status=case when p_decision='approve' then 'approved' when p_decision='hide' then 'hidden' else status end,
+   reply_public=case when p_decision='approve_reply' then reply_pending when p_decision='hide_reply' then '' else reply_public end,
+   reply_pending=case when p_decision in ('approve_reply','hide_reply') then '' else reply_pending end,
+   admin_note=coalesce(p_note,''),version=version+1,updated_at=clock_timestamp() where id=p_id returning version into v_next;return v_next;
+end $$;
+
+-- This latest source definition remains the only attendance writer. It locks
+-- the student/teacher FK parents before acquiring the group, enrollment or
+-- attendance row locks that can lead to a prompt notification insert.
+create or replace function public.set_lesson_attendance(p_lesson_id uuid,p_student_id uuid,p_status text)
+returns void language plpgsql security definer set search_path=pg_catalog,public as $$
+declare v_group_id uuid; v_owner uuid; v_discovered_teacher uuid; v_locked_teacher uuid;
+  v_group_status public.group_status; v_starts_at timestamptz; v_lesson_status public.lesson_status;
+begin
+  if public.current_role()='teacher'::public.user_role and not coalesce(dars_private.teacher_has_access(auth.uid()),false) then
+    raise exception 'teacher teaching access expired' using errcode='42501'; end if;
+  if auth.uid() is null or not exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id
+    where p.id=auth.uid() and p.role='teacher' and p.status='active' and t.approved) then
+    raise exception 'not authorized' using errcode='42501'; end if;
+  if p_status is not null and p_status not in ('present','absent','late','excused') then
+    raise exception 'invalid attendance status' using errcode='22023'; end if;
+  select g.id,g.teacher_id into v_group_id,v_owner from public.groups g join public.lessons l on l.group_id=g.id where l.id=p_lesson_id;
+  if not found or v_owner<>auth.uid() then raise exception 'lesson not found' using errcode='42501'; end if;
+  v_discovered_teacher:=dars_private.lock_feedback_profile_parents(v_group_id,p_student_id,false);
+  if v_discovered_teacher is distinct from v_owner then raise exception 'group changed; retry attendance' using errcode='40001'; end if;
+  select status,teacher_id into v_group_status,v_locked_teacher from public.groups where id=v_group_id for update;
+  if not found then raise exception 'lesson not found' using errcode='42501'; end if;
+  if v_locked_teacher is distinct from v_discovered_teacher then raise exception 'group changed; retry attendance' using errcode='40001'; end if;
+  select starts_at,status into v_starts_at,v_lesson_status from public.lessons where id=p_lesson_id and group_id=v_group_id for update;
+  if not found then raise exception 'lesson not found' using errcode='P0002'; end if;
+  if v_group_status='archived' then raise exception 'group archived' using errcode='22023'; end if;
+  if v_lesson_status='cancelled' then raise exception 'lesson cancelled' using errcode='22023'; end if;
+  if v_starts_at>now() then raise exception 'lesson has not started' using errcode='22023'; end if;
+  perform 1 from public.enrollments e join public.profiles p on p.id=e.student_id
+    where e.group_id=v_group_id and e.student_id=p_student_id and e.status='accepted' and p.role='student' for update of e;
+  if not found then raise exception 'student is not currently accepted' using errcode='22023'; end if;
+  if not exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id
+    where p.id=auth.uid() and p.role='teacher' and p.status='active' and t.approved) then raise exception 'not authorized' using errcode='42501'; end if;
+  if p_status is null then
+    delete from public.lesson_attendance where lesson_id=p_lesson_id and student_id=p_student_id;
+  else
+    insert into public.lesson_attendance(lesson_id,student_id,status,recorded_at,recorded_by)
+    values(p_lesson_id,p_student_id,p_status,now(),auth.uid())
+    on conflict(lesson_id,student_id) do update set status=excluded.status,recorded_at=excluded.recorded_at,recorded_by=excluded.recorded_by;
+  end if;
+end $$;
+
 create or replace function public.dismiss_feedback_prompt(p_group_id uuid)
 returns void language plpgsql security definer
 set search_path=pg_catalog,public,dars_private,auth
@@ -188,6 +315,7 @@ begin
     raise exception 'active student required' using errcode='42501';
   end if;
   if p_group_id is null then return; end if;
+  perform dars_private.lock_feedback_profile_parents(null,v_uid,false);
   perform dars_private.feedback_prompt_pair_lock(p_group_id,v_uid);
   update dars_private.feedback_prompt_state set state='dismissed',updated_at=clock_timestamp()
     where group_id=p_group_id and student_id=v_uid and state='prompted';
@@ -251,11 +379,13 @@ begin
   if p_decision='hide' and (length(v_reason) not between 1 and 500) then
     raise exception 'student reason must be between 1 and 500 characters' using errcode='22023';
   end if;
-  select * into v_row from dars_private.group_feedback where id=p_id for update;
-  if not found or v_row.version is distinct from p_expected_version then
-    raise exception 'feedback changed' using errcode='40001';
-  end if;
   v_next:=public.moderate_group_feedback(p_id,p_decision,p_note,p_expected_version);
+  -- The canonical routine holds its feedback row lock through this transaction
+  -- and acquired recipient profile parents first. Read only its resulting row.
+  select * into v_row from dars_private.group_feedback where id=p_id;
+  if not found or v_row.version is distinct from v_next then
+    raise exception 'feedback changed; retry moderation' using errcode='40001';
+  end if;
   if p_decision='hide' then
     update public.user_notifications set payload=payload||jsonb_build_object('student_reason',v_reason)
       where recipient_id=v_row.student_id and kind='feedback_decision'
