@@ -40,14 +40,16 @@ describe('private meeting server data', () => {
   });
 
   it('fails closed on RPC errors and invalid owner prefill values', async () => {
-    await expect(meetingLinks(client(null, new Error('RPC failed')), ['lesson-1'])).resolves.toEqual({});
+    await expect(
+      meetingLinks(client(null, new Error('RPC failed')), ['lesson-1']),
+    ).resolves.toEqual({});
     await expect(groupMeetingSettings(client(null), 'group-1')).resolves.toBeNull();
     await expect(groupMeetingSettings(client({}), 'group-1')).resolves.toBeNull();
     await expect(
       groupMeetingSettings(client({ meeting_url: 'https://unlisted.example/room' }), 'group-1'),
     ).resolves.toBeNull();
-    await expect(
-      lessonMeetingSettings(client({ meeting_url: null }), 'lesson-1'),
-    ).resolves.toEqual({ meeting_url: null });
+    await expect(lessonMeetingSettings(client({ meeting_url: null }), 'lesson-1')).resolves.toEqual(
+      { meeting_url: null },
+    );
   });
 });
