@@ -73,10 +73,13 @@ select throws_ok($$select public.save_teacher_profile_account('Direct owner',rep
 select throws_ok($$select public.admin_set_group_draft('99240000-0000-4000-8000-000000000001')$$,'42501',null,'a teacher cannot use the admin draft RPC');
 reset role;
 set local role authenticated;
+select set_config('request.jwt.claims','{"sub":"99200000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}',true);
 select set_config('request.jwt.claim.sub','99200000-0000-4000-8000-000000000003',true);
 select lives_ok($$select public.publish_group('99240000-0000-4000-8000-000000000003',null,null)$$,'admin publishes through publish_group');
 select lives_ok($$select public.admin_set_group_draft('99240000-0000-4000-8000-000000000003')$$,'admin returns a published group to draft');
 select throws_ok($$select public.admin_set_group_draft('99240000-0000-4000-8000-000000000002')$$,'P0001',null,'admin cannot un-archive a group through the draft RPC');
+select set_config('request.jwt.claims','{}',true);
+set local request.jwt.claims = '{}';
 reset role;
 
 -- Database-level headline limit (the table owner bypasses grants, not constraints).

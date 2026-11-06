@@ -17,10 +17,15 @@ test('teacher creates a manual lesson and it remains in the calendar after reloa
     `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}T${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
 
   await teacherPage.goto(`/${locale}/teacher/lessons?new=1`);
-  const group = teacherPage.getByLabel(ar ? 'المجموعة' : 'Group');
-  await expect(group.locator(`option[value="${groupId}"]`)).toBeAttached();
+  const groupChoiceForm = teacherPage
+    .locator('form')
+    .filter({ has: teacherPage.locator('input[name="new"][value="1"]') });
+  await expect(groupChoiceForm).toHaveCount(1);
+  const group = groupChoiceForm.locator('select[name="groupId"]');
+  await expect(group).toHaveCount(1);
+  await expect(group.locator(`option[value="${groupId}"]`)).toHaveCount(1);
   await group.selectOption(groupId);
-  await teacherPage.getByRole('button', { name: ar ? 'تطبيق' : 'Apply' }).click();
+  await groupChoiceForm.getByRole('button', { name: ar ? 'تطبيق' : 'Apply' }).click();
   await teacherPage.getByLabel(ar ? 'عنوان الحصة' : 'Lesson title').fill(lessonTitle);
   await teacherPage.getByLabel(ar ? 'البداية' : 'Starts').fill(dateTime(start));
   await teacherPage.getByLabel(ar ? 'النهاية' : 'Ends').fill(dateTime(end));

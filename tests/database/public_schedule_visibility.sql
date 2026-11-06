@@ -33,17 +33,20 @@ insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time)
  ('7a820000-0000-4000-8000-000000000004','7a810000-0000-4000-8000-000000000004',4,'12:00','13:00');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000001';
 select public.publish_group('7a810000-0000-4000-8000-000000000001',null,null);
 select public.publish_group('7a810000-0000-4000-8000-000000000003',null,null);
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000003';
 select public.request_enrollment('7a810000-0000-4000-8000-000000000003') as enrollment_id \gset
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000001';
 select public.decide_enrollment(:'enrollment_id'::uuid,'accepted');
 select public.cancel_teacher_group('7a810000-0000-4000-8000-000000000003');
@@ -62,6 +65,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000002';
 do $$ begin
   if (select count(*) from public.group_schedule_slots where group_id='7a810000-0000-4000-8000-000000000001')<>1 then
@@ -75,6 +79,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000003';
 do $$ begin
   if (select count(*) from public.group_schedule_slots where group_id='7a810000-0000-4000-8000-000000000001')<>1
@@ -89,6 +94,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000001';
 do $$ begin
   if (select count(*) from public.group_schedule_slots where group_id in (
@@ -99,6 +105,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7a800000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7a800000-0000-4000-8000-000000000005';
 do $$ begin
   if (select count(*) from public.group_schedule_slots where group_id in (
@@ -106,6 +113,7 @@ do $$ begin
     raise exception 'admin visibility changed for private schedules';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

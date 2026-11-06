@@ -111,6 +111,7 @@ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 select public.save_teacher_profile_details(
  '{"about":{"ar":"Visible Arabic","en":"Hidden English"},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"classic","palette":"teal","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":["about"]}'::jsonb,
@@ -133,6 +134,7 @@ begin
 end $$;
 
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 begin
@@ -151,6 +153,7 @@ reset role;
 -- Non-default appearance is itself public profile content even when all
 -- descriptive sections are empty or hidden.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000002';
 select public.save_teacher_profile_details(
   '{"about":{"ar":"","en":""},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"compact","palette":"indigo","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,
@@ -158,6 +161,7 @@ select public.save_teacher_profile_details(
 );
 reset role;
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 declare v_public jsonb;
@@ -171,6 +175,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000002';
 select public.save_teacher_profile_details(
   '{"about":{"ar":"","en":""},"approach":{"ar":"","en":""},"goals":{"ar":"","en":""},"qualifications":[],"experience":[],"languages":[],"city":{"ar":"","en":""},"teaching_mode":null,"layout":"classic","palette":"olive","section_order":["about","qualifications","experience","approach","goals"],"hidden_sections":[]}'::jsonb,
@@ -182,6 +187,7 @@ select public.save_teacher_profile_details(
 );
 reset role;
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 declare v_public jsonb;
@@ -201,6 +207,7 @@ set local session_replication_role=replica;
 update public.teacher_profiles set approved=false where id='20000000-0000-4000-8000-000000000002';
 set local session_replication_role=origin;
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 begin
@@ -214,6 +221,7 @@ update public.teacher_profiles set approved=true where id='20000000-0000-4000-80
 update public.profiles set status='suspended' where id='20000000-0000-4000-8000-000000000002';
 set local session_replication_role=origin;
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 begin
@@ -227,6 +235,7 @@ update public.profiles set status='active' where id='20000000-0000-4000-8000-000
 set local session_replication_role=origin;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 do $$
 begin
@@ -254,6 +263,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000004';
 do $$
 begin
@@ -261,9 +271,11 @@ begin
     raise exception 'active admin cannot read private canonical details';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 begin
@@ -276,6 +288,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000002';
 do $$
 begin
@@ -286,6 +299,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 do $$
 declare v_details jsonb; v_version bigint; v_rejected boolean;
@@ -336,6 +350,7 @@ reset role;
 -- An explicit legacy write must update canonical About even when public bio is
 -- already empty because About is hidden.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 select public.save_teacher_profile(
   'Rich teacher','', '', array(select id from public.offerings limit 1), null, null, null, 'enrolled'
@@ -357,6 +372,7 @@ set local session_replication_role=replica;
 update public.profiles set preferred_language='en' where id='20000000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 select public.save_teacher_profile(
   'Rich teacher','Legacy English biography','Legacy English biography', array(select id from public.offerings limit 1), null, null, null, 'enrolled'
@@ -378,6 +394,7 @@ set local session_replication_role=replica;
 update public.profiles set preferred_language='ar' where id='20000000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 select public.save_teacher_profile(
   'Rich teacher','Legacy English biography','Legacy English biography', array(select id from public.offerings limit 1), null, null, null, 'enrolled'
@@ -397,6 +414,7 @@ set local session_replication_role=replica;
 update public.profiles set status='suspended' where id='20000000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"20000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='20000000-0000-4000-8000-000000000001';
 do $$
 declare v_details jsonb; v_version bigint;

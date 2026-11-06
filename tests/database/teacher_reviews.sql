@@ -72,6 +72,7 @@ update public.teacher_applications set legacy_approved=true,status='draft'
 where teacher_id='7b000000-0000-4000-8000-000000000004';
 
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 begin
@@ -89,6 +90,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000001';
 do $$
 declare v_status jsonb;
@@ -120,6 +122,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000003';
 do $$
 declare v_page jsonb;
@@ -137,9 +140,11 @@ begin
     if sqlerrm='overlong review search was accepted' then raise; end if;
   end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000003';
 do $$
 declare v_event uuid;
@@ -164,9 +169,11 @@ begin
     if sqlerrm='admin target review was accepted' then raise; end if;
   end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000001';
 do $$
 declare v_request uuid; v_event_count bigint; v_status jsonb;
@@ -186,6 +193,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000003';
 do $$
 declare v_request uuid;
@@ -218,9 +226,11 @@ begin
     raise exception 'suspension changed initial review status';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000003';
 do $$
 begin
@@ -236,6 +246,7 @@ begin
     if sqlerrm='legacy contradictory completed decision was accepted' then raise; end if;
   end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role service_role;

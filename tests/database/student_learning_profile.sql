@@ -38,6 +38,7 @@ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"8f000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='8f000000-0000-4000-8000-000000000001';
 do $$
 declare v_before timestamptz; v_after timestamptz; v_result jsonb;
@@ -121,6 +122,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"8f000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='8f000000-0000-4000-8000-000000000002';
 do $$
 begin
@@ -131,6 +133,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"8f000000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='8f000000-0000-4000-8000-000000000003';
 do $$
 begin
@@ -141,6 +144,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"8f000000-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='8f000000-0000-4000-8000-000000000004';
 do $$
 begin
@@ -153,9 +157,11 @@ begin
   exception when insufficient_privilege then null;
   end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"8f000000-0000-4000-8000-000000000005","role":"authenticated"}';
 set local request.jwt.claim.sub='8f000000-0000-4000-8000-000000000005';
 do $$
 begin
@@ -169,6 +175,7 @@ end $$;
 reset role;
 
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$
 begin

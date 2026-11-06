@@ -43,6 +43,7 @@ insert into public.lessons(id,group_id,slot_id,local_date,title,starts_at,ends_a
  ('56300000-0000-4000-8000-000000000003','56100000-0000-4000-8000-000000000001','56200000-0000-4000-8000-000000000003','2027-02-09','Completed occurrence','2027-02-09 06:00+00','2027-02-09 07:00+00','completed');
 
 -- Publish through the same atomic path used by the application.
+set local request.jwt.claims = '{"sub":"56000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='56000000-0000-4000-8000-000000000001';
 select public.publish_group('56100000-0000-4000-8000-000000000003',null,null);
 
@@ -74,6 +75,7 @@ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"56000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub = '56000000-0000-4000-8000-000000000001';
 do $$
 declare
@@ -136,6 +138,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"56000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub = '56000000-0000-4000-8000-000000000003';
 do $$
 begin
@@ -144,9 +147,11 @@ begin
     raise exception 'admin could not delete a schedule slot';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub = '';
 do $$
 begin

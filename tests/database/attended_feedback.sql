@@ -46,6 +46,7 @@ insert into public.group_schedule_slots(group_id,weekday,start_time,end_time)
 select g.id,0,'10:00','11:00' from public.groups g
 where g.teacher_id='10000000-0000-4000-8000-000000000001' and g.name='Contact access group';
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
 select public.publish_group(g.id,null,null)
 from public.groups g where g.teacher_id='10000000-0000-4000-8000-000000000001' and g.name='Contact access group';
@@ -62,6 +63,7 @@ values ('10000000-0000-4000-8000-000000000001','+201234567890','   ','teacher-co
 
 -- No recorded attendance means no review, even with accepted enrollment.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
@@ -69,12 +71,14 @@ do $$declare gid uuid;begin
  begin perform public.save_group_feedback(gid,5,'This lesson was useful and clear.',0);raise exception 'unattended student reviewed';exception when insufficient_privilege then null;end;
 end $$;
 reset role;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
 insert into public.lessons(id,group_id,title,local_date,starts_at,ends_at)
 select '99100000-0000-4000-8000-000000000001',id,'Past class',(now() at time zone 'Africa/Cairo')::date,now()-interval '2 hours',now()-interval '1 hour' from public.groups where teacher_id=auth.uid();
 insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by)
 values('99100000-0000-4000-8000-000000000001','10000000-0000-4000-8000-000000000002','absent','10000000-0000-4000-8000-000000000001');
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
@@ -82,9 +86,11 @@ do $$declare gid uuid;begin
  begin perform public.save_group_feedback(gid,5,'This lesson was useful and clear.',0);raise exception 'absent student reviewed';exception when insufficient_privilege then null;end;
 end $$;
 reset role;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
 update public.lesson_attendance set status='late' where student_id='10000000-0000-4000-8000-000000000002';
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;v bigint;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
@@ -101,19 +107,23 @@ set local session_replication_role=replica;
 update public.profiles set role='admin' where id='10000000-0000-4000-8000-000000000003';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
 do $$declare f jsonb;begin
  f:=public.manage_group_feedback_page(0)->'rows'->0;
  perform public.moderate_group_feedback((f->>'id')::uuid,'approve','private moderation note',(f->>'version')::bigint);
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 set local role anon;
+set local request.jwt.claims = '{}';
 set local request.jwt.claim.sub='';
 do $$declare gid uuid:='00000000-0000-4000-8000-000000000000';begin
  if has_function_privilege('anon','public.save_group_feedback(uuid,integer,text,bigint)','EXECUTE') then raise exception 'anon can submit';end if;
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
 do $$declare f jsonb;p jsonb;begin
  f:=public.manage_group_feedback_page(0)->'rows'->0;
@@ -126,13 +136,16 @@ do $$declare f jsonb;p jsonb;begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
 do $$declare f jsonb;begin
  f:=public.manage_group_feedback_page(0)->'rows'->0;
  perform public.moderate_group_feedback((f->>'id')::uuid,'approve_reply','',(f->>'version')::bigint);
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;f jsonb;p jsonb;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();

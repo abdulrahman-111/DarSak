@@ -172,6 +172,7 @@ begin
   raise notice 'lesson preview assertions passed';
 end $$;
 
+set local request.jwt.claims = '{"sub":"40000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub = '40000000-0000-4000-8000-000000000003';
 set local role authenticated;
 do $$
@@ -180,6 +181,7 @@ begin
     raise exception 'admin cannot preview another teacher group';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

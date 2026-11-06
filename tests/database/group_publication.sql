@@ -68,6 +68,7 @@ insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time)
  ('78200000-0000-4000-8000-000000000005','78100000-0000-4000-8000-000000000007',0,'17:00','18:00');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000001';
 do $$
 declare
@@ -114,6 +115,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000002';
 do $$
 declare
@@ -140,6 +142,7 @@ insert into public.lessons(group_id,title,starts_at,ends_at)
 values ('78100000-0000-4000-8000-000000000003','Existing teacher conflict','2027-06-06 10:30+00','2027-06-06 11:30+00');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000002';
 do $$
 begin
@@ -157,6 +160,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000001';
 do $$
 begin
@@ -170,6 +174,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000003';
 do $$
 begin
@@ -180,9 +185,11 @@ begin
   if sqlerrm='student published a group' then raise; end if;
  end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000004';
 do $$
 begin
@@ -199,6 +206,7 @@ set local session_replication_role = replica;
 update public.profiles set role='admin' where id='78000000-0000-4000-8000-000000000003';
 set local session_replication_role = origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"78000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='78000000-0000-4000-8000-000000000003';
 do $$
 declare
@@ -209,6 +217,7 @@ begin
   raise exception 'active admin could not publish a valid scheduled group';
  end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

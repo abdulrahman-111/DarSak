@@ -1,5 +1,11 @@
 export type ActorName =
-  'teacher' | 'student' | 'outsider' | 'passwordStudent' | 'notificationStudent';
+  | 'teacher'
+  | 'student'
+  | 'outsider'
+  | 'passwordStudent'
+  | 'notificationStudent'
+  | 'liveNotificationStudent'
+  | 'accessTeacher';
 
 const projectIndexes: Record<string, number> = {
   'en-desktop': 1,
@@ -14,7 +20,18 @@ const actorNames: ActorName[] = [
   'outsider',
   'passwordStudent',
   'notificationStudent',
+  'liveNotificationStudent',
+  'accessTeacher',
 ];
+const actorIndexes: Record<ActorName, number> = {
+  teacher: 1,
+  student: 2,
+  outsider: 3,
+  passwordStudent: 4,
+  notificationStudent: 5,
+  liveNotificationStudent: 7,
+  accessTeacher: 8,
+};
 const password = 'E2E-local-only-2026!';
 
 function uuid(kind: number, projectIndex: number, actorIndex = 0): string {
@@ -28,10 +45,10 @@ export function fixtureData(projectName: string) {
   if (!projectIndex) throw new Error(`Unknown E2E project: ${projectName}`);
 
   const actors = Object.fromEntries(
-    actorNames.map((name, index) => [
+    actorNames.map(name => [
       name,
       {
-        id: uuid(0, projectIndex, index + 1),
+        id: uuid(0, projectIndex, actorIndexes[name]),
         email: `${name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}+${projectName}@e2e.invalid`,
         password,
       },
@@ -48,9 +65,14 @@ export function fixtureData(projectName: string) {
       outsiderId: actors.outsider.id,
       passwordStudentId: actors.passwordStudent.id,
       notificationStudentId: actors.notificationStudent.id,
+      liveNotificationStudentId: actors.liveNotificationStudent.id,
+      accessTeacherId: actors.accessTeacher.id,
+      seedAdminId: uuid(0, projectIndex, 6),
       groupId: uuid(1, projectIndex),
+      accessTeacherGroupId: uuid(1, projectIndex, 8),
       futureLessonId: uuid(2, projectIndex, 1),
       endedLessonId: uuid(2, projectIndex, 2),
+      accessTeacherLessonId: uuid(2, projectIndex, 8),
       assignmentId: uuid(3, projectIndex),
       notificationId: uuid(4, projectIndex),
       feedbackId: uuid(5, projectIndex),

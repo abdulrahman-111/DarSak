@@ -11,6 +11,7 @@ vi.mock('@/lib/supabase/browser', () => ({ createClient: () => ({}) }));
 import {
   getLiveUnread,
   setLiveUnread,
+  subscribeToLiveNotificationInserts,
   subscribeToUnreadInserts,
   type RealtimeClientLike,
 } from '@/features/notifications/live-unread';
@@ -52,6 +53,9 @@ describe('live unread subscription', () => {
     setLiveUnread(2);
     const fake = fakeClient();
     subscribeToUnreadInserts(fake.client, 'user-1');
+    expect(fake.raw.channel).toHaveBeenCalledWith('user-notifications:user-1', {
+      config: { postgres_changes_options: { wait: true } },
+    });
     expect(fake.filters[0]).toEqual({
       event: 'INSERT',
       schema: 'public',
@@ -70,6 +74,18 @@ describe('live unread subscription', () => {
     fake.insert({ read_at: null });
     fake.insert({ id: 'n3', read_at: '2026-10-28T00:00:00Z' });
     expect(getLiveUnread()).toBe(0);
+  });
+  it('notifies the open inbox once for each new unread notification', () => {
+    const received: string[] = [];
+    const stop = subscribeToLiveNotificationInserts(id => received.push(id));
+    const fake = fakeClient();
+    subscribeToUnreadInserts(fake.client, 'user-1');
+    fake.insert({ id: 'n1', read_at: null });
+    fake.insert({ id: 'n1', read_at: null });
+    fake.insert({ id: 'n2', read_at: null });
+    fake.insert({ id: 'n3', read_at: '2026-10-28T00:00:00Z' });
+    expect(received).toEqual(['n1', 'n2']);
+    stop();
   });
   it('resyncs the exact count after a reconnect and unsubscribes on cleanup', async () => {
     setLiveUnread(1);

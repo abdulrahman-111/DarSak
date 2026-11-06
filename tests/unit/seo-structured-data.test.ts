@@ -1,10 +1,70 @@
 import { describe, expect, it, vi } from 'vitest';
-import { groupJsonLd, safeJsonLd, teacherJsonLd } from '@/features/seo/structured-data';
+import {
+  groupJsonLd,
+  organizationJsonLd,
+  safeJsonLd,
+  teacherJsonLd,
+  websiteJsonLd,
+} from '@/features/seo/structured-data';
 import { entityShareImage, entityImageSize } from '@/features/seo/share-image';
+import { groupFallbackDescription, teacherFallbackDescription } from '@/features/seo/metadata';
 
 const uuid = '5c8f4f26-6d16-4f1f-9c10-df678e321abc';
 
 describe('public entity JSON-LD', () => {
+  it('builds bilingual Organization and WebSite data from the public DarSak brand', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://darsak.example');
+    for (const [locale, brand] of [
+      ['en', 'DarSak'],
+      ['ar', 'درسك'],
+    ] as const) {
+      const organization = organizationJsonLd(locale);
+      const website = websiteJsonLd(locale);
+      expect(organization).toMatchObject({
+        '@type': 'Organization',
+        name: brand,
+        url: 'https://darsak.example',
+        logo: 'https://darsak.example/brand/darsak/english-header-lockup.svg',
+      });
+      expect(website).toMatchObject({
+        '@type': 'WebSite',
+        name: brand,
+        url: `https://darsak.example/${locale}`,
+        inLanguage: locale,
+      });
+    }
+    const serialized = JSON.stringify([
+      organizationJsonLd('en'),
+      websiteJsonLd('en'),
+    ]).toLowerCase();
+    expect(serialized).not.toMatch(/email|telephone|address|sameas|review|rating/);
+  });
+
+  it('includes names in localized fallback descriptions so sparse entities remain distinct', () => {
+    const teacherA = teacherFallbackDescription('en', {
+      name: 'Amina Haddad',
+      headline: null,
+      subjects: [],
+    });
+    const teacherB = teacherFallbackDescription('en', {
+      name: 'Omar Ali',
+      headline: null,
+      subjects: [],
+    });
+    const groupA = groupFallbackDescription('ar', {
+      name: 'مجموعة النحو',
+      subject: 'اللغة العربية',
+    });
+    const groupB = groupFallbackDescription('ar', {
+      name: 'مجموعة البلاغة',
+      subject: 'اللغة العربية',
+    });
+    expect(teacherA).toContain('Amina Haddad');
+    expect(teacherA).not.toBe(teacherB);
+    expect(groupA).toContain('مجموعة النحو');
+    expect(groupA).not.toBe(groupB);
+  });
+
   it('builds Person and Course data only from public SEO fields', () => {
     vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://darsak.example');
     const person = teacherJsonLd('ar', {

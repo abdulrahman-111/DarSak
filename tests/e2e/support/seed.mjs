@@ -1,20 +1,38 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 
 const projects = ['en-desktop', 'ar-desktop', 'en-mobile', 'ar-mobile'];
-const actorNames = ['teacher', 'student', 'outsider', 'passwordStudent', 'notificationStudent'];
+const actorNames = [
+  'teacher',
+  'student',
+  'outsider',
+  'passwordStudent',
+  'notificationStudent',
+  'liveNotificationStudent',
+  'accessTeacher',
+];
+const actorIndexes = {
+  teacher: 1,
+  student: 2,
+  outsider: 3,
+  passwordStudent: 4,
+  notificationStudent: 5,
+  liveNotificationStudent: 7,
+  accessTeacher: 8,
+};
 const password = 'E2E-local-only-2026!';
 const uuid = (kind, projectIndex, actorIndex = 0) =>
   `e2e${String(kind).padStart(5, '0')}-0000-4000-8000-${String(projectIndex).padStart(4, '0')}${String(actorIndex).padStart(8, '0')}`;
 
 function fixtureData(projectName, projectIndex) {
   const actors = Object.fromEntries(
-    actorNames.map((name, index) => [
+    actorNames.map(name => [
       name,
       {
-        id: uuid(0, projectIndex, index + 1),
+        id: uuid(0, projectIndex, actorIndexes[name]),
         email: `${name.replace(/[A-Z]/g, letter => `-${letter.toLowerCase()}`)}+${projectName}@e2e.invalid`,
         password,
       },
@@ -23,8 +41,10 @@ function fixtureData(projectName, projectIndex) {
   return {
     actors,
     groupId: uuid(1, projectIndex),
+    accessTeacherGroupId: uuid(1, projectIndex, 8),
     futureLessonId: uuid(2, projectIndex, 1),
     endedLessonId: uuid(2, projectIndex, 2),
+    accessTeacherLessonId: uuid(2, projectIndex, 8),
     assignmentId: uuid(3, projectIndex),
     notificationId: uuid(4, projectIndex),
     feedbackId: uuid(5, projectIndex),
@@ -50,22 +70,40 @@ function sqlLiteral(value) {
   return `'${String(value).replaceAll("'", "''")}'`;
 }
 
-function seedSql(projectName, projectIndex) {
+export function seedSql(projectName, projectIndex) {
   const data = fixtureData(projectName, projectIndex);
-  const { teacher, student, outsider, passwordStudent, notificationStudent } = data.actors;
+  const {
+    teacher,
+    student,
+    outsider,
+    passwordStudent,
+    notificationStudent,
+    liveNotificationStudent,
+    accessTeacher,
+  } = data.actors;
   const admin = {
     id: uuid(0, projectIndex, 6),
     email: `seed-admin+${projectName}@e2e.invalid`,
   };
   const users = [
-    ...[teacher, student, outsider, passwordStudent, notificationStudent].map((actor, index) => {
-      const role = index === 0 ? 'teacher' : 'student';
+    ...[
+      teacher,
+      student,
+      outsider,
+      passwordStudent,
+      notificationStudent,
+      liveNotificationStudent,
+      accessTeacher,
+    ].map((actor, index) => {
+      const role = index === 0 || index === 6 ? 'teacher' : 'student';
       const fullName = [
         'E2E Teacher',
         'E2E Student',
         'E2E Outsider',
         'E2E Password Student',
         'E2E Notification Student',
+        'E2E Live Notification Student',
+        'E2E Access Teacher',
       ][index];
       return `('00000000-0000-0000-0000-000000000000', ${sqlLiteral(actor.id)}, 'authenticated', 'authenticated', ${sqlLiteral(actor.email)}, crypt(${sqlLiteral(password)}, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', ${sqlLiteral(JSON.stringify({ full_name: fullName, requested_role: role }))}::jsonb, now(), now(), '', '', '', '', '', '')`;
     }),
@@ -77,6 +115,8 @@ function seedSql(projectName, projectIndex) {
     outsider.id,
     passwordStudent.id,
     notificationStudent.id,
+    liveNotificationStudent.id,
+    accessTeacher.id,
     admin.id,
   ]
     .map(sqlLiteral)
@@ -89,16 +129,27 @@ select gen_random_uuid(),id,id::text,jsonb_build_object('sub',id::text,'email',e
 set local role service_role;
 update public.profiles set role='admin' where id=${sqlLiteral(admin.id)};
 select set_config('request.jwt.claim.sub',${sqlLiteral(admin.id)},true);
+select set_config('request.jwt.claims',${sqlLiteral(JSON.stringify({ sub: admin.id, role: 'authenticated', aal: 'aal2' }))},true);
 reset role;
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(teacher.id)} where teacher_id=${sqlLiteral(teacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(teacher.id)};
 update public.teacher_profiles set headline='Synthetic E2E teacher' where id=${sqlLiteral(teacher.id)};
-update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)});
+update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(accessTeacher.id)};
+select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(accessTeacher.id)};
+update public.teacher_profiles set headline='Synthetic E2E access teacher' where id=${sqlLiteral(accessTeacher.id)};
+update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)});
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(teacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
+insert into public.teacher_specializations(teacher_id,offering_id)
+select ${sqlLiteral(accessTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
 select ${sqlLiteral(data.groupId)},${sqlLiteral(teacher.id)},id,'E2E mathematics group','Synthetic browser workflow group.',20,'draft','Online'
 from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
+insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
+select ${sqlLiteral(data.accessTeacherGroupId)},${sqlLiteral(accessTeacher.id)},id,'E2E access control group','Dedicated teaching access withdrawal fixture.',8,'draft','Online'
+from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
+insert into public.lessons(id,group_id,title,starts_at,ends_at,notes)
+values(${sqlLiteral(data.accessTeacherLessonId)},${sqlLiteral(data.accessTeacherGroupId)},'E2E access fixture lesson',now()+interval '8 days',now()+interval '8 days 1 hour','Dedicated access withdrawal route fixture');
 insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.groupId)},1,'16:00','17:00');
 select public.publish_group(${sqlLiteral(data.groupId)},null,null);
 insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
@@ -115,6 +166,8 @@ insert into public.group_assignments(id,group_id,title,instructions,resource_url
 insert into public.user_notifications(id,recipient_id,kind,event_key,payload) values(${sqlLiteral(data.notificationId)},${sqlLiteral(notificationStudent.id)},'lesson_rescheduled','e2e:${projectName}:lesson-notice',jsonb_build_object('lesson_id',${sqlLiteral(data.futureLessonId)},'group_id',${sqlLiteral(data.groupId)},'group_name','E2E mathematics group','title','E2E upcoming lesson','starts_at',now()+interval '7 days','ends_at',now()+interval '7 days 1 hour'));
 insert into dars_private.group_feedback(id,group_id,student_id,rating,comment,status)
 values(${sqlLiteral(data.feedbackId)},${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},5,'Synthetic approved feedback for the teacher reply browser workflow.','approved');
+select set_config('request.jwt.claims','{}',true);
+select set_config('request.jwt.claim.sub','',true);
 reset role;
 do $$ begin
  if not exists(select 1 from public.groups where id=${sqlLiteral(data.groupId)} and status='published') then raise exception 'E2E group seed failed: starter offering missing'; end if;
@@ -124,27 +177,31 @@ commit;
 `;
 }
 
-const databaseUrl = process.env.E2E_DATABASE_URL;
-if (!databaseUrl) throw new Error('E2E_DATABASE_URL is required.');
-assertLoopbackDatabaseUrl(databaseUrl);
+const invokedDirectly =
+  process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href;
+if (invokedDirectly) {
+  const databaseUrl = process.env.E2E_DATABASE_URL;
+  if (!databaseUrl) throw new Error('E2E_DATABASE_URL is required.');
+  assertLoopbackDatabaseUrl(databaseUrl);
 
-const scratchDir = await mkdtemp(join(tmpdir(), 'darsak-e2e-seed-'));
-try {
-  for (const [index, projectName] of projects.entries()) {
-    const sqlFile = join(scratchDir, `${projectName}.sql`);
-    await writeFile(sqlFile, seedSql(projectName, index + 1), { mode: 0o600 });
-    const result = spawnSync(
-      'psql',
-      [databaseUrl, '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--file', sqlFile],
-      {
-        stdio: 'inherit',
-        env: process.env,
-      },
-    );
-    if (result.error) throw result.error;
-    if (result.status !== 0)
-      throw new Error(`Seeding ${projectName} failed with status ${result.status}.`);
+  const scratchDir = await mkdtemp(join(tmpdir(), 'darsak-e2e-seed-'));
+  try {
+    for (const [index, projectName] of projects.entries()) {
+      const sqlFile = join(scratchDir, `${projectName}.sql`);
+      await writeFile(sqlFile, seedSql(projectName, index + 1), { mode: 0o600 });
+      const result = spawnSync(
+        'psql',
+        [databaseUrl, '--no-psqlrc', '--set', 'ON_ERROR_STOP=1', '--file', sqlFile],
+        {
+          stdio: 'inherit',
+          env: process.env,
+        },
+      );
+      if (result.error) throw result.error;
+      if (result.status !== 0)
+        throw new Error(`Seeding ${projectName} failed with status ${result.status}.`);
+    }
+  } finally {
+    await rm(scratchDir, { recursive: true, force: true });
   }
-} finally {
-  await rm(scratchDir, { recursive: true, force: true });
 }

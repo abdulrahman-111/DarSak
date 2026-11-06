@@ -6,7 +6,7 @@ import { publicTeacherDetail } from '@/features/teacher/profile-data';
 import { idSchema } from '@/features/student/domain';
 import { ensureLocale } from '@/i18n/config';
 import Link from 'next/link';
-import { pageMetadata, snippet } from '@/features/seo/metadata';
+import { pageMetadata, snippet, teacherFallbackDescription } from '@/features/seo/metadata';
 import { publicTeacherSeo } from '@/features/seo/public-entity-data';
 import { safeJsonLd, teacherJsonLd } from '@/features/seo/structured-data';
 
@@ -29,28 +29,14 @@ export async function generateMetadata({
   });
   const result = await publicTeacherSeo(locale, id);
   if (result.kind !== 'found') return fallback;
-  const { name, headline, subjects } = result.data;
-  const taught = subjects.join(ar ? '، ' : ', ');
-  const description = snippet(
-    [
-      headline,
-      taught &&
-        (ar
-          ? `يدرّس ${taught} على درسك. تصفّح مجموعاته واطلب مقعدًا.`
-          : `Teaches ${taught} on DarSak. Browse their groups and request a seat.`),
-    ]
-      .filter(Boolean)
-      .join(' · ') ||
-      (ar
-        ? 'اطلع على ملف المعلم ومجموعاته على درسك.'
-        : 'View this teacher’s profile and groups on DarSak.'),
-  );
+  const { id: canonicalId, name, headline, subjects } = result.data;
+  const description = snippet(teacherFallbackDescription(locale, { name, headline, subjects }));
   return pageMetadata({
     locale,
-    path: `/teachers/${id}`,
+    path: `/teachers/${canonicalId}`,
     title: headline ? `${name} — ${headline}` : name,
     description,
-    imagePath: `/teachers/${id}/opengraph-image`,
+    imagePath: `/teachers/${canonicalId}/opengraph-image`,
   });
 }
 

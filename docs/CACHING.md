@@ -30,3 +30,19 @@ update or clear the current browser's session cookies and redirect. The proxy ma
 Supabase session cookies `private, no-store`, and each new server render resolves the viewer again.
 The browser security regression test covers a warm member session, local logout, login as an
 outsider, and back navigation in that same isolated browser context.
+
+## Display-only viewer fallback
+
+The browser keeps viewer display state in memory only; it no longer restores a
+sessionStorage snapshot after a full document load. This trades the old immediate
+returning-tab header paint for a fresh private viewer read. Ordinary client-side
+navigation can retain the current verified snapshot while revalidating.
+
+Authenticated workspace shells supply a bounded, server-authorized identity hint.
+A failed viewer read may use that hint for navigation and unread display, with AI
+disabled for hint-only state. The current auth-cookie set is represented by an
+opaque in-memory change stamp, used only to invalidate stale requests and state;
+it grants no authorization and is neither logged nor persisted. Successful viewer
+responses, including anonymous responses, remain authoritative for their session.
+Logout and session changes invalidate pending responses. Server data loaders and
+actions continue to authorize independently of this display state.

@@ -95,6 +95,7 @@ update public.student_profiles set education_year=' Secondary ',interests=array[
  learning_goal='I want to improve (Mathematics.), particularly drawing.' where id='b2000000-0000-4000-8000-000000000002';
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"b2000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='b2000000-0000-4000-8000-000000000002';
 do $$
 declare v_before timestamptz; v_result jsonb; v_page jsonb; v_page2 jsonb; v_empty jsonb;
@@ -172,6 +173,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"b2000000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='b2000000-0000-4000-8000-000000000004';
 do $$ declare v_page jsonb; begin
  v_page:=public.student_group_recommendations(0,12);
@@ -183,6 +185,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"b2000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='b2000000-0000-4000-8000-000000000005';
 do $$ begin
  begin
@@ -190,9 +193,11 @@ do $$ begin
   raise exception 'admin used student-only recommendation RPC';
  exception when insufficient_privilege then null; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"b2000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='b2000000-0000-4000-8000-000000000001';
 do $$ begin
  begin
@@ -203,6 +208,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"b2000000-0000-4000-8000-000000000006","role":"authenticated"}';
 set local request.jwt.claim.sub='b2000000-0000-4000-8000-000000000006';
 do $$ begin
  begin
