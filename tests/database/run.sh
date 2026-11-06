@@ -76,6 +76,8 @@ fixtures=(
   tests/database/signup_email_availability.sql
   tests/database/rls_auth_uid_initplan.sql
   tests/database/account_deletion.sql
+  tests/database/deletion_policy_actor.sql
+  tests/database/deletion_booking_snapshots.sql
 )
 
 failed=()
