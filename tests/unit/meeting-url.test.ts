@@ -19,10 +19,11 @@ describe('lesson meeting URLs', () => {
     expect(parseMeetingUrl('HTTPS://MEET.GOOGLE.COM/AbC')).toBe('https://meet.google.com/AbC');
   });
 
-  it('allows trusted configured domains and their subdomains', () => {
-    expect(isMeetingUrl('https://meet.school.example/room', ['school.example'])).toBe(true);
-    expect(isMeetingUrl('https://not-school.example/room', ['school.example'])).toBe(false);
+  it('allows only exact trusted configured hostnames', () => {
     expect(isMeetingUrl('https://school.example/room', ['school.example'])).toBe(true);
+    expect(isMeetingUrl('https://meet.school.example/room', ['school.example'])).toBe(false);
+    expect(isMeetingUrl('https://school.example/room', ['*.example'])).toBe(false);
+    expect(isMeetingUrl('https://school.example/room', ['https://school.example'])).toBe(false);
   });
 
   it('treats blank values as absent and rejects whitespace and controls', () => {

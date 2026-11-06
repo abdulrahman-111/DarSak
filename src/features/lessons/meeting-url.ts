@@ -10,7 +10,7 @@ const MAX_MEETING_URL_LENGTH = 500;
 
 /**
  * Checks whether a lesson meeting URL points at a supported meeting provider.
- * Extra hosts are trusted configured domains; their subdomains are accepted too.
+ * Extra hosts are trusted configured hostnames and must match exactly.
  */
 export function isMeetingUrl(value: string, extraHosts: readonly string[] = []): boolean {
   return parseMeetingUrl(value, extraHosts) !== null;
@@ -48,7 +48,7 @@ export function parseMeetingUrl(
   if (
     EXACT_MEETING_HOSTS.has(host) ||
     isSubdomainOf(host, MEETING_DOMAIN_ROOTS) ||
-    isSubdomainOf(host, extraHosts)
+    extraHosts.some(extraHost => host === extraHost.toLowerCase())
   ) {
     return url.toString();
   }
