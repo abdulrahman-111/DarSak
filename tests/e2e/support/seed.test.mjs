@@ -108,4 +108,29 @@ for (const fixture of fixtures) {
     assert.ok(sql.includes('Synthetic baseline review from the third fixture student.'));
     assert.ok(!sql.includes('undefined'));
   });
+
+  test(`meeting fixtures use the reserved actors, isolated group, and inherited-link lesson for ${fixture.project}`, () => {
+    const sql = seedSql(fixture.project, fixture.index);
+    const projectIndex = String(fixture.index).padStart(4, '0');
+    const teacherId = `e2e00000-0000-4000-8000-${projectIndex}00000011`;
+    const studentId = `e2e00000-0000-4000-8000-${projectIndex}00000012`;
+    const groupId = `00000145-0000-4000-8000-${projectIndex}00000001`;
+    const lessonId = `00000145-0000-4000-8000-${projectIndex}00000002`;
+    const usersBlock = sql.match(
+      /insert into auth\.users[^]*? values ([^]*?);\ninsert into auth\.identities/,
+    )?.[1];
+    assert.ok(usersBlock);
+    assert.ok(usersBlock.includes(`'${teacherId}'`));
+    assert.ok(usersBlock.includes(`meeting-teacher+${fixture.project}@e2e.invalid`));
+    assert.ok(usersBlock.includes('"requested_role":"teacher"'));
+    assert.ok(usersBlock.includes('E2E Meeting Teacher'));
+    assert.ok(usersBlock.includes(`'${studentId}'`));
+    assert.ok(usersBlock.includes(`meeting-student+${fixture.project}@e2e.invalid`));
+    assert.ok(usersBlock.includes('E2E Meeting Student'));
+    assert.ok(sql.includes(`'${groupId}','${teacherId}',id,'E2E meeting links group'`));
+    assert.ok(sql.includes(`values('${lessonId}','${groupId}','E2E meeting links lesson'`));
+    assert.ok(sql.includes(`'${groupId}','${studentId}','accepted'`));
+    assert.ok(sql.includes(`now()+interval '5 minutes',now()+interval '65 minutes'`));
+    assert.ok(!sql.includes('undefined'));
+  });
 }

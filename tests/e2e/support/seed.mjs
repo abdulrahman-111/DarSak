@@ -15,6 +15,8 @@ const actorNames = [
   'accessTeacher',
   'ratingsTeacher',
   'ratingsStudent',
+  'meetingTeacher',
+  'meetingStudent',
 ];
 const actorIndexes = {
   teacher: 1,
@@ -26,6 +28,8 @@ const actorIndexes = {
   accessTeacher: 8,
   ratingsTeacher: 9,
   ratingsStudent: 10,
+  meetingTeacher: 11,
+  meetingStudent: 12,
 };
 const password = 'E2E-local-only-2026!';
 const uuid = (kind, projectIndex, actorIndex = 0) =>
@@ -47,6 +51,8 @@ function fixtureData(projectName, projectIndex) {
     groupId: uuid(1, projectIndex),
     accessTeacherGroupId: uuid(1, projectIndex, 8),
     ratingsGroupId: `00000148-0000-4000-8000-${String(projectIndex).padStart(4, '0')}00000001`,
+    meetingGroupId: `00000145-0000-4000-8000-${String(projectIndex).padStart(4, '0')}00000001`,
+    meetingLessonId: `00000145-0000-4000-8000-${String(projectIndex).padStart(4, '0')}00000002`,
     futureLessonId: uuid(2, projectIndex, 1),
     endedLessonId: uuid(2, projectIndex, 2),
     accessTeacherLessonId: uuid(2, projectIndex, 8),
@@ -90,6 +96,8 @@ export function seedSql(projectName, projectIndex) {
     accessTeacher,
     ratingsTeacher,
     ratingsStudent,
+    meetingTeacher,
+    meetingStudent,
   } = data.actors;
   const admin = {
     id: uuid(0, projectIndex, 6),
@@ -106,8 +114,10 @@ export function seedSql(projectName, projectIndex) {
       accessTeacher,
       ratingsTeacher,
       ratingsStudent,
+      meetingTeacher,
+      meetingStudent,
     ].map((actor, index) => {
-      const role = index === 0 || index === 6 || index === 7 ? 'teacher' : 'student';
+      const role = [0, 6, 7, 9].includes(index) ? 'teacher' : 'student';
       const fullName = [
         'E2E Teacher',
         'E2E Student',
@@ -118,6 +128,8 @@ export function seedSql(projectName, projectIndex) {
         'E2E Access Teacher',
         'E2E Ratings Teacher',
         'E2E Ratings Student',
+        'E2E Meeting Teacher',
+        'E2E Meeting Student',
       ][index];
       return `('00000000-0000-0000-0000-000000000000', ${sqlLiteral(actor.id)}, 'authenticated', 'authenticated', ${sqlLiteral(actor.email)}, crypt(${sqlLiteral(password)}, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', ${sqlLiteral(JSON.stringify({ full_name: fullName, requested_role: role }))}::jsonb, now(), now(), '', '', '', '', '', '')`;
     }),
@@ -133,6 +145,8 @@ export function seedSql(projectName, projectIndex) {
     accessTeacher.id,
     ratingsTeacher.id,
     ratingsStudent.id,
+    meetingTeacher.id,
+    meetingStudent.id,
     admin.id,
   ]
     .map(sqlLiteral)
@@ -156,13 +170,18 @@ update public.teacher_profiles set headline='Synthetic E2E access teacher' where
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(ratingsTeacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(ratingsTeacher.id)};
 update public.teacher_profiles set headline='Synthetic ratings teacher' where id=${sqlLiteral(ratingsTeacher.id)};
-update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)},${sqlLiteral(ratingsStudent.id)});
+update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(meetingTeacher.id)};
+select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(meetingTeacher.id)};
+update public.teacher_profiles set headline='Synthetic meeting links teacher' where id=${sqlLiteral(meetingTeacher.id)};
+update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)},${sqlLiteral(ratingsStudent.id)},${sqlLiteral(meetingStudent.id)});
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(teacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(accessTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(ratingsTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
+insert into public.teacher_specializations(teacher_id,offering_id)
+select ${sqlLiteral(meetingTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
 select ${sqlLiteral(data.groupId)},${sqlLiteral(teacher.id)},id,'E2E mathematics group','Synthetic browser workflow group.',20,'draft','Online'
 from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
@@ -172,16 +191,23 @@ from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and s
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
 select ${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(ratingsTeacher.id)},id,'E2E Ratings Algebra Group','A real algebra teaching group for the student ratings browser journey.',12,'draft','Online'
 from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
+insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
+select ${sqlLiteral(data.meetingGroupId)},${sqlLiteral(meetingTeacher.id)},id,'E2E meeting links group','Dedicated private meeting link browser fixture.',12,'draft','Online'
+from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.lessons(id,group_id,title,starts_at,ends_at,notes)
 values(${sqlLiteral(data.accessTeacherLessonId)},${sqlLiteral(data.accessTeacherGroupId)},'E2E access fixture lesson',now()+interval '8 days',now()+interval '8 days 1 hour','Dedicated access withdrawal route fixture');
 insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.groupId)},1,'16:00','17:00');
 insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.ratingsGroupId)},2,'16:00','17:00');
+insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.meetingGroupId)},3,'16:00','17:00');
 select public.publish_group(${sqlLiteral(data.groupId)},null,null);
 select public.publish_group(${sqlLiteral(data.ratingsGroupId)},null,null);
+select public.publish_group(${sqlLiteral(data.meetingGroupId)},null,null);
 insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
 values(${sqlLiteral(data.groupId)},'Solve algebra problems','Grade 10','online',150,'month','Practice materials');
 insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
 values(${sqlLiteral(data.ratingsGroupId)},'Solve algebra problems','Grade 10','online',150,'month','Practice materials');
+insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
+values(${sqlLiteral(data.meetingGroupId)},'Solve algebra problems','Grade 10','online',150,'month','Practice materials');
 insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.groupId)},${sqlLiteral(student.id)},'accepted');
 insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},'accepted');
 insert into public.enrollments(group_id,student_id,status) values
@@ -189,6 +215,9 @@ insert into public.enrollments(group_id,student_id,status) values
 (${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(student.id)},'accepted'),
 (${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(outsider.id)},'accepted'),
 (${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(liveNotificationStudent.id)},'accepted');
+insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.meetingGroupId)},${sqlLiteral(meetingStudent.id)},'accepted');
+insert into public.lessons(id,group_id,title,starts_at,ends_at,notes)
+values(${sqlLiteral(data.meetingLessonId)},${sqlLiteral(data.meetingGroupId)},'E2E meeting links lesson',now()+interval '5 minutes',now()+interval '65 minutes','Dedicated private meeting link fixture');
 insert into public.lessons(id,group_id,title,starts_at,ends_at,notes) values
 (${sqlLiteral(data.futureLessonId)},${sqlLiteral(data.groupId)},'E2E upcoming lesson',now()+interval '7 days',now()+interval '7 days 1 hour','Synthetic future lesson'),
 (${sqlLiteral(data.endedLessonId)},${sqlLiteral(data.groupId)},'E2E completed lesson',now()-interval '7 days',now()-interval '7 days'+interval '1 hour','Synthetic ended lesson');
@@ -215,6 +244,9 @@ reset role;
 do $$ begin
  if not exists(select 1 from public.groups where id=${sqlLiteral(data.groupId)} and status='published') then raise exception 'E2E group seed failed: starter offering missing'; end if;
  if (select count(*) from public.enrollments where group_id=${sqlLiteral(data.groupId)} and student_id=${sqlLiteral(student.id)} and status='accepted')<>1 then raise exception 'E2E enrollment seed failed'; end if;
+ if not exists(select 1 from public.groups where id=${sqlLiteral(data.meetingGroupId)} and teacher_id=${sqlLiteral(meetingTeacher.id)} and status='published') then raise exception 'E2E meeting group seed failed'; end if;
+ if (select count(*) from public.enrollments where group_id=${sqlLiteral(data.meetingGroupId)} and student_id=${sqlLiteral(meetingStudent.id)} and status='accepted')<>1 then raise exception 'E2E meeting enrollment seed failed'; end if;
+ if not exists(select 1 from public.lessons where id=${sqlLiteral(data.meetingLessonId)} and group_id=${sqlLiteral(data.meetingGroupId)} and manual_url is null) then raise exception 'E2E meeting lesson seed failed'; end if;
 end $$;
 commit;
 `;
