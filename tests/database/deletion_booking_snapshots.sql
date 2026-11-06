@@ -2,26 +2,39 @@
 begin;
 
 insert into auth.users(id,aud,role,email,raw_user_meta_data) values
- ('a1600000-0000-4000-8000-000000000001','authenticated','authenticated','snapshot-student-delete@test.invalid','{}'),
- ('a1600000-0000-4000-8000-000000000002','authenticated','authenticated','snapshot-student-keep@test.invalid','{}'),
- ('a1600000-0000-4000-8000-000000000003','authenticated','authenticated','snapshot-teacher-delete@test.invalid','{}'),
- ('a1600000-0000-4000-8000-000000000004','authenticated','authenticated','snapshot-teacher-keep@test.invalid','{}');
+ ('a1600000-0000-4000-8000-000000000001','authenticated','authenticated','snapshot-student-delete@test.invalid','{"full_name":"Shared Name","requested_role":"student"}'),
+ ('a1600000-0000-4000-8000-000000000002','authenticated','authenticated','snapshot-student-keep@test.invalid','{"full_name":"Shared Name","requested_role":"student"}'),
+ ('a1600000-0000-4000-8000-000000000003','authenticated','authenticated','snapshot-teacher-delete@test.invalid','{"full_name":"Deleting Teacher","requested_role":"teacher"}'),
+ ('a1600000-0000-4000-8000-000000000004','authenticated','authenticated','snapshot-teacher-keep@test.invalid','{"full_name":"Unrelated Teacher","requested_role":"teacher"}');
 
-insert into public.profiles(id,full_name,role,status) values
- ('a1600000-0000-4000-8000-000000000001','Shared Name','student','active'),
- ('a1600000-0000-4000-8000-000000000002','Shared Name','student','active'),
- ('a1600000-0000-4000-8000-000000000003','Deleting Teacher','teacher','active'),
- ('a1600000-0000-4000-8000-000000000004','Unrelated Teacher','teacher','active');
+set local session_replication_role=replica;
+update public.teacher_profiles set approved=true where id in (
+ 'a1600000-0000-4000-8000-000000000003','a1600000-0000-4000-8000-000000000004'
+);
+set local session_replication_role=origin;
 
 insert into public.education_nodes(id,kind,name_ar,name_en,slug) values
- ('a1610000-0000-4000-8000-000000000001','grade','صف الحجز','Booking grade','deletion-booking-grade');
+ ('a1610000-0000-4000-8000-000000000001','system','نظام الحجز','Booking system','deletion-booking-system');
+insert into public.education_nodes(id,parent_id,kind,name_ar,name_en,slug) values
+ ('a1610000-0000-4000-8000-000000000002','a1610000-0000-4000-8000-000000000001','level','مرحلة الحجز','Booking level','deletion-booking-level');
+insert into public.education_nodes(id,parent_id,kind,name_ar,name_en,slug) values
+ ('a1610000-0000-4000-8000-000000000003','a1610000-0000-4000-8000-000000000002','grade','صف الحجز','Booking grade','deletion-booking-grade');
 insert into public.subjects(id,name_ar,name_en,slug) values
  ('a1620000-0000-4000-8000-000000000001','مادة الحجز','Booking subject','deletion-booking-subject');
 insert into public.offerings(id,node_id,subject_id) values
- ('a1630000-0000-4000-8000-000000000001','a1610000-0000-4000-8000-000000000001','a1620000-0000-4000-8000-000000000001');
+ ('a1630000-0000-4000-8000-000000000001','a1610000-0000-4000-8000-000000000003','a1620000-0000-4000-8000-000000000001');
+insert into public.teacher_specializations(teacher_id,offering_id) values
+ ('a1600000-0000-4000-8000-000000000003','a1630000-0000-4000-8000-000000000001'),
+ ('a1600000-0000-4000-8000-000000000004','a1630000-0000-4000-8000-000000000001');
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status) values
- ('a1640000-0000-4000-8000-000000000001','a1600000-0000-4000-8000-000000000003','a1630000-0000-4000-8000-000000000001','Deleting teacher group',10,'published'),
- ('a1640000-0000-4000-8000-000000000002','a1600000-0000-4000-8000-000000000004','a1630000-0000-4000-8000-000000000001','Unrelated teacher group',10,'published');
+ ('a1640000-0000-4000-8000-000000000001','a1600000-0000-4000-8000-000000000003','a1630000-0000-4000-8000-000000000001','Deleting teacher group',10,'draft'),
+ ('a1640000-0000-4000-8000-000000000002','a1600000-0000-4000-8000-000000000004','a1630000-0000-4000-8000-000000000001','Unrelated teacher group',10,'draft');
+insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values
+ ('a1640000-0000-4000-8000-000000000001',1,'08:00','09:00'),
+ ('a1640000-0000-4000-8000-000000000002',2,'08:00','09:00');
+update public.groups set status='published' where id in (
+ 'a1640000-0000-4000-8000-000000000001','a1640000-0000-4000-8000-000000000002'
+);
 
 insert into public.booking_slots(id,group_id,teacher_id,starts_at,ends_at,status,source) values
  ('a1650000-0000-4000-8000-000000000001','a1640000-0000-4000-8000-000000000001','a1600000-0000-4000-8000-000000000003',now()+interval '5 days',now()+interval '5 days 1 hour','open','teacher_published'),
