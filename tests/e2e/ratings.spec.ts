@@ -195,10 +195,14 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   await expect(async () => {
     await discovery.goto(`/${locale}/teachers`);
     const freshCard = ratingsGroupCard(discovery, locale, ids.ratingsGroupId);
-    await expect(freshCard.getByText(locale === 'ar' ? /٤٫٠/ : /4\.0\s*\/\s*5/)).toBeVisible();
-    await expect(
-      freshCard.getByText(locale === 'ar' ? 'عدد التقييمات: ٤' : 'Rating count: 4'),
-    ).toBeVisible();
+    // This summary is server-rendered with the listing response. Snapshot it without
+    // locator auto-waits, which could consume the 8s freshness window on stale HTML.
+    const cardTexts = await freshCard.evaluateAll(cards =>
+      cards.map(card => (card as HTMLElement).innerText),
+    );
+    expect(cardTexts).toHaveLength(1);
+    expect(cardTexts[0]).toContain(locale === 'ar' ? '٤٫٠' : '4.0 / 5');
+    expect(cardTexts[0]).toContain(locale === 'ar' ? 'عدد التقييمات: ٤' : 'Rating count: 4');
     expect(Date.now()).toBeGreaterThanOrEqual(minuteBoundary);
   }).toPass({ timeout: deadline, intervals: [1_500, 2_500, 4_000] });
   await openAdvancedFilters(discovery, locale);
