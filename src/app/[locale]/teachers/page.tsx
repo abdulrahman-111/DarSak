@@ -108,6 +108,8 @@ export default async function Teachers({
     filters.weekday !== null ||
     filters.hasSeats ||
     filters.query ||
+    filters.sort === 'rating' ||
+    filters.minRating !== null ||
     filters.page > 1 ||
     teacherSearch
   );
@@ -118,6 +120,8 @@ export default async function Teachers({
     filters.weekday !== null ? 'weekday' : '',
     filters.hasSeats ? 'hasSeats' : '',
     filters.query,
+    filters.sort === 'rating' ? 'rating' : '',
+    filters.minRating !== null ? 'minRating' : '',
     teacherSearch,
   ].filter(Boolean).length;
   // Keep the filter panel open whenever a filter inside it is applied, so people can see what narrows their results.
@@ -284,6 +288,38 @@ export default async function Teachers({
                         {c.weekdays.map((day, index) => (
                           <option key={day} value={index}>
                             {day}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-line-strong px-3">
+                      <span className="sr-only">{locale === 'ar' ? 'ترتيب حسب' : 'Sort by'}</span>
+                      <select
+                        className="min-w-0 flex-1 bg-transparent"
+                        name="sort"
+                        defaultValue={filters.sort}
+                      >
+                        <option value="default">
+                          {locale === 'ar' ? 'الترتيب الافتراضي' : 'Default order'}
+                        </option>
+                        <option value="rating">
+                          {locale === 'ar' ? 'الأعلى تقييمًا للمعلم' : 'Highest teacher rating'}
+                        </option>
+                      </select>
+                    </label>
+                    <label className="flex min-h-11 min-w-0 items-center gap-2 rounded-xl border border-line-strong px-3">
+                      <span className="sr-only">
+                        {locale === 'ar' ? 'الحد الأدنى لتقييم المعلم' : 'Minimum teacher rating'}
+                      </span>
+                      <select
+                        className="min-w-0 flex-1 bg-transparent"
+                        name="min_rating"
+                        defaultValue={filters.minRating ?? ''}
+                      >
+                        <option value="">{locale === 'ar' ? 'أي تقييم' : 'Any rating'}</option>
+                        {[1, 2, 3, 4, 5].map(rating => (
+                          <option key={rating} value={rating}>
+                            {rating}+
                           </option>
                         ))}
                       </select>

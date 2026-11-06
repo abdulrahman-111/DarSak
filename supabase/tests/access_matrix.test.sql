@@ -107,6 +107,8 @@ select ok(not has_table_privilege('anon','public.profiles','SELECT') and not has
 set local role anon;
 select throws_ok($$select count(*) from public.groups$$,'42501',null,'anon cannot query the base groups table directly');
 select is((select count(*)::integer from public.discover_groups(null,null,null,null,false,'',0,12) where id::text like '1554%'),2,'anon discovers published test groups through the public RPC');
+select ok(has_function_privilege('anon','public.discover_groups_rated(uuid,uuid,uuid,integer,boolean,text,integer,integer,text,integer)','EXECUTE') and has_function_privilege('anon','public.public_teachers_rated()','EXECUTE'),'anon can execute rated discovery and teacher read RPCs');
+select is((select count(*)::integer from public.discover_groups_rated(null,null,null,null,false,'',0,12,'default',null) where id::text like '1554%'),2,'anon discovers rated groups through the rated RPC');
 select is((select count(*)::integer from public.public_group_detail('15540000-0000-4000-8000-000000000001')),1,'anon reads published group details through the public RPC');
 select is((select count(*)::integer from public.group_schedule_slots where group_id::text like '1554%'),2,'anon reads published test group schedules');
 reset role;
@@ -267,6 +269,9 @@ select is((select revision from public.assignment_submissions where id='155a0000
 -- Each negative case is paired with an owner control and a persisted-state check.
 set local role authenticated;
 select set_config('request.jwt.claim.sub','15500000-0000-4000-8000-000000000001',true);
+select ok(has_function_privilege('authenticated','public.discover_groups_rated(uuid,uuid,uuid,integer,boolean,text,integer,integer,text,integer)','EXECUTE') and has_function_privilege('authenticated','public.public_teachers_rated()','EXECUTE'),'authenticated can execute rated discovery and teacher read RPCs');
+select lives_ok($$select count(*) from public.discover_groups_rated()$$,'authenticated executes rated discovery');
+select lives_ok($$select count(*) from public.public_teachers_rated()$$,'authenticated executes rated teacher listing');
 select throws_ok($$select public.submit_assignment_link('15590000-0000-4000-8000-000000000002','https://example.test/cross-user-submission','cross-user attempt',0)$$,
   '42501',null,'student A cannot submit for student B group');
 reset role;

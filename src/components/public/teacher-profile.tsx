@@ -4,9 +4,10 @@ import { TeacherAvatarImage } from '@/features/teacher/profile-avatar-image';
 import { localizedProfileText, publicVisitorContacts, type PublicTeacherProfileDetails, type PublicTeacherVisitorContacts } from '@/features/teacher/profile-details-domain';
 import { publicTeacherContactLinks } from '@/features/teacher/profile-domain';
 import type { Group } from '@/lib/supabase/types';
+import { RatingSummary } from '@/features/feedback/rating-summary';
 
 export type TeacherVisitorView = {
-  teacher: { id: string; full_name: string; headline: string | null };
+  teacher: { id: string; full_name: string; headline: string | null; teacher_rating_average?: number | null; teacher_rating_count?: number | null };
   details: PublicTeacherProfileDetails | null;
   contacts: PublicTeacherVisitorContacts | null;
   specializations: Array<{ id: string; subject: string; context: string }>;
@@ -84,6 +85,7 @@ export function TeacherProfile({ view, locale, backLabel }: { view: TeacherVisit
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-[.14em] text-orange">{ar ? 'ملف المعلم' : 'Teacher profile'}</p>
             <h1 className={`mt-2 wrap-break-word text-3xl font-black tracking-tight md:text-4xl ${theme.accent}`}>{view.teacher.full_name}</h1>
+            <div className="mt-2"><RatingSummary average={view.teacher.teacher_rating_average} count={view.teacher.teacher_rating_count} locale={locale} /></div>
             {view.teacher.headline && <p className="mt-2 text-lg text-muted">{view.teacher.headline}</p>}
             {(city || details?.teaching_mode) && <p className="mt-2 text-sm text-muted">{[city && `${labels.city}: ${city}`, details?.teaching_mode && labels.mode[details.teaching_mode]].filter(Boolean).join(' · ')}</p>}
             {details?.languages.length ? <p className="mt-1 text-sm text-muted">{labels.languages}: {details.languages.join(ar ? '، ' : ', ')}</p> : null}

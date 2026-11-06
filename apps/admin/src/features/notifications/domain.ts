@@ -2,7 +2,7 @@ import { notificationSummary } from '@/features/notifications/domain';
 
 export type AdminNotification = {
   id: string;
-  kind: 'teacher_review_requested';
+  kind: 'teacher_review_requested' | 'feedback_pending';
   payload: Record<string, unknown>;
   created_at: string;
   read_at: string | null;
@@ -36,7 +36,7 @@ export function parseAdminNotificationsPage(value: unknown): AdminNotificationsP
     if (
       typeof row.id !== 'string' ||
       !UUID.test(row.id) ||
-      row.kind !== 'teacher_review_requested' ||
+      (row.kind !== 'teacher_review_requested' && row.kind !== 'feedback_pending') ||
       !row.payload ||
       typeof row.payload !== 'object' ||
       Array.isArray(row.payload) ||
@@ -48,9 +48,19 @@ export function parseAdminNotificationsPage(value: unknown): AdminNotificationsP
       )
     )
       return null;
+    if (
+      row.kind === 'feedback_pending' &&
+      (typeof (row.payload as Record<string, unknown>).feedback_id !== 'string' ||
+        !UUID.test((row.payload as Record<string, unknown>).feedback_id as string) ||
+        typeof (row.payload as Record<string, unknown>).group_id !== 'string' ||
+        !UUID.test((row.payload as Record<string, unknown>).group_id as string) ||
+        typeof (row.payload as Record<string, unknown>).category !== 'string' ||
+        !['review', 'reply'].includes((row.payload as Record<string, unknown>).category as string))
+    )
+      return null;
     rows.push({
       id: row.id,
-      kind: 'teacher_review_requested',
+      kind: row.kind,
       payload: row.payload as Record<string, unknown>,
       created_at: row.created_at,
       read_at: row.read_at as string | null,
@@ -65,6 +75,7 @@ export function adminNotificationHref(
   locale: string,
 ) {
   if (locale !== 'ar' && locale !== 'en') return null;
+  if (kind === 'feedback_pending') return `/${locale}/admin/feedback`;
   if (kind !== 'teacher_review_requested') return null;
   const teacherId = payload.teacher_id;
   if (typeof teacherId !== 'string' || !UUID.test(teacherId)) return `/${locale}/admin/teachers`;
@@ -76,6 +87,7 @@ export function adminNotificationSummary(
   payload: Record<string, unknown>,
   locale: string,
 ) {
+  if (kind === 'feedback_pending') return notificationSummary(kind, payload, locale);
   if (kind !== 'teacher_review_requested') return null;
   return notificationSummary(kind, payload, locale);
 }

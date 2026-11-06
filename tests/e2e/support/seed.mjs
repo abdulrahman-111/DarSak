@@ -13,6 +13,8 @@ const actorNames = [
   'notificationStudent',
   'liveNotificationStudent',
   'accessTeacher',
+  'ratingsTeacher',
+  'ratingsStudent',
 ];
 const actorIndexes = {
   teacher: 1,
@@ -22,6 +24,8 @@ const actorIndexes = {
   notificationStudent: 5,
   liveNotificationStudent: 7,
   accessTeacher: 8,
+  ratingsTeacher: 9,
+  ratingsStudent: 10,
 };
 const password = 'E2E-local-only-2026!';
 const uuid = (kind, projectIndex, actorIndex = 0) =>
@@ -42,9 +46,13 @@ function fixtureData(projectName, projectIndex) {
     actors,
     groupId: uuid(1, projectIndex),
     accessTeacherGroupId: uuid(1, projectIndex, 8),
+    ratingsGroupId: `00000148-0000-4000-8000-${String(projectIndex).padStart(4, '0')}00000001`,
     futureLessonId: uuid(2, projectIndex, 1),
     endedLessonId: uuid(2, projectIndex, 2),
     accessTeacherLessonId: uuid(2, projectIndex, 8),
+    ratingsFirstLessonId: uuid(6, projectIndex, 1),
+    ratingsSecondLessonId: uuid(6, projectIndex, 2),
+    ratingsBaselineFeedbackIds: [20, 21, 22].map(index => uuid(5, projectIndex, index)),
     assignmentId: uuid(3, projectIndex),
     notificationId: uuid(4, projectIndex),
     feedbackId: uuid(5, projectIndex),
@@ -80,6 +88,8 @@ export function seedSql(projectName, projectIndex) {
     notificationStudent,
     liveNotificationStudent,
     accessTeacher,
+    ratingsTeacher,
+    ratingsStudent,
   } = data.actors;
   const admin = {
     id: uuid(0, projectIndex, 6),
@@ -94,8 +104,10 @@ export function seedSql(projectName, projectIndex) {
       notificationStudent,
       liveNotificationStudent,
       accessTeacher,
+      ratingsTeacher,
+      ratingsStudent,
     ].map((actor, index) => {
-      const role = index === 0 || index === 6 ? 'teacher' : 'student';
+      const role = index === 0 || index === 6 || index === 7 ? 'teacher' : 'student';
       const fullName = [
         'E2E Teacher',
         'E2E Student',
@@ -104,6 +116,8 @@ export function seedSql(projectName, projectIndex) {
         'E2E Notification Student',
         'E2E Live Notification Student',
         'E2E Access Teacher',
+        'E2E Ratings Teacher',
+        'E2E Ratings Student',
       ][index];
       return `('00000000-0000-0000-0000-000000000000', ${sqlLiteral(actor.id)}, 'authenticated', 'authenticated', ${sqlLiteral(actor.email)}, crypt(${sqlLiteral(password)}, gen_salt('bf')), now(), '{"provider":"email","providers":["email"]}', ${sqlLiteral(JSON.stringify({ full_name: fullName, requested_role: role }))}::jsonb, now(), now(), '', '', '', '', '', '')`;
     }),
@@ -117,6 +131,8 @@ export function seedSql(projectName, projectIndex) {
     notificationStudent.id,
     liveNotificationStudent.id,
     accessTeacher.id,
+    ratingsTeacher.id,
+    ratingsStudent.id,
     admin.id,
   ]
     .map(sqlLiteral)
@@ -137,35 +153,62 @@ update public.teacher_profiles set headline='Synthetic E2E teacher' where id=${s
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(accessTeacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(accessTeacher.id)};
 update public.teacher_profiles set headline='Synthetic E2E access teacher' where id=${sqlLiteral(accessTeacher.id)};
-update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)});
+update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(admin.id)} where teacher_id=${sqlLiteral(ratingsTeacher.id)};
+select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(ratingsTeacher.id)};
+update public.teacher_profiles set headline='Synthetic ratings teacher' where id=${sqlLiteral(ratingsTeacher.id)};
+update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)},${sqlLiteral(ratingsStudent.id)});
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(teacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(accessTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
+insert into public.teacher_specializations(teacher_id,offering_id)
+select ${sqlLiteral(ratingsTeacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
 select ${sqlLiteral(data.groupId)},${sqlLiteral(teacher.id)},id,'E2E mathematics group','Synthetic browser workflow group.',20,'draft','Online'
 from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
 select ${sqlLiteral(data.accessTeacherGroupId)},${sqlLiteral(accessTeacher.id)},id,'E2E access control group','Dedicated teaching access withdrawal fixture.',8,'draft','Online'
 from public.offerings where node_id='00000000-0000-0000-0000-000000000022' and subject_id='00000000-0000-0000-0000-000000000102' and owner_teacher_id is null;
+insert into public.groups(id,teacher_id,offering_id,name,description,capacity,status,location)
+select ${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(ratingsTeacher.id)},id,'E2E Ratings Algebra Group','A real algebra teaching group for the student ratings browser journey.',12,'draft','Online'
+from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.lessons(id,group_id,title,starts_at,ends_at,notes)
 values(${sqlLiteral(data.accessTeacherLessonId)},${sqlLiteral(data.accessTeacherGroupId)},'E2E access fixture lesson',now()+interval '8 days',now()+interval '8 days 1 hour','Dedicated access withdrawal route fixture');
 insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.groupId)},1,'16:00','17:00');
+insert into public.group_schedule_slots(group_id,weekday,start_time,end_time) values(${sqlLiteral(data.ratingsGroupId)},2,'16:00','17:00');
 select public.publish_group(${sqlLiteral(data.groupId)},null,null);
+select public.publish_group(${sqlLiteral(data.ratingsGroupId)},null,null);
 insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
 values(${sqlLiteral(data.groupId)},'Solve algebra problems','Grade 10','online',150,'month','Practice materials');
+insert into public.group_learning_details(group_id,outcomes,prerequisites,delivery_mode,fee_egp,fee_basis,fee_includes)
+values(${sqlLiteral(data.ratingsGroupId)},'Solve algebra problems','Grade 10','online',150,'month','Practice materials');
 insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.groupId)},${sqlLiteral(student.id)},'accepted');
 insert into public.enrollments(group_id,student_id,status) values(${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},'accepted');
+insert into public.enrollments(group_id,student_id,status) values
+(${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(ratingsStudent.id)},'accepted'),
+(${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(student.id)},'accepted'),
+(${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(outsider.id)},'accepted'),
+(${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(liveNotificationStudent.id)},'accepted');
 insert into public.lessons(id,group_id,title,starts_at,ends_at,notes) values
 (${sqlLiteral(data.futureLessonId)},${sqlLiteral(data.groupId)},'E2E upcoming lesson',now()+interval '7 days',now()+interval '7 days 1 hour','Synthetic future lesson'),
 (${sqlLiteral(data.endedLessonId)},${sqlLiteral(data.groupId)},'E2E completed lesson',now()-interval '7 days',now()-interval '7 days'+interval '1 hour','Synthetic ended lesson');
 insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by)
 values(${sqlLiteral(data.endedLessonId)},${sqlLiteral(notificationStudent.id)},'present',${sqlLiteral(teacher.id)});
+insert into public.lessons(id,group_id,title,starts_at,ends_at,notes) values
+(${sqlLiteral(data.ratingsFirstLessonId)},${sqlLiteral(data.ratingsGroupId)},'E2E first ended ratings lesson',now()-interval '10 days',now()-interval '10 days'+interval '1 hour','Synthetic ended ratings lesson'),
+(${sqlLiteral(data.ratingsSecondLessonId)},${sqlLiteral(data.ratingsGroupId)},'E2E second ended ratings lesson',now()-interval '8 days',now()-interval '8 days'+interval '1 hour','Synthetic ended ratings lesson');
+insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by) values
+(${sqlLiteral(data.ratingsFirstLessonId)},${sqlLiteral(ratingsStudent.id)},'present',${sqlLiteral(ratingsTeacher.id)}),
+(${sqlLiteral(data.ratingsSecondLessonId)},${sqlLiteral(ratingsStudent.id)},'absent',${sqlLiteral(ratingsTeacher.id)});
 insert into public.lesson_materials(lesson_id,kind,title,url,uploaded_by) values(${sqlLiteral(data.futureLessonId)},'link','E2E algebra resource','https://en.wikipedia.org/wiki/Elementary_algebra',${sqlLiteral(teacher.id)});
 insert into public.group_assignments(id,group_id,title,instructions,resource_url,due_at) values(${sqlLiteral(data.assignmentId)},${sqlLiteral(data.groupId)},'E2E algebra assignment','Complete the practice questions.','https://en.wikipedia.org/wiki/Algebra',now()+interval '14 days');
 insert into public.user_notifications(id,recipient_id,kind,event_key,payload) values(${sqlLiteral(data.notificationId)},${sqlLiteral(notificationStudent.id)},'lesson_rescheduled','e2e:${projectName}:lesson-notice',jsonb_build_object('lesson_id',${sqlLiteral(data.futureLessonId)},'group_id',${sqlLiteral(data.groupId)},'group_name','E2E mathematics group','title','E2E upcoming lesson','starts_at',now()+interval '7 days','ends_at',now()+interval '7 days 1 hour'));
 insert into dars_private.group_feedback(id,group_id,student_id,rating,comment,status)
 values(${sqlLiteral(data.feedbackId)},${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},5,'Synthetic approved feedback for the teacher reply browser workflow.','approved');
+insert into dars_private.group_feedback(id,group_id,student_id,rating,comment,status) values
+(${sqlLiteral(data.ratingsBaselineFeedbackIds[0])},${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(student.id)},5,'Synthetic baseline review from the first fixture student.','approved'),
+(${sqlLiteral(data.ratingsBaselineFeedbackIds[1])},${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(outsider.id)},5,'Synthetic baseline review from the second fixture student.','approved'),
+(${sqlLiteral(data.ratingsBaselineFeedbackIds[2])},${sqlLiteral(data.ratingsGroupId)},${sqlLiteral(liveNotificationStudent.id)},5,'Synthetic baseline review from the third fixture student.','approved');
 select set_config('request.jwt.claims','{}',true);
 select set_config('request.jwt.claim.sub','',true);
 reset role;

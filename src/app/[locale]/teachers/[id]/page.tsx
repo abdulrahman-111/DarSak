@@ -71,12 +71,51 @@ export default async function PublicTeacherPage({
     );
   if (!data.visitor) notFound();
 
+  const displayedRating = data.visitor.teacher.teacher_rating_average;
+  const displayedCount = data.visitor.teacher.teacher_rating_count;
+  const ratingVisible =
+    Number.isFinite(displayedRating) &&
+    (displayedRating as number) >= 1 &&
+    (displayedRating as number) <= 5 &&
+    Number.isSafeInteger(displayedCount) &&
+    (displayedCount as number) >= 3;
+  const serviceGroup = data.visitor.groups.find(group => {
+    const subject = ar
+      ? group.offering?.subject?.name_ar || group.offering?.subject?.name_en
+      : group.offering?.subject?.name_en || group.offering?.subject?.name_ar;
+    return !!subject?.trim() && !!group.description?.trim();
+  });
+  const serviceSubject = serviceGroup
+    ? ar
+      ? serviceGroup.offering?.subject?.name_ar || serviceGroup.offering?.subject?.name_en
+      : serviceGroup.offering?.subject?.name_en || serviceGroup.offering?.subject?.name_ar
+    : null;
+  const teacherJson = teacherJsonLd(
+    locale,
+    seo.kind === 'found'
+      ? seo.data
+      : {
+          id: data.visitor.teacher.id,
+          name: data.visitor.teacher.full_name,
+          headline: data.visitor.teacher.headline,
+          subjects: data.visitor.specializations.map(item => item.subject).slice(0, 8),
+        },
+    ratingVisible && serviceGroup && serviceSubject
+      ? {
+          subject: serviceSubject,
+          description: serviceGroup.description,
+          average: displayedRating as number,
+          count: displayedCount as number,
+        }
+      : undefined,
+  );
+
   return (
     <>
-      {seo.kind === 'found' && (
+      {(seo.kind === 'found' || data.visitor) && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: safeJsonLd(teacherJsonLd(locale, seo.data)) }}
+          dangerouslySetInnerHTML={{ __html: safeJsonLd(teacherJson) }}
         />
       )}
       <TeacherProfile

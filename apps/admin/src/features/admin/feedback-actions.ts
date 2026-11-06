@@ -32,24 +32,34 @@ export async function moderateFeedback(
         .refine(Number.isSafeInteger),
       decision: decisions,
       admin_note: z.string().max(1500),
+      student_reason: z.string().max(500),
     })
     .safeParse({
       id,
       version: form.get('version'),
       decision: form.get('decision'),
       admin_note: form.get('admin_note'),
+      student_reason: form.get('student_reason') ?? '',
     });
   if (!parsed.success)
     return {
       error: ar
-        ? 'تحقق من القرار والملاحظة ثم حاول مجددًا.'
-        : 'Check the decision and note, then try again.',
+        ? 'تحقق من القرار والملاحظة وسبب الإخفاء ثم حاول مجددًا.'
+        : 'Check the decision, note, and hide reason, then try again.',
     };
-  const { data, error } = await actor.db.rpc('moderate_group_feedback', {
+  const studentReason = parsed.data.student_reason.trim();
+  if (parsed.data.decision === 'hide' && (studentReason.length < 1 || studentReason.length > 500))
+    return {
+      error: ar
+        ? 'أدخل سببًا من ١ إلى ٥٠٠ حرف يظهر للطالب عند الإخفاء.'
+        : 'Enter a 1 to 500 character reason shown to the student when hidden.',
+    };
+  const { data, error } = await actor.db.rpc('moderate_group_feedback_with_reason', {
     p_id: parsed.data.id,
     p_decision: parsed.data.decision,
     p_note: parsed.data.admin_note,
     p_expected_version: parsed.data.version,
+    p_student_reason: parsed.data.decision === 'hide' ? studentReason : '',
   });
   if (error)
     return {

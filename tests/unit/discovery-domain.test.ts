@@ -29,6 +29,8 @@ describe('public discovery filter normalization', () => {
       hasSeats: true,
       query: 'Algebra',
       page: 3,
+      sort: 'default',
+      minRating: null,
     });
   });
 
@@ -53,6 +55,8 @@ describe('public discovery filter normalization', () => {
       hasSeats: false,
       query: '',
       page: 1,
+      sort: 'default',
+      minRating: null,
     });
   });
 
@@ -67,6 +71,17 @@ describe('public discovery filter normalization', () => {
     expect(discoverySearchParams({ ...filters, page: 4 }).toString()).toBe(
       `has_seats=true&query=${'a'.repeat(120)}&page=4`,
     );
+  });
+
+  it('normalizes and serializes supported rating filters and rejects unsupported URL values', () => {
+    const rated = normalizeDiscoveryFilters(new URLSearchParams('sort=rating&min_rating=4&page=2'));
+    expect(rated).toMatchObject({ sort: 'rating', minRating: 4 });
+    expect(discoverySearchParams(rated).toString()).toBe('sort=rating&min_rating=4&page=2');
+    expect(discoveryRpcArgs(rated)).toMatchObject({ p_sort: 'rating', p_min_rating: 4 });
+    expect(normalizeDiscoveryFilters({ sort: 'newest', min_rating: '6' })).toMatchObject({
+      sort: 'default',
+      minRating: null,
+    });
   });
 
   it('accepts first query values and ignores malformed duplicates', () => {

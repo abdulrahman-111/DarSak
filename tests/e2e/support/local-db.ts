@@ -86,6 +86,98 @@ function targetSeedAdmin(projectName: string) {
   };
 }
 
+function targetRatingsFixture(projectName: string) {
+  const { actors, ids } = fixtureData(projectName);
+  const teacher = actors.ratingsTeacher;
+  const student = actors.ratingsStudent;
+  if (
+    teacher.id !==
+      `e2e00000-0000-4000-8000-${projectName === 'en-desktop' ? '0001' : projectName === 'ar-desktop' ? '0002' : projectName === 'en-mobile' ? '0003' : '0004'}00000009` ||
+    student.id !== teacher.id.replace(/00000009$/, '00000010') ||
+    teacher.email !== `ratings-teacher+${projectName}@e2e.invalid` ||
+    student.email !== `ratings-student+${projectName}@e2e.invalid` ||
+    !/^00000148-0000-4000-8000-\d{12}$/.test(ids.ratingsGroupId)
+  )
+    throw new Error(
+      'The dedicated ratings E2E actors or group did not match their reserved fixture IDs.',
+    );
+  return { teacher, student, ids, admin: targetSeedAdmin(projectName) };
+}
+
+type RatingsDecision = 'approve' | 'hide';
+
+export async function ratingsFixtureState(projectName: string) {
+  const databaseUrl = assertLocalMutationEnvironment();
+  const { teacher, student, ids, admin } = targetRatingsFixture(projectName);
+  const raw = runLocalSql(
+    databaseUrl,
+    `
+do $$ begin
+  if not exists(select 1 from auth.users u join public.profiles p on p.id=u.id
+    where u.id=${sqlLiteral(student.id)} and u.email=${sqlLiteral(student.email)} and p.role='student' and p.status='active')
+    or not exists(select 1 from auth.users u join public.profiles p on p.id=u.id join public.teacher_profiles t on t.id=p.id
+    where u.id=${sqlLiteral(teacher.id)} and u.email=${sqlLiteral(teacher.email)} and p.role='teacher' and p.status='active' and t.approved)
+    or not exists(select 1 from auth.users u join public.profiles p on p.id=u.id
+    where u.id=${sqlLiteral(admin.id)} and u.email=${sqlLiteral(admin.email)} and p.role='admin' and p.status='active') then
+    raise exception 'Ratings E2E fixture actor identity mismatch' using errcode='42501'; end if;
+end $$;
+select jsonb_build_object(
+ 'feedback_id',f.id,'version',f.version,'status',f.status,
+ 'baseline_count',(select count(*) from dars_private.group_feedback b where b.group_id=${sqlLiteral(ids.ratingsGroupId)} and b.status='approved'),
+ 'pending_admin_notice',exists(select 1 from public.user_notifications n where n.recipient_id=${sqlLiteral(admin.id)} and n.kind='feedback_pending' and n.payload->>'group_id'=${sqlLiteral(ids.ratingsGroupId)})
+)::text from dars_private.group_feedback f where f.group_id=${sqlLiteral(ids.ratingsGroupId)} and f.student_id=${sqlLiteral(student.id)};`,
+  );
+  try {
+    return JSON.parse(raw) as {
+      feedback_id: string;
+      version: number;
+      status: string;
+      baseline_count: number;
+      pending_admin_notice: boolean;
+    };
+  } catch {
+    throw new Error('The dedicated ratings E2E fixture state was incomplete.');
+  }
+}
+
+export async function moderateRatingsFeedback(
+  projectName: string,
+  decision: RatingsDecision,
+  studentReason: string,
+  privateNote: string,
+) {
+  const databaseUrl = assertLocalMutationEnvironment();
+  const { teacher, student, ids, admin } = targetRatingsFixture(projectName);
+  if (decision !== 'approve' && decision !== 'hide')
+    throw new Error('Unsupported ratings fixture decision.');
+  const output = runLocalSql(
+    databaseUrl,
+    `begin;
+do $$ begin
+ if not exists(select 1 from auth.users u join public.profiles p on p.id=u.id join public.teacher_profiles t on t.id=p.id
+   where u.id=${sqlLiteral(teacher.id)} and u.email=${sqlLiteral(teacher.email)} and p.role='teacher' and p.status='active' and t.approved)
+   or not exists(select 1 from auth.users u join public.profiles p on p.id=u.id
+   where u.id=${sqlLiteral(student.id)} and u.email=${sqlLiteral(student.email)} and p.role='student' and p.status='active')
+   or not exists(select 1 from auth.users u join public.profiles p on p.id=u.id
+   where u.id=${sqlLiteral(admin.id)} and u.email=${sqlLiteral(admin.email)} and p.role='admin' and p.status='active')
+   or not exists(select 1 from dars_private.group_feedback f where f.group_id=${sqlLiteral(ids.ratingsGroupId)} and f.student_id=${sqlLiteral(student.id)})
+ then raise exception 'Ratings E2E mutation identity mismatch' using errcode='42501'; end if;
+end $$;
+do $$ declare v_id uuid; v_version bigint; begin
+ perform set_config('request.jwt.claim.sub',${sqlLiteral(admin.id)},true);
+ perform set_config('request.jwt.claims',${sqlLiteral(JSON.stringify({ sub: admin.id, role: 'authenticated', aal: 'aal2' }))},true);
+ select id,version into v_id,v_version from dars_private.group_feedback where group_id=${sqlLiteral(ids.ratingsGroupId)} and student_id=${sqlLiteral(student.id)} for update;
+ perform public.moderate_group_feedback_with_reason(v_id,${sqlLiteral(decision)},${sqlLiteral(privateNote)},v_version,${sqlLiteral(studentReason)});
+ perform set_config('request.jwt.claims','{}',true); perform set_config('request.jwt.claim.sub','',true);
+end $$;
+select version from dars_private.group_feedback where group_id=${sqlLiteral(ids.ratingsGroupId)} and student_id=${sqlLiteral(student.id)};
+commit;`,
+  );
+  if (!/^\d+$/.test(output))
+    throw new Error('Canonical ratings moderation did not return one resulting version.');
+  return Number(output);
+}
+
 function sqlLiteral(value: string) {
   return `'${value.replaceAll("'", "''")}'`;
 }

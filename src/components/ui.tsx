@@ -4,6 +4,7 @@ import { ArrowUpRight, BookOpen, CalendarDays, GraduationCap, MapPin, Users } fr
 import { publicCopy } from '@/components/public/copy';
 import type { Group } from '@/lib/supabase/types';
 import { catalogueDisplayName } from '@/features/teacher/catalogue-domain';
+import { RatingSummary } from '@/features/feedback/rating-summary';
 export function SetupCard({ t }: { t: Record<string, string> }) {
   return (
     <div className="rounded-3xl border border-orange/30 bg-orange/10 p-6">
@@ -98,6 +99,15 @@ export function GroupCard({
       <h3 className="mt-4 wrap-break-word text-xl font-bold leading-tight text-teal [overflow-wrap:anywhere]">
         {group.name}
       </h3>
+      {group.teacher && (
+        <div className="mt-2">
+          <RatingSummary
+            average={group.teacher.teacher_rating_average}
+            count={group.teacher.teacher_rating_count}
+            locale={lang}
+          />
+        </div>
+      )}
       {group.description && (
         <p className="mt-2 line-clamp-2 text-sm leading-6 text-ink-soft">{group.description}</p>
       )}

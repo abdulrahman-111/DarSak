@@ -81,4 +81,31 @@ for (const fixture of fixtures) {
     );
     assert.ok(!sql.includes('undefined'), 'no missing fixture ID reaches generated SQL');
   });
+
+  test(`ratings fixtures use the reserved actors, low group ID, and isolated review cohort for ${fixture.project}`, () => {
+    const sql = seedSql(fixture.project, fixture.index);
+    const projectIndex = String(fixture.index).padStart(4, '0');
+    const ratingsTeacherId = `e2e00000-0000-4000-8000-${projectIndex}00000009`;
+    const ratingsStudentId = `e2e00000-0000-4000-8000-${projectIndex}00000010`;
+    const ratingsGroupId = `00000148-0000-4000-8000-${projectIndex}00000001`;
+    const usersBlock = sql.match(
+      /insert into auth\.users[^]*? values ([^]*?);\ninsert into auth\.identities/,
+    )?.[1];
+    assert.ok(usersBlock);
+    assert.ok(usersBlock.includes(`'${ratingsTeacherId}'`));
+    assert.ok(usersBlock.includes(`ratings-teacher+${fixture.project}@e2e.invalid`));
+    assert.ok(usersBlock.includes(`'${ratingsStudentId}'`));
+    assert.ok(usersBlock.includes(`ratings-student+${fixture.project}@e2e.invalid`));
+    assert.ok(
+      sql.includes(
+        `select '${ratingsGroupId}','${ratingsTeacherId}',id,'E2E Ratings Algebra Group'`,
+      ),
+    );
+    assert.ok(sql.includes(`'${ratingsGroupId}','${ratingsStudentId}','accepted'`));
+    assert.ok(sql.includes('E2E first ended ratings lesson'));
+    assert.ok(sql.includes('E2E second ended ratings lesson'));
+    assert.ok(sql.includes("'absent'"));
+    assert.ok(sql.includes('Synthetic baseline review from the third fixture student.'));
+    assert.ok(!sql.includes('undefined'));
+  });
 }

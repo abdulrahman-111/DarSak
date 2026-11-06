@@ -27,6 +27,14 @@ describe('local E2E mutation guard', () => {
       'e2e00000-0000-4000-8000-000100000007',
     ]);
     expect(actors.accessTeacher.id.endsWith('00000008')).toBe(true);
+    expect(actors.ratingsTeacher.id.endsWith('00000009')).toBe(true);
+    expect(actors.ratingsStudent.id.endsWith('00000010')).toBe(true);
+    expect(actors.ratingsTeacher.email).toBe('ratings-teacher+en-desktop@e2e.invalid');
+    expect(actors.ratingsStudent.email).toBe('ratings-student+en-desktop@e2e.invalid');
+    expect(ids.ratingsGroupId).toBe('00000148-0000-4000-8000-000100000001');
+    expect(ids.ratingsFirstLessonId).not.toBe(ids.ratingsSecondLessonId);
+    expect(ids.ratingsBaselineFeedbackIds).toHaveLength(3);
+    expect(new Set(ids.ratingsBaselineFeedbackIds).size).toBe(3);
     expect(ids.accessTeacherGroupId).not.toBe(ids.groupId);
     expect(ids.accessTeacherLessonId).not.toBe(ids.futureLessonId);
     expect(actors.accessTeacher.id).not.toBe('e2e00000-0000-4000-8000-000100000006');

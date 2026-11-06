@@ -93,6 +93,41 @@ describe('public entity JSON-LD', () => {
     expect(serialized).not.toMatch(/email|telephone|image|rating|price|offer|location|language/);
   });
 
+  it('adds a Service aggregate only for a visible offering and the displayed thresholded summary', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'https://darsak.example');
+    const teacher = { id: uuid, name: 'Amina', headline: null, subjects: [] };
+    const graph = teacherJsonLd('en', teacher, {
+      subject: 'Algebra',
+      description: 'Weekly algebra practice.',
+      average: 4.04,
+      count: 4,
+    });
+    expect(graph).toMatchObject({
+      '@graph': [
+        { '@type': 'Person', '@id': `https://darsak.example/en/teachers/${uuid}#teacher` },
+        {
+          '@type': 'Service',
+          '@id': `https://darsak.example/en/teachers/${uuid}#teaching-service`,
+          name: 'Teaching with Amina',
+          description: 'Algebra: Weekly algebra practice.',
+          provider: { '@id': `https://darsak.example/en/teachers/${uuid}#teacher` },
+          aggregateRating: { ratingValue: 4, reviewCount: 4, bestRating: 5, worstRating: 1 },
+        },
+      ],
+    });
+    expect(
+      teacherJsonLd('en', teacher, { subject: '', description: 'Text', average: 4, count: 4 }),
+    ).toMatchObject({ '@type': 'Person' });
+    expect(
+      teacherJsonLd('ar', teacher, {
+        subject: 'الجبر',
+        description: 'تدريب أسبوعي',
+        average: 4.6,
+        count: 2,
+      }),
+    ).toMatchObject({ '@type': 'Person' });
+  });
+
   it('escapes script delimiters and Unicode separators and parses back to the original value', () => {
     const value = { name: '</script>&\u2028\u2029' };
     const safe = safeJsonLd(value);

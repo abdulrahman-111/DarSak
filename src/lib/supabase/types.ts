@@ -1,5 +1,5 @@
 export type Profile={id:string;full_name:string;role:'student'|'teacher'|'admin';status:'active'|'suspended';preferred_language:'ar'|'en'};
-export type Teacher={id:string;full_name:string;headline:string|null;bio:string|null;avatar_path:string|null};
+export type Teacher={id:string;full_name:string;headline:string|null;bio:string|null;avatar_path:string|null;teacher_rating_average?:number|null;teacher_rating_count?:number|null};
 export type Group={id:string;teacher_id:string;offering_id:string;name:string;description:string;capacity:number;status:'draft'|'published'|'archived';location:string;created_at:string;accepted_count?:number;available_seats?:number;weekdays?:number[];next_lesson_at?:string|null;teacher?:Pick<Teacher,'id'|'full_name'> & Partial<Teacher>; offering?:{id:string;subject?:{name_ar:string;name_en:string};node?:{name_ar:string;name_en:string}}};
 export type PublicGroupRow={
  id:string;
@@ -19,6 +19,6 @@ export type PublicGroupRow={
  accepted_count:number;
  available_seats:number;
 };
-export type DiscoverGroupRow=PublicGroupRow & {weekdays:number[];next_lesson_at:string|null};
+export type DiscoverGroupRow=PublicGroupRow & {weekdays:number[];next_lesson_at:string|null;teacher_rating_average?:number|null;teacher_rating_count?:number};
 export type Slot={id:string;group_id:string;weekday:number;start_time:string;end_time:string;timezone:string};
 export type Lesson={id:string;group_id:string;title:string;starts_at:string;ends_at:string;status:string;notes:string};

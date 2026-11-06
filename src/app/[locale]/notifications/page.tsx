@@ -3,7 +3,11 @@ import { ensureLocale } from '@/i18n/config';
 import { requireViewer } from '@/components/platform/access';
 import { PlatformShell } from '@/components/platform/shell';
 import { Panel, ScreenTitle } from '@/components/platform/ui';
-import { markAllNotificationsRead, markNotificationRead } from '@/features/notifications/actions';
+import {
+  dismissFeedbackPrompt,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from '@/features/notifications/actions';
 import { InboxLiveRefresh } from '@/features/notifications/inbox-live-refresh';
 import {
   MarkViewedOnOpen,
@@ -125,6 +129,20 @@ export default async function NotificationsPage({
                               {ar ? 'فتح' : 'Open'}
                             </Link>
                           )}
+                          {me.role === 'student' &&
+                            row.kind === 'feedback_prompt' &&
+                            typeof row.payload.group_id === 'string' && (
+                              <NotificationSubmit
+                                action={dismissFeedbackPrompt.bind(
+                                  null,
+                                  locale,
+                                  row.payload.group_id,
+                                )}
+                                pending={ar ? 'جارٍ الإخفاء…' : 'Dismissing…'}
+                              >
+                                {ar ? 'إخفاء طلب التقييم' : 'Dismiss review request'}
+                              </NotificationSubmit>
+                            )}
                           {!row.read_at && (
                             <NotificationSubmit
                               action={markNotificationRead.bind(null, locale, row.id)}

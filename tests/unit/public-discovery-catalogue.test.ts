@@ -29,6 +29,7 @@ vi.mock('next/cache', () => ({
 
 import {
   catalogue,
+  landingGroups,
   myGroups,
   publicGroups,
   publicTeacherChoices,
@@ -83,8 +84,14 @@ describe('public discovery catalogue', () => {
     await publicTeacherSample(3);
 
     expect(rpc).toHaveBeenCalledWith(
-      'discover_groups',
-      expect.objectContaining({ p_offset: 0, p_limit: 3, p_query: '' }),
+      'discover_groups_rated',
+      expect.objectContaining({
+        p_offset: 0,
+        p_limit: 3,
+        p_query: '',
+        p_sort: 'default',
+        p_min_rating: null,
+      }),
     );
     expect(rpc).toHaveBeenCalledWith('public_teacher_choices', {
       p_search: null,
@@ -143,6 +150,105 @@ describe('public discovery catalogue', () => {
       await publicTeacherChoices('  ', null);
       expect(createClientMock).toHaveBeenCalledTimes(4);
     });
+  });
+
+  it('uses the UTC minute in the default rated cache key', async () => {
+    const makeRow = (average: number) => ({
+      id: 'g',
+      teacher_id: 't',
+      offering_id: 'o',
+      name: 'Group',
+      description: '',
+      capacity: 5,
+      status: 'published',
+      location: '',
+      created_at: '',
+      teacher_name: 'Teacher',
+      subject_name_ar: '',
+      subject_name_en: '',
+      node_name_ar: '',
+      node_name_en: '',
+      accepted_count: 0,
+      available_seats: 5,
+      weekdays: [],
+      next_lesson_at: null,
+      teacher_rating_average: average,
+      teacher_rating_count: 3,
+    });
+    const rpc = vi.fn(async () => ({
+      data: [makeRow(rpc.mock.calls.length === 1 ? 3.5 : 4.8)],
+      error: null,
+    }));
+    createPublicClientMock.mockReturnValue({ rpc });
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
+    const first = await publicGroups();
+    const sameMinute = await publicGroups();
+    now.mockReturnValue(1_800_000_060_000);
+    const nextMinute = await publicGroups();
+    expect(rpc).toHaveBeenCalledTimes(2);
+    expect(first.data[0]?.teacher?.teacher_rating_average).toBe(3.5);
+    expect(sameMinute.data[0]?.teacher?.teacher_rating_average).toBe(3.5);
+    expect(nextMinute.data[0]?.teacher?.teacher_rating_average).toBe(4.8);
+    now.mockRestore();
+  });
+
+  it('keeps landing groups on the cached unrated RPC', async () => {
+    const rpc = vi.fn(async (_name?: string, _args?: Record<string, unknown>) => ({
+      data: [],
+      error: null,
+    }));
+    createPublicClientMock.mockReturnValue({ rpc });
+    await landingGroups(3);
+    expect(rpc).toHaveBeenCalledWith('discover_groups', expect.objectContaining({ p_limit: 3 }));
+    const legacyArgs = rpc.mock.calls.find(([name]) => name === 'discover_groups')?.[1] as Record<
+      string,
+      unknown
+    >;
+    expect(legacyArgs).not.toHaveProperty('p_sort');
+    expect(legacyArgs).not.toHaveProperty('p_min_rating');
+  });
+
+  it('maps ratings from the single rated group RPC without a second rating read', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          id: 'g',
+          teacher_id: 't',
+          offering_id: 'o',
+          name: 'Group',
+          description: '',
+          capacity: 5,
+          status: 'published',
+          location: '',
+          created_at: '',
+          teacher_name: 'Teacher',
+          subject_name_ar: '',
+          subject_name_en: '',
+          node_name_ar: '',
+          node_name_en: '',
+          accepted_count: 0,
+          available_seats: 5,
+          weekdays: [],
+          next_lesson_at: null,
+          teacher_rating_average: 4.6,
+          teacher_rating_count: 12,
+        },
+      ],
+      error: null,
+    }));
+    createClientMock.mockResolvedValue({ rpc });
+    const result = await publicGroups(
+      normalizeDiscoveryFilters({ sort: 'rating', min_rating: '4' }),
+    );
+    expect(result.data[0]?.teacher).toMatchObject({
+      teacher_rating_average: 4.6,
+      teacher_rating_count: 12,
+    });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith(
+      'discover_groups_rated',
+      expect.objectContaining({ p_sort: 'rating', p_min_rating: 4 }),
+    );
   });
 
   describe('myGroups', () => {
