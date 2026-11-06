@@ -5,8 +5,10 @@ import { execFileSync } from 'node:child_process';
 const adminId = 'de000000-0000-4000-8000-000000000003';
 const adminEmail = 'admin@demo.invalid';
 const adminPassword = 'DarSak-local-demo-2026!';
+class SafeFailure extends Error {}
+
 const safeMessage = message => {
-  throw new Error(message);
+  throw new SafeFailure(message);
 };
 const ensure = (condition, message) => {
   if (!condition) safeMessage(message);
@@ -111,16 +113,6 @@ function totp(secret, timestamp = Date.now()) {
   return String(value).padStart(6, '0');
 }
 
-function listExistingFactors(data) {
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.all)) return data.all;
-  if (Array.isArray(data?.factors)) return data.factors;
-  if (Array.isArray(data?.totp) || Array.isArray(data?.phone)) {
-    return [...(data.totp ?? []), ...(data.phone ?? [])];
-  }
-  safeMessage('Local Auth returned an unrecognized MFA factor list');
-}
-
 async function run() {
   const signedIn = await requireSuccess('/auth/v1/token?grant_type=password', {
     method: 'POST',
@@ -164,9 +156,13 @@ async function run() {
     'AAL1 admin launch health call was not denied with 42501',
   );
 
-  const listed = await requireSuccess('/auth/v1/factors', { token: accessToken });
+  const authUser = await requireSuccess('/auth/v1/user', { token: accessToken });
   ensure(
-    listExistingFactors(listed).length === 0,
+    authUser.id === adminId && authUser.email === adminEmail,
+    'Local Auth identity changed before MFA enrollment',
+  );
+  ensure(
+    Array.isArray(authUser.factors ?? []) && (authUser.factors ?? []).length === 0,
     'Refusing to modify a demo admin with an existing MFA factor',
   );
 
@@ -229,8 +225,11 @@ async function run() {
 let testFailure;
 try {
   await run();
-} catch {
-  testFailure = new Error('Local admin MFA integration regression failed');
+} catch (error) {
+  testFailure =
+    error instanceof SafeFailure
+      ? error
+      : new SafeFailure('Local admin MFA integration regression failed');
 } finally {
   let cleanupFailed = false;
   if (factorId && accessToken) {
