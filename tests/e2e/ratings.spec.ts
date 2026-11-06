@@ -23,6 +23,20 @@ async function openAdvancedFilters(page: import('@playwright/test').Page, locale
   await expect(page.getByLabel(locale === 'ar' ? 'ترتيب حسب' : 'Sort by')).toBeVisible();
 }
 
+function advancedFilters(page: import('@playwright/test').Page, locale: string) {
+  return page.locator('details').filter({
+    has: page
+      .locator('summary')
+      .filter({ hasText: locale === 'ar' ? 'تصفية النتائج' : 'More filters' }),
+  });
+}
+
+async function applyAdvancedFilters(page: import('@playwright/test').Page, locale: string) {
+  await advancedFilters(page, locale)
+    .getByRole('button', { name: locale === 'ar' ? 'عرض النتائج' : 'Show results', exact: true })
+    .click();
+}
+
 async function profileRating(page: import('@playwright/test').Page, locale: string) {
   // TeacherProfile places the heading and header RatingSummary in the same div;
   // group cards later in the page also contain summaries for the same teacher.
@@ -66,9 +80,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   await discovery
     .getByLabel(locale === 'ar' ? 'الحد الأدنى لتقييم المعلم' : 'Minimum teacher rating')
     .selectOption('5');
-  await discovery
-    .getByRole('button', { name: locale === 'ar' ? 'عرض النتائج' : 'Show results' })
-    .click();
+  await applyAdvancedFilters(discovery, locale);
   await expect(discovery).toHaveURL(/sort=rating/);
   await expect(ratingsGroupCard(discovery, locale, ids.ratingsGroupId)).toBeVisible();
   await groupCard.getByRole('link', { name: /E2E Ratings Teacher/ }).click();
@@ -193,9 +205,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   await discovery
     .getByLabel(locale === 'ar' ? 'الحد الأدنى لتقييم المعلم' : 'Minimum teacher rating')
     .selectOption('5');
-  await discovery
-    .getByRole('button', { name: locale === 'ar' ? 'عرض النتائج' : 'Show results' })
-    .click();
+  await applyAdvancedFilters(discovery, locale);
   await expect(ratingsGroupCard(discovery, locale, ids.ratingsGroupId)).toHaveCount(0);
   await discovery.goto(`/${locale}/teachers/${actors.ratingsTeacher.id}`);
   const approvedProfile = await profileRating(discovery, locale);
