@@ -5,6 +5,11 @@ function localeFor(project: string) {
   return project.startsWith('ar-') ? 'ar' : 'en';
 }
 
+function ratingsGroupCard(page: import('@playwright/test').Page, locale: string, groupId: string) {
+  const groupLink = page.locator(`a[href="/${locale}/groups/${groupId}"]`);
+  return page.getByRole('article').filter({ has: groupLink });
+}
+
 async function profileRating(page: import('@playwright/test').Page, locale: string) {
   const visible = page
     .getByRole('group')
@@ -37,10 +42,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
 
   // The baseline group has a real visible 5.0 / 3 summary.
   await discovery.goto(`/${locale}/teachers`);
-  const groupCard = discovery
-    .getByRole('article')
-    .filter({ hasText: 'E2E Ratings Algebra Group' })
-    .first();
+  const groupCard = ratingsGroupCard(discovery, locale, ids.ratingsGroupId);
   await expect(groupCard).toBeVisible();
   await expect(groupCard.getByText(locale === 'ar' ? /٥٫٠/ : /5\.0\s*\/\s*5/)).toBeVisible();
   await expect(
@@ -54,9 +56,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
     .getByRole('button', { name: locale === 'ar' ? 'عرض النتائج' : 'Show results' })
     .click();
   await expect(discovery).toHaveURL(/sort=rating/);
-  await expect(
-    discovery.getByRole('article').filter({ hasText: 'E2E Ratings Algebra Group' }),
-  ).toBeVisible();
+  await expect(ratingsGroupCard(discovery, locale, ids.ratingsGroupId)).toBeVisible();
   await groupCard.getByRole('link', { name: /E2E Ratings Teacher/ }).click();
   const initialProfile = await profileRating(discovery, locale);
   expect(initialProfile.aggregate).toMatchObject({
@@ -147,9 +147,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
 
   // Prime the unfiltered minute cache before the canonical admin moderation.
   await discovery.goto(`/${locale}/teachers`);
-  const defaultCard = discovery
-    .getByRole('article')
-    .filter({ hasText: 'E2E Ratings Algebra Group' });
+  const defaultCard = ratingsGroupCard(discovery, locale, ids.ratingsGroupId);
   await expect(defaultCard).toBeVisible();
   const minuteBoundary = Math.floor(Date.now() / 60_000 + 1) * 60_000;
   await moderateRatingsFeedback(project, 'approve', '', 'private approval note');
@@ -165,9 +163,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   const deadline = Math.min(65_000, Math.max(0, minuteBoundary - freshnessStarted) + 8_000);
   await expect(async () => {
     await discovery.goto(`/${locale}/teachers`);
-    const freshCard = discovery
-      .getByRole('article')
-      .filter({ hasText: 'E2E Ratings Algebra Group' });
+    const freshCard = ratingsGroupCard(discovery, locale, ids.ratingsGroupId);
     await expect(freshCard.getByText(locale === 'ar' ? /٤٫٠/ : /4\.0\s*\/\s*5/)).toBeVisible();
     await expect(
       freshCard.getByText(locale === 'ar' ? 'عدد التقييمات: ٤' : 'Rating count: 4'),
@@ -180,9 +176,7 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   await discovery
     .getByRole('button', { name: locale === 'ar' ? 'عرض النتائج' : 'Show results' })
     .click();
-  await expect(
-    discovery.getByRole('article').filter({ hasText: 'E2E Ratings Algebra Group' }),
-  ).toHaveCount(0);
+  await expect(ratingsGroupCard(discovery, locale, ids.ratingsGroupId)).toHaveCount(0);
   await discovery.goto(`/${locale}/teachers/${actors.ratingsTeacher.id}`);
   const approvedProfile = await profileRating(discovery, locale);
   expect(approvedProfile.aggregate).toMatchObject({ ratingValue: 4, reviewCount: 4 });
