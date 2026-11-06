@@ -27,11 +27,17 @@ update public.teacher_profiles set approved=true where id in (
 set local session_replication_role=origin;
 
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,location)
-select '7f310000-0000-4000-8000-000000000001','7f300000-0000-4000-8000-000000000001',o.id,'Calendar owner group',10,'published','Cairo'
+select '7f310000-0000-4000-8000-000000000001','7f300000-0000-4000-8000-000000000001',o.id,'Calendar owner group',10,'draft','Cairo'
 from public.offerings o order by o.id limit 1;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,location)
 select '7f310000-0000-4000-8000-000000000002','7f300000-0000-4000-8000-000000000002',o.id,'Calendar foreign group',10,'draft','Giza'
 from public.offerings o order by o.id limit 1;
+insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time) values
+ ('7f330000-0000-4000-8000-000000000001','7f310000-0000-4000-8000-000000000001',5,'18:00','19:00');
+-- The publication guard requires a real schedule slot and the canonical
+-- function-owner context. This fixture uses that valid state before changing
+-- status, so later archive/republish assertions exercise normal guard logic.
+update public.groups set status='published' where id='7f310000-0000-4000-8000-000000000001';
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,location)
 select '7f310000-0000-4000-8000-000000000003','7f300000-0000-4000-8000-000000000002',o.id,'Calendar removed group',10,'archived','Giza'
 from public.offerings o order by o.id limit 1;
