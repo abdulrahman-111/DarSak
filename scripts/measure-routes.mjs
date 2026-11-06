@@ -305,6 +305,47 @@ export function redirectedFromUrls(request) {
   return urls;
 }
 
+export async function installMainFrameOriginGuard(cdp, origin, mainFrameId, onBlocked = () => {}) {
+  const onPaused = async event => {
+    const isMainDocument = event.resourceType === 'Document' && event.frameId === mainFrameId;
+    let forbidden = false;
+    if (isMainDocument) {
+      try {
+        forbidden = new URL(event.request.url).origin !== origin;
+      } catch {
+        forbidden = true;
+      }
+    }
+    try {
+      if (forbidden) {
+        onBlocked();
+        await cdp.send('Fetch.failRequest', {
+          requestId: event.requestId,
+          errorReason: 'BlockedByClient',
+        });
+      } else {
+        await cdp.send('Fetch.continueRequest', { requestId: event.requestId });
+      }
+    } catch {
+      // A paused request must always be released, including when one CDP command fails.
+      try {
+        await cdp.send('Fetch.failRequest', {
+          requestId: event.requestId,
+          errorReason: 'Aborted',
+        });
+      } catch {}
+    }
+  };
+  cdp.on('Fetch.requestPaused', onPaused);
+  await cdp.send('Fetch.enable', {
+    patterns: [{ urlPattern: '*', resourceType: 'Document', requestStage: 'Request' }],
+  });
+  return async () => {
+    cdp.off('Fetch.requestPaused', onPaused);
+    await cdp.send('Fetch.disable');
+  };
+}
+
 export function parseArgs(argv) {
   const values = {};
   const routes = [];
@@ -404,6 +445,7 @@ async function oneSample(browser, target, routeName, statePath, warm = false) {
     isMobile: true,
     hasTouch: true,
     deviceScaleFactor: 3,
+    serviceWorkers: 'block',
     ...(statePath ? { storageState: statePath } : {}),
   });
   try {
@@ -414,22 +456,11 @@ async function oneSample(browser, target, routeName, statePath, warm = false) {
       if (frame === page.mainFrame())
         mainFrameRoutes.push(routeFromFinalUrl(frame.url(), target.origin));
     });
-    await page.route('**/*', async requestRoute => {
-      const request = requestRoute.request();
-      if (
-        request.isNavigationRequest() &&
-        request.frame() === page.mainFrame() &&
-        new URL(request.url()).origin !== target.origin
-      ) {
-        externalNavigationBlocked = true;
-        await requestRoute.abort('blockedbyclient');
-        return;
-      }
-      await requestRoute.continue();
-    });
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Page.enable');
+    const { frameTree } = await cdp.send('Page.getFrameTree');
+    await cdp.send('Network.enable');
     if (!warm) {
-      const cdp = await context.newCDPSession(page);
-      await cdp.send('Network.enable');
       await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
       await cdp.send('Network.emulateNetworkConditions', {
         offline: false,
@@ -440,6 +471,9 @@ async function oneSample(browser, target, routeName, statePath, warm = false) {
       });
       await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE.cpuRate });
     }
+    await installMainFrameOriginGuard(cdp, target.origin, frameTree.frame.id, () => {
+      externalNavigationBlocked = true;
+    });
     await page.addInitScript(() => {
       window.__routeMetrics = { lcp: null, observer: null };
       try {
