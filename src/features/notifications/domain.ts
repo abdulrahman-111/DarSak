@@ -75,14 +75,16 @@ export function parseNotificationsPage(value: unknown): NotificationsPage | null
       row.kind === 'feedback_pending' &&
       (!id(payload, 'feedback_id') ||
         !id(payload, 'group_id') ||
-        !['review', 'reply'].includes(String(payload.category)))
+        typeof payload.category !== 'string' ||
+        !['review', 'reply'].includes(payload.category))
     )
       return null;
     if (
       row.kind === 'feedback_decision' &&
       (!id(payload, 'feedback_id') ||
         !id(payload, 'group_id') ||
-        !['approved', 'hidden'].includes(String(payload.decision)) ||
+        typeof payload.decision !== 'string' ||
+        !['approved', 'hidden'].includes(payload.decision) ||
         (payload.student_reason !== undefined &&
           (typeof payload.student_reason !== 'string' || payload.student_reason.length > 500)))
     )

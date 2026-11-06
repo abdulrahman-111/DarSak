@@ -96,5 +96,20 @@ describe('admin notifications', () => {
         unread: 1,
       }),
     ).toBeNull();
+    expect(
+      parseAdminNotificationsPage({
+        rows: [
+          {
+            id: notificationId,
+            kind: 'feedback_pending',
+            payload: { ...payload, category: ['reply'] },
+            created_at: '2026-10-27T12:00:00Z',
+            read_at: null,
+          },
+        ],
+        total: 1,
+        unread: 1,
+      }),
+    ).toBeNull();
   });
 });

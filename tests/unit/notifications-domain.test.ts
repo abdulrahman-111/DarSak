@@ -228,5 +228,17 @@ describe('notifications domain', () => {
       notificationSummary('feedback_decision', { decision: 'hidden', admin_note: 'secret' }, 'ar'),
     ).toContain('إرشادات النشر');
     expect(notificationSummary('feedback_pending', { category: 'unknown' }, 'en')).toBeNull();
+    const feedbackPayload = { feedback_id: uuid, group_id: uuid };
+    const page = (kind: string, payload: Record<string, unknown>) =>
+      parseNotificationsPage({
+        rows: [{ id: uuid, kind, payload, created_at: '2026-10-22T12:00:00Z', read_at: null }],
+        total: 1,
+        unread: 1,
+      });
+    expect(page('feedback_pending', { ...feedbackPayload, category: ['review'] })).toBeNull();
+    expect(page('feedback_decision', { ...feedbackPayload, decision: ['approved'] })).toBeNull();
+    expect(
+      page('feedback_decision', { ...feedbackPayload, decision: 'hidden', student_reason: {} }),
+    ).toBeNull();
   });
 });

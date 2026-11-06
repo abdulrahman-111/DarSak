@@ -50,9 +50,12 @@ export function parseAdminNotificationsPage(value: unknown): AdminNotificationsP
       return null;
     if (
       row.kind === 'feedback_pending' &&
-      (!UUID.test(String((row.payload as Record<string, unknown>).feedback_id ?? '')) ||
-        !UUID.test(String((row.payload as Record<string, unknown>).group_id ?? '')) ||
-        !['review', 'reply'].includes(String((row.payload as Record<string, unknown>).category)))
+      (typeof (row.payload as Record<string, unknown>).feedback_id !== 'string' ||
+        !UUID.test((row.payload as Record<string, unknown>).feedback_id as string) ||
+        typeof (row.payload as Record<string, unknown>).group_id !== 'string' ||
+        !UUID.test((row.payload as Record<string, unknown>).group_id as string) ||
+        typeof (row.payload as Record<string, unknown>).category !== 'string' ||
+        !['review', 'reply'].includes((row.payload as Record<string, unknown>).category as string))
     )
       return null;
     rows.push({
