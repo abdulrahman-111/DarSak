@@ -9,7 +9,8 @@ describe('public rating summary', () => {
       createElement(RatingSummary, { average: 4.6, count: 12, locale: 'en' }),
     );
     expect(en).toContain('role="group"');
-    expect(en).toContain('aria-label="Teacher rating: 4.6 out of 5, 12 reviews"');
+    expect(en).toContain('aria-label="Teacher rating: 4.6 out of 5, rating count: 12"');
+    expect(en).toContain('Rating count: 12');
     expect(en).toContain('Teacher rating');
     expect(en).toContain('aria-hidden="true"');
     const ar = renderToStaticMarkup(
@@ -17,6 +18,7 @@ describe('public rating summary', () => {
     );
     expect(ar).toContain('تقييم المعلم');
     expect(ar).toContain('٤٫٦');
+    expect(ar).toContain('عدد التقييمات: ٣');
   });
 
   it('fails closed for below-threshold or malformed summaries', () => {

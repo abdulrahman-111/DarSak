@@ -43,6 +43,29 @@ export async function markNotificationRead(
   return { success: locale === 'ar' ? 'تم تحديث الإشعار.' : 'Notification updated.' };
 }
 
+export async function dismissFeedbackPrompt(
+  locale: string,
+  groupId: string,
+  _previous: NotificationActionState,
+  _formData: FormData,
+): Promise<NotificationActionState> {
+  const ar = locale === 'ar';
+  const failure = {
+    error: ar
+      ? 'تعذر إخفاء طلب التقييم. حاول مرة أخرى.'
+      : 'Could not dismiss this review request. Try again.',
+  };
+  if (!['en', 'ar'].includes(locale) || !idSchema.safeParse(groupId).success) return failure;
+  const viewer = await getRequestViewer();
+  if (!viewer.user || viewer.profile?.status !== 'active' || viewer.profile.role !== 'student')
+    return failure;
+  const { error } = await viewer.db.rpc('dismiss_feedback_prompt', { p_group_id: groupId });
+  if (error) return failure;
+  revalidatePath(`/${locale}/notifications`);
+  revalidatePath(`/${locale}/student`);
+  return { success: ar ? 'تم إخفاء طلب التقييم.' : 'Review request dismissed.' };
+}
+
 export async function markAllNotificationsRead(
   locale: string,
   _previous: NotificationActionState,

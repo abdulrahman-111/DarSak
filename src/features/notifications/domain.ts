@@ -8,7 +8,10 @@ export type NotificationKind =
   | 'teacher_fee_announcement'
   | 'enrollment_accepted'
   | 'waitlist_promoted'
-  | 'booking_updated';
+  | 'booking_updated'
+  | 'feedback_prompt'
+  | 'feedback_pending'
+  | 'feedback_decision';
 export type NotificationRow = {
   id: string;
   kind: NotificationKind;
@@ -29,6 +32,9 @@ const KINDS = new Set<NotificationKind>([
   'enrollment_accepted',
   'waitlist_promoted',
   'booking_updated',
+  'feedback_prompt',
+  'feedback_pending',
+  'feedback_decision',
 ]);
 
 export function parseNotificationsPage(value: unknown): NotificationsPage | null {
@@ -61,6 +67,24 @@ export function parseNotificationsPage(value: unknown): NotificationsPage | null
         row.read_at === null ||
         (typeof row.read_at === 'string' && Number.isFinite(Date.parse(row.read_at)))
       )
+    )
+      return null;
+    const payload = row.payload as Record<string, unknown>;
+    if (row.kind === 'feedback_prompt' && !id(payload, 'group_id')) return null;
+    if (
+      row.kind === 'feedback_pending' &&
+      (!id(payload, 'feedback_id') ||
+        !id(payload, 'group_id') ||
+        !['review', 'reply'].includes(String(payload.category)))
+    )
+      return null;
+    if (
+      row.kind === 'feedback_decision' &&
+      (!id(payload, 'feedback_id') ||
+        !id(payload, 'group_id') ||
+        !['approved', 'hidden'].includes(String(payload.decision)) ||
+        (payload.student_reason !== undefined &&
+          (typeof payload.student_reason !== 'string' || payload.student_reason.length > 500)))
     )
       return null;
     rows.push({
@@ -103,6 +127,10 @@ export function notificationHref(
       const value = id(payload, 'group_id');
       return value ? `/${locale}/groups/${value}` : `/${locale}/student/classes`;
     }
+    if (kind === 'feedback_prompt' || kind === 'feedback_decision') {
+      const value = id(payload, 'group_id');
+      return value ? `/${locale}/groups/${value}#feedback` : null;
+    }
   }
   if (role === 'teacher' && kind === 'enrollment_requested') {
     const value = id(payload, 'group_id');
@@ -113,6 +141,7 @@ export function notificationHref(
     return `/${locale}/account/application`;
   if (role === 'teacher' && kind === 'teacher_fee_announcement')
     return `/${locale}/account/teaching-access`;
+  if (role === 'teacher' && kind === 'feedback_pending') return `/${locale}/teacher/feedback`;
   return null;
 }
 
@@ -222,6 +251,37 @@ export function notificationSummary(
       : ar
         ? `تحديث على موعد فردي في ${group}.`
         : `There is an update to a one-off booking for ${group}.`;
+  }
+  if (kind === 'feedback_prompt')
+    return ar
+      ? 'يمكنك الآن مشاركة تقييمك لهذه المجموعة.'
+      : 'You can now share feedback for this group.';
+  if (kind === 'feedback_pending') {
+    if (payload.category === 'reply')
+      return ar
+        ? 'يوجد رد جديد بانتظار مراجعة الإدارة.'
+        : 'A teacher reply is waiting for administrator review.';
+    if (payload.category === 'review')
+      return ar ? 'يوجد تقييم جديد بانتظار المراجعة.' : 'A new review is waiting for moderation.';
+    return null;
+  }
+  if (kind === 'feedback_decision') {
+    const decision = payload.decision;
+    if (decision === 'approved')
+      return ar ? 'تمت الموافقة على تقييمك ونشره.' : 'Your feedback was approved and published.';
+    if (decision === 'hidden') {
+      const reason = payload.student_reason;
+      const safeReason =
+        typeof reason === 'string' && reason.trim().length > 0 && reason.length <= 500
+          ? reason.trim()
+          : ar
+            ? 'يرجى مراجعة إرشادات النشر.'
+            : 'Please review the publication guidelines.';
+      return ar
+        ? `تم إخفاء تقييمك. السبب: ${safeReason}`
+        : `Your feedback was hidden. Reason: ${safeReason}`;
+    }
+    return null;
   }
   return null;
 }

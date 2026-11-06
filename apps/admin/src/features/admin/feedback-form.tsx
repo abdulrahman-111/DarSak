@@ -30,6 +30,15 @@ export function AdminFeedbackForm({ locale, row }: { locale: string; row: Feedba
         </select>
       </label>
       <label className="grid gap-2 text-sm font-bold">
+        {ar ? 'سبب الإخفاء الذي يظهر للطالب' : 'Reason shown to the student when hidden'}
+        <textarea
+          name="student_reason"
+          maxLength={500}
+          rows={3}
+          className="rounded-xl border border-line bg-cream p-3"
+        />
+      </label>
+      <label className="grid gap-2 text-sm font-bold">
         {ar ? 'ملاحظة إدارية خاصة (١٥٠٠ حرف)' : 'Private administrator note (1,500 characters)'}
         <textarea
           name="admin_note"

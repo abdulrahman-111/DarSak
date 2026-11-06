@@ -169,4 +169,64 @@ describe('notifications domain', () => {
     );
     expect(notificationSummary('waitlist_promoted', payload, 'ar')).toContain('لم يتأكد المقعد');
   });
+
+  it('routes feedback prompts and decisions to feedback while keeping summaries private and safe', () => {
+    const prompt = { group_id: uuid };
+    expect(
+      parseNotificationsPage({
+        rows: [
+          {
+            id: uuid,
+            kind: 'feedback_prompt',
+            payload: prompt,
+            created_at: '2026-10-22T12:00:00Z',
+            read_at: null,
+          },
+        ],
+        total: 1,
+        unread: 1,
+      })?.rows[0].kind,
+    ).toBe('feedback_prompt');
+    expect(notificationHref('student', 'feedback_prompt', prompt, 'en')).toBe(
+      `/en/groups/${uuid}#feedback`,
+    );
+    expect(notificationHref('student', 'feedback_decision', { group_id: 'bad' }, 'en')).toBeNull();
+    expect(notificationHref('teacher', 'feedback_pending', { group_id: uuid }, 'ar')).toBe(
+      '/ar/teacher/feedback',
+    );
+    expect(notificationSummary('feedback_prompt', prompt, 'ar')).toContain('تقييمك');
+    expect(
+      notificationSummary(
+        'feedback_pending',
+        { category: 'review', comment: 'secret', student_name: 'secret' },
+        'en',
+      ),
+    ).toBe('A new review is waiting for moderation.');
+    expect(notificationSummary('feedback_pending', { category: 'reply' }, 'ar')).toContain(
+      'رد جديد',
+    );
+    expect(
+      notificationSummary(
+        'feedback_decision',
+        { decision: 'approved', student_reason: 'private' },
+        'en',
+      ),
+    ).toBe('Your feedback was approved and published.');
+    const hidden = notificationSummary(
+      'feedback_decision',
+      {
+        decision: 'hidden',
+        student_reason: 'Publication guidelines',
+        admin_note: 'private',
+        comment: 'private',
+      },
+      'en',
+    );
+    expect(hidden).toContain('Publication guidelines');
+    expect(hidden).not.toContain('private');
+    expect(
+      notificationSummary('feedback_decision', { decision: 'hidden', admin_note: 'secret' }, 'ar'),
+    ).toContain('إرشادات النشر');
+    expect(notificationSummary('feedback_pending', { category: 'unknown' }, 'en')).toBeNull();
+  });
 });

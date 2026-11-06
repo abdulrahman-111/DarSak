@@ -23,8 +23,8 @@ export function RatingSummary({
   }).format(average as number);
   const reviews = new Intl.NumberFormat(numberLocale).format(count as number);
   const label = ar
-    ? `تقييم المعلم: ${score} من ٥، ${reviews} تقييمات`
-    : `Teacher rating: ${score} out of 5, ${reviews} reviews`;
+    ? `تقييم المعلم: ${score} من ٥، عدد التقييمات: ${reviews}`
+    : `Teacher rating: ${score} out of 5, rating count: ${reviews}`;
   return (
     <span
       role="group"
@@ -37,9 +37,7 @@ export function RatingSummary({
       <span>{ar ? 'تقييم المعلم' : 'Teacher rating'}</span>
       <span aria-hidden="true">·</span>
       <span>{score} / 5</span>
-      <span>
-        ({reviews} {ar ? 'تقييمات' : 'reviews'})
-      </span>
+      <span>{ar ? `عدد التقييمات: ${reviews}` : `Rating count: ${reviews}`}</span>
     </span>
   );
 }
