@@ -202,6 +202,17 @@ export async function saveLesson(locale: string, _previous: unknown, formData: F
       ),
     };
   const db = await createClient();
+  const {
+    data: { user },
+  } = await db.auth.getUser();
+  if (!user)
+    return {
+      error: localized(
+        locale,
+        'Sign in with an active teacher account and try again.',
+        'سجّل الدخول بحساب معلم نشط وحاول مرة أخرى.',
+      ),
+    };
   const denied = await accessError(locale, db);
   if (denied) return { error: denied };
   const r = await db.rpc('save_lesson_with_meeting', {

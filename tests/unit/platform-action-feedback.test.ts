@@ -31,7 +31,11 @@ const currentStatus = {
   announcement_ar: null,
   pending_request_id: null,
 };
-function setup(error: { code?: string; message: string } | null, access: unknown = currentStatus) {
+function setup(
+  error: { code?: string; message: string } | null,
+  access: unknown = currentStatus,
+  user: { id: string } | null = { id: teacherId },
+) {
   const rpc = vi.fn(async (name: string) =>
     name === 'teacher_access_status' ? { data: access, error: null } : { data: null, error },
   );
@@ -40,7 +44,7 @@ function setup(error: { code?: string; message: string } | null, access: unknown
   };
   const db = {
     rpc,
-    auth: { getUser: async () => ({ data: { user: { id: teacherId } } }) },
+    auth: { getUser: async () => ({ data: { user } }) },
     from: () => ({ select: () => ({ eq: () => profile }) }),
   };
   createClientMock.mockResolvedValue(db);
@@ -149,6 +153,24 @@ describe('localized platform action feedback', () => {
       p_lesson_id: null,
       p_meeting_url: null,
     });
+  });
+
+  it('checks the verified session before the teaching-access and lesson-write RPCs', async () => {
+    const rpc = setup(null, currentStatus, null);
+    const result = await saveLesson(
+      'en',
+      null,
+      form({
+        groupId,
+        title: 'Lesson',
+        startsAt: '2026-10-01T10:00:00Z',
+        endsAt: '2026-10-01T11:00:00Z',
+        notes: '',
+        meetingUrl: '',
+      }),
+    );
+    expect(result?.error).toMatch(/sign in with an active teacher account/i);
+    expect(rpc).not.toHaveBeenCalled();
   });
 
   it('blocks expired or unavailable teacher access before a teaching mutation with distinct guidance', async () => {
