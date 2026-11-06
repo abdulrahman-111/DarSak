@@ -131,6 +131,16 @@ for (const fixture of fixtures) {
     assert.ok(sql.includes(`values('${lessonId}','${groupId}','E2E meeting links lesson'`));
     assert.ok(sql.includes(`'${groupId}','${studentId}','accepted'`));
     assert.ok(sql.includes(`now()+interval '5 minutes',now()+interval '65 minutes'`));
+    assert.ok(
+      sql.includes(
+        `exists(select 1 from dars_private.lesson_meetings where lesson_id='${lessonId}' and teacher_id='${teacherId}' and manual_url is not null)`,
+      ),
+      'the private override check reads its private table rather than a public lesson column',
+    );
+    assert.ok(
+      !sql.includes('and manual_url is null'),
+      'the public lessons row has no private URL field',
+    );
     assert.ok(!sql.includes('undefined'));
   });
 }

@@ -1,10 +1,21 @@
 import { test, expect, fixtureData, storageStatePath } from './support/fixtures';
 import { meetingFixtureState, setMeetingFixtureTiming } from './support/local-db';
+import type { Locator, Page } from '@playwright/test';
 
 test.setTimeout(180_000);
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const anonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!;
+
+async function submitServerAction(page: Page, button: Locator) {
+  const actionResponse = page.waitForResponse(response => {
+    const request = response.request();
+    return request.method() === 'POST' && Boolean(request.headers()['next-action']);
+  });
+  await button.click();
+  const response = await actionResponse;
+  expect(response.ok(), `server action response: ${response.status()}`).toBeTruthy();
+}
 
 async function accessToken(
   page: import('@playwright/test').Page,
@@ -82,7 +93,10 @@ async function saveGroupLink(
   await form
     .getByLabel(locale === 'ar' ? 'رابط الاجتماع الافتراضي' : 'Default meeting link')
     .fill(url);
-  await form.getByRole('button', { name: locale === 'ar' ? 'حفظ الرابط' : 'Save link' }).click();
+  await submitServerAction(
+    page,
+    form.getByRole('button', { name: locale === 'ar' ? 'حفظ الرابط' : 'Save link' }),
+  );
   await expect(form.getByRole('status')).toHaveText(
     locale === 'ar' ? 'تم حفظ رابط الاجتماع.' : 'Meeting link saved.',
   );
@@ -168,7 +182,10 @@ test('an accepted student and lesson owner use the private meeting link across t
   await lessonForm
     .getByLabel(ar ? 'عنوان الحصة' : 'Lesson title')
     .fill('E2E meeting links lesson edited');
-  await lessonForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }).click();
+  await submitServerAction(
+    meetingTeacherPage,
+    lessonForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }),
+  );
   await expect(lessonForm.getByRole('status')).toHaveText(ar ? 'تم الحفظ.' : 'Saved.');
   await meetingTeacherPage.reload();
   const reloadedLessonForm = await lessonEditForm(meetingTeacherPage, locale);
@@ -182,7 +199,10 @@ test('an accepted student and lesson owner use the private meeting link across t
   await reloadedLessonForm
     .getByLabel(ar ? 'رابط اجتماع خاص بهذه الحصة' : 'Lesson meeting link')
     .fill(overrideUrl);
-  await reloadedLessonForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }).click();
+  await submitServerAction(
+    meetingTeacherPage,
+    reloadedLessonForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }),
+  );
   await expect(reloadedLessonForm.getByRole('status')).toHaveText(ar ? 'تم الحفظ.' : 'Saved.');
   state = await meetingFixtureState(project);
   expect(state.manual_url).toBe(overrideUrl);
@@ -192,7 +212,10 @@ test('an accepted student and lesson owner use the private meeting link across t
 
   const overrideForm = await lessonEditForm(meetingTeacherPage, locale);
   await overrideForm.getByLabel(ar ? 'رابط اجتماع خاص بهذه الحصة' : 'Lesson meeting link').fill('');
-  await overrideForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }).click();
+  await submitServerAction(
+    meetingTeacherPage,
+    overrideForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }),
+  );
   await expect(overrideForm.getByRole('status')).toHaveText(ar ? 'تم الحفظ.' : 'Saved.');
   state = await meetingFixtureState(project);
   expect(state.manual_url).toBeNull();
@@ -216,7 +239,10 @@ test('an accepted student and lesson owner use the private meeting link across t
   await groupForm
     .getByLabel(ar ? 'رابط الاجتماع الافتراضي' : 'Default meeting link')
     .fill('https://example.invalid/room');
-  await groupForm.getByRole('button', { name: ar ? 'حفظ الرابط' : 'Save link' }).click();
+  await submitServerAction(
+    meetingTeacherPage,
+    groupForm.getByRole('button', { name: ar ? 'حفظ الرابط' : 'Save link' }),
+  );
   await expect(groupForm.getByRole('alert')).toHaveText(
     ar
       ? 'أدخل رابط HTTPS صالحاً من مزود اجتماعات مدعوم.'
@@ -230,7 +256,10 @@ test('an accepted student and lesson owner use the private meeting link across t
   await invalidLessonForm
     .getByLabel(ar ? 'رابط اجتماع خاص بهذه الحصة' : 'Lesson meeting link')
     .fill('https://example.invalid/room');
-  await invalidLessonForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }).click();
+  await submitServerAction(
+    meetingTeacherPage,
+    invalidLessonForm.getByRole('button', { name: ar ? 'حفظ الحصة' : 'Save lesson' }),
+  );
   await expect(invalidLessonForm.getByRole('alert')).toHaveText(
     ar
       ? 'أدخل رابط HTTPS صالحاً من مزود اجتماعات مدعوم أو اتركه فارغاً.'

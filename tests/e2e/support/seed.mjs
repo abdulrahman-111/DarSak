@@ -246,7 +246,9 @@ do $$ begin
  if (select count(*) from public.enrollments where group_id=${sqlLiteral(data.groupId)} and student_id=${sqlLiteral(student.id)} and status='accepted')<>1 then raise exception 'E2E enrollment seed failed'; end if;
  if not exists(select 1 from public.groups where id=${sqlLiteral(data.meetingGroupId)} and teacher_id=${sqlLiteral(meetingTeacher.id)} and status='published') then raise exception 'E2E meeting group seed failed'; end if;
  if (select count(*) from public.enrollments where group_id=${sqlLiteral(data.meetingGroupId)} and student_id=${sqlLiteral(meetingStudent.id)} and status='accepted')<>1 then raise exception 'E2E meeting enrollment seed failed'; end if;
- if not exists(select 1 from public.lessons where id=${sqlLiteral(data.meetingLessonId)} and group_id=${sqlLiteral(data.meetingGroupId)} and manual_url is null) then raise exception 'E2E meeting lesson seed failed'; end if;
+ if not exists(select 1 from public.lessons where id=${sqlLiteral(data.meetingLessonId)} and group_id=${sqlLiteral(data.meetingGroupId)})
+   or exists(select 1 from dars_private.lesson_meetings where lesson_id=${sqlLiteral(data.meetingLessonId)} and teacher_id=${sqlLiteral(meetingTeacher.id)} and manual_url is not null)
+ then raise exception 'E2E meeting lesson seed failed'; end if;
 end $$;
 commit;
 `;
