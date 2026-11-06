@@ -298,6 +298,13 @@ export function classifyWarmCheck(attempt, cacheHeader) {
   };
 }
 
+export function redirectedFromUrls(request) {
+  const urls = [];
+  for (let previous = request?.redirectedFrom(); previous; previous = previous.redirectedFrom())
+    urls.push(previous.url());
+  return urls;
+}
+
 export function parseArgs(argv) {
   const values = {};
   const routes = [];
@@ -495,9 +502,7 @@ async function oneSample(browser, target, routeName, statePath, warm = false) {
       };
     } catch {}
     const status = response?.status() ?? null;
-    const redirectedFromUrls = [];
-    for (let request = response?.request(); request; request = request.redirectedFrom())
-      redirectedFromUrls.push(request.url());
+    const redirectedUrls = redirectedFromUrls(response?.request());
     const finalUrl = finalDocument.url ?? page.url();
     const attempt = classifyDocumentAttempt({
       origin: target.origin,
@@ -509,7 +514,7 @@ async function oneSample(browser, target, routeName, statePath, warm = false) {
       initialTimeOrigin: initialDocument?.timeOrigin,
       finalTimeOrigin: finalDocument.timeOrigin,
       mainFrameRoutes,
-      redirectedFromUrls,
+      redirectedFromUrls: redirectedUrls,
       externalNavigationBlocked,
     });
     const error = externalNavigationBlocked

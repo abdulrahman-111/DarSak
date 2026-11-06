@@ -5,6 +5,7 @@ import {
   navigationTtfbMs,
   parseArgs,
   parseServerTiming,
+  redirectedFromUrls,
   resolveBuildIdentity,
   routeFromFinalUrl,
   sanitizeSample,
@@ -232,6 +233,51 @@ describe('route benchmark safety boundaries', () => {
       valid: false,
       error: 'document-changed',
     });
+  });
+
+  it('uses only actual predecessor requests when checking a redirect chain', () => {
+    const origin = 'https://darsak-staging-theag01s-projects.vercel.app';
+    const requested = `${origin}/en/student`;
+    const makeRequest = (url, previous = null) => ({
+      url: () => url,
+      redirectedFrom: () => previous,
+    });
+    const direct = makeRequest(requested);
+    const directChain = redirectedFromUrls(direct);
+    expect(directChain).toEqual([]);
+    expect(
+      classifyDocumentAttempt({
+        origin,
+        expectedRoute: 'student-en',
+        status: 200,
+        responseUrl: requested,
+        initialUrl: requested,
+        finalUrl: requested,
+        initialTimeOrigin: 10,
+        finalTimeOrigin: 10,
+        mainFrameRoutes: ['student-en'],
+        redirectedFromUrls: directChain,
+      }),
+    ).toEqual({ valid: true, error: null });
+
+    const redirectChain = redirectedFromUrls(
+      makeRequest(requested, makeRequest(`${origin}/en/login`)),
+    );
+    expect(redirectChain).toEqual([`${origin}/en/login`]);
+    expect(
+      classifyDocumentAttempt({
+        origin,
+        expectedRoute: 'student-en',
+        status: 200,
+        responseUrl: requested,
+        initialUrl: requested,
+        finalUrl: requested,
+        initialTimeOrigin: 10,
+        finalTimeOrigin: 10,
+        mainFrameRoutes: ['student-en'],
+        redirectedFromUrls: redirectChain,
+      }),
+    ).toEqual({ valid: false, error: 'redirected' });
   });
 
   it('does not treat an SSO cache hit as a valid warm-route check', () => {
