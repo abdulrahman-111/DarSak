@@ -69,7 +69,7 @@ function setup(
   };
   const db = {
     rpc: vi.fn((name: string) => {
-      if (name === 'public_teachers') return query({ data: teacher, error: null });
+      if (name === 'public_teachers_rated') return query({ data: teacher, error: null });
       if (name === 'public_teacher_specialization_labels')
         return Promise.resolve({ data: specializationRows, error: null });
       if (name === 'public_teacher_profile_details')
@@ -209,7 +209,7 @@ describe('public teacher profile cover projection', () => {
         }),
     );
     db.rpc.mockImplementation((name: string) => {
-      if (name === 'public_teachers') return teacherQuery;
+      if (name === 'public_teachers_rated') return teacherQuery;
       return name === 'public_teacher_specialization_labels'
         ? Promise.resolve({ data: [], error: null })
         : Promise.resolve({ data: null, error: null });
@@ -224,7 +224,7 @@ describe('public teacher profile cover projection', () => {
     expect(publicGroupsMock).toHaveBeenCalled();
     expect(db.rpc.mock.calls.map(([name]) => name)).toEqual(
       expect.arrayContaining([
-        'public_teachers',
+        'public_teachers_rated',
         'public_teacher_specialization_labels',
         'public_teacher_profile_details',
         'public_teacher_cover_path',

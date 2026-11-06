@@ -27,6 +27,7 @@ export function RatingSummary({
     : `Teacher rating: ${score} out of 5, ${reviews} reviews`;
   return (
     <span
+      role="group"
       className="inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-full bg-orange/10 px-3 py-1 text-sm font-bold text-ink-soft"
       aria-label={label}
     >

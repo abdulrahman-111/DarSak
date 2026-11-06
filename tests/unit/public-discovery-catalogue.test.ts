@@ -153,14 +153,42 @@ describe('public discovery catalogue', () => {
   });
 
   it('uses the UTC minute in the default rated cache key', async () => {
-    const rpc = vi.fn(async () => ({ data: [], error: null }));
+    const makeRow = (average: number) => ({
+      id: 'g',
+      teacher_id: 't',
+      offering_id: 'o',
+      name: 'Group',
+      description: '',
+      capacity: 5,
+      status: 'published',
+      location: '',
+      created_at: '',
+      teacher_name: 'Teacher',
+      subject_name_ar: '',
+      subject_name_en: '',
+      node_name_ar: '',
+      node_name_en: '',
+      accepted_count: 0,
+      available_seats: 5,
+      weekdays: [],
+      next_lesson_at: null,
+      teacher_rating_average: average,
+      teacher_rating_count: 3,
+    });
+    const rpc = vi.fn(async () => ({
+      data: [makeRow(rpc.mock.calls.length === 1 ? 3.5 : 4.8)],
+      error: null,
+    }));
     createPublicClientMock.mockReturnValue({ rpc });
     const now = vi.spyOn(Date, 'now').mockReturnValue(1_800_000_000_000);
-    await publicGroups();
-    await publicGroups();
+    const first = await publicGroups();
+    const sameMinute = await publicGroups();
     now.mockReturnValue(1_800_000_060_000);
-    await publicGroups();
+    const nextMinute = await publicGroups();
     expect(rpc).toHaveBeenCalledTimes(2);
+    expect(first.data[0]?.teacher?.teacher_rating_average).toBe(3.5);
+    expect(sameMinute.data[0]?.teacher?.teacher_rating_average).toBe(3.5);
+    expect(nextMinute.data[0]?.teacher?.teacher_rating_average).toBe(4.8);
     now.mockRestore();
   });
 

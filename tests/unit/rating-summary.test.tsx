@@ -8,6 +8,7 @@ describe('public rating summary', () => {
     const en = renderToStaticMarkup(
       createElement(RatingSummary, { average: 4.6, count: 12, locale: 'en' }),
     );
+    expect(en).toContain('role="group"');
     expect(en).toContain('aria-label="Teacher rating: 4.6 out of 5, 12 reviews"');
     expect(en).toContain('Teacher rating');
     expect(en).toContain('aria-hidden="true"');

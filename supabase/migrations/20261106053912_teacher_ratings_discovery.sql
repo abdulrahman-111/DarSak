@@ -79,7 +79,7 @@ begin
     select c.*, greatest(c.capacity::bigint-c.accepted_count,0::bigint) as available_seats,
       case when coalesce(a.rating_count,0)>=3 then round(a.rating_average,1) else null end as public_rating_average,
       case when coalesce(a.rating_count,0)>=3 then a.rating_count else 0::bigint end as public_rating_count
-    from counts c left join dars_private.public_teacher_rating_aggregate(array(select distinct teacher_id from counts)) a on a.teacher_id=c.teacher_id
+    from counts c left join dars_private.public_teacher_rating_aggregate(array(select distinct c.teacher_id from counts c)) a on a.teacher_id=c.teacher_id
     where (p_has_seats is distinct from true or greatest(c.capacity::bigint-c.accepted_count,0::bigint)>0)
       and (p_min_rating is null or (coalesce(a.rating_count,0)>=3 and round(a.rating_average,1)>=p_min_rating))
   ), eligible_page as (
