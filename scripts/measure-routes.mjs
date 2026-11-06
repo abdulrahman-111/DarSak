@@ -33,7 +33,7 @@ export const ROUTES = Object.freeze({
 
 const HOSTED_ORIGINS = Object.freeze({
   production: 'https://darsak-platform.vercel.app',
-  staging: 'https://darsak-platform-staging.vercel.app',
+  staging: 'https://darsak-staging-theag01s-projects.vercel.app',
 });
 
 function loopback(host) {
@@ -68,9 +68,46 @@ export function validatePrivateStateUse({ environment, hasState, syntheticStagin
   if (!hasState) return true;
   if (environment === 'production') throw new Error('Production private state is prohibited.');
   if (environment === 'staging' && !syntheticStaging)
-    throw new Error('Private staging state must be declared synthetic staging state.');
+    throw new Error(
+      'Private staging state requires operator assertion of synthetic staging fixtures.',
+    );
   if (!['local', 'staging'].includes(environment))
     throw new Error('Private state is allowed only on loopback or synthetic staging.');
+  return true;
+}
+
+export function validateStateOrigins(state, target) {
+  const cookies = Array.isArray(state?.cookies) ? state.cookies : [];
+  const origins = Array.isArray(state?.origins) ? state.origins : [];
+  const allowedDomain = domain => {
+    const normalized = String(domain ?? '')
+      .replace(/^\./, '')
+      .toLowerCase();
+    if (target.environment === 'local') return loopback(normalized);
+    return normalized === new URL(target.origin).hostname.toLowerCase();
+  };
+  for (const cookie of cookies) {
+    if (!allowedDomain(cookie.domain))
+      throw new Error(
+        'Private browser state contains a cookie outside the selected origin boundary.',
+      );
+  }
+  for (const entry of origins) {
+    let parsed;
+    try {
+      parsed = new URL(entry.origin);
+    } catch {
+      throw new Error('Private browser state contains an invalid origin.');
+    }
+    const allowed =
+      target.environment === 'local'
+        ? ['http:', 'https:'].includes(parsed.protocol) && loopback(parsed.hostname)
+        : parsed.origin === target.origin;
+    if (!allowed)
+      throw new Error(
+        'Private browser state contains an origin outside the selected origin boundary.',
+      );
+  }
   return true;
 }
 
@@ -88,6 +125,9 @@ function nearestRankP90(values) {
 export function summarizeSamples(samples) {
   const metricKeys = ['ttfbMs', 'fcpMs', 'lcpMs'];
   const errors = [];
+  const validSamples = samples.filter(
+    sample => sample.valid === true && sample.status === 200 && !sample.error,
+  );
   samples.forEach((sample, index) => {
     if (sample.error)
       errors.push({ sample: index, status: sample.status ?? null, error: sample.error });
@@ -100,9 +140,15 @@ export function summarizeSamples(samples) {
         errors.push({ sample: index, metric, error: 'missing' });
     }
   });
+  const metricMissingCounts = Object.fromEntries(
+    metricKeys.map(metric => [
+      metric,
+      samples.filter(sample => !Number.isFinite(sample[metric]) || sample[metric] < 0).length,
+    ]),
+  );
   const metrics = Object.fromEntries(
-    [...metricKeys, 'serverTimingMs'].map(metric => {
-      const values = samples
+    metricKeys.map(metric => {
+      const values = validSamples
         .map(sample => sample[metric])
         .filter(value => Number.isFinite(value) && value >= 0);
       return [
@@ -115,24 +161,54 @@ export function summarizeSamples(samples) {
   );
   return {
     sampleCount: samples.length,
-    complete: samples.length === THROTTLE.samplesPerRoute && errors.length === 0,
+    validSampleCount: validSamples.length,
+    excludedSampleCount: samples.length - validSamples.length,
+    metricMissingCounts,
+    complete:
+      samples.length === THROTTLE.samplesPerRoute &&
+      validSamples.length === THROTTLE.samplesPerRoute &&
+      errors.length === 0 &&
+      metricKeys.every(metric => metrics[metric].count === THROTTLE.samplesPerRoute),
     metrics,
     errors,
   };
 }
 
+const SAFE_ERRORS = [
+  'redirected',
+  'timeout',
+  'navigation',
+  'http-status',
+  'external-navigation-blocked',
+  'document-changed',
+];
+
+function sanitizeServerTiming(entries) {
+  if (!Array.isArray(entries)) return null;
+  const bounded = entries
+    .filter(
+      entry =>
+        entry &&
+        ['app', 'db', 'edge'].includes(entry.name) &&
+        Number.isFinite(entry.durationMs) &&
+        entry.durationMs >= 0,
+    )
+    .slice(0, 3)
+    .map(entry => ({ name: entry.name, durationMs: entry.durationMs }));
+  return bounded.length ? bounded : null;
+}
+
 export function sanitizeSample(sample) {
   return {
+    valid: sample.valid === true,
     status: Number.isInteger(sample.status) ? sample.status : null,
     ttfbMs: Number.isFinite(sample.ttfbMs) ? sample.ttfbMs : null,
     fcpMs: Number.isFinite(sample.fcpMs) ? sample.fcpMs : null,
     lcpMs: Number.isFinite(sample.lcpMs) ? sample.lcpMs : null,
-    serverTimingMs: Number.isFinite(sample.serverTimingMs) ? sample.serverTimingMs : null,
+    serverTiming: sanitizeServerTiming(sample.serverTiming),
     ...(sample.error
       ? {
-          error: ['redirected', 'timeout', 'navigation', 'http-status'].includes(sample.error)
-            ? sample.error
-            : 'navigation',
+          error: SAFE_ERRORS.includes(sample.error) ? sample.error : 'navigation',
         }
       : {}),
   };
@@ -140,15 +216,100 @@ export function sanitizeSample(sample) {
 
 export function parseServerTiming(header) {
   if (!header) return null;
-  const durations = [...header.matchAll(/(?:^|,)\s*[a-z][a-z0-9_-]*\s*;\s*dur=(\d+(?:\.\d+)?)/gi)]
-    .map(match => Number(match[1]))
-    .filter(Number.isFinite);
-  return durations.length ? durations.reduce((sum, value) => sum + value, 0) : null;
+  const segments = [];
+  let start = 0;
+  let quoted = false;
+  let escaped = false;
+  for (let i = 0; i < header.length; i++) {
+    const character = header[i];
+    if (escaped) {
+      escaped = false;
+    } else if (character === '\\' && quoted) {
+      escaped = true;
+    } else if (character === '"') {
+      quoted = !quoted;
+    } else if (character === ',' && !quoted) {
+      segments.push(header.slice(start, i));
+      start = i + 1;
+    }
+  }
+  segments.push(header.slice(start));
+  const entries = [];
+  for (const segment of segments) {
+    const match = /^\s*([a-z][a-z0-9_-]*)\s*;(.+)$/i.exec(segment);
+    if (!match) continue;
+    const name = match[1].toLowerCase();
+    if (!['app', 'db', 'edge'].includes(name)) continue;
+    const duration = /(?:^|;)\s*dur\s*=\s*(\d+(?:\.\d+)?)\s*(?=;|$)/i.exec(match[2]);
+    if (!duration) continue;
+    const durationMs = Number(duration[1]);
+    if (Number.isFinite(durationMs) && durationMs >= 0) entries.push({ name, durationMs });
+  }
+  return sanitizeServerTiming(entries);
 }
 
-function parseArgs(argv) {
+export function navigationTtfbMs(navigation) {
+  const { responseStart, activationStart, startTime } = navigation ?? {};
+  if (!Number.isFinite(responseStart) || responseStart <= 0) return null;
+  const origin =
+    Number.isFinite(activationStart) && activationStart > 0 ? activationStart : startTime;
+  if (!Number.isFinite(origin) || origin < 0 || responseStart < origin) return null;
+  return responseStart - origin;
+}
+
+export function classifyDocumentAttempt(attempt) {
+  if (attempt.externalNavigationBlocked)
+    return { valid: false, error: 'external-navigation-blocked' };
+  if (attempt.status !== 200) return { valid: false, error: 'http-status' };
+  if ((attempt.redirectedFromUrls ?? []).length > 0) return { valid: false, error: 'redirected' };
+  const urls = [
+    attempt.responseUrl,
+    attempt.initialUrl,
+    attempt.finalUrl,
+    ...(attempt.redirectedFromUrls ?? []),
+  ];
+  if (urls.some(url => routeFromFinalUrl(url, attempt.origin) !== attempt.expectedRoute))
+    return { valid: false, error: 'redirected' };
+  if (
+    !Array.isArray(attempt.mainFrameRoutes) ||
+    attempt.mainFrameRoutes.length === 0 ||
+    attempt.mainFrameRoutes.some(route => route !== attempt.expectedRoute)
+  )
+    return { valid: false, error: 'redirected' };
+  if (
+    !Number.isFinite(attempt.initialTimeOrigin) ||
+    !Number.isFinite(attempt.finalTimeOrigin) ||
+    attempt.initialTimeOrigin !== attempt.finalTimeOrigin
+  )
+    return { valid: false, error: 'document-changed' };
+  return { valid: true, error: null };
+}
+
+export function classifyWarmCheck(attempt, cacheHeader) {
+  const valid = attempt.valid === true && attempt.status === 200 && !attempt.error;
+  return {
+    valid,
+    status: Number.isInteger(attempt.status) ? attempt.status : null,
+    error: valid ? null : (attempt.error ?? 'http-status'),
+    cache:
+      valid && ['HIT', 'MISS', 'STALE', 'PRERENDER', 'BYPASS'].includes(cacheHeader)
+        ? cacheHeader
+        : 'unknown',
+  };
+}
+
+export function parseArgs(argv) {
   const values = {};
   const routes = [];
+  const valueOptions = new Set([
+    'environment',
+    'base-url',
+    'build-sha',
+    'deployment-id',
+    'student-state',
+    'teacher-state',
+    'output',
+  ]);
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === '--route') {
@@ -157,11 +318,11 @@ function parseArgs(argv) {
     } else if (arg.startsWith('--')) {
       const key = arg.slice(2);
       if (['synthetic-staging-state', 'warm-public'].includes(key)) values[key] = true;
-      else {
+      else if (valueOptions.has(key)) {
         if (!argv[i + 1] || argv[i + 1].startsWith('--'))
           throw new Error(`${arg} requires a value.`);
         values[key] = argv[++i];
-      }
+      } else throw new Error(`Unknown option: ${arg}`);
     } else throw new Error(`Unexpected argument: ${arg}`);
   }
   values.routes = routes.length
@@ -170,12 +331,19 @@ function parseArgs(argv) {
   return values;
 }
 
-async function readPrivateState(file) {
+async function readPrivateState(file, target) {
   if (!file) return undefined;
   const absolute = path.resolve(file);
   const stat = await fs.stat(absolute);
   if (!stat.isFile() || (stat.mode & 0o077) !== 0)
     throw new Error('Private state must be a regular file with owner-only permissions.');
+  let state;
+  try {
+    state = JSON.parse(await fs.readFile(absolute, 'utf8'));
+  } catch {
+    throw new Error('Private browser state must be valid Playwright storage state JSON.');
+  }
+  validateStateOrigins(state, target);
   return absolute;
 }
 
@@ -192,10 +360,20 @@ export function resolveBuildIdentity({ environment, buildSha, deploymentId, gitS
 }
 
 async function outputDirectory(value) {
-  const dir = value
-    ? path.resolve(value)
-    : await fs.mkdtemp(path.join(os.tmpdir(), 'darsak-route-measure-'));
-  if (value) await fs.mkdir(dir, { mode: 0o700 });
+  let dir;
+  if (value) {
+    dir = path.resolve(value);
+    const parent = await fs.stat(path.dirname(dir));
+    if (!parent.isDirectory() || (parent.mode & 0o022) !== 0)
+      throw new Error('Output parent must be a directory not writable by untrusted users.');
+    try {
+      await fs.lstat(dir);
+      throw new Error('Output directory must not already exist.');
+    } catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+    }
+    await fs.mkdir(dir, { mode: 0o700 });
+  } else dir = await fs.mkdtemp(path.join(os.tmpdir(), 'darsak-route-measure-'));
   await fs.chmod(dir, 0o700);
   return dir;
 }
@@ -221,77 +399,137 @@ async function oneSample(browser, target, routeName, statePath, warm = false) {
     deviceScaleFactor: 3,
     ...(statePath ? { storageState: statePath } : {}),
   });
-  const page = await context.newPage();
-  let cdp;
-  if (!warm) {
-    cdp = await context.newCDPSession(page);
-    await cdp.send('Network.enable');
-    await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
-    await cdp.send('Network.emulateNetworkConditions', {
-      offline: false,
-      latency: THROTTLE.latencyMs,
-      downloadThroughput: THROTTLE.downloadBytesPerSecond,
-      uploadThroughput: THROTTLE.uploadBytesPerSecond,
-      connectionType: 'cellular4g',
-    });
-    await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE.cpuRate });
-  }
-  await page.addInitScript(() => {
-    window.__routeMetrics = { lcp: null };
-    try {
-      new PerformanceObserver(list => {
-        const entries = list.getEntries();
-        if (entries.length) window.__routeMetrics.lcp = entries.at(-1).startTime;
-      }).observe({ type: 'largest-contentful-paint', buffered: true });
-    } catch {}
-  });
-  let response = null;
-  let error = null;
   try {
-    response = await page.goto(new URL(route.template, target.origin).href, {
-      waitUntil: 'domcontentloaded',
-      timeout: THROTTLE.timeoutMs,
+    const page = await context.newPage();
+    const mainFrameRoutes = [];
+    let externalNavigationBlocked = false;
+    page.on('framenavigated', frame => {
+      if (frame === page.mainFrame())
+        mainFrameRoutes.push(routeFromFinalUrl(frame.url(), target.origin));
     });
-    await page.waitForTimeout(THROTTLE.observationWindowMs);
-  } catch (cause) {
-    error = String(cause).includes('Timeout') ? 'timeout' : 'navigation';
-  }
-  let measured = {};
-  try {
-    measured = await page.evaluate(() => {
-      const navigation = performance.getEntriesByType('navigation')[0];
-      const fcp = performance
-        .getEntriesByName('first-contentful-paint')
-        .find(entry => entry.entryType === 'paint');
-      return {
-        ttfbMs: navigation ? navigation.responseStart - navigation.requestStart : null,
-        fcpMs: fcp?.startTime ?? null,
-        lcpMs: window.__routeMetrics?.lcp ?? null,
-      };
-    });
-  } catch {}
-  const status = response?.status() ?? null;
-  const actualRoute = routeFromFinalUrl(page.url(), target.origin);
-  if (!error && actualRoute !== routeName) error = 'redirected';
-  if (!error && status !== 200) error = 'http-status';
-  const sample = sanitizeSample({
-    status,
-    ...measured,
-    serverTimingMs: parseServerTiming(
-      await response?.headerValue('server-timing').catch(() => null),
-    ),
-    error,
-  });
-  const cacheHeader = await response?.headerValue('x-vercel-cache').catch(() => null);
-  await context.close();
-  return warm
-    ? {
-        status,
-        cache: ['HIT', 'MISS', 'STALE', 'PRERENDER', 'BYPASS'].includes(cacheHeader)
-          ? cacheHeader
-          : 'unknown',
+    await page.route('**/*', async requestRoute => {
+      const request = requestRoute.request();
+      if (
+        request.isNavigationRequest() &&
+        request.frame() === page.mainFrame() &&
+        new URL(request.url()).origin !== target.origin
+      ) {
+        externalNavigationBlocked = true;
+        await requestRoute.abort('blockedbyclient');
+        return;
       }
-    : sample;
+      await requestRoute.continue();
+    });
+    if (!warm) {
+      const cdp = await context.newCDPSession(page);
+      await cdp.send('Network.enable');
+      await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
+      await cdp.send('Network.emulateNetworkConditions', {
+        offline: false,
+        latency: THROTTLE.latencyMs,
+        downloadThroughput: THROTTLE.downloadBytesPerSecond,
+        uploadThroughput: THROTTLE.uploadBytesPerSecond,
+        connectionType: 'cellular4g',
+      });
+      await cdp.send('Emulation.setCPUThrottlingRate', { rate: THROTTLE.cpuRate });
+    }
+    await page.addInitScript(() => {
+      window.__routeMetrics = { lcp: null, observer: null };
+      try {
+        window.__routeMetrics.observer = new PerformanceObserver(list => {
+          const entries = list.getEntries();
+          if (entries.length) window.__routeMetrics.lcp = entries.at(-1).startTime;
+        });
+        window.__routeMetrics.observer.observe({
+          type: 'largest-contentful-paint',
+          buffered: true,
+        });
+      } catch {}
+    });
+    let response = null;
+    let navigationError = null;
+    let initialDocument;
+    try {
+      response = await page.goto(new URL(route.template, target.origin).href, {
+        waitUntil: 'domcontentloaded',
+        timeout: THROTTLE.timeoutMs,
+      });
+      initialDocument = await page.evaluate(() => ({
+        url: location.href,
+        timeOrigin: performance.timeOrigin,
+      }));
+      await page.waitForTimeout(THROTTLE.observationWindowMs);
+    } catch (cause) {
+      navigationError = String(cause).includes('Timeout') ? 'timeout' : 'navigation';
+    }
+    let measured = {};
+    let finalDocument = {};
+    try {
+      const result = await page.evaluate(() => {
+        const navigation = performance.getEntriesByType('navigation')[0];
+        const fcp = performance
+          .getEntriesByName('first-contentful-paint')
+          .find(entry => entry.entryType === 'paint');
+        const observer = window.__routeMetrics?.observer;
+        const pending = observer?.takeRecords() ?? [];
+        if (pending.length) window.__routeMetrics.lcp = pending.at(-1).startTime;
+        return {
+          url: location.href,
+          timeOrigin: performance.timeOrigin,
+          navigation: navigation
+            ? {
+                responseStart: navigation.responseStart,
+                activationStart: navigation.activationStart,
+                startTime: navigation.startTime,
+              }
+            : null,
+          fcpMs: fcp?.startTime ?? null,
+          lcpMs: window.__routeMetrics?.lcp ?? null,
+        };
+      });
+      finalDocument = { url: result.url, timeOrigin: result.timeOrigin };
+      measured = {
+        ttfbMs: navigationTtfbMs(result.navigation),
+        fcpMs: result.fcpMs,
+        lcpMs: result.lcpMs,
+      };
+    } catch {}
+    const status = response?.status() ?? null;
+    const redirectedFromUrls = [];
+    for (let request = response?.request(); request; request = request.redirectedFrom())
+      redirectedFromUrls.push(request.url());
+    const finalUrl = finalDocument.url ?? page.url();
+    const attempt = classifyDocumentAttempt({
+      origin: target.origin,
+      expectedRoute: routeName,
+      status,
+      responseUrl: response?.url() ?? '',
+      initialUrl: initialDocument?.url ?? page.url(),
+      finalUrl,
+      initialTimeOrigin: initialDocument?.timeOrigin,
+      finalTimeOrigin: finalDocument.timeOrigin,
+      mainFrameRoutes,
+      redirectedFromUrls,
+      externalNavigationBlocked,
+    });
+    const error = externalNavigationBlocked
+      ? 'external-navigation-blocked'
+      : (navigationError ?? attempt.error);
+    const serverTiming = parseServerTiming(
+      await response?.headerValue('server-timing').catch(() => null),
+    );
+    const cacheHeader = await response?.headerValue('x-vercel-cache').catch(() => null);
+    const sample = sanitizeSample({
+      valid: !error && attempt.valid,
+      status,
+      ...measured,
+      serverTiming,
+      error,
+    });
+    return warm ? classifyWarmCheck({ valid: sample.valid, status, error }, cacheHeader) : sample;
+  } finally {
+    await context.close();
+  }
 }
 
 async function writeOutput(dir, data) {
@@ -309,14 +547,16 @@ export async function main(argv = process.argv.slice(2)) {
   const args = parseArgs(argv);
   const environment = args.environment ?? 'local';
   const target = validateTarget(args['base-url'], environment);
-  const studentState = await readPrivateState(args['student-state']);
-  const teacherState = await readPrivateState(args['teacher-state']);
-  const hasState = Boolean(studentState || teacherState);
+  const hasState = Boolean(args['student-state'] || args['teacher-state']);
   validatePrivateStateUse({
     environment,
     hasState,
     syntheticStaging: Boolean(args['synthetic-staging-state']),
   });
+  if (args['synthetic-staging-state'] && environment !== 'staging')
+    throw new Error('--synthetic-staging-state is valid only for the staging environment.');
+  const studentState = await readPrivateState(args['student-state'], target);
+  const teacherState = await readPrivateState(args['teacher-state'], target);
   const selected = args.routes;
   for (const name of selected)
     if (!ROUTES[name]) throw new Error(`Unknown route template: ${name}`);
@@ -328,9 +568,6 @@ export async function main(argv = process.argv.slice(2)) {
     )
       throw new Error(`Private route ${name} requires its matching local or synthetic state file.`);
   }
-  if (args['synthetic-staging-state'] && environment !== 'staging')
-    throw new Error('--synthetic-staging-state is valid only for the staging environment.');
-
   const output = await outputDirectory(args.output);
   const gitSha =
     environment === 'local'
@@ -349,19 +586,30 @@ export async function main(argv = process.argv.slice(2)) {
       : {}),
     headless: true,
   });
+  const runStartedAt = new Date().toISOString();
   const report = {
+    schemaVersion: 1,
+    runStartedAt,
     capturedAt: new Date().toISOString(),
+    browserVersion: browser.version(),
     environment,
     origin: target.origin,
     deploymentId: identity.deploymentId,
     buildSha: identity.buildSha,
+    identityProvenance:
+      environment === 'local'
+        ? 'checkout SHA; running server build not verified'
+        : 'caller asserted; alias/deployment binding not verified',
     observationWindowMs: THROTTLE.observationWindowMs,
+    observationWindowAnchor: 'domcontentloaded',
+    lcpMeaning: 'last candidate observed within fixed window; not finalized field LCP',
     throttle: THROTTLE,
     routes: {},
     warmChecks: {},
   };
   try {
     for (const name of selected) {
+      const routeStartedAt = new Date().toISOString();
       const state =
         ROUTES[name].role === 'student'
           ? studentState
@@ -370,25 +618,48 @@ export async function main(argv = process.argv.slice(2)) {
             : undefined;
       const samples = [];
       for (let i = 0; i < THROTTLE.samplesPerRoute; i++) {
+        const sampleStartedAt = new Date().toISOString();
         try {
-          samples.push(await oneSample(browser, target, name, state));
+          const sample = await oneSample(browser, target, name, state);
+          samples.push({
+            sampleIndex: i + 1,
+            startedAt: sampleStartedAt,
+            completedAt: new Date().toISOString(),
+            ...sample,
+          });
         } catch {
-          samples.push(sanitizeSample({ error: 'navigation' }));
+          samples.push({
+            sampleIndex: i + 1,
+            startedAt: sampleStartedAt,
+            completedAt: new Date().toISOString(),
+            ...sanitizeSample({ error: 'navigation' }),
+          });
         }
       }
       report.routes[name] = {
         template: ROUTES[name].template,
         access: ROUTES[name].access,
+        startedAt: routeStartedAt,
+        completedAt: new Date().toISOString(),
+        sampleOrder: 'sequential',
         sampleCount: samples.length,
         summary: summarizeSamples(samples),
         samples,
       };
-      if (args['warm-public'] && ROUTES[name].access === 'public')
-        report.warmChecks[name] = await oneSample(browser, target, name, undefined, true);
+      if (args['warm-public'] && ROUTES[name].access === 'public') {
+        const startedAt = new Date().toISOString();
+        const warmCheck = await oneSample(browser, target, name, undefined, true);
+        report.warmChecks[name] = {
+          startedAt,
+          completedAt: new Date().toISOString(),
+          ...warmCheck,
+        };
+      }
     }
   } finally {
     await browser.close();
   }
+  report.runCompletedAt = new Date().toISOString();
   await writeOutput(output, report);
   console.log(`Wrote sanitized route measurements to ${output}`);
   return output;
