@@ -11,9 +11,9 @@ function ratingsGroupCard(page: import('@playwright/test').Page, locale: string,
 }
 
 async function profileRating(page: import('@playwright/test').Page, locale: string) {
-  const visible = page
-    .getByRole('group')
-    .filter({ has: page.getByText(locale === 'ar' ? 'تقييم المعلم' : 'Teacher rating') });
+  // TeacherProfile places the heading and header RatingSummary in the same div;
+  // group cards later in the page also contain summaries for the same teacher.
+  const visible = page.getByRole('heading', { level: 1 }).locator('xpath=..').getByRole('group');
   await expect(visible).toBeVisible();
   const json = (await page
     .locator('script[type="application/ld+json"]')
@@ -118,14 +118,19 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
 
   // Dismissal does not remove access to the real feedback form.
   await discovery.goto(`/${locale}/groups/${ids.ratingsGroupId}#feedback`);
-  await discovery
+  const feedbackForm = discovery.getByLabel(commentLabel).locator('xpath=ancestor::form[1]');
+  await feedbackForm
     .getByLabel(locale === 'ar' ? 'التقييم من ٥' : 'Rating out of 5')
     .selectOption('1');
-  await discovery
+  await feedbackForm
     .getByLabel(commentLabel)
     .fill('A detailed synthetic review for the ratings journey.');
-  await discovery.getByRole('button', { name: locale === 'ar' ? 'حفظ' : 'Save' }).click();
-  await expect(discovery.getByRole('status')).toContainText(locale === 'ar' ? 'تم الحفظ' : 'Saved');
+  await feedbackForm
+    .getByRole('button', { name: locale === 'ar' ? 'حفظ' : 'Save', exact: true })
+    .click();
+  await expect(feedbackForm.getByRole('status')).toContainText(
+    locale === 'ar' ? 'تم الحفظ' : 'Saved',
+  );
   await ratingsTeacherPage.goto(`/${locale}/notifications`);
   await expect(
     ratingsTeacherPage.getByText(
@@ -196,6 +201,6 @@ test('ratings, prompt dismissal, moderation, discovery freshness, and Service sc
   await discovery.goto(`/${locale}/teachers/${actors.ratingsTeacher.id}`);
   const hiddenProfile = await profileRating(discovery, locale);
   expect(hiddenProfile.aggregate).toMatchObject({ ratingValue: 5, reviewCount: 3 });
-  await expect(discovery.getByText(locale === 'ar' ? /٥٫٠/ : /5\.0\s*\/\s*5/)).toBeVisible();
+  await expect(hiddenProfile.visible).toContainText(locale === 'ar' ? /٥٫٠/ : /5\.0\s*\/\s*5/);
   await expect(requests).toEqual([]);
 });
