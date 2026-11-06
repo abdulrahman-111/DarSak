@@ -367,9 +367,14 @@ test('an accepted student and lesson owner use the private meeting link across t
     const startsAt = new Date(state.starts_at).getTime();
     const endsAt = new Date(state.ends_at).getTime();
     const justBeforeOpen = new Date(startsAt - 15 * 60_000 - 1_000);
-    await clockPage.clock.install({ time: justBeforeOpen });
-    await clockPage.clock.pauseAt(justBeforeOpen);
+    await clockPage.clock.install({ time: new Date(justBeforeOpen.getTime() - 60_000) });
     await clockPage.goto(studentLessonPath);
+    await expect(
+      clockPage.getByText(ar ? /يفتح رابط الاجتماع/ : /meeting link opens/i),
+    ).toBeVisible();
+    await clockPage.waitForLoadState('networkidle');
+    // Let the page hydrate and schedule its threshold timer before freezing at the target instant.
+    await clockPage.clock.pauseAt(justBeforeOpen);
     await assertNoMeetingLink(clockPage, allUrls);
     await clockPage.clock.fastForward(1_000);
     await assertMeetingLink(clockPage, replacementUrl, locale);
