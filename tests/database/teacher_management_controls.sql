@@ -50,6 +50,7 @@ set local session_replication_role=origin;
 -- Owner cancel preserves accepted membership and lesson/material history, while
 -- cancelling only future scheduled lessons and archiving the group.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000001';
 do $$
 declare v_count integer; v_lesson_count integer;
@@ -105,6 +106,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000003';
 do $$
 begin
@@ -136,6 +138,7 @@ update public.profiles set status='suspended' where id='7d000000-0000-4000-8000-
 set local session_replication_role=origin;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000001';
 do $$
 begin
@@ -154,6 +157,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000002';
 do $$
 begin
@@ -164,6 +168,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7d000000-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7d000000-0000-4000-8000-000000000004';
 do $$
 begin
@@ -173,6 +178,7 @@ begin
     raise exception 'admin delete did not remove an eligible group and its schedule';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

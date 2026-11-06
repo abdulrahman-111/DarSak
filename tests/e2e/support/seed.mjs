@@ -129,6 +129,7 @@ select gen_random_uuid(),id,id::text,jsonb_build_object('sub',id::text,'email',e
 set local role service_role;
 update public.profiles set role='admin' where id=${sqlLiteral(admin.id)};
 select set_config('request.jwt.claim.sub',${sqlLiteral(admin.id)},true);
+select set_config('request.jwt.claims',${sqlLiteral(JSON.stringify({ sub: admin.id, role: 'authenticated', aal: 'aal2' }))},true);
 reset role;
 update public.teacher_applications set legacy_approved=true,status='approved',reviewed_at=now(),reviewed_by=${sqlLiteral(teacher.id)} where teacher_id=${sqlLiteral(teacher.id)};
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(teacher.id)};
@@ -165,6 +166,8 @@ insert into public.group_assignments(id,group_id,title,instructions,resource_url
 insert into public.user_notifications(id,recipient_id,kind,event_key,payload) values(${sqlLiteral(data.notificationId)},${sqlLiteral(notificationStudent.id)},'lesson_rescheduled','e2e:${projectName}:lesson-notice',jsonb_build_object('lesson_id',${sqlLiteral(data.futureLessonId)},'group_id',${sqlLiteral(data.groupId)},'group_name','E2E mathematics group','title','E2E upcoming lesson','starts_at',now()+interval '7 days','ends_at',now()+interval '7 days 1 hour'));
 insert into dars_private.group_feedback(id,group_id,student_id,rating,comment,status)
 values(${sqlLiteral(data.feedbackId)},${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},5,'Synthetic approved feedback for the teacher reply browser workflow.','approved');
+select set_config('request.jwt.claims','{}',true);
+select set_config('request.jwt.claim.sub','',true);
 reset role;
 do $$ begin
  if not exists(select 1 from public.groups where id=${sqlLiteral(data.groupId)} and status='published') then raise exception 'E2E group seed failed: starter offering missing'; end if;

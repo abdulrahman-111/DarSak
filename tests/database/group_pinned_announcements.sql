@@ -32,6 +32,7 @@ insert into public.enrollments(id,group_id,student_id,status) values
  ('7e200000-0000-4000-8000-000000000002','7e100000-0000-4000-8000-000000000001','7e000000-0000-4000-8000-000000000003','pending');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
 do $$ declare v_time timestamptz; begin
   v_time := public.set_group_pinned_announcement('7e100000-0000-4000-8000-000000000001','<b>مرحبا</b>');
@@ -46,6 +47,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000002';
 do $$ begin
   if (select count(*) from public.group_pinned_announcements where group_id='7e100000-0000-4000-8000-000000000001') <> 1 then raise exception 'accepted student could not read announcement'; end if;
@@ -56,14 +58,17 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000003';
 do $$ begin if (select count(*) from public.group_pinned_announcements) <> 0 then raise exception 'pending student read announcement'; end if; end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000004';
 do $$ begin if (select count(*) from public.group_pinned_announcements) <> 0 then raise exception 'foreign student read announcement'; end if; end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000006","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000006';
 do $$ begin
   if (select count(*) from public.group_pinned_announcements) <> 0 then raise exception 'foreign teacher read announcement'; end if;
@@ -71,11 +76,13 @@ do $$ begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000005';
 do $$ begin
   if (select count(*) from public.group_pinned_announcements) <> 1 then raise exception 'admin oversight read failed'; end if;
   begin perform public.set_group_pinned_announcement('7e100000-0000-4000-8000-000000000001','admin write'); raise exception 'admin wrote announcement'; exception when others then if sqlerrm='admin wrote announcement' then raise; end if; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 -- Active owner may review old announcements even if teacher approval changes.
@@ -83,6 +90,7 @@ set local session_replication_role=replica;
 update public.teacher_profiles set approved=false where id='7e000000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
 do $$ begin
   if (select count(*) from public.group_pinned_announcements) <> 1 then raise exception 'active owner lost read access to historical announcement'; end if;
@@ -94,6 +102,7 @@ set local session_replication_role=replica;
 update public.profiles set status='suspended' where id='7e000000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
 do $$ begin if (select count(*) from public.group_pinned_announcements) <> 0 then raise exception 'suspended owner retained announcement access'; end if; end $$;
 reset role;
@@ -103,12 +112,14 @@ update public.teacher_profiles set approved=true where id='7e000000-0000-4000-80
 set local session_replication_role=origin;
 update public.groups set status='archived' where id='7e100000-0000-4000-8000-000000000001';
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
 do $$ begin
   begin perform public.set_group_pinned_announcement('7e100000-0000-4000-8000-000000000001','stale archived write'); raise exception 'archived announcement write succeeded'; exception when others then if sqlerrm='archived announcement write succeeded' then raise; elsif sqlerrm <> 'archived group cannot be edited' then raise; end if; end;
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000002';
 do $$ begin
   if (select count(*) from public.group_pinned_announcements) <> 1 then raise exception 'accepted student lost archived history'; end if;

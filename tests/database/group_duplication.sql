@@ -48,6 +48,7 @@ cross join lateral (select id from public.offerings order by id limit 1) o;
 insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time)
 values ('79200000-0000-4000-8000-000000000001','79100000-0000-4000-8000-000000000001',0,'10:00','11:00');
 
+set local request.jwt.claims = '{"sub":"79000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='79000000-0000-4000-8000-000000000001';
 select public.publish_group('79100000-0000-4000-8000-000000000001',null,null);
 insert into public.enrollments(group_id,student_id,status)
@@ -60,6 +61,7 @@ insert into public.group_lesson_exclusions(group_id,local_date)
 values ('79100000-0000-4000-8000-000000000001','2027-02-14');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"79000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='79000000-0000-4000-8000-000000000001';
 do $$
 declare
@@ -102,6 +104,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"79000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='79000000-0000-4000-8000-000000000001';
 do $$
 begin
@@ -115,6 +118,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"79000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='79000000-0000-4000-8000-000000000003';
 do $$
 begin
@@ -125,12 +129,14 @@ begin
     if sqlerrm='student source duplication succeeded' then raise; end if;
   end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local session_replication_role=replica;
 update public.profiles set role='admin' where id='79000000-0000-4000-8000-000000000003';
 set local session_replication_role=origin;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"79000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='79000000-0000-4000-8000-000000000003';
 do $$
 declare
@@ -144,6 +150,7 @@ begin
     raise exception 'admin duplicate copied source slots';
   end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

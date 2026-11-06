@@ -62,6 +62,7 @@ insert into public.lesson_attendance(lesson_id,student_id,status,recorded_at,rec
 values('7f200000-0000-4000-8000-000000000004','7f000000-0000-4000-8000-000000000003','late',now()-interval '1 day','7f000000-0000-4000-8000-000000000001');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000001';
 select public.set_lesson_attendance('7f200000-0000-4000-8000-000000000001','7f000000-0000-4000-8000-000000000003','present');
 do $$ begin
@@ -85,6 +86,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f000000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000003';
 do $$ begin
   if (select count(*) from public.lesson_attendance where lesson_id='7f200000-0000-4000-8000-000000000001')<>1
@@ -95,6 +97,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f000000-0000-4000-8000-000000000006","role":"authenticated"}';
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000006';
 do $$ begin
   if (public.teacher_lesson_attendance_page('7f200000-0000-4000-8000-000000000006')->>'total')::integer<>1 then raise exception 'unapproved active owner could not read history'; end if;
@@ -103,11 +106,13 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f000000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000005';
 do $$ begin
   if (public.teacher_lesson_attendance_page('7f200000-0000-4000-8000-000000000001')->>'total')::integer<>2 then raise exception 'admin could not read lesson attendance history'; end if;
   begin perform public.set_lesson_attendance('7f200000-0000-4000-8000-000000000001','7f000000-0000-4000-8000-000000000003','absent'); raise exception 'admin wrote attendance'; exception when insufficient_privilege then null; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

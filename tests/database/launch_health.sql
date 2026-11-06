@@ -14,6 +14,7 @@ do $$begin
 end $$;
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"99000000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='99000000-0000-4000-8000-000000000001';
 do $$declare h jsonb;begin
  h:=public.admin_launch_health();
@@ -21,5 +22,6 @@ do $$declare h jsonb;begin
  if h::text like '%payload%' or h::text like '%example.test%' then raise exception 'health leaked profile';end if;
  begin perform public.record_launch_operation('signup','success','none',1);raise exception 'admin forged counters';exception when insufficient_privilege then null;end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 select 'launch health regression passed';rollback;

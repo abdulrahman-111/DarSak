@@ -63,6 +63,7 @@ select is((select stored_files::integer from public.teacher_plan_status()),83,'t
 select is((select limits->>'bytes' from public.teacher_plan_status()),'262144000','teacher RPC reports standard byte limit');
 select set_config('request.jwt.claim.sub','99100000-0000-4000-8000-000000000004',true);
 select throws_ok($$select * from public.teacher_plan_status()$$,'P0001',null,'student cannot read teacher plan status');
+select set_config('request.jwt.claims','{"sub":"99100000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}',true);
 select set_config('request.jwt.claim.sub','99100000-0000-4000-8000-000000000005',true);
 select is((select plan_code from public.admin_teacher_plan_status('99100000-0000-4000-8000-000000000002')),'standard','admin can read teacher plan status');
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','standard',null,'test-null-version')$$,'22023',null,'admin assignment rejects null expected version');
@@ -73,5 +74,6 @@ select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000001','standard',0,'test-transfer-99100002')$$,'23505',null,'reference cannot be reused for another teacher');
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','pro',3,'test-switch')$$,'55000',null,'plan switch waits for current period expiry');
 select is((select approved from public.teacher_profiles where id='99100000-0000-4000-8000-000000000002'),false,'plan assignment never approves the teacher');
+select set_config('request.jwt.claims','{}',true);
 select * from finish();
 rollback;

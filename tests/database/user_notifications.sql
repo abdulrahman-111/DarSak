@@ -60,6 +60,7 @@ insert into public.lessons(group_id,title,starts_at,ends_at,status) values('7f41
 
 -- A new pending request creates one teacher notification; the repeated pending request is a no-op.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000003';
 select public.request_enrollment('7f410000-0000-4000-8000-000000000001');
 select public.request_enrollment('7f410000-0000-4000-8000-000000000001');
@@ -71,12 +72,14 @@ update public.group_schedule_slots set start_time='12:00',end_time='13:00' where
 delete from public.group_schedule_slots where group_id='7f410000-0000-4000-8000-000000000001' and weekday=3;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000001';
 select public.set_lesson_status('7f420000-0000-4000-8000-000000000003','cancelled');
 reset role;
 
 -- Active owner reschedules a relevant lesson, then makes a no-op update.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000001';
 select public.create_lesson('7f410000-0000-4000-8000-000000000001','Notify Lesson',timestamptz '2030-01-01 10:00:00+00',timestamptz '2030-01-01 11:00:00+00','', '7f420000-0000-4000-8000-000000000001');
 select public.create_lesson('7f410000-0000-4000-8000-000000000001','Notify Lesson',timestamptz '2030-01-02 10:00:00+00',timestamptz '2030-01-02 11:00:00+00','', '7f420000-0000-4000-8000-000000000001');
@@ -101,6 +104,7 @@ do $$ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000002';
 do $$ declare v jsonb; v_id uuid; begin
   v:=public.notifications_page(0,20);
@@ -124,6 +128,7 @@ select ('7f430000-0000-4000-8000-'||lpad((100+n)::text,12,'0'))::uuid,
   '7f400000-0000-4000-8000-000000000002','lesson_cancelled','page-fixture:'||n,timestamptz '2027-01-01 00:00:00+00'
 from generate_series(0,22) as g(n);
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000002';
 do $$ declare v jsonb; begin
   v:=public.notifications_page(0,20);
@@ -144,6 +149,7 @@ do $$ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000004';
 do $$ begin
   begin perform public.notifications_page(0,20); raise exception 'suspended account read notifications'; exception when sqlstate '42501' then null; end;
@@ -154,10 +160,12 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f400000-0000-4000-8000-000000000005","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7f400000-0000-4000-8000-000000000005';
 do $$ begin
   if (public.notifications_page(0,20)->>'total')::integer<>1 then raise exception 'admin own review notification was not private or missing'; end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 rollback;

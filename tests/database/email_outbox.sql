@@ -329,6 +329,7 @@ values('7d000000-0000-4000-8000-000000000001','email-test-admin-retry','teacher_
   jsonb_build_object('teacher_id','7c000000-0000-4000-8000-000000000001'),
   'failed',5,null,'max_attempts');
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000003';
 do $$
 declare v_page jsonb;
@@ -354,6 +355,7 @@ begin
     raise exception 'retry accepted a live sending row';
   exception when sqlstate '22023' then if sqlerrm='retry accepted a live sending row' then raise; end if; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 do $$
 begin
@@ -364,6 +366,7 @@ begin
 end $$;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000004';
 do $$
 begin

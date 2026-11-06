@@ -54,6 +54,7 @@ values ('7e200000-0000-4000-8000-000000000030','7e100000-0000-4000-8000-00000000
   '7f000000-0000-4000-8000-000000000002','accepted');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
 do $$
 declare v_first jsonb; v_second jsonb; v_last jsonb;
@@ -84,15 +85,18 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000004';
 do $$ declare v_page jsonb;
 begin
   v_page:=public.group_enrollment_page('7e100000-0000-4000-8000-000000000002');
   if (v_page->>'total')::integer<>1 then raise exception 'active admin could not inspect another group roster'; end if;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000002';
 do $$ begin
   begin perform public.group_enrollment_page('7e100000-0000-4000-8000-000000000001');
@@ -102,6 +106,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000003';
 do $$ begin
   begin perform public.group_enrollment_page('7e100000-0000-4000-8000-000000000003');
@@ -111,6 +116,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7f000000-0000-4000-8000-000000000001';
 do $$ begin
   begin perform public.group_enrollment_page('7e100000-0000-4000-8000-000000000001');

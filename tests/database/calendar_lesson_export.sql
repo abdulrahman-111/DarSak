@@ -44,6 +44,7 @@ insert into public.lessons(id,group_id,title,starts_at,ends_at,status) values
  ('7f320000-0000-4000-8000-000000000006','7f310000-0000-4000-8000-000000000003','Removed membership',timestamp '2026-04-24 16:00:00' at time zone 'Africa/Cairo',timestamp '2026-04-24 17:00:00' at time zone 'Africa/Cairo','scheduled');
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000003';
 do $$ declare v_result jsonb; v_rows jsonb; begin
   v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
@@ -64,6 +65,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000001';
 do $$ declare v_result jsonb; begin
   v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
@@ -76,6 +78,7 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000002';
 do $$ declare v_result jsonb; begin
   v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
@@ -87,12 +90,15 @@ end $$;
 reset role;
 
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000004","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000004';
 do $$ begin
   begin perform public.calendar_lesson_export('2026-04-24','2026-04-25'); raise exception 'admin export succeeded'; exception when sqlstate '42501' then null; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000005","role":"authenticated"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000005';
 do $$ begin
   begin perform public.calendar_lesson_export('2026-04-24','2026-04-25'); raise exception 'inactive student export succeeded'; exception when sqlstate '42501' then null; end;
@@ -108,6 +114,7 @@ insert into public.lessons(group_id,title,starts_at,ends_at)
 select '7f310000-0000-4000-8000-000000000001','Calendar cap fixture',timestamp '2026-04-27 00:00:00' at time zone 'Africa/Cairo',timestamp '2026-04-27 00:30:00' at time zone 'Africa/Cairo'
 from generate_series(1,501);
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000001';
 do $$ begin
   begin perform public.calendar_lesson_export('2026-04-27','2026-04-27'); raise exception '501-event range was accepted'; exception when sqlstate '54000' then null; end;

@@ -187,6 +187,9 @@ jobs:
       - name: Demo sign-in and access smoke test
         run: node tests/integration/demo.mjs
 
+      - name: Admin MFA authentication and database boundary
+        run: node tests/integration/admin-mfa.mjs
+
       - name: Stop local Supabase
         if: always()
         run: supabase stop --no-backup

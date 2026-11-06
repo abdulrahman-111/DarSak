@@ -31,6 +31,7 @@ set local session_replication_role=origin;
 
 -- Student reports can be submitted through the RPC and are idempotent within 60s.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000001';
 do $$
 declare v_first uuid; v_retry uuid;
@@ -72,10 +73,12 @@ reset role;
 
 -- A second active role can report even without teaching access; suspended users cannot.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000002';
 select public.submit_problem_report('Teacher issue','Pending teacher can send a report.','/en/teacher');
 reset role;
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000004","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000004';
 do $$ begin
   begin perform public.submit_problem_report('Suspended issue','This should never be stored.','');
@@ -86,6 +89,7 @@ reset role;
 
 -- Admins retain the existing status/note update flow and get private reporter context via RPC.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000003';
 do $$
 declare v_id uuid; v_page jsonb; v_empty_page jsonb; v_version timestamptz; v_next timestamptz;
@@ -118,10 +122,12 @@ begin
     raise exception 'unbounded page size accepted';
   exception when invalid_parameter_value then null; end;
 end $$;
+set local request.jwt.claims = '{}';
 reset role;
 
 -- Ordinary authenticated accounts cannot call the privileged admin RPC.
 set local role authenticated;
+set local request.jwt.claims = '{"sub":"7e000000-0000-4000-8000-000000000005","role":"authenticated"}';
 set local request.jwt.claim.sub='7e000000-0000-4000-8000-000000000005';
 do $$ begin
   begin perform public.admin_update_problem_report(gen_random_uuid(),now(),'open','forged',''); raise exception 'nonadmin changed report'; exception when insufficient_privilege then null; end;
