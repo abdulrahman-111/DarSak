@@ -73,6 +73,11 @@ do $$ begin
     or not exists(select 1 from public.user_notifications where event_key='snapshot:malformed-id') then
    raise exception 'student deletion removed an unrelated or malformed-payload notification';
  end if;
+ if not exists(select 1 from public.user_notifications where kind='booking_updated'
+      and recipient_id='a1600000-0000-4000-8000-000000000004'
+      and payload->>'booking_id'='a1660000-0000-4000-8000-000000000004') then
+   raise exception 'student deletion removed an unrelated valid booking notification';
+ end if;
  if not exists(select 1 from dars_private.account_deletion_requests where user_id='a1600000-0000-4000-8000-000000000001' and state='queued') then
    raise exception 'student deletion request history was not retained';
  end if;
@@ -90,6 +95,11 @@ do $$ begin
  if not exists(select 1 from public.user_notifications where event_key='snapshot:unrelated-name')
     or not exists(select 1 from public.user_notifications where event_key='snapshot:malformed-id') then
    raise exception 'teacher deletion removed an unrelated or malformed-payload notification';
+ end if;
+ if not exists(select 1 from public.user_notifications where kind='booking_updated'
+      and recipient_id='a1600000-0000-4000-8000-000000000004'
+      and payload->>'booking_id'='a1660000-0000-4000-8000-000000000004') then
+   raise exception 'teacher deletion removed an unrelated valid booking notification';
  end if;
  if (select count(*) from dars_private.account_deletion_requests where user_id in (
       'a1600000-0000-4000-8000-000000000001','a1600000-0000-4000-8000-000000000003')) <> 2 then
