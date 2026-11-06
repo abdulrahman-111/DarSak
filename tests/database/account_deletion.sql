@@ -49,9 +49,12 @@ delete from dars_private.pending_google_signups where user_id in (
 -- Keep exactly the two test admins active so this test remains deterministic
 -- when run against a developer database that already has local admin fixtures.
 select set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000002',true);
+select set_config('request.jwt.claims','{"sub":"71000000-0000-4000-8000-000000000002","role":"authenticated","aal":"aal2"}',true);
 update public.profiles set status='suspended'
 where role='admin' and status='active'
   and id not in ('71000000-0000-4000-8000-000000000001','71000000-0000-4000-8000-000000000002');
+select set_config('request.jwt.claims','{}',true);
+select set_config('request.jwt.claim.sub','',true);
 insert into public.teacher_profiles(id,headline) values
  ('71000000-0000-4000-8000-000000000001','Admin teacher'),
  ('71000000-0000-4000-8000-000000000003','Deleting teacher'),
@@ -141,6 +144,7 @@ begin
      or exists(select 1 from public.profiles where id='71000000-0000-4000-8000-000000000006') then
     raise exception 'pending Google identity was not removed transactionally';
   end if;
+  perform set_config('request.jwt.claims','{"sub":"71000000-0000-4000-8000-000000000006","role":"authenticated"}',true);
   perform set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000006',true);
   begin
     perform public.complete_google_signup('student');
@@ -237,6 +241,7 @@ begin
 
   -- The trigger protects both deleting the last administrator and the
   -- existing admin suspension/demotion route, before its side effects.
+  perform set_config('request.jwt.claims','{"sub":"71000000-0000-4000-8000-000000000002","role":"authenticated","aal":"aal2"}',true);
   perform set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000002',true);
   begin
     update public.profiles set status='suspended' where id='71000000-0000-4000-8000-000000000002';
@@ -256,6 +261,8 @@ begin
      or public.account_deletion_worker_authorized(repeat('c',64)) then
     raise exception 'worker key hash authorization failed';
   end if;
+  perform set_config('request.jwt.claims','{}',true);
+  perform set_config('request.jwt.claim.sub','',true);
 end $$;
 
 rollback;
