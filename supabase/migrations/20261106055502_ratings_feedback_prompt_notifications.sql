@@ -12,6 +12,7 @@ create table dars_private.feedback_prompt_state (
 );
 alter table dars_private.feedback_prompt_state enable row level security;
 revoke all on dars_private.feedback_prompt_state from public,anon,authenticated,service_role;
+create index feedback_prompt_state_student_idx on dars_private.feedback_prompt_state(student_id,group_id);
 
 -- Lock order shared by attendance, feedback submission and reconciliation:
 -- group row, then the advisory student/group pair lock. Dismissal takes only
@@ -107,8 +108,13 @@ begin
   for v_group in
     select e.group_id from public.enrollments e
     where e.student_id=v_uid and e.status='accepted'
+      and not exists(select 1 from dars_private.feedback_prompt_state s
+                     where s.group_id=e.group_id and s.student_id=v_uid)
     union
-    select s.group_id from dars_private.feedback_prompt_state s where s.student_id=v_uid
+    select s.group_id from dars_private.feedback_prompt_state s
+    join public.user_notifications n on n.recipient_id=s.student_id and n.kind='feedback_prompt'
+      and n.event_key='feedback-prompt:'||s.group_id::text
+    where s.student_id=v_uid and s.state='prompted'
     order by 1
   loop
     perform dars_private.ensure_feedback_prompt(v_group,v_uid);
