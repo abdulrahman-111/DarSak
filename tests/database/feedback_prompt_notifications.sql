@@ -2,13 +2,18 @@
 begin;
 
 do $$
-declare v_constraint text;
+declare v_constraint text; v_kind text;
 begin
   select pg_get_constraintdef(oid) into v_constraint from pg_constraint
     where conrelid='public.user_notifications'::regclass and conname='user_notifications_kind_check';
-  if v_constraint not like '%feedback_prompt%' or v_constraint not like '%waitlist_promoted%' then
-    raise exception 'notification kind constraint lost an existing or feedback kind';
-  end if;
+  if v_constraint is null then raise exception 'notification kind constraint missing'; end if;
+  foreach v_kind in array array['lesson_rescheduled','lesson_cancelled','group_cancelled','weekly_schedule_changed',
+    'enrollment_requested','teacher_review_requested','teacher_review_decision','teacher_fee_announcement',
+    'enrollment_accepted','booking_updated','waitlist_promoted','feedback_prompt','feedback_pending','feedback_decision'] loop
+    if position(quote_literal(v_kind) in v_constraint)=0 then
+      raise exception 'notification kind constraint lost kind %',v_kind;
+    end if;
+  end loop;
   if not exists(select 1 from pg_class c join pg_namespace n on n.oid=c.relnamespace
       where n.nspname='dars_private' and c.relname='feedback_prompt_state' and c.relrowsecurity)
      or has_table_privilege('authenticated','dars_private.feedback_prompt_state','SELECT')

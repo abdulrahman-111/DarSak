@@ -97,20 +97,16 @@ create or replace function dars_private.feedback_prompt_attendance_changed()
 returns trigger language plpgsql security definer
 set search_path=pg_catalog,public,dars_private
 as $$
-declare v_group uuid; v_student uuid; v_lesson uuid;
+declare v_group uuid;
 begin
-  if tg_op='DELETE' then v_lesson:=old.lesson_id; v_student:=old.student_id;
-  else v_lesson:=new.lesson_id; v_student:=new.student_id; end if;
-  if tg_op='UPDATE' and old.status is not distinct from new.status
-     and old.lesson_id is not distinct from new.lesson_id
-     and old.student_id is not distinct from new.student_id then return new; end if;
-  select group_id into v_group from public.lessons where id=v_lesson;
-  if v_group is not null then perform dars_private.ensure_feedback_prompt(v_group,v_student); end if;
-  if tg_op='DELETE' then return old; else return new; end if;
+  if tg_op='UPDATE' and old.status is not distinct from new.status then return new; end if;
+  select group_id into v_group from public.lessons where id=new.lesson_id;
+  if v_group is not null then perform dars_private.ensure_feedback_prompt(v_group,new.student_id); end if;
+  return new;
 end $$;
 revoke all on function dars_private.feedback_prompt_attendance_changed() from public,anon,authenticated,service_role;
 create trigger feedback_prompt_attendance_changed
-after insert or update of status,lesson_id,student_id or delete on public.lesson_attendance
+after insert or update of status on public.lesson_attendance
 for each row execute function dars_private.feedback_prompt_attendance_changed();
 
 -- A successful submission creates the durable submitted state in the same
@@ -119,26 +115,30 @@ create or replace function dars_private.feedback_notifications_produce()
 returns trigger language plpgsql security definer
 set search_path=pg_catalog,public,dars_private
 as $$
-declare v_group public.groups; v_teacher uuid; v_decision text; v_pending_review boolean:=false;
+declare v_group public.groups; v_teacher uuid; v_decision text;
+  v_pending_review boolean:=false; v_pending_reply boolean:=false;
 begin
-  if tg_op='INSERT' then
-    perform dars_private.feedback_prompt_pair_lock(new.group_id,new.student_id);
-  else
-    perform dars_private.feedback_prompt_pair_lock(new.group_id,new.student_id);
-  end if;
-  insert into dars_private.feedback_prompt_state(group_id,student_id,state)
-    values(new.group_id,new.student_id,'submitted')
-    on conflict(group_id,student_id) do update
-      set state='submitted',updated_at=clock_timestamp()
-      where dars_private.feedback_prompt_state.state is distinct from 'submitted';
-  delete from public.user_notifications where recipient_id=new.student_id
-    and kind='feedback_prompt' and event_key='feedback-prompt:'||new.group_id::text;
-
   select * into v_group from public.groups where id=new.group_id;
   if not found then return new; end if;
   v_teacher:=v_group.teacher_id;
-  v_pending_review:=new.status='pending' and
-    (tg_op='INSERT' or (new.version is distinct from old.version));
+  if tg_op='INSERT' then
+    v_pending_review:=new.status='pending';
+  elsif tg_op='UPDATE' then
+    v_pending_review:=new.status='pending' and new.version is distinct from old.version;
+    v_pending_reply:=new.reply_pending is distinct from old.reply_pending and new.reply_pending<>'';
+  end if;
+  if v_pending_review then
+    -- This transition is a canonical successful submission/revision. Canonical
+    -- save locks group then feedback row; acquire the pair lock last.
+    perform dars_private.feedback_prompt_pair_lock(new.group_id,new.student_id);
+    insert into dars_private.feedback_prompt_state(group_id,student_id,state)
+      values(new.group_id,new.student_id,'submitted')
+      on conflict(group_id,student_id) do update
+        set state='submitted',updated_at=clock_timestamp()
+        where dars_private.feedback_prompt_state.state is distinct from 'submitted';
+    delete from public.user_notifications where recipient_id=new.student_id
+      and kind='feedback_prompt' and event_key='feedback-prompt:'||new.group_id::text;
+  end if;
   if v_pending_review then
     if exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id
               where p.id=v_teacher and p.role='teacher' and p.status='active'
@@ -151,8 +151,7 @@ begin
       'feedback-pending:'||new.id::text||':'||new.version::text,
       jsonb_build_object('feedback_id',new.id,'group_id',new.group_id,'category','review'))
       from public.profiles p where p.role='admin' and p.status='active';
-  elsif tg_op='UPDATE' and new.reply_pending is distinct from old.reply_pending
-        and new.reply_pending<>'' then
+  elsif v_pending_reply then
     perform dars_private.add_user_notification(p.id,'feedback_pending',
       'feedback-pending:'||new.id::text||':'||new.version::text,
       jsonb_build_object('feedback_id',new.id,'group_id',new.group_id,'category','reply'))
@@ -160,8 +159,12 @@ begin
   end if;
 
   -- Reply decisions are intentionally omitted: they are not review decisions.
-  if tg_op='UPDATE' and old.status is distinct from new.status and new.status in ('approved','hidden') then
-    v_decision:=case when new.status='approved' then 'approved' else 'hidden' end;
+  if tg_op='UPDATE' then
+    if old.status is distinct from new.status and new.status in ('approved','hidden') then
+      v_decision:=case when new.status='approved' then 'approved' else 'hidden' end;
+    end if;
+  end if;
+  if v_decision is not null then
     perform dars_private.add_user_notification(new.student_id,'feedback_decision',
       'feedback-decision:'||new.id::text||':'||new.version::text,
       jsonb_build_object('feedback_id',new.id,'group_id',new.group_id,
@@ -242,7 +245,9 @@ begin
   if public.current_role() is distinct from 'admin'::public.user_role then
     raise exception 'active admin required' using errcode='42501';
   end if;
-  if p_decision not in ('approve','hide') then raise exception 'review decision required' using errcode='22023'; end if;
+  if p_decision is null or p_decision not in ('approve','hide','approve_reply','hide_reply') then
+    raise exception 'invalid moderation decision' using errcode='22023';
+  end if;
   if p_decision='hide' and (length(v_reason) not between 1 and 500) then
     raise exception 'student reason must be between 1 and 500 characters' using errcode='22023';
   end if;
