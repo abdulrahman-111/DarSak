@@ -61,6 +61,7 @@ fixtures=(
   tests/database/waitlists.sql
   tests/database/assignments.sql
   tests/database/calendar_lesson_export.sql
+  tests/database/meeting_links.sql
   tests/database/user_notifications.sql
   tests/database/enrollment_accepted_notification.sql
   tests/database/email_outbox.sql
