@@ -36,6 +36,10 @@ enable_confirmations = true
 subject = "Your DarSak verification code"
 content_path = "./supabase/templates/confirmation.html"
 
+[auth.mfa.totp]
+enroll_enabled = true
+verify_enabled = true
+
 [auth.external.google]
 enabled = false
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"

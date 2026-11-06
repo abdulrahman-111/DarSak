@@ -31,6 +31,8 @@ set local role service_role;
 update public.profiles set role = 'admin' where id = 'de000000-0000-4000-8000-000000000003';
 reset role;
 select set_config('request.jwt.claim.sub', 'de000000-0000-4000-8000-000000000003', true);
+-- These synthetic top-level claims authorize only the demo's seeded admin RPCs.
+select set_config('request.jwt.claims', '{"sub":"de000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}', true);
 -- Treat this synthetic teacher as a legacy application fixture, then use the
 -- canonical administrator review RPC so review state and approval stay synced.
 update public.teacher_applications set legacy_approved = true, status = 'approved', reviewed_at = now(), reviewed_by = 'de000000-0000-4000-8000-000000000003'
@@ -52,6 +54,8 @@ from public.offerings where node_id = '00000000-0000-0000-0000-000000000021' and
 insert into public.group_schedule_slots(group_id, weekday, start_time, end_time)
 values('de100000-0000-4000-8000-000000000001', extract(dow from current_date + 1)::integer, '16:00', '17:00');
 select public.publish_group('de100000-0000-4000-8000-000000000001', null, null);
+select set_config('request.jwt.claims', '{}', true);
+select set_config('request.jwt.claim.sub', '', true);
 -- The learning detail columns are plain text; separate list items with newlines (never text[] literals).
 insert into public.group_learning_details(group_id, outcomes, prerequisites, delivery_mode, fee_egp, fee_basis, fee_includes)
 values('de100000-0000-4000-8000-000000000001',
