@@ -17,7 +17,7 @@ test('teacher creates a manual lesson and it remains in the calendar after reloa
     `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}T${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
 
   await teacherPage.goto(`/${locale}/teacher/lessons?new=1`);
-  const group = teacherPage.getByLabel(ar ? 'المجموعة' : 'Group');
+  const group = teacherPage.getByLabel(ar ? 'المجموعة' : 'Group', { exact: true });
   await expect(group.locator(`option[value="${groupId}"]`)).toBeAttached();
   await group.selectOption(groupId);
   await teacherPage.getByRole('button', { name: ar ? 'تطبيق' : 'Apply' }).click();

@@ -138,6 +138,7 @@ test('teaching access withdrawal blocks reads and a previously open lesson write
       await expect(
         formPage.getByRole('heading', {
           name: ar ? 'الخطة والاستخدام' : 'Teaching plan and usage',
+          level: 1,
         }),
       ).toBeVisible();
     });
