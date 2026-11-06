@@ -12,6 +12,7 @@ declare
   v_request dars_private.account_deletion_requests%rowtype;
   v_intent dars_private.account_deletion_intents%rowtype;
   v_manifest jsonb;
+  v_booking_request_ids uuid[] := '{}'::uuid[];
   v_now timestamptz := clock_timestamp();
   v_foreign boolean;
 begin
@@ -31,6 +32,10 @@ begin
     where r.user_id=p_user_id and r.state='completed' order by r.created_at desc limit 1;
   if found then return jsonb_build_object('request_id',v_request.id,'state','completed'); end if;
 
+  -- Drain this user's normal calendar and booking writers before taking the
+  -- profile row lock. Use both own-identity keys for every profile role.
+  perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||p_user_id::text,0));
+  perform pg_advisory_xact_lock(hashtextextended('student-booking:'||p_user_id::text,0));
   select p.* into v_profile from public.profiles p where p.id=p_user_id for update;
   if found then
     if v_profile.status <> 'active' then raise exception 'inactive_owner' using errcode='42501'; end if;
@@ -81,6 +86,14 @@ begin
     raise exception 'invalid_request' using errcode='22023';
   end if;
 
+  -- Keep the linked IDs so alerts can be removed after profile cascades delete
+  -- the booking rows. Compare notification payloads as text; never cast them.
+  select coalesce(array_agg(distinct r.id), '{}'::uuid[])
+    into v_booking_request_ids
+  from public.booking_requests r
+  join public.booking_slots s on s.id=r.slot_id
+  where r.student_id=p_user_id or s.teacher_id=p_user_id or s.proposed_by=p_user_id;
+
   -- Snapshot every object owned by this UID, regardless of path, plus every
   -- file attached to groups the owner controls (including admin uploads).
   -- Any owned object referenced from a retained foreign group was rejected above.
@@ -127,24 +140,67 @@ begin
          select 1 from public.teacher_review_events e
          where e.teacher_id=p_user_id and n.event_key='teacher-review-request:'||e.id::text
        );
-  -- Remove booking notifications linked to requests owned by this user,
-  -- requests on their teacher slots, or requests on slots they proposed.
-  -- Compare the payload as text to a real request ID; malformed JSON values
-  -- are simply unmatched and never cast to UUID.
-  delete from public.user_notifications n
-    where n.kind = 'booking_updated'
-      and exists (
-        select 1
-        from public.booking_requests r
-        join public.booking_slots s on s.id = r.slot_id
-        where n.payload->>'booking_id' = r.id::text
-          and (r.student_id = p_user_id
-            or s.teacher_id = p_user_id
-            or s.proposed_by = p_user_id)
-      );
-
   delete from public.profiles where id=p_user_id;
+  -- Request cascades and concurrent status writers finish before this cleanup.
+  delete from public.user_notifications n
+    where n.kind='booking_updated'
+      and exists (
+        select 1 from unnest(v_booking_request_ids) as captured(request_id)
+        where n.payload->>'booking_id'=captured.request_id::text
+      );
   return jsonb_build_object('request_id',v_request.id,'state',v_request.state);
+end
+$$;
+
+create or replace function public.decide_enrollment(p_enrollment_id uuid,p_status text)
+returns void language plpgsql security definer set search_path=pg_catalog,public,dars_private,auth as $$
+declare v_group_id uuid; v_student_id uuid; v_teacher uuid; v_group public.groups; v_enrollment public.enrollments; v_count integer;
+begin
+ if public.current_role()='teacher'::public.user_role and not coalesce(dars_private.teacher_has_access(auth.uid()),false) then raise exception 'teacher teaching access expired' using errcode='42501'; end if;
+ select group_id,student_id into v_group_id,v_student_id from public.enrollments where id=p_enrollment_id;
+ if not found then raise exception 'not authorized'; end if;
+ select teacher_id into v_teacher from public.groups where id=v_group_id;
+ if not found then raise exception 'not authorized'; end if;
+ perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+ perform pg_advisory_xact_lock(hashtextextended('student-booking:'||v_student_id::text,0));
+ select * into v_group from public.groups where id=v_group_id and teacher_id=v_teacher for update;
+ if not found then raise exception 'not authorized'; end if;
+ select * into v_enrollment from public.enrollments where id=p_enrollment_id and group_id=v_group_id and student_id=v_student_id for update;
+ if not found or (public.current_role() is distinct from 'admin'::public.user_role and not public.is_group_owner(v_group_id)) then raise exception 'not authorized'; end if;
+ if p_status='accepted' then
+  if v_group.status is distinct from 'published'::public.group_status then raise exception 'cannot accept enrollment for archived or unpublished group'; end if;
+  if v_enrollment.status<>'pending' then raise exception 'only pending can be accepted'; end if;
+  select count(*) into v_count from public.enrollments where group_id=v_group_id and status='accepted'::public.enrollment_status;
+  if v_count>=v_group.capacity then raise exception 'group is full'; end if;
+ elsif p_status='rejected' and v_enrollment.status<>'pending' then raise exception 'only pending can be rejected';
+ elsif p_status='removed' and v_enrollment.status<>'accepted' then raise exception 'only accepted can be removed';
+ elsif p_status not in ('accepted','rejected','removed') then raise exception 'invalid decision'; end if;
+ update public.enrollments set status=p_status::public.enrollment_status where id=v_enrollment.id;
+ insert into public.notifications(user_id,kind,title_ar,title_en,href) values
+  (v_enrollment.student_id,'enrollment_decision',case when p_status='accepted' then 'تم قبول طلب الانضمام' when p_status='removed' then 'تمت إزالة عضويتك' else 'تم رفض طلب الانضمام' end,
+   case when p_status='accepted' then 'Your enrollment was accepted' when p_status='removed' then 'Your membership was removed' else 'Your enrollment was rejected' end,'/student/classes');
+end $$;
+
+create or replace function public.cancel_enrollment(p_enrollment_id uuid) returns void language plpgsql security definer set search_path=pg_catalog,public as $$
+declare
+ v_group_id uuid;
+ v_student_id uuid;
+ v_teacher uuid;
+ v_enrollment public.enrollments;
+begin
+ select group_id,student_id into v_group_id,v_student_id
+ from public.enrollments
+ where id=p_enrollment_id and student_id=auth.uid() and status in ('pending','accepted');
+ if not found then raise exception 'not authorized'; end if;
+ select teacher_id into v_teacher from public.groups where id=v_group_id;
+ if not found then raise exception 'not authorized'; end if;
+ perform pg_advisory_xact_lock(hashtextextended('teacher-calendar:'||v_teacher::text,0));
+ perform pg_advisory_xact_lock(hashtextextended('student-booking:'||v_student_id::text,0));
+ select * into v_enrollment from public.enrollments
+ where id=p_enrollment_id and group_id=v_group_id and student_id=v_student_id
+   and student_id=auth.uid() and status in ('pending','accepted') for update;
+ if not found then raise exception 'not authorized'; end if;
+ update public.enrollments set status='cancelled' where id=v_enrollment.id;
 end
 $$;
 
