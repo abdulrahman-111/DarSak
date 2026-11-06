@@ -29,6 +29,8 @@ export type DiscoveryFilters = {
   hasSeats: boolean;
   query: string;
   page: number;
+  sort: 'default' | 'rating';
+  minRating: number | null;
 };
 
 function firstValue(input: DiscoveryFilterInput, key: string): string {
@@ -65,6 +67,8 @@ export function normalizeDiscoveryFilters(input: DiscoveryFilterInput): Discover
     hasSeats: seatsValue === 'true' || seatsValue === '1' || seatsValue === 'on',
     query: rawQuery.slice(0, MAX_QUERY_LENGTH),
     page: pageNumber(input),
+    sort: firstValue(input, 'sort') === 'rating' ? 'rating' : 'default',
+    minRating: /^[1-5]$/.test(firstValue(input, 'min_rating')) ? Number(firstValue(input, 'min_rating')) : null,
   };
 }
 
@@ -76,6 +80,8 @@ export function discoverySearchParams(filters: DiscoveryFilters): URLSearchParam
   if (filters.weekday !== null) params.set('weekday', String(filters.weekday));
   if (filters.hasSeats) params.set('has_seats', 'true');
   if (filters.query) params.set('query', filters.query);
+  if (filters.sort === 'rating') params.set('sort', 'rating');
+  if (filters.minRating !== null) params.set('min_rating', String(filters.minRating));
   if (filters.page > 1) params.set('page', String(filters.page));
   return params;
 }
@@ -90,5 +96,7 @@ export function discoveryRpcArgs(filters: DiscoveryFilters) {
     p_query: filters.query,
     p_offset: (filters.page - 1) * DISCOVERY_PAGE_SIZE,
     p_limit: DISCOVERY_FETCH_LIMIT,
+    p_sort: filters.sort,
+    p_min_rating: filters.minRating,
   };
 }
