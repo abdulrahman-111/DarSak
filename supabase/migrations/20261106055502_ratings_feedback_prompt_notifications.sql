@@ -139,20 +139,17 @@ returns trigger language plpgsql security definer
 set search_path=pg_catalog,public,dars_private
 as $$
 declare v_group public.groups; v_teacher uuid; v_decision text;
+  v_submission boolean:=coalesce(tg_argv[0]='submission',false);
   v_pending_review boolean:=false; v_pending_reply boolean:=false;
 begin
   select * into v_group from public.groups where id=new.group_id;
   if not found then return new; end if;
   v_teacher:=v_group.teacher_id;
-  if tg_op='INSERT' then
-    v_pending_review:=new.status='pending';
-  elsif tg_op='UPDATE' then
-    v_pending_review:=new.status='pending' and new.version is distinct from old.version;
-    v_pending_reply:=new.reply_pending is distinct from old.reply_pending and new.reply_pending<>'';
-  end if;
-  if v_pending_review then
-    -- This transition is a canonical successful submission/revision. Canonical
-    -- save locks group then feedback row; acquire the pair lock last.
+  if v_submission and new.status='pending' then
+    v_pending_review:=true;
+    -- This trigger is limited to canonical review submission columns. It is
+    -- the only producer path that creates/updates the durable submitted ledger.
+    -- Canonical save locks profiles, group and feedback before taking pair.
     perform dars_private.feedback_prompt_pair_lock(new.group_id,new.student_id);
     insert into dars_private.feedback_prompt_state(group_id,student_id,state)
       values(new.group_id,new.student_id,'submitted')
@@ -161,6 +158,9 @@ begin
         where dars_private.feedback_prompt_state.state is distinct from 'submitted';
     delete from public.user_notifications where recipient_id=new.student_id
       and kind='feedback_prompt' and event_key='feedback-prompt:'||new.group_id::text;
+  end if;
+  if not v_submission and tg_op='UPDATE' then
+    v_pending_reply:=new.reply_pending is distinct from old.reply_pending and new.reply_pending<>'';
   end if;
   if v_pending_review then
     if exists(select 1 from public.profiles p join public.teacher_profiles t on t.id=p.id
@@ -182,7 +182,7 @@ begin
   end if;
 
   -- Reply decisions are intentionally omitted: they are not review decisions.
-  if tg_op='UPDATE' then
+  if not v_submission and tg_op='UPDATE' then
     if old.status is distinct from new.status and new.status in ('approved','hidden') then
       v_decision:=case when new.status='approved' then 'approved' else 'hidden' end;
     end if;
@@ -197,9 +197,13 @@ begin
   return new;
 end $$;
 revoke all on function dars_private.feedback_notifications_produce() from public,anon,authenticated,service_role;
+drop trigger if exists feedback_notifications_produce on dars_private.group_feedback;
 create trigger feedback_notifications_produce
-after insert or update on dars_private.group_feedback
-for each row execute function dars_private.feedback_notifications_produce();
+after insert or update of rating,comment on dars_private.group_feedback
+for each row execute function dars_private.feedback_notifications_produce('submission');
+create trigger feedback_moderation_notifications_produce
+after update on dars_private.group_feedback
+for each row execute function dars_private.feedback_notifications_produce('other');
 
 -- Preserve the canonical save path while acquiring notification FK parents
 -- before the existing group → feedback → student/group-pair lock sequence.
