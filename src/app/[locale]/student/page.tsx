@@ -17,6 +17,8 @@ import {
   lessonTimeRange,
 } from '@/components/platform/lesson-time';
 import { pluralize } from '@/lib/plural';
+import { meetingLinks } from '@/features/lessons/data';
+import { MeetingJoin } from '@/features/lessons/meeting-join';
 export default async function StudentDashboard({
   params,
 }: {
@@ -32,6 +34,7 @@ export default async function StudentDashboard({
     days = timetableDayDates(week.weekStart),
     next = data.lessons[0],
     live = next && new Date(next.starts_at) <= now && new Date(next.ends_at) > now;
+  const meetingUrls = next ? await meetingLinks(me.db, [next.id]) : {};
   const nextGroup = next
     ? Array.isArray(next.group)
       ? next.group[0]?.name
@@ -130,6 +133,11 @@ export default async function StudentDashboard({
                             : 'Open lesson & get ready'}
                         <ArrowRight size={17} className="shrink-0 rtl:rotate-180" />
                       </Link>
+                      <MeetingJoin
+                        locale={locale}
+                        lesson={next}
+                        meetingUrl={meetingUrls[next.id] ?? null}
+                      />
                     </>
                   ) : (
                     <>

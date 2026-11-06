@@ -28,6 +28,8 @@ import { summarizeSchedule } from '@/features/groups/schedule-summary';
 import { AnnouncementForm } from '@/features/groups/announcement-form';
 import { groupAnnouncement } from '@/features/groups/announcement-data';
 import { readCountedPage } from '@/lib/supabase/counted-page';
+import { groupMeetingSettings } from '@/features/lessons/data';
+import { GroupMeetingForm } from '@/features/lessons/meeting-forms';
 
 export default async function TeacherGroupDetail({
   params,
@@ -73,6 +75,7 @@ export default async function TeacherGroupDetail({
       announcement,
       seats,
       upcoming,
+      meetingSettings,
     ],
   } = await loadWithTeachingAccess(locale, me =>
     Promise.all([
@@ -110,6 +113,7 @@ export default async function TeacherGroupDetail({
         .gte('starts_at', new Date().toISOString())
         .order('starts_at')
         .limit(200),
+      groupMeetingSettings(me.db, id),
     ]),
   );
   let page = initialLessons.page;
@@ -365,6 +369,23 @@ export default async function TeacherGroupDetail({
               </div>
             </dl>
           </Panel>
+          {!archived && (
+            <Panel className="mt-5">
+              <h2 className="mb-2 text-xl font-black text-teal">
+                {ar ? 'رابط الاجتماع الافتراضي' : 'Default meeting link'}
+              </h2>
+              <p className="mb-4 text-sm text-muted">
+                {ar
+                  ? 'يظهر للطلاب المقبولين قبل موعد الحصة. يمكن تخصيص رابط لكل حصة.'
+                  : 'Accepted students can join from each lesson. A lesson can have its own link.'}
+              </p>
+              <GroupMeetingForm
+                locale={locale}
+                groupId={id}
+                meetingUrl={meetingSettings?.meeting_url ?? null}
+              />
+            </Panel>
+          )}
         </section>
 
         <section id="schedule" aria-labelledby="schedule-heading" className={sectionClass}>

@@ -19,6 +19,8 @@ import {
   normalizeAttendancePage,
   teacherAttendancePage,
 } from '@/features/teacher/attendance-data';
+import { MeetingJoin } from '@/features/lessons/meeting-join';
+import { lessonMeetingSettings, meetingLinks } from '@/features/lessons/data';
 
 export default async function TeacherLesson({
   params,
@@ -38,7 +40,15 @@ export default async function TeacherLesson({
   // before ownership of the lesson is confirmed exposes nothing; they are dropped on notFound().
   const {
     me,
-    data: [lessonResult, materials, groups, approval, requestedAttendance],
+    data: [
+      lessonResult,
+      materials,
+      groups,
+      approval,
+      requestedAttendance,
+      effectiveLinks,
+      override,
+    ],
   } = await loadWithTeachingAccess(locale, me =>
     Promise.all([
       me.db
@@ -63,6 +73,8 @@ export default async function TeacherLesson({
         .order('id'),
       me.db.from('teacher_profiles').select('approved').eq('id', me.id).maybeSingle(),
       teacherAttendancePage(me.db, id, (requestedPage - 1) * 20),
+      meetingLinks(me.db, [id]),
+      lessonMeetingSettings(me.db, id),
     ]),
   );
   if (!lessonResult.data) notFound();
@@ -168,11 +180,23 @@ export default async function TeacherLesson({
         description={cairoDate(lesson.starts_at, locale)}
         action={<Status value={lesson.status} locale={locale} />}
       />
+      {!archived && effectiveLinks[id] && (
+        <Panel className="mb-6">
+          <MeetingJoin locale={locale} lesson={lesson} meetingUrl={effectiveLinks[id] ?? null} />
+        </Panel>
+      )}
       <div className="grid gap-6 xl:grid-cols-[.8fr_1.2fr]">
         <div className="grid content-start gap-6">
           <Panel>
             <h2 className="mb-4 text-xl font-black text-teal">{copy.edit}</h2>
-            {!archived && <LessonForm locale={locale} groupId={lesson.group_id} lesson={lesson} />}
+            {!archived && (
+              <LessonForm
+                locale={locale}
+                groupId={lesson.group_id}
+                lesson={lesson}
+                meetingUrl={override?.meeting_url ?? null}
+              />
+            )}
             {!archived && (
               <div className="mt-6 border-t border-line pt-5">
                 <h3 className="mb-3 font-black text-teal">{copy.status}</h3>

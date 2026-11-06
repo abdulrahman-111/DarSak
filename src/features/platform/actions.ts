@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server';
 import { slotSchema, lessonSchema, profileSchema } from '@/lib/domain';
 import { submitProblemReport } from '@/features/reports/actions';
 import { checkTeachingAccess, teachingGuardMessage } from '@/features/teacher-access/guard';
+import { parseMeetingUrl } from '@/features/lessons/meeting-url';
 function result(error?: { message: string } | null) {
   return error ? { error: error.message } : { ok: true };
 }
@@ -180,21 +181,46 @@ export async function saveLesson(locale: string, _previous: unknown, formData: F
         'تحقق من عنوان الحصة وموعدَي البداية والنهاية. يجب أن يكون وقت النهاية بعد وقت البداية.',
       ),
     };
+  const rawMeetingUrl = formData.get('meetingUrl');
+  const raw = typeof rawMeetingUrl === 'string' ? rawMeetingUrl : '';
+  const meetingUrl =
+    raw !== ''
+      ? parseMeetingUrl(
+          raw,
+          (process.env.MEETING_HOSTS_EXTRA ?? '')
+            .split(',')
+            .map(host => host.trim())
+            .filter(Boolean),
+        )
+      : null;
+  if ((rawMeetingUrl !== null && typeof rawMeetingUrl !== 'string') || (raw !== '' && !meetingUrl))
+    return {
+      error: localized(
+        locale,
+        'Enter a valid HTTPS link from a supported meeting provider, or leave it empty.',
+        'أدخل رابط HTTPS صالحاً من مزود اجتماعات مدعوم أو اتركه فارغاً.',
+      ),
+    };
   const db = await createClient();
   const denied = await accessError(locale, db);
   if (denied) return { error: denied };
-  const r = await db.rpc('create_lesson', {
+  const r = await db.rpc('save_lesson_with_meeting', {
     p_group_id: p.data.groupId,
     p_title: p.data.title,
     p_starts_at: p.data.startsAt,
     p_ends_at: p.data.endsAt,
     p_notes: p.data.notes,
     p_lesson_id: p.data.lessonId || null,
+    p_meeting_url: meetingUrl,
   });
   if (!r.error)
     for (const currentLocale of ['en', 'ar']) {
       revalidatePath(`/${currentLocale}/teacher/lessons`);
       revalidatePath(`/${currentLocale}/teacher`);
+      revalidatePath(`/${currentLocale}/teacher/lessons/[id]`, 'page');
+      revalidatePath(`/${currentLocale}/student`);
+      revalidatePath(`/${currentLocale}/student/classes/${p.data.groupId}`);
+      revalidatePath(`/${currentLocale}/student/lessons/[id]`, 'page');
     }
   return r.error ? { error: rpcFeedback(locale, 'lesson', r.error) } : { ok: true };
 }

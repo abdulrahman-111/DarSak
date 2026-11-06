@@ -110,6 +110,47 @@ describe('localized platform action feedback', () => {
     expect(result?.error).not.toContain('private database trace');
   });
 
+  it('rejects an unlisted meeting host before database access and atomically clears an empty override', async () => {
+    const invalid = await saveLesson(
+      'en',
+      null,
+      form({
+        groupId,
+        title: 'Lesson',
+        startsAt: '2026-10-01T10:00:00Z',
+        endsAt: '2026-10-01T11:00:00Z',
+        notes: '',
+        meetingUrl: 'https://evil.example/meeting',
+      }),
+    );
+    expect(invalid?.error).toMatch(/supported meeting provider/i);
+    expect(createClientMock).not.toHaveBeenCalled();
+
+    const rpc = setup(null);
+    const result = await saveLesson(
+      'en',
+      null,
+      form({
+        groupId,
+        title: 'Lesson',
+        startsAt: '2026-10-01T10:00:00Z',
+        endsAt: '2026-10-01T11:00:00Z',
+        notes: '',
+        meetingUrl: '',
+      }),
+    );
+    expect(result).toEqual({ ok: true });
+    expect(rpc).toHaveBeenCalledWith('save_lesson_with_meeting', {
+      p_group_id: groupId,
+      p_title: 'Lesson',
+      p_starts_at: '2026-10-01T10:00:00Z',
+      p_ends_at: '2026-10-01T11:00:00Z',
+      p_notes: '',
+      p_lesson_id: null,
+      p_meeting_url: null,
+    });
+  });
+
   it('blocks expired or unavailable teacher access before a teaching mutation with distinct guidance', async () => {
     setup(null, { ...currentStatus, has_access: false });
     const expired = await saveLesson(
