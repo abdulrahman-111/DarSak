@@ -35,6 +35,9 @@ describe('lesson meeting URLs', () => {
     expect(isMeetingUrl('https://meet.google.com/room name')).toBe(false);
     expect(isMeetingUrl('https://meet.google.com/room\n')).toBe(false);
     expect(isMeetingUrl('https://meet.google.com/room\u007f')).toBe(false);
+    expect(isMeetingUrl('https://meet.google.com/room\u0080')).toBe(false);
+    expect(isMeetingUrl('https://meet.google.com/room\u0085')).toBe(false);
+    expect(isMeetingUrl('https://meet.google.com/room\u009f')).toBe(false);
   });
 
   it('requires HTTPS and rejects credentials, non-default ports, and deceptive hosts', () => {

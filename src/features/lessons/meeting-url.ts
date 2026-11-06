@@ -22,7 +22,7 @@ export function parseMeetingUrl(
   extraHosts: readonly string[] = [],
 ): string | null {
   if (value == null || value === '') return null;
-  if (value.length > MAX_MEETING_URL_LENGTH || /[\s\u0000-\u001f\u007f\\]/u.test(value)) {
+  if (value.length > MAX_MEETING_URL_LENGTH || /[\s\u0000-\u001f\u007f-\u009f\\]/u.test(value)) {
     return null;
   }
 
@@ -79,7 +79,7 @@ function isValidHostname(host: string): boolean {
         label =>
           label.length >= 1 &&
           label.length <= 63 &&
-          /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/iu.test(label),
+          /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label),
       )
   );
 }
