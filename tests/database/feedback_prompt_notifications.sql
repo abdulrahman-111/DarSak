@@ -114,6 +114,13 @@ select public.set_lesson_attendance('14820000-0000-4000-8000-000000000005','1480
 select public.set_lesson_attendance('14820000-0000-4000-8000-000000000006','14800000-0000-4000-8000-000000000002','late');
 reset role;
 set local request.jwt.claims='{}';
+set local role authenticated;
+set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000001';
+select public.set_lesson_attendance('14820000-0000-4000-8000-000000000003','14800000-0000-4000-8000-000000000002','present');
+select public.set_lesson_attendance('14820000-0000-4000-8000-000000000004','14800000-0000-4000-8000-000000000002','late');
+reset role;
+set local request.jwt.claims='{}';
 -- A bell read with only one valid ended lesson plus cancelled/future/absent/
 -- excused rows must still produce neither an event nor a ledger state.
 set local role authenticated;
