@@ -1,6 +1,9 @@
+import assert from 'node:assert/strict';
+import { access } from 'node:fs/promises';
+import { constants } from 'node:fs';
 import { createServer } from 'node:http';
+import { test } from 'node:test';
 import { chromium } from '@playwright/test';
-import { expect, it } from 'vitest';
 import { installMainFrameOriginGuard } from '../../scripts/measure-routes.mjs';
 
 function listen(server) {
@@ -14,24 +17,22 @@ function listen(server) {
 }
 
 function close(server) {
-  return new Promise(resolve => server.close(resolve));
+  return new Promise((resolve, reject) =>
+    server.close(error => (error ? reject(error) : resolve())),
+  );
 }
 
-it('blocks an external HTTP redirect before the destination server receives it', async ({
-  skip,
-}) => {
+test('blocks an external HTTP redirect before the destination server receives it', async () => {
+  const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+  assert.ok(executablePath, 'PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH must select the test browser');
+  await access(executablePath, constants.X_OK);
+
   let destinationRequests = 0;
   const destination = createServer((_request, response) => {
     destinationRequests++;
     response.end('should not be reached');
   });
-  let destinationOrigin;
-  try {
-    destinationOrigin = await listen(destination);
-  } catch (error) {
-    if (error.code === 'EPERM') skip('This runner does not permit loopback fixture servers.');
-    throw error;
-  }
+  const destinationOrigin = await listen(destination);
   const entry = createServer((_request, response) => {
     response.writeHead(302, { location: destinationOrigin });
     response.end();
@@ -42,7 +43,7 @@ it('blocks an external HTTP redirect before the destination server receives it',
   let disableGuard;
   let blocked = false;
   try {
-    browser = await chromium.launch({ headless: true });
+    browser = await chromium.launch({ headless: true, executablePath });
     context = await browser.newContext({ serviceWorkers: 'block' });
     const page = await context.newPage();
     const cdp = await context.newCDPSession(page);
@@ -54,8 +55,8 @@ it('blocks an external HTTP redirect before the destination server receives it',
 
     await page.goto(entryOrigin, { waitUntil: 'domcontentloaded' }).catch(() => {});
 
-    expect(blocked).toBe(true);
-    expect(destinationRequests).toBe(0);
+    assert.equal(blocked, true, 'the cross-origin redirect hop should be intercepted');
+    assert.equal(destinationRequests, 0, 'the blocked destination must receive no request');
   } finally {
     await disableGuard?.();
     await context?.close();
@@ -63,4 +64,4 @@ it('blocks an external HTTP redirect before the destination server receives it',
     await close(entry);
     await close(destination);
   }
-}, 20_000);
+});
