@@ -63,6 +63,10 @@ export async function GET(request: NextRequest) {
     const ics = formatCalendarIcs(
       result.rows as Parameters<typeof formatCalendarIcs>[0],
       new Date(),
+      (process.env.MEETING_HOSTS_EXTRA ?? '')
+        .split(',')
+        .map(host => host.trim())
+        .filter(Boolean),
     );
     return response(ics, 200, {
       'Content-Type': 'text/calendar; charset=utf-8',
