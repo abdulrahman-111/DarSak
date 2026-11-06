@@ -169,7 +169,7 @@ set local request.jwt.claims='{}';
 do $$ begin
   if not exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000002'
        and kind='feedback_prompt' and payload->>'group_id'='14810000-0000-4000-8000-000000000001') then
-    raise exception 'other student dismissal changed the owner's prompt';
+    raise exception 'other student dismissal changed the owner''s prompt';
   end if;
 end $$;
 
@@ -501,7 +501,7 @@ do $$ begin
   if exists(select 1 from public.profiles where id='14800000-0000-4000-8000-000000000002')
      or exists(select 1 from dars_private.feedback_prompt_state where student_id='14800000-0000-4000-8000-000000000002')
      or exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000002') then
-    raise exception 'account deletion did not cascade the student's prompt history and notifications';
+    raise exception 'account deletion did not cascade the student''s prompt history and notifications';
   end if;
   if not exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000004'
        and event_key='ratings148-account-delete-control') then
