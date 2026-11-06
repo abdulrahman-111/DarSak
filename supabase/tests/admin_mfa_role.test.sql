@@ -3,7 +3,7 @@
 -- they do not represent an Auth-issued factor verification.
 create extension if not exists pgtap;
 begin;
-select plan(13);
+select plan(20);
 
 insert into auth.users(id,aud,role,email,encrypted_password,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
  ('155f0000-0000-4000-8000-000000000001','authenticated','authenticated','mfa-admin@example.test','','{}','{"requested_role":"student","full_name":"MFA admin"}',now(),now()),
@@ -32,6 +32,30 @@ select is((select count(*)::integer from public.student_profiles where id='155f0
 
 select set_config('request.jwt.claims','{"sub":"155f0000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal1"}',true);
 select is(public.current_role()::text,null::text,'active admin at aal1 is not an admin');
+select is(
+  public.can_upload_teacher_avatar(
+    '155f0000-0000-4000-8000-000000000002/155f0000-0000-4000-8000-000000000099.png',
+    '{"mimetype":"image/png"}'::jsonb
+  ),
+  false,
+  'AAL1 admin cannot use the avatar upload admin helper'
+);
+select throws_ok(
+  $$select public.teacher_review_status('155f0000-0000-4000-8000-000000000002')$$,
+  'P0001', 'not authorized', 'AAL1 admin cannot read teacher review status'
+);
+select throws_ok(
+  $$select public.admin_teacher_access_page(0,20)$$,
+  '42501', 'active admin only', 'AAL1 admin cannot read teacher access page'
+);
+select throws_ok(
+  $$select public.admin_email_page(0,20)$$,
+  '42501', 'active admin only', 'AAL1 admin cannot read email outbox page'
+);
+select throws_ok(
+  $$select public.admin_problem_report_page('all',0,20)$$,
+  '42501', null, 'AAL1 admin cannot read problem report page'
+);
 
 select set_config('request.jwt.claims','{"sub":"155f0000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal3"}',true);
 select is(public.current_role()::text,null::text,'only the exact aal2 value grants admin authority');
@@ -42,6 +66,19 @@ select is(public.current_role()::text,null::text,'metadata assurance does not re
 select set_config('request.jwt.claims','{"sub":"155f0000-0000-4000-8000-000000000001","role":"authenticated","aal":"aal2"}',true);
 select is(public.current_role()::text,'admin','active stored admin at top-level aal2 receives admin role');
 select is((select count(*)::integer from public.student_profiles where id='155f0000-0000-4000-8000-000000000003'),1,'AAL2 admin can use the direct student-profile admin policy');
+select is(
+  public.can_upload_teacher_avatar(
+    '155f0000-0000-4000-8000-000000000002/155f0000-0000-4000-8000-000000000099.png',
+    '{"mimetype":"image/png"}'::jsonb
+  ),
+  true,
+  'AAL2 admin retains avatar upload oversight'
+);
+select is(
+  public.teacher_review_status('155f0000-0000-4000-8000-000000000002')->>'teacher_id',
+  '155f0000-0000-4000-8000-000000000002',
+  'AAL2 admin can read an existing teacher review state'
+);
 select set_config('request.jwt.claims','{}',true);
 select is(public.current_role()::text,null::text,'clearing claims removes the prior admin assurance');
 
