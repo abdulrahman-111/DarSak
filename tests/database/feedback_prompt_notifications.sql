@@ -94,8 +94,6 @@ set local session_replication_role=replica;
 insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by)
 values('14820000-0000-4000-8000-000000000001','14800000-0000-4000-8000-000000000002','present','14800000-0000-4000-8000-000000000001');
 insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by) values
- ('14820000-0000-4000-8000-000000000003','14800000-0000-4000-8000-000000000002','present','14800000-0000-4000-8000-000000000001'),
- ('14820000-0000-4000-8000-000000000004','14800000-0000-4000-8000-000000000002','late','14800000-0000-4000-8000-000000000001'),
  ('14820000-0000-4000-8000-000000000005','14800000-0000-4000-8000-000000000002','present','14800000-0000-4000-8000-000000000001'),
  ('14820000-0000-4000-8000-000000000006','14800000-0000-4000-8000-000000000002','late','14800000-0000-4000-8000-000000000001'),
  ('14820000-0000-4000-8000-000000000007','14800000-0000-4000-8000-000000000002','present','14800000-0000-4000-8000-000000000001'),
@@ -106,8 +104,46 @@ insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by) va
 set local session_replication_role=origin;
 insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by)
 values('14820000-0000-4000-8000-000000000002','14800000-0000-4000-8000-000000000002','late','14800000-0000-4000-8000-000000000001');
-insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by)
-values('14820000-0000-4000-8000-000000000012','14800000-0000-4000-8000-000000000002','present','14800000-0000-4000-8000-000000000001');
+-- Attendance written after lesson start but before its end uses the real
+-- teacher RPC and hook. Two such rows remain prompt-ineligible until a read
+-- after their lesson-end timestamps.
+set local role authenticated;
+set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000001';
+select public.set_lesson_attendance('14820000-0000-4000-8000-000000000005','14800000-0000-4000-8000-000000000002','present');
+select public.set_lesson_attendance('14820000-0000-4000-8000-000000000006','14800000-0000-4000-8000-000000000002','late');
+reset role;
+set local request.jwt.claims='{}';
+-- A bell read with only one valid ended lesson plus cancelled/future/absent/
+-- excused rows must still produce neither an event nor a ledger state.
+set local role authenticated;
+set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000002","role":"authenticated"}';
+set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000002';
+do $$ begin
+  perform public.notifications_page(0,20);
+  if exists(select 1 from public.user_notifications where recipient_id=auth.uid() and kind='feedback_prompt'
+       and payload->>'group_id'='14810000-0000-4000-8000-000000000004') then
+    raise exception 'one valid ended lesson with only excluded rows generated a prompt';
+  end if;
+  if exists(select 1 from public.user_notifications where recipient_id=auth.uid() and kind='feedback_prompt'
+       and payload->>'group_id'='14810000-0000-4000-8000-000000000003') then
+    raise exception 'pre-end attendance generated a prompt before lesson end';
+  end if;
+end $$;
+reset role;
+set local request.jwt.claims='{}';
+do $$ begin
+  if exists(select 1 from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000004'
+       and student_id='14800000-0000-4000-8000-000000000002') then
+    raise exception 'ineligible one-ended group wrote a prompt ledger';
+  end if;
+end $$;
+set local role authenticated;
+set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000001';
+select public.set_lesson_attendance('14820000-0000-4000-8000-000000000012','14800000-0000-4000-8000-000000000002','present');
+reset role;
+set local request.jwt.claims='{}';
 update public.lesson_attendance set status='present'
 where lesson_id='14820000-0000-4000-8000-000000000002' and student_id='14800000-0000-4000-8000-000000000002';
 update public.lesson_attendance set status='late'
@@ -228,7 +264,7 @@ select set_config('test.ratings148.feedback_second',
   (select id::text from dars_private.group_feedback where group_id='14810000-0000-4000-8000-000000000002'),true);
 do $$ begin
   if (select state from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000002'
-       and student_id='14800000-0000-4000-8000-000000000002')<>'submitted' then
+       and student_id='14800000-0000-4000-8000-000000000002') is distinct from 'submitted' then
     raise exception 'first-lesson save did not create a durable submitted ledger';
   end if;
 end $$;
@@ -284,6 +320,15 @@ do $$ begin
 end $$;
 reset role;
 set local request.jwt.claims='{}';
+do $$ begin
+  if not exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000003'
+       and kind='feedback_pending' and event_key='feedback-pending:'||current_setting('test.ratings148.feedback_second')||':6'
+       and payload->>'category'='reply') then raise exception 'pending reply did not notify admins'; end if;
+  if exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000002'
+       and kind='feedback_decision' and event_key='feedback-decision:'||current_setting('test.ratings148.feedback_second')||':7') then
+    raise exception 'reply approval was mislabeled as a review decision';
+  end if;
+end $$;
 set local role authenticated;
 set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000003';
@@ -314,7 +359,7 @@ begin
        and payload::text like '%private admin note%') then
     raise exception 'private admin note leaked into student decision payload';
   end if;
-  if (select state from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000001' and student_id='14800000-0000-4000-8000-000000000002')<>'submitted' then
+  if (select state from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000001' and student_id='14800000-0000-4000-8000-000000000002') is distinct from 'submitted' then
     raise exception 'dismissed prompt did not become submitted after save';
   end if;
   if (select count(*) from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000001'
@@ -470,7 +515,7 @@ do $$ begin
   if exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000002'
        and kind='feedback_prompt' and payload->>'group_id'='14810000-0000-4000-8000-000000000004')
      or (select state from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000004'
-       and student_id='14800000-0000-4000-8000-000000000002')<>'prompted' then
+       and student_id='14800000-0000-4000-8000-000000000002') is distinct from 'prompted' then
     raise exception 'attendance correction did not remove only the pending event and keep durable history';
   end if;
 end $$;
@@ -483,14 +528,18 @@ set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000002';
 do $$ begin
   perform public.notifications_page(0,20);
   if exists(select 1 from public.user_notifications where recipient_id=auth.uid()
-       and kind='feedback_prompt' and payload->>'group_id'='14810000-0000-4000-8000-000000000003')
-     or (select state from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000003'
-       and student_id=auth.uid())<>'prompted' then
-    raise exception 'archive reconciliation did not remove the event while retaining its ledger';
+       and kind='feedback_prompt' and payload->>'group_id'='14810000-0000-4000-8000-000000000003') then
+    raise exception 'archive reconciliation did not remove the prompt event';
   end if;
 end $$;
 reset role;
 set local request.jwt.claims='{}';
+do $$ begin
+  if (select state from dars_private.feedback_prompt_state where group_id='14810000-0000-4000-8000-000000000003'
+       and student_id='14800000-0000-4000-8000-000000000002') is distinct from 'prompted' then
+    raise exception 'archive reconciliation did not retain the ledger state';
+  end if;
+end $$;
 
 insert into public.user_notifications(recipient_id,kind,event_key,payload)
 values('14800000-0000-4000-8000-000000000004','lesson_cancelled','ratings148-account-delete-control','{}');
