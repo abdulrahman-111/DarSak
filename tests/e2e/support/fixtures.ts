@@ -19,7 +19,9 @@ async function actorPage(
     | 'passwordStudent'
     | 'notificationStudent'
     | 'liveNotificationStudent'
-    | 'accessTeacher',
+    | 'accessTeacher'
+    | 'ratingsTeacher'
+    | 'ratingsStudent',
 ): Promise<ActorPage> {
   const mobile = projectName.endsWith('mobile');
   const context = await browser.newContext({
@@ -40,6 +42,8 @@ export const test = base.extend<{
   notificationPage: Page;
   liveNotificationPage: Page;
   accessTeacherPage: Page;
+  ratingsTeacherPage: Page;
+  ratingsStudentPage: Page;
 }>({
   teacherPage: async ({ browser }, provide, testInfo) => {
     const fixture = await actorPage(
@@ -107,6 +111,26 @@ export const test = base.extend<{
       testInfo.project.name,
       process.env.E2E_BASE_URL ?? testInfo.project.use.baseURL,
       'accessTeacher',
+    );
+    await provide(fixture.page);
+    await fixture.context.close();
+  },
+  ratingsTeacherPage: async ({ browser }, provide, testInfo) => {
+    const fixture = await actorPage(
+      browser,
+      testInfo.project.name,
+      process.env.E2E_BASE_URL ?? testInfo.project.use.baseURL,
+      'ratingsTeacher',
+    );
+    await provide(fixture.page);
+    await fixture.context.close();
+  },
+  ratingsStudentPage: async ({ browser }, provide, testInfo) => {
+    const fixture = await actorPage(
+      browser,
+      testInfo.project.name,
+      process.env.E2E_BASE_URL ?? testInfo.project.use.baseURL,
+      'ratingsStudent',
     );
     await provide(fixture.page);
     await fixture.context.close();
