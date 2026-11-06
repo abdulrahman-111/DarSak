@@ -83,7 +83,18 @@ end$$;
 reset role;
 set local session_replication_role=replica;
 update public.profiles set status='active' where id='82000000-0000-4000-8000-000000000005';
+set local session_replication_role=origin;
 delete from auth.users where id='82000000-0000-4000-8000-000000000006';
+do $$begin
+ if exists(select 1 from public.profiles where id='82000000-0000-4000-8000-000000000006') or exists(select 1 from dars_private.group_feedback where student_id='82000000-0000-4000-8000-000000000006') then raise exception 'deleted student profile or reviews did not cascade';end if;
+end$$;
+set local role anon;
+do $$declare r record;begin
+ select * into r from public.discover_groups_rated(null,null,'82000000-0000-4000-8000-000000000003',null,false,'',0,1,'default',null);
+ if r.id is null or r.teacher_rating_average is not null or r.teacher_rating_count<>0 then raise exception 'deleted student feedback still counted';end if;
+end$$;
+reset role;
+set local session_replication_role=replica;
 update public.groups set status='archived' where id='82100000-0000-4000-8000-000000000001';
 set local session_replication_role=origin;
 set local role anon;
