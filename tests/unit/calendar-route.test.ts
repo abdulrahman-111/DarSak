@@ -34,6 +34,50 @@ describe('calendar route', () => {
     });
   });
 
+  it('renders authorized meeting links and validates links against server configured hosts', async () => {
+    vi.stubEnv('MEETING_HOSTS_EXTRA', 'rooms.example.test');
+    rpc.mockResolvedValueOnce({
+      data: {
+        total: 2,
+        rows: [
+          {
+            id: 'lesson-1',
+            title: 'Online lesson',
+            starts_at: '2026-01-02T10:00:00Z',
+            ends_at: '2026-01-02T11:00:00Z',
+            status: 'scheduled',
+            created_at: '2026-01-01T00:00:00Z',
+            group_name: 'Group',
+            location: 'Cairo',
+            meeting_url: 'https://rooms.example.test/join',
+          },
+          {
+            id: 'lesson-2',
+            title: 'Unsafe link',
+            starts_at: '2026-01-03T10:00:00Z',
+            ends_at: '2026-01-03T11:00:00Z',
+            status: 'scheduled',
+            created_at: '2026-01-01T00:00:00Z',
+            group_name: 'Group',
+            location: 'Cairo',
+            meeting_url: 'https://google.com.evil.test/\r\nURL:https://evil.test',
+          },
+        ],
+      },
+      error: null,
+    });
+    try {
+      const response = await GET(request());
+      const body = await response.text();
+      expect(body).toContain('LOCATION:https://rooms.example.test/join\r\n');
+      expect(body).toContain('URL:https://rooms.example.test/join\r\n');
+      expect(body).toContain('LOCATION:Cairo\r\n');
+      expect(body).not.toContain('evil.test');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('returns private 401/403 responses for missing, inactive, or disallowed viewers', async () => {
     getRequestViewer.mockResolvedValueOnce({ db: { rpc }, user: null, profile: null });
     const unauthenticated = await GET(request());

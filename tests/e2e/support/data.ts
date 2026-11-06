@@ -7,7 +7,9 @@ export type ActorName =
   | 'liveNotificationStudent'
   | 'accessTeacher'
   | 'ratingsTeacher'
-  | 'ratingsStudent';
+  | 'ratingsStudent'
+  | 'meetingTeacher'
+  | 'meetingStudent';
 
 const projectIndexes: Record<string, number> = {
   'en-desktop': 1,
@@ -26,6 +28,8 @@ const actorNames: ActorName[] = [
   'accessTeacher',
   'ratingsTeacher',
   'ratingsStudent',
+  'meetingTeacher',
+  'meetingStudent',
 ];
 const actorIndexes: Record<ActorName, number> = {
   teacher: 1,
@@ -37,6 +41,8 @@ const actorIndexes: Record<ActorName, number> = {
   accessTeacher: 8,
   ratingsTeacher: 9,
   ratingsStudent: 10,
+  meetingTeacher: 11,
+  meetingStudent: 12,
 };
 const password = 'E2E-local-only-2026!';
 
@@ -77,6 +83,10 @@ export function fixtureData(projectName: string) {
       groupId: uuid(1, projectIndex),
       accessTeacherGroupId: uuid(1, projectIndex, 8),
       ratingsGroupId: `00000148-0000-4000-8000-${projectIndex.toString().padStart(4, '0')}00000001`,
+      meetingTeacherId: actors.meetingTeacher.id,
+      meetingStudentId: actors.meetingStudent.id,
+      meetingGroupId: `00000145-0000-4000-8000-${projectIndex.toString().padStart(4, '0')}00000001`,
+      meetingLessonId: `00000145-0000-4000-8000-${projectIndex.toString().padStart(4, '0')}00000002`,
       futureLessonId: uuid(2, projectIndex, 1),
       endedLessonId: uuid(2, projectIndex, 2),
       accessTeacherLessonId: uuid(2, projectIndex, 8),

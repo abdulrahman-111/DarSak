@@ -30,6 +30,8 @@ import { GroupFeedbackSection } from '@/features/feedback/group-section';
 import { StudentTeacherContactCard } from '@/features/student/teacher-contact-card';
 import { StudentAssignments } from '@/features/assignments/views';
 import { LearningText } from '@/features/teacher/learning-text';
+import { meetingLinks } from '@/features/lessons/data';
+import { MeetingJoin } from '@/features/lessons/meeting-join';
 
 export default async function StudentClassPage({
   params,
@@ -46,6 +48,8 @@ export default async function StudentClassPage({
     ar = locale === 'ar';
   const data = await studentClassWorkspace(locale, id, query);
   if (!data) notFound();
+  const meetingUrls = data.next ? await meetingLinks(data.me.db, [data.next.id]) : {};
+  const renderNow = new Date().getTime();
   const { group, view } = data,
     base = `/${locale}/student/classes/${id}`;
   const titles = ar
@@ -176,6 +180,12 @@ export default async function StudentClassPage({
                       {ar ? 'الاستعداد للحصة' : 'Prepare for lesson'}
                       <ChevronRight size={16} aria-hidden="true" className="rtl:rotate-180" />
                     </Link>
+                    <MeetingJoin
+                      locale={locale}
+                      lesson={data.next}
+                      meetingUrl={meetingUrls[data.next.id] ?? null}
+                      initialNow={renderNow}
+                    />
                   </section>
                 ) : (
                   <StudentEmpty

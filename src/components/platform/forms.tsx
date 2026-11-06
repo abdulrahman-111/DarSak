@@ -25,10 +25,12 @@ export function LessonForm({
   locale,
   groupId,
   lesson,
+  meetingUrl,
 }: {
   locale: string;
   groupId: string;
   lesson?: { id: string; title: string; starts_at: string; ends_at: string; notes: string };
+  meetingUrl?: string | null;
 }) {
   async function submit(previous: { error?: string; ok?: boolean } | null, formData: FormData) {
     try {
@@ -96,6 +98,23 @@ export function LessonForm({
         {locale === 'ar' ? 'ملاحظات' : 'Notes'}
         <textarea name="notes" rows={3} defaultValue={lesson?.notes || ''} className={control} />
       </label>
+      <label className="text-sm font-bold">
+        {locale === 'ar' ? 'رابط اجتماع خاص بهذه الحصة' : 'Lesson meeting link'}
+        <input
+          name="meetingUrl"
+          type="url"
+          maxLength={500}
+          defaultValue={meetingUrl ?? ''}
+          autoComplete="url"
+          dir="ltr"
+          className={control}
+        />
+      </label>
+      <p className="text-xs text-muted">
+        {locale === 'ar'
+          ? 'Google Meet أو Zoom أو Teams أو Jitsi أو Whereby. روابط HTTPS فقط وبحد أقصى ٥٠٠ حرف. اتركه فارغاً لاستخدام رابط المجموعة.'
+          : 'Google Meet, Zoom, Teams, Jitsi or Whereby. HTTPS links only; up to 500 characters. Leave empty to inherit the group link.'}
+      </p>
       <p className="text-xs text-muted">
         {locale === 'ar' ? 'أدخل الوقت بتوقيت القاهرة.' : 'Enter times in Africa/Cairo.'}
       </p>

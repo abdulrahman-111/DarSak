@@ -20,14 +20,24 @@ insert into auth.users(id,aud,role,email,raw_user_meta_data) values
 set local session_replication_role=replica;
 update public.profiles set role='admin' where id='7f300000-0000-4000-8000-000000000004';
 update public.profiles set status='suspended' where id='7f300000-0000-4000-8000-000000000005';
+update public.teacher_profiles set approved=true where id in (
+ '7f300000-0000-4000-8000-000000000001',
+ '7f300000-0000-4000-8000-000000000002'
+);
 set local session_replication_role=origin;
 
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,location)
-select '7f310000-0000-4000-8000-000000000001','7f300000-0000-4000-8000-000000000001',o.id,'Calendar owner archived group',10,'archived','Cairo'
+select '7f310000-0000-4000-8000-000000000001','7f300000-0000-4000-8000-000000000001',o.id,'Calendar owner group',10,'draft','Cairo'
 from public.offerings o order by o.id limit 1;
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,location)
 select '7f310000-0000-4000-8000-000000000002','7f300000-0000-4000-8000-000000000002',o.id,'Calendar foreign group',10,'draft','Giza'
 from public.offerings o order by o.id limit 1;
+insert into public.group_schedule_slots(id,group_id,weekday,start_time,end_time) values
+ ('7f330000-0000-4000-8000-000000000001','7f310000-0000-4000-8000-000000000001',5,'18:00','19:00');
+-- The publication guard requires a real schedule slot and the canonical
+-- function-owner context. This fixture uses that valid state before changing
+-- status, so later archive/republish assertions exercise normal guard logic.
+update public.groups set status='published' where id='7f310000-0000-4000-8000-000000000001';
 insert into public.groups(id,teacher_id,offering_id,name,capacity,status,location)
 select '7f310000-0000-4000-8000-000000000003','7f300000-0000-4000-8000-000000000002',o.id,'Calendar removed group',10,'archived','Giza'
 from public.offerings o order by o.id limit 1;
@@ -43,21 +53,65 @@ insert into public.lessons(id,group_id,title,starts_at,ends_at,status) values
  ('7f320000-0000-4000-8000-000000000005','7f310000-0000-4000-8000-000000000002','Foreign teacher lesson',timestamp '2026-04-24 14:00:00' at time zone 'Africa/Cairo',timestamp '2026-04-24 15:00:00' at time zone 'Africa/Cairo','scheduled'),
  ('7f320000-0000-4000-8000-000000000006','7f310000-0000-4000-8000-000000000003','Removed membership',timestamp '2026-04-24 16:00:00' at time zone 'Africa/Cairo',timestamp '2026-04-24 17:00:00' at time zone 'Africa/Cairo','scheduled');
 
+insert into dars_private.group_meeting_settings(group_id,teacher_id,meeting_url) values
+ ('7f310000-0000-4000-8000-000000000001','7f300000-0000-4000-8000-000000000001','https://meet.google.com/group-owner'),
+ ('7f310000-0000-4000-8000-000000000002','7f300000-0000-4000-8000-000000000002','https://meet.google.com/group-foreign'),
+ ('7f310000-0000-4000-8000-000000000003','7f300000-0000-4000-8000-000000000002','https://meet.google.com/archived-group');
+insert into dars_private.lesson_meetings(lesson_id,teacher_id,mode,status,manual_url) values
+ ('7f320000-0000-4000-8000-000000000001','7f300000-0000-4000-8000-000000000001','manual','ready','https://teams.microsoft.com/owner-override'),
+ ('7f320000-0000-4000-8000-000000000002','7f300000-0000-4000-8000-000000000001','manual','ready','https://meet.google.com/cancelled-private'),
+ ('7f320000-0000-4000-8000-000000000005','7f300000-0000-4000-8000-000000000002','manual','ready','https://meet.google.com/foreign-override');
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000003","role":"authenticated"}';
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000003';
 do $$ declare v_result jsonb; v_rows jsonb; begin
   v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
   v_rows := v_result->'rows';
-  if (v_result->>'total')::integer<>2
-     or not (v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000001"}]'::jsonb)
-     or not (v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000002","status":"cancelled"}]'::jsonb)
-     or v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000003"}]'::jsonb then
+  if coalesce((v_result->>'total')::integer,-1)<>2
+     or not coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000001"}]'::jsonb,false)
+     or not coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000002","status":"cancelled"}]'::jsonb,false)
+     or coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000003"}]'::jsonb,false) then
     raise exception 'accepted student visibility or Cairo inclusive bounds failed: %',v_result;
   end if;
   if (v_rows->0) ?| array['notes','materials','student_contacts','enrollments'] then
     raise exception 'calendar export leaked private fields: %',v_rows;
   end if;
+  if coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000001","meeting_url":"https://meet.google.com/group-owner"}]'::jsonb,false)
+     or not coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000001","meeting_url":"https://teams.microsoft.com/owner-override"}]'::jsonb,false)
+     or coalesce(v_rows->1->>'meeting_url','')<>'' then
+    raise exception 'override precedence or cancelled privacy failed: %',v_rows;
+  end if;
+  if not coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000002","meeting_url":null}]'::jsonb,false) then
+    raise exception 'cancelled lesson included a meeting URL: %',v_rows;
+  end if;
+end $$;
+reset role;
+-- Archiving the group preserves historical accepted-student export rows but hides meeting URLs.
+update public.groups set status='archived' where id='7f310000-0000-4000-8000-000000000001';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000003","role":"authenticated"}';
+set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000003';
+do $$ declare v_result jsonb; v_rows jsonb; begin
+  v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
+  v_rows := v_result->'rows';
+  if coalesce((v_result->>'total')::integer,-1)<>2
+     or not coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000001","meeting_url":null}]'::jsonb,false)
+     or not coalesce(v_rows @> '[{"id":"7f320000-0000-4000-8000-000000000002","meeting_url":null}]'::jsonb,false) then
+    raise exception 'archived group history or meeting-link privacy failed: %',v_result;
+  end if;
+end $$;
+reset role;
+update public.groups set status='published' where id='7f310000-0000-4000-8000-000000000001';
+-- Change membership as the database owner, then make the fresh export as the student.
+update public.enrollments set status='removed'
+where group_id='7f310000-0000-4000-8000-000000000001' and student_id='7f300000-0000-4000-8000-000000000003';
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000003","role":"authenticated"}';
+set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000003';
+do $$ declare v_result jsonb; begin
+  v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
+  if coalesce((v_result->>'total')::integer,-1)<>0 then raise exception 'removed student retained calendar meeting access: %',v_result; end if;
   begin perform public.calendar_lesson_export('2026-04-24','2026-04-24'::date+93); raise exception '94-day range was accepted'; exception when sqlstate '22023' then null; end;
   v_result := public.calendar_lesson_export('2026-04-24','2026-07-25');
   if (v_result->>'total')::integer>500 then raise exception '93-day inclusive range incorrectly rejected'; end if;
@@ -69,8 +123,8 @@ set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000001","r
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000001';
 do $$ declare v_result jsonb; begin
   v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
-  if (v_result->>'total')::integer<>2
-     or not (v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000002","status":"cancelled"}]'::jsonb) then
+  if coalesce((v_result->>'total')::integer,-1)<>2
+     or not coalesce(v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000002","status":"cancelled"}]'::jsonb,false) then
     raise exception 'teacher did not receive owned archived/cancelled lesson history: %',v_result;
   end if;
   begin perform public.calendar_lesson_export(null,'2026-04-25'); raise exception 'null date was accepted'; exception when sqlstate '22023' then null; end;
@@ -82,8 +136,11 @@ set local request.jwt.claims = '{"sub":"7f300000-0000-4000-8000-000000000002","r
 set local request.jwt.claim.sub='7f300000-0000-4000-8000-000000000002';
 do $$ declare v_result jsonb; begin
   v_result := public.calendar_lesson_export('2026-04-24','2026-04-25');
-  if (v_result->>'total')::integer<>3
-     or not (v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000004"}]'::jsonb) then
+  if coalesce((v_result->>'total')::integer,-1)<>3
+     or not coalesce(v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000004"}]'::jsonb,false)
+     or not coalesce(v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000005","meeting_url":"https://meet.google.com/foreign-override"}]'::jsonb,false)
+     or not coalesce(v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000006","meeting_url":null}]'::jsonb,false)
+     or coalesce(v_result->'rows' @> '[{"id":"7f320000-0000-4000-8000-000000000001"}]'::jsonb,false) then
     raise exception 'teacher did not receive only their own groups: %',v_result;
   end if;
 end $$;

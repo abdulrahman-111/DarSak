@@ -8,6 +8,8 @@ import { safeLink } from '@/features/student/domain';
 import { Suspense } from 'react';
 import { AnnouncementView } from '@/features/groups/announcement-view';
 import { StudentAttendanceStatus } from '@/features/student/attendance-status';
+import { meetingLinks } from '@/features/lessons/data';
+import { MeetingJoin } from '@/features/lessons/meeting-join';
 
 export default async function StudentLesson({
   params,
@@ -19,6 +21,8 @@ export default async function StudentLesson({
     ar = locale === 'ar';
   const data = await lessonDetail(locale, id);
   if (!data) notFound();
+  const meetingUrls = await meetingLinks(data.db, [data.lesson.id]);
+  const renderNow = new Date().getTime();
   return (
     <>
       <Link
@@ -34,6 +38,16 @@ export default async function StudentLesson({
         action={<Status value={data.lesson.status} locale={locale} />}
       />
       <AnnouncementView locale={locale} announcement={data.announcement} className="mb-6" />
+      {meetingUrls[data.lesson.id] && (
+        <Panel className="mb-6">
+          <MeetingJoin
+            locale={locale}
+            lesson={data.lesson}
+            meetingUrl={meetingUrls[data.lesson.id] ?? null}
+            initialNow={renderNow}
+          />
+        </Panel>
+      )}
       <Suspense
         fallback={
           <Panel className="mb-6">

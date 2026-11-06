@@ -74,4 +74,76 @@ describe('calendar ICS', () => {
       expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
     expect(ics).toContain('STATUS:CONFIRMED\r\n');
   });
+
+  it('uses an allowed meeting URL as location and URL while retaining address fallbacks', () => {
+    const online = formatCalendarIcs(
+      [{ ...lesson, status: 'scheduled', meeting_url: 'https://MEET.GOOGLE.COM/abc' }],
+      new Date('2026-01-01T00:00:00Z'),
+    );
+    expect(online).toContain('LOCATION:https://meet.google.com/abc\r\n');
+    expect(online).toContain('URL:https://meet.google.com/abc\r\n');
+
+    const fallback = formatCalendarIcs(
+      [{ ...lesson, status: 'scheduled', meeting_url: null }],
+      new Date('2026-01-01T00:00:00Z'),
+    );
+    expect(fallback).toContain('LOCATION:Cairo\r\n');
+    expect(fallback).not.toContain('\r\nURL:');
+  });
+
+  it('validates configured exact hosts and omits unsafe, unlisted, or cancelled links', () => {
+    const extra = formatCalendarIcs(
+      [
+        { ...lesson, status: 'scheduled', meeting_url: 'https://room.example.test/join' },
+        {
+          ...lesson,
+          id: 'unsafe',
+          status: 'scheduled',
+          meeting_url: 'https://meet.google.com/ok\r\nURL:https://evil.test',
+        },
+        {
+          ...lesson,
+          id: 'unlisted',
+          status: 'scheduled',
+          meeting_url: 'https://meeting.evil.test/room',
+        },
+        {
+          ...lesson,
+          id: 'cancelled',
+          status: 'cancelled',
+          meeting_url: 'https://meet.google.com/old',
+        },
+      ],
+      new Date('2026-01-01T00:00:00Z'),
+      ['room.example.test'],
+    );
+    expect(extra).toContain('LOCATION:https://room.example.test/join\r\n');
+    expect(extra).toContain('URL:https://room.example.test/join\r\n');
+    expect(extra.match(/\r\nURL:/g)).toHaveLength(1);
+    expect(extra).toContain('LOCATION:Cairo\r\n');
+    expect(extra).not.toContain('evil.test');
+  });
+
+  it('folds long safe meeting URIs by UTF-8 octets without changing the URL value', () => {
+    const meetingUrl = `https://meet.google.com/${'a'.repeat(430)}?comma=a,b;semi=c`;
+    const ics = formatCalendarIcs(
+      [{ ...lesson, status: 'scheduled', meeting_url: meetingUrl }],
+      new Date('2026-01-01T00:00:00Z'),
+    );
+    const physicalLines = ics.split('\r\n');
+    const propertyLines = (name: string) => {
+      const start = physicalLines.findIndex(line => line.startsWith(`${name}:`));
+      const lines = [physicalLines[start]];
+      for (let index = start + 1; physicalLines[index]?.startsWith(' '); index++)
+        lines.push(physicalLines[index]);
+      return lines;
+    };
+    const urlLines = propertyLines('URL');
+    expect(propertyLines('LOCATION').join('\r\n').replace(/\r\n /g, '')).toBe(
+      `LOCATION:${meetingUrl.replace(/,/g, '\\,').replace(/;/g, '\\;')}`,
+    );
+    for (const line of urlLines)
+      expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75);
+    expect(urlLines.join('\r\n').replace(/\r\n /g, '')).toBe(`URL:${meetingUrl}`);
+  });
 });

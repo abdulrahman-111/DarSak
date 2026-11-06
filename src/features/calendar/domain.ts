@@ -1,3 +1,5 @@
+import { parseMeetingUrl } from '@/features/lessons/meeting-url';
+
 export const MAX_CALENDAR_DAYS = 93;
 export const MAX_CALENDAR_EVENTS = 500;
 
@@ -10,6 +12,7 @@ export type CalendarLesson = {
   created_at: string;
   group_name: string;
   location: string;
+  meeting_url?: string | null;
 };
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -98,7 +101,11 @@ function utcStamp(value: string): string {
     .replace(/\.\d{3}Z$/, 'Z');
 }
 
-export function formatCalendarIcs(rows: CalendarLesson[], exportedAt: Date): string {
+export function formatCalendarIcs(
+  rows: CalendarLesson[],
+  exportedAt: Date,
+  extraHosts: readonly string[] = [],
+): string {
   const stamp = utcStamp(exportedAt.toISOString());
   const lines = [
     'BEGIN:VCALENDAR',
@@ -107,6 +114,8 @@ export function formatCalendarIcs(rows: CalendarLesson[], exportedAt: Date): str
     'CALSCALE:GREGORIAN',
   ];
   for (const lesson of rows) {
+    const meetingUrl =
+      lesson.status === 'scheduled' ? parseMeetingUrl(lesson.meeting_url, extraHosts) : null;
     lines.push(
       'BEGIN:VEVENT',
       `UID:${lesson.id}@dars`,
@@ -115,7 +124,10 @@ export function formatCalendarIcs(rows: CalendarLesson[], exportedAt: Date): str
       `DTEND:${utcStamp(lesson.ends_at)}`,
       `SUMMARY:${escapeText(lesson.title)}`,
       `DESCRIPTION:${escapeText(lesson.group_name)}`,
-      `LOCATION:${escapeText(lesson.location)}`,
+      `LOCATION:${escapeText(meetingUrl ?? lesson.location)}`,
+      // URL is an RFC 5545 URI property, so text escaping (notably `\\,` and
+      // `\\;`) would change the address. Validation already rejects line breaks.
+      ...(meetingUrl ? [`URL:${meetingUrl}`] : []),
       `STATUS:${lesson.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
       'END:VEVENT',
     );

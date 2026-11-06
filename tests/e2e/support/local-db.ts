@@ -86,6 +86,162 @@ function targetSeedAdmin(projectName: string) {
   };
 }
 
+function targetMeetingFixture(projectName: string) {
+  const { actors, ids } = fixtureData(projectName);
+  const teacher = actors.meetingTeacher;
+  const student = actors.meetingStudent;
+  const index =
+    projectName === 'en-desktop'
+      ? '0001'
+      : projectName === 'ar-desktop'
+        ? '0002'
+        : projectName === 'en-mobile'
+          ? '0003'
+          : projectName === 'ar-mobile'
+            ? '0004'
+            : '';
+  if (
+    !index ||
+    teacher.id !== `e2e00000-0000-4000-8000-${index}00000011` ||
+    student.id !== `e2e00000-0000-4000-8000-${index}00000012` ||
+    teacher.email !== `meeting-teacher+${projectName}@e2e.invalid` ||
+    student.email !== `meeting-student+${projectName}@e2e.invalid` ||
+    ids.meetingGroupId !== `00000145-0000-4000-8000-${index}00000001` ||
+    ids.meetingLessonId !== `00000145-0000-4000-8000-${index}00000002`
+  ) {
+    throw new Error('The meeting links fixture identities did not match their reserved E2E IDs.');
+  }
+  return { teacher, student, ids };
+}
+
+function assertMeetingFixtureSql(projectName: string) {
+  const { teacher, student, ids } = targetMeetingFixture(projectName);
+  return `
+  if not exists (
+    select 1 from auth.users u join public.profiles p on p.id=u.id
+    join public.teacher_profiles t on t.id=p.id
+    join public.teacher_applications a on a.teacher_id=t.id
+    where u.id=${sqlLiteral(teacher.id)} and u.email=${sqlLiteral(teacher.email)}
+      and p.role='teacher' and p.status='active' and t.approved
+      and a.legacy_approved and a.status='approved'
+  ) or not exists (
+    select 1 from auth.users u join public.profiles p on p.id=u.id
+    where u.id=${sqlLiteral(student.id)} and u.email=${sqlLiteral(student.email)}
+      and p.role='student' and p.status='active'
+  ) or not exists (
+    select 1 from public.groups g join public.lessons l on l.group_id=g.id
+    join public.enrollments e on e.group_id=g.id and e.student_id=${sqlLiteral(student.id)}
+    where g.id=${sqlLiteral(ids.meetingGroupId)} and g.teacher_id=${sqlLiteral(teacher.id)}
+      and g.status='published' and l.id=${sqlLiteral(ids.meetingLessonId)} and e.status='accepted'
+  ) then
+    raise exception 'Meeting links fixture identity or membership mismatch' using errcode='42501';
+  end if;`;
+}
+
+export type MeetingFixtureState = {
+  starts_at: string;
+  ends_at: string;
+  status: string;
+  group_url: string | null;
+  manual_url: string | null;
+  enrollment_status: string;
+  lesson_count: number;
+};
+
+function parseMeetingFixtureState(raw: string) {
+  let state: MeetingFixtureState;
+  try {
+    state = JSON.parse(raw) as MeetingFixtureState;
+  } catch {
+    throw new Error('The dedicated meeting links fixture state could not be read.');
+  }
+  if (
+    typeof state.starts_at !== 'string' ||
+    typeof state.ends_at !== 'string' ||
+    state.status !== 'scheduled' ||
+    !(state.group_url === null || typeof state.group_url === 'string') ||
+    !(state.manual_url === null || typeof state.manual_url === 'string') ||
+    state.enrollment_status !== 'accepted' ||
+    state.lesson_count !== 1
+  ) {
+    throw new Error('The dedicated meeting links fixture state was incomplete.');
+  }
+  return state;
+}
+
+export async function meetingFixtureState(projectName: string): Promise<MeetingFixtureState> {
+  const databaseUrl = assertLocalMutationEnvironment();
+  const { ids } = targetMeetingFixture(projectName);
+  const raw = runLocalSql(
+    databaseUrl,
+    `do $$ begin ${assertMeetingFixtureSql(projectName)} end $$;
+select jsonb_build_object(
+  'starts_at',l.starts_at,'ends_at',l.ends_at,'status',l.status,
+  'group_url',s.meeting_url,'manual_url',m.manual_url,'enrollment_status',e.status,
+  'lesson_count',(select count(*) from public.lessons scoped where scoped.group_id=${sqlLiteral(ids.meetingGroupId)})
+)::text
+from public.lessons l join public.groups g on g.id=l.group_id
+join public.enrollments e on e.group_id=g.id and e.student_id=${sqlLiteral(targetMeetingFixture(projectName).student.id)}
+left join dars_private.group_meeting_settings s on s.group_id=g.id and s.teacher_id=g.teacher_id
+left join dars_private.lesson_meetings m on m.lesson_id=l.id and m.teacher_id=g.teacher_id
+where g.id=${sqlLiteral(ids.meetingGroupId)} and l.id=${sqlLiteral(ids.meetingLessonId)} and e.status='accepted';`,
+  );
+  return parseMeetingFixtureState(raw);
+}
+
+export type MeetingFixturePhase = 'before' | 'active' | 'ended' | 'midnight';
+
+export async function setMeetingFixtureTiming(
+  projectName: string,
+  phase: MeetingFixturePhase,
+): Promise<MeetingFixtureState> {
+  const databaseUrl = assertLocalMutationEnvironment();
+  const { student, ids } = targetMeetingFixture(projectName);
+  const timing = {
+    before: [
+      `statement_timestamp()+interval '16 minutes'`,
+      `statement_timestamp()+interval '76 minutes'`,
+    ],
+    active: [
+      `statement_timestamp()+interval '5 minutes'`,
+      `statement_timestamp()+interval '65 minutes'`,
+    ],
+    ended: [
+      `statement_timestamp()-interval '65 minutes'`,
+      `statement_timestamp()-interval '5 minutes'`,
+    ],
+    midnight: [
+      `(((statement_timestamp() at time zone 'Africa/Cairo')::date+1)+time '23:55') at time zone 'Africa/Cairo'`,
+      `(((statement_timestamp() at time zone 'Africa/Cairo')::date+2)+time '00:55') at time zone 'Africa/Cairo'`,
+    ],
+  }[phase];
+  if (!timing) throw new Error('Unsupported meeting fixture timing phase.');
+  const raw = runLocalSql(
+    databaseUrl,
+    `begin;
+do $$ begin ${assertMeetingFixtureSql(projectName)} end $$;
+with changed as (
+  update public.lessons l set starts_at=${timing[0]},ends_at=${timing[1]}
+  from public.groups g
+  where l.group_id=g.id and g.id=${sqlLiteral(ids.meetingGroupId)}
+    and g.teacher_id=${sqlLiteral(targetMeetingFixture(projectName).teacher.id)}
+    and l.id=${sqlLiteral(ids.meetingLessonId)} and l.status='scheduled'
+  returning l.id,l.group_id,l.starts_at,l.ends_at,l.status
+)
+select jsonb_build_object(
+  'starts_at',changed.starts_at,'ends_at',changed.ends_at,'status',changed.status,
+  'group_url',s.meeting_url,'manual_url',m.manual_url,'enrollment_status',e.status,
+  'lesson_count',(select count(*) from public.lessons scoped where scoped.group_id=${sqlLiteral(ids.meetingGroupId)})
+)::text
+from changed join public.enrollments e on e.group_id=changed.group_id and e.student_id=${sqlLiteral(student.id)}
+left join dars_private.group_meeting_settings s on s.group_id=changed.group_id and s.teacher_id=${sqlLiteral(targetMeetingFixture(projectName).teacher.id)}
+left join dars_private.lesson_meetings m on m.lesson_id=changed.id and m.teacher_id=${sqlLiteral(targetMeetingFixture(projectName).teacher.id)}
+where e.status='accepted';
+commit;`,
+  );
+  return parseMeetingFixtureState(raw);
+}
+
 function targetRatingsFixture(projectName: string) {
   const { actors, ids } = fixtureData(projectName);
   const teacher = actors.ratingsTeacher;
