@@ -327,15 +327,6 @@ do $$ begin
 end $$;
 reset role;
 set local request.jwt.claims='{}';
-do $$ begin
-  if not exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000003'
-       and kind='feedback_pending' and event_key='feedback-pending:'||current_setting('test.ratings148.feedback_second')||':6'
-       and payload->>'category'='reply') then raise exception 'pending reply did not notify admins'; end if;
-  if exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000002'
-       and kind='feedback_decision' and event_key='feedback-decision:'||current_setting('test.ratings148.feedback_second')||':7') then
-    raise exception 'reply approval was mislabeled as a review decision';
-  end if;
-end $$;
 set local role authenticated;
 set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000003';
@@ -485,6 +476,15 @@ do $$ begin
 end $$;
 reset role;
 set local request.jwt.claims='{}';
+do $$ begin
+  if not exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000003'
+       and kind='feedback_pending' and event_key='feedback-pending:'||current_setting('test.ratings148.feedback_second')||':6'
+       and payload->>'category'='reply') then raise exception 'pending reply did not notify admins'; end if;
+  if exists(select 1 from public.user_notifications where recipient_id='14800000-0000-4000-8000-000000000002'
+       and kind='feedback_decision' and event_key='feedback-decision:'||current_setting('test.ratings148.feedback_second')||':7') then
+    raise exception 'reply approval was mislabeled as a review decision';
+  end if;
+end $$;
 set local role authenticated;
 set local request.jwt.claims='{"sub":"14800000-0000-4000-8000-000000000002","role":"authenticated"}';
 set local request.jwt.claim.sub='14800000-0000-4000-8000-000000000002';
