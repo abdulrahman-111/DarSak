@@ -67,21 +67,31 @@ function isSubdomainOf(host: string, roots: readonly string[]): boolean {
 }
 
 function isIpLiteral(host: string): boolean {
-  return host.startsWith('[') || /^\d{1,3}(?:\.\d{1,3}){3}$/u.test(host);
+  if (host.startsWith('[')) return true;
+  const octets = host.split('.');
+  return (
+    octets.length === 4 &&
+    octets.every(octet => octet.length >= 1 && octet.length <= 3 && [...octet].every(isAsciiDigit))
+  );
 }
 
 function isValidHostname(host: string): boolean {
-  return (
-    host.length <= 253 &&
-    host
-      .split('.')
-      .every(
-        label =>
-          label.length >= 1 &&
-          label.length <= 63 &&
-          /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label),
-      )
-  );
+  if (host.length > 253) return false;
+  return host.split('.').every(label => {
+    if (label.length < 1 || label.length > 63) return false;
+    if (!isAsciiAlphaNumeric(label[0]) || !isAsciiAlphaNumeric(label[label.length - 1])) {
+      return false;
+    }
+    return [...label].every(char => isAsciiAlphaNumeric(char) || char === '-');
+  });
+}
+
+function isAsciiDigit(char: string): boolean {
+  return char >= '0' && char <= '9';
+}
+
+function isAsciiAlphaNumeric(char: string): boolean {
+  return isAsciiDigit(char) || (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
 }
 
 function isValidConfiguredHostname(host: string): boolean {
