@@ -1,5 +1,45 @@
 # Performance measurements
 
+## Reproducible route measurements
+
+`scripts/measure-routes.mjs` takes ten independent cold Playwright contexts per selected route at
+390×844 with the versioned `fast4g-cpu4-v1` profile (40 ms latency, 4 Mbps download, 1 Mbps upload,
+4× CPU slowdown) and a five-second LCP observation window. It records TTFB, FCP, the last observed
+LCP candidate, numeric Server-Timing when present, status, missing metrics and request/redirect
+errors. Summaries use the arithmetic median and nearest-rank p90; incomplete samples remain visible
+and make the route incomplete. A successful login redirect is never counted as a private-route pass.
+
+The script accepts loopback origins for local runs and exact allowlisted hosted origins only:
+`https://darsak-platform.vercel.app` (production) and
+`https://darsak-platform-staging.vercel.app` (staging). Do not run it against staging until that
+origin is confirmed as the current synthetic staging deployment. Production rejects private
+browser state. Staging private routes require the explicit `--synthetic-staging-state` assertion and
+owner-only state files; local private routes also require owner-only files. This tool does not create
+or seed synthetic accounts.
+
+```sh
+node scripts/measure-routes.mjs \
+  --base-url http://127.0.0.1:3000 \
+  --environment local \
+  --route landing-en \
+  --route teachers-en
+```
+
+Available route names are `landing-en`, `landing-ar`, `teachers-en`, `teachers-ar`, `student-en`,
+`student-ar`, `teacher-en`, and `teacher-ar`. Without `--route`, the
+public route templates are selected. Private routes require a matching `--student-state` or
+`--teacher-state`; use `--synthetic-staging-state` only for synthetic staging sessions. Add
+`--warm-public` to record a separate unthrottled public CDN cache-status check; it is not included in
+the cold-sample statistics. Local runs default to the checked-out Git SHA. Hosted runs require the
+exact `--build-sha` (or `VERCEL_GIT_COMMIT_SHA`) and `--deployment-id`; the runner will not substitute
+the current checkout for a hosted deployment identity.
+
+The JSON report contains route templates and bounded metadata only. It does not save HTML, URLs with
+query strings, page IDs, browser state, request headers, traces, screenshots or HAR files. The output
+directory is created with mode `0700`, and the report with mode `0600`; an explicit output directory
+must not already exist. These measurements do not establish the required historical baseline, hosted
+private-route acceptance, public CDN warmth unless separately requested, or field vitals.
+
 ## Arabic font payload
 
 The public app and admin app now register IBM Plex Sans Arabic at weights 400 and 700. The 500 and 600 registrations and WOFF2 files were removed. Each app's source assets are 90,984 bytes smaller. That source-size reduction is separate from the bytes a route downloads.
