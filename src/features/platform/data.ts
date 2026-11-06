@@ -112,7 +112,12 @@ export function mapDiscoverGroup(group: DiscoverGroupRow): Group {
     available_seats: group.available_seats,
     weekdays: group.weekdays,
     next_lesson_at: group.next_lesson_at,
-    teacher: { id: group.teacher_id, full_name: group.teacher_name, teacher_rating_average: group.teacher_rating_average, teacher_rating_count: group.teacher_rating_count },
+    teacher: {
+      id: group.teacher_id,
+      full_name: group.teacher_name,
+      teacher_rating_average: group.teacher_rating_average,
+      teacher_rating_count: group.teacher_rating_count,
+    },
     offering: {
       id: group.offering_id,
       subject: { name_ar: group.subject_name_ar, name_en: group.subject_name_en },
@@ -132,12 +137,21 @@ const readPublicGroups = async (
   const groups = ((data ?? []) as DiscoverGroupRow[]).map(mapDiscoverGroup);
   return { data: groups, error };
 };
-const readLegacyPublicGroups = async (db: Pick<PublicClient, 'rpc'>, filters: DiscoveryFilters, limit: number) => {
-  const { data, error } = await db.rpc('discover_groups', { ...discoveryRpcArgs(filters), p_limit: limit });
+const readLegacyPublicGroups = async (
+  db: Pick<PublicClient, 'rpc'>,
+  filters: DiscoveryFilters,
+  limit: number,
+) => {
+  const { p_sort: _sort, p_min_rating: _minRating, ...legacyArgs } = discoveryRpcArgs(filters);
+  const { data, error } = await db.rpc('discover_groups', { ...legacyArgs, p_limit: limit });
   return { data: ((data ?? []) as DiscoverGroupRow[]).map(mapDiscoverGroup), error };
 };
 const cachedPublicGroups = cachePublic('groups', readLegacyPublicGroups);
-const cachedRatedPublicGroups = cachePublic('groups-rated', async (db, filters: DiscoveryFilters, limit: number, _bucket: number) => readPublicGroups(db, filters, limit));
+const cachedRatedPublicGroups = cachePublic(
+  'groups-rated',
+  async (db, filters: DiscoveryFilters, limit: number, _bucket: number) =>
+    readPublicGroups(db, filters, limit),
+);
 export async function publicGroups(
   filters: DiscoveryFilters = normalizeDiscoveryFilters({}),
   limit = discoveryRpcArgs(filters).p_limit,

@@ -1,5 +1,5 @@
 begin;
-create or replace function dars_private.public_teacher_rating_aggregate()
+create or replace function dars_private.public_teacher_rating_aggregate(p_teacher_ids uuid[] default null)
 returns table(teacher_id uuid, rating_average numeric, rating_count bigint)
 language sql stable security definer set search_path=pg_catalog,public,dars_private
 as $$
@@ -8,10 +8,10 @@ as $$
  join public.profiles tp on tp.id=g.teacher_id and tp.role='teacher' and tp.status='active'
  join public.teacher_profiles teacher on teacher.id=tp.id and teacher.approved and dars_private.teacher_has_access(tp.id)
  join public.profiles student on student.id=gf.student_id and student.role='student' and student.status='active'
- where gf.status='approved'
+ where gf.status='approved' and (p_teacher_ids is null or g.teacher_id=any(p_teacher_ids))
  group by g.teacher_id
 $$;
-revoke all on function dars_private.public_teacher_rating_aggregate() from public,anon,authenticated;
+revoke all on function dars_private.public_teacher_rating_aggregate(uuid[]) from public,anon,authenticated;
 CREATE OR REPLACE FUNCTION public.discover_groups_rated(p_subject_id uuid DEFAULT NULL::uuid, p_node_id uuid DEFAULT NULL::uuid, p_teacher_id uuid DEFAULT NULL::uuid, p_weekday integer DEFAULT NULL::integer, p_has_seats boolean DEFAULT false, p_query text DEFAULT ''::text, p_offset integer DEFAULT 0, p_limit integer DEFAULT 12, p_sort text DEFAULT 'default'::text, p_min_rating integer DEFAULT NULL::integer)
  RETURNS TABLE(id uuid, teacher_id uuid, offering_id uuid, name text, description text, capacity integer, status group_status, location text, created_at timestamp with time zone, teacher_name text, subject_name_ar text, subject_name_en text, node_name_ar text, node_name_en text, accepted_count bigint, available_seats bigint, weekdays integer[], next_lesson_at timestamp with time zone, teacher_rating_average numeric, teacher_rating_count bigint)
  LANGUAGE plpgsql
@@ -77,14 +77,15 @@ begin
       eg.subject_name_ar, eg.subject_name_en, eg.node_name_ar, eg.node_name_en
   ), rated as (
     select c.*, greatest(c.capacity::bigint-c.accepted_count,0::bigint) as available_seats,
-      a.rating_average, coalesce(a.rating_count,0)::bigint as rating_count
-    from counts c left join dars_private.public_teacher_rating_aggregate() a on a.teacher_id=c.teacher_id
+      case when coalesce(a.rating_count,0)>=3 then round(a.rating_average,1) else null end as public_rating_average,
+      case when coalesce(a.rating_count,0)>=3 then a.rating_count else 0::bigint end as public_rating_count
+    from counts c left join dars_private.public_teacher_rating_aggregate(array(select distinct teacher_id from counts)) a on a.teacher_id=c.teacher_id
     where (p_has_seats is distinct from true or greatest(c.capacity::bigint-c.accepted_count,0::bigint)>0)
-      and (p_min_rating is null or (a.rating_count>=3 and a.rating_average>=p_min_rating))
+      and (p_min_rating is null or (coalesce(a.rating_count,0)>=3 and round(a.rating_average,1)>=p_min_rating))
   ), eligible_page as (
     select r.* from rated r
-    order by case when p_sort='rating' then r.rating_average end desc nulls last,
-      case when p_sort='rating' then r.rating_count end desc, r.id
+    order by case when p_sort='rating' then r.public_rating_average end desc nulls last,
+      case when p_sort='rating' then r.public_rating_count end desc, r.id
     offset p_offset
     limit p_limit
   )
@@ -93,8 +94,7 @@ begin
     pg.subject_name_ar, pg.subject_name_en, pg.node_name_ar, pg.node_name_en,
     pg.accepted_count, pg.available_seats,
     coalesce(schedule.weekdays, array[]::integer[]), upcoming.next_lesson_at,
-    case when pg.rating_count>=3 then round(pg.rating_average,1) else null end,
-    case when pg.rating_count>=3 then pg.rating_count else 0::bigint end
+    pg.public_rating_average, pg.public_rating_count
   from eligible_page pg
   left join lateral (
     select array_agg(distinct slot.weekday order by slot.weekday)::integer[] as weekdays
@@ -106,7 +106,7 @@ begin
     where l.group_id = pg.id and l.status = 'scheduled'
       and l.starts_at > statement_timestamp()
   ) upcoming on true
-  order by case when p_sort='rating' then pg.rating_average end desc nulls last, case when p_sort='rating' then pg.rating_count end desc, pg.id;
+  order by case when p_sort='rating' then pg.public_rating_average end desc nulls last, case when p_sort='rating' then pg.public_rating_count end desc, pg.id;
 end;
 $function$;
 revoke all on function public.discover_groups_rated(uuid,uuid,uuid,integer,boolean,text,integer,integer,text,integer) from public;

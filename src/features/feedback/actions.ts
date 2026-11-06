@@ -1,5 +1,6 @@
 'use server';
 import { revalidatePath } from 'next/cache';
+import { invalidatePublicDiscovery } from '@/features/platform/discovery-cache';
 import { createClient } from '@/lib/supabase/server';
 import { idSchema } from '@/features/student/domain';
 import { feedbackInput } from './domain';
@@ -67,6 +68,7 @@ export async function feedbackAction(
             ? 'تعذر حفظ التقييم. تحقق من الصلاحية والحدود الموضحة.'
             : 'Could not save. Check your eligibility and the displayed limits.',
     };
+  if (kind === 'save' || kind === 'withdraw') invalidatePublicDiscovery();
   revalidateStudentWorkspace();
   revalidateTeacherWorkspace();
   for (const l of ['en', 'ar']) {

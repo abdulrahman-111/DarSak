@@ -26,6 +26,8 @@ type PublicTeacherRow = {
   full_name: string;
   headline: string | null;
   avatar_path: string | null;
+  teacher_rating_average?: number | null;
+  teacher_rating_count?: number;
 };
 
 export async function teacherProfile(locale: Locale) {
@@ -215,7 +217,7 @@ export const publicTeacherDetail = cache(async (locale: Locale, teacherId: strin
         coverResult,
         groupsResult,
       ] = await Promise.all([
-        db.rpc('public_teachers').eq('id', teacherId).maybeSingle(),
+        db.rpc('public_teachers_rated').eq('id', teacherId).maybeSingle(),
         db
           .from('teacher_contacts')
           .select('phone_number,whatsapp_number,contact_email,visibility')
@@ -273,7 +275,13 @@ export const publicTeacherDetail = cache(async (locale: Locale, teacherId: strin
         readTeacherCover(db, coverResult.data ?? null),
       ]);
       const visitor = buildTeacherVisitorView({
-        teacher: { id: teacher.id, full_name: teacher.full_name, headline: teacher.headline },
+        teacher: {
+          id: teacher.id,
+          full_name: teacher.full_name,
+          headline: teacher.headline,
+          teacher_rating_average: teacher.teacher_rating_average,
+          teacher_rating_count: teacher.teacher_rating_count,
+        },
         details: safePublicTeacherProfileDetails(detailsResult.data),
         contactVisibility: contactsResult.data?.visibility ?? null,
         contacts: contactsResult.data,

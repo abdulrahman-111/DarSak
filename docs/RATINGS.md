@@ -1,0 +1,7 @@
+# Public teacher ratings
+
+Public teacher ratings come from approved student feedback on currently published groups belonging to active, approved teachers with current group access. A review is one `(group, student)` feedback row, so a student reviewing two groups contributes twice. Only active student profiles count. Public summaries appear at three eligible reviews; smaller totals are returned as no rating with a count of zero.
+
+The summary is computed from live feedback rows. Public discovery cards and teacher profile headers use the same teacher summary. The default public discovery result is cached for 60 seconds and keyed by the current UTC minute, so separate public deployments do not reuse a previous minute's entry while it refreshes. Filtered discovery stays live. Reviews remain anonymous in public projections; comments and student identity are not included in the summary.
+
+Task 1 adds discovery sorting and minimum-rating filtering. Prompt/notice producers and the structured-data decision remain for Task 2 and final SEO review.
