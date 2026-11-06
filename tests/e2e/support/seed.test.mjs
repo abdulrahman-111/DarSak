@@ -34,6 +34,29 @@ const fixtures = [
 ];
 
 for (const fixture of fixtures) {
+  test(`generated seed SQL keeps admin assurance through publishing for ${fixture.project}`, () => {
+    const sql = seedSql(fixture.project, fixture.index);
+    const adminClaimsAt = sql.indexOf('"aal":"aal2"');
+    const adminReviewAt = sql.indexOf('select public.admin_decide_teacher_review');
+    const publishAt = sql.indexOf('select public.publish_group(');
+    const finalDataWriteAt = sql.indexOf('insert into dars_private.group_feedback');
+    const clearClaimsAt = sql.indexOf("select set_config('request.jwt.claims','{}',true);");
+    const clearSubjectAt = sql.indexOf("select set_config('request.jwt.claim.sub','',true);");
+    const finalResetAt = sql.indexOf('reset role;', clearSubjectAt);
+
+    assert.ok(adminClaimsAt >= 0, 'synthetic admin claims include top-level aal2');
+    assert.ok(adminClaimsAt < adminReviewAt, 'admin assurance is set before review RPCs');
+    assert.ok(adminReviewAt < publishAt, 'review RPC runs before group publication');
+    assert.ok(publishAt < finalDataWriteAt, 'group publication precedes the final seed write');
+    assert.ok(finalDataWriteAt < clearClaimsAt, 'claims remain present through seed data writes');
+    assert.ok(clearClaimsAt < clearSubjectAt, 'claims JSON is cleared before the subject');
+    assert.ok(clearSubjectAt < finalResetAt, 'both claims are cleared before the final role reset');
+    assert.ok(
+      !sql.slice(adminClaimsAt, publishAt).includes("request.jwt.claims','{}"),
+      'admin assurance is not cleared before publishing',
+    );
+  });
+
   test(`generated seed SQL includes the approved access teacher fixtures for ${fixture.project}`, () => {
     const sql = seedSql(fixture.project, fixture.index);
     const usersBlock = sql.match(
