@@ -1,5 +1,56 @@
 # Performance measurements
 
+## Reproducible route measurements
+
+`scripts/measure-routes.mjs` takes ten independent cold Playwright contexts per selected route at
+390×844 with the versioned `fast4g-cpu4-v1` custom profile (40 ms latency, 4 Mbps download,
+1 Mbps upload, 4× CPU slowdown). This is not the canonical Chrome Fast 4G preset. Its five-second
+LCP observation window starts at `DOMContentLoaded`; LCP is the last candidate seen during that
+fixed window, not the finalized field LCP. TTFB uses navigation `responseStart - activationStart`
+(or `responseStart - startTime` when activation time is zero), and FCP/LCP are attributed to the
+same document. Server-Timing retains only separate, bounded `app`, `db`, and `edge` durations; it
+does not add overlapping entries or claim a total request duration. The report records status,
+missing metrics and request/redirect errors. Summaries use only valid HTTP 200 samples and report
+attempted, valid, excluded, and missing-metric counts; failed pages stay visible but do not affect
+medians or nearest-rank p90. A successful login redirect is never counted as a private-route pass.
+
+The script accepts loopback origins for local runs and exact allowlisted hosted origins only:
+`https://darsak-platform.vercel.app` (production) and
+`https://darsak-staging-theag01s-projects.vercel.app` (staging). Production rejects private browser
+state. Staging private routes require the operator assertion `--synthetic-staging-state`, owner-only
+state files, and state whose cookie and local-storage origins match the selected staging origin.
+The flag is an assertion only: the runner cannot verify that the account is synthetic. Local private
+routes also require owner-only state files scoped to loopback. This tool does not create or seed
+synthetic accounts. Browser navigation is held to the selected origin, and samples are excluded if
+the requested route redirects or the document changes during the observation window.
+
+```sh
+node scripts/measure-routes.mjs \
+  --base-url http://127.0.0.1:3000 \
+  --environment local \
+  --route landing-en \
+  --route teachers-en
+```
+
+Available route names are `landing-en`, `landing-ar`, `teachers-en`, `teachers-ar`, `student-en`,
+`student-ar`, `teacher-en`, and `teacher-ar`. Without `--route`, the
+public route templates are selected. Private routes require a matching `--student-state` or
+`--teacher-state`; use `--synthetic-staging-state` only for synthetic staging sessions. Add
+`--warm-public` to record a separate unthrottled public CDN cache-status check; it is not included in
+the cold-sample statistics. Invalid, redirected, or external-login warm checks report cache status
+as `unknown`. Local runs default to the checked-out Git SHA, which does not verify the running
+server's build. Hosted runs require caller-supplied `--build-sha` (or `VERCEL_GIT_COMMIT_SHA`) and
+`--deployment-id`; these values are labeled as caller assertions and are not independently bound to
+the requested deployment by the runner.
+
+The JSON report contains route templates, sample/route timestamps, sequential sample order, browser
+version, and bounded metadata only. It does not save HTML, URLs with
+query strings, page IDs, browser state, request headers, traces, screenshots or HAR files. The output
+directory is created with mode `0700`, and the report with mode `0600`; an explicit output directory
+must not already exist, and its parent must not be writable by group or other users. These
+measurements do not establish the required historical baseline, hosted private-route acceptance,
+public CDN warmth unless separately requested, or field vitals.
+
 ## Arabic font payload
 
 The public app and admin app now register IBM Plex Sans Arabic at weights 400 and 700. The 500 and 600 registrations and WOFF2 files were removed. Each app's source assets are 90,984 bytes smaller. That source-size reduction is separate from the bytes a route downloads.
