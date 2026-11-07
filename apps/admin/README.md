@@ -29,7 +29,7 @@ Set production-only Vercel environment variables using [`apps/admin/.env.example
 - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` set to that project's publishable key
 - `NEXT_PUBLIC_SITE_URL=https://darsak-admin-portal.vercel.app`
 
-`APP_ENV` and `NEXT_PUBLIC_APP_ENV` must agree. The server and browser configuration also verify the expected project ref and production Vercel target. Do not add staging, preview, or development values to the production Vercel project. Apply migration `20261028153000_admin_login_attempts.sql` (login throttle) before deploying the version that calls it; if the functions are missing the portal fails open on the throttle only, and the TOTP requirement below still applies.
+`APP_ENV` and `NEXT_PUBLIC_APP_ENV` must agree. The server and browser configuration also verify the expected project ref and production Vercel target. Do not add staging, preview, or development values to the production Vercel project. Apply migration `20261028153000_admin_login_attempts.sql` (login throttle) before deploying the version that calls it; if the functions are missing, login returns an unavailable error until the migration is applied. The throttle only permits password sign-in when its RPC returns boolean `true`; TOTP remains separately required.
 
 After Vercel SSO, administrators sign in separately with their existing live admin account credentials. The portal does not use Google sign-in or provide a self-service recovery flow. If an administrator loses access, an operator must reset the account through the established Supabase operator process; do not hand off password-reset tokens.
 

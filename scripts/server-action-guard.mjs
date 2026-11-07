@@ -405,15 +405,32 @@ function lineOf(sourceFile, node) {
   return sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile)).line + 1;
 }
 
-/** Analyze exported actions in a source file. This is intentionally syntactic, not a proof of control flow. */
-export function analyzeActionSource(sourceText, filePath, { actionNames } = {}) {
-  const sourceFile = ts.createSourceFile(
+function hasModuleLevelUseServer(sourceFile) {
+  for (const statement of sourceFile.statements) {
+    if (
+      ts.isExpressionStatement(statement) &&
+      ts.isStringLiteral(statement.expression) &&
+      statement.expression.text === 'use server'
+    )
+      return true;
+    if (!ts.isExpressionStatement(statement) || !ts.isStringLiteral(statement.expression)) break;
+  }
+  return false;
+}
+
+function parseSourceFile(sourceText, filePath) {
+  return ts.createSourceFile(
     filePath,
     sourceText,
     ts.ScriptTarget.Latest,
     true,
-    ts.ScriptKind.TS,
+    filePath.endsWith('.tsx') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
   );
+}
+
+/** Analyze exported actions in a source file. This is intentionally syntactic, not a proof of control flow. */
+export function analyzeActionSource(sourceText, filePath, { actionNames } = {}) {
+  const sourceFile = parseSourceFile(sourceText, filePath);
   const exported = actionDeclarations(sourceFile).filter(
     action => actionNames === undefined || actionNames.has(action.name),
   );
@@ -466,17 +483,21 @@ export function analyzeNewOrChangedActionSource(sourceText, baselineText, filePa
   return analyzeActionSource(sourceText, filePath, { actionNames: changedNames });
 }
 
-function actionFiles(root) {
+export function actionFiles(root) {
   const found = [];
   const walk = directory => {
     if (!fs.existsSync(directory)) return;
     for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
       const fullPath = path.join(directory, entry.name);
-      if (entry.isDirectory()) walk(fullPath);
-      else if (entry.isFile() && entry.name === 'actions.ts') found.push(fullPath);
+      if (entry.isDirectory()) {
+        if (entry.name !== 'node_modules') walk(fullPath);
+      } else if (entry.isFile() && /\.(?:ts|tsx)$/.test(entry.name)) {
+        const sourceFile = parseSourceFile(fs.readFileSync(fullPath, 'utf8'), fullPath);
+        if (hasModuleLevelUseServer(sourceFile)) found.push(fullPath);
+      }
     }
   };
-  walk(path.join(root, 'src/features'));
+  walk(path.join(root, 'src'));
   walk(path.join(root, 'apps/admin/src'));
   return found.sort();
 }
@@ -559,6 +580,13 @@ function identifiersIn(node) {
 }
 
 function changedActionNames(currentText, baselineText, filePath) {
+  const currentSourceFile = parseSourceFile(currentText, filePath);
+  if (
+    hasModuleLevelUseServer(currentSourceFile) &&
+    (baselineText === undefined ||
+      !hasModuleLevelUseServer(parseSourceFile(baselineText, filePath)))
+  )
+    return new Set(actionDeclarations(currentSourceFile).map(action => action.name));
   const currentTexts = actionTextByName(currentText, filePath);
   const baselineTexts =
     baselineText === undefined ? new Map() : actionTextByName(baselineText, filePath);

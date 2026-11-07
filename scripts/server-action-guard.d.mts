@@ -18,6 +18,8 @@ export function analyzeNewOrChangedActionSource(
   filePath: string,
 ): ServerActionGuardFinding[];
 
+export function actionFiles(root: string): string[];
+
 export function scanRepository(
   root?: string,
   baseRef?: string,

@@ -15,21 +15,23 @@ export async function clientIp(): Promise<string> {
 }
 
 /**
- * False only when the database says this email or IP has had too many recent failures.
- * If the limiter itself is unavailable (for example the migration is not applied yet)
- * this fails open: the TOTP requirement, not the limiter, is the primary control and
- * the sole administrator must not be locked out by an infrastructure error.
+ * Returns false when the database says this email or IP has had too many recent
+ * failures, and null when the limiter is unavailable or returns an invalid result.
  */
-export async function loginAllowed(db: SupabaseClient, email: string, ip: string) {
+export async function loginAllowed(
+  db: SupabaseClient,
+  email: string,
+  ip: string,
+): Promise<boolean | null> {
   try {
     const { data, error } = await db.rpc('admin_login_allowed', { p_email: email, p_ip: ip });
     if (error) {
       console.error('admin login throttle unavailable');
-      return true;
+      return null;
     }
-    return data !== false;
+    return typeof data === 'boolean' ? data : null;
   } catch {
-    return true;
+    return null;
   }
 }
 
