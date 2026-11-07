@@ -286,6 +286,24 @@ jobs:
           throw new Error(`delete-account worker did not return its handler-level unauthenticated response (last result: ${lastStatus}).`);
           NODE
 
+      # INTENTIONALLY UNMERGED DEMO: create two independent browser failures
+      # on this disposable CI stack only. The branch and fixed loopback target
+      # guards prevent applying these controls elsewhere.
+      - name: Apply issue 138 browser negative controls
+        run: |
+          set -eu
+          if [[ "${GITHUB_ACTIONS:-}" != "true" ]]; then
+            echo "Negative controls require GitHub Actions." >&2
+            exit 1
+          fi
+          if [[ "${GITHUB_EVENT_NAME:-}" != "pull_request" || "${GITHUB_HEAD_REF:-}" != "test/negative-controls-138" ]]; then
+            echo "Negative controls are restricted to test/negative-controls-138." >&2
+            exit 1
+          fi
+          target='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
+          psql "$target" --no-psqlrc --set ON_ERROR_STOP=1 \
+            --file tests/e2e/support/issue-138-negative-controls.sql
+
       - name: Build and run browser workflows
         env:
           E2E_SUPABASE_WORKDIR: .
