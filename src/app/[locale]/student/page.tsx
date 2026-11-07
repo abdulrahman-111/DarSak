@@ -1,7 +1,8 @@
+import { Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowUpRight, CalendarDays, Clock3, FolderOpen, ArrowRight } from 'lucide-react';
-import { ensureLocale } from '@/i18n/config';
+import { ensureLocale, type Locale } from '@/i18n/config';
 import { studentDashboard } from '@/features/student/data';
 import { requireViewer } from '@/components/platform/access';
 import {
@@ -19,22 +20,21 @@ import {
 import { pluralize } from '@/lib/plural';
 import { meetingLinks } from '@/features/lessons/data';
 import { MeetingJoin } from '@/features/lessons/meeting-join';
-export default async function StudentDashboard({
-  params,
+async function DashboardSummary({
+  locale,
+  me,
+  now,
 }: {
-  params: Promise<{ locale: string }>;
+  locale: Locale;
+  me: Awaited<ReturnType<typeof requireViewer>>;
+  now: Date;
 }) {
-  const { locale: raw } = await params,
-    locale = ensureLocale(raw),
-    ar = locale === 'ar',
-    me = await requireViewer(locale, 'student'),
-    data = await studentDashboard(locale);
-  const now = new Date(),
-    week = normalizeTimetableWeek(null, now),
+  const ar = locale === 'ar';
+  const data = await studentDashboard(locale, now);
+  const week = normalizeTimetableWeek(null, now),
     days = timetableDayDates(week.weekStart),
     next = data.lessons[0],
     live = next && new Date(next.starts_at) <= now && new Date(next.ends_at) > now;
-  const meetingUrls = next ? await meetingLinks(me.db, [next.id]) : {};
   const nextGroup = next
     ? Array.isArray(next.group)
       ? next.group[0]?.name
@@ -46,19 +46,7 @@ export default async function StudentDashboard({
   const lessonGroup = (lesson: (typeof data.lessons)[number]) =>
     Array.isArray(lesson.group) ? lesson.group[0]?.name : lesson.group?.name;
   return (
-    <div className="student-workspace screen-enter">
-      <StudentHeading
-        eyebrow={new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
-          dateStyle: 'full',
-          timeZone: 'Africa/Cairo',
-        }).format(now)}
-        title={ar ? `أهلاً، ${firstName}` : `Welcome back, ${firstName}`}
-        description={
-          ar
-            ? 'مساحة واضحة لمتابعة تعلمك، خطوة بخطوة.'
-            : 'A little clarity for your learning day. Everything you need, easy to find.'
-        }
-      />
+    <>
       {data.error ? (
         <section className={studentCard}>
           <p role="alert" className="text-sm text-danger">
@@ -133,12 +121,9 @@ export default async function StudentDashboard({
                             : 'Open lesson & get ready'}
                         <ArrowRight size={17} className="shrink-0 rtl:rotate-180" />
                       </Link>
-                      <MeetingJoin
-                        locale={locale}
-                        lesson={next}
-                        meetingUrl={meetingUrls[next.id] ?? null}
-                        initialNow={now.getTime()}
-                      />
+                      <Suspense fallback={null}>
+                        <OptionalMeetingJoin locale={locale} me={me} lesson={next} now={now} />
+                      </Suspense>
                     </>
                   ) : (
                     <>
@@ -441,6 +426,77 @@ export default async function StudentDashboard({
           </div>
         </>
       )}
+    </>
+  );
+}
+
+async function OptionalMeetingJoin({
+  locale,
+  me,
+  lesson,
+  now,
+}: {
+  locale: Locale;
+  me: Awaited<ReturnType<typeof requireViewer>>;
+  lesson: NonNullable<Awaited<ReturnType<typeof studentDashboard>>['lessons'][number]>;
+  now: Date;
+}) {
+  let meetingUrl: string | null = null;
+  try {
+    meetingUrl = (await meetingLinks(me.db, [lesson.id]))[lesson.id] ?? null;
+  } catch {
+    /* The lesson remains useful without an optional join link. */
+  }
+  return (
+    <MeetingJoin
+      locale={locale}
+      lesson={lesson}
+      meetingUrl={meetingUrl}
+      initialNow={now.getTime()}
+    />
+  );
+}
+
+export default async function StudentDashboard({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale: raw } = await params;
+  const locale = ensureLocale(raw);
+  const me = await requireViewer(locale, 'student');
+  const now = new Date();
+  const ar = locale === 'ar';
+  return (
+    <div className="student-workspace screen-enter">
+      <StudentHeading
+        eyebrow={new Intl.DateTimeFormat(ar ? 'ar-EG' : 'en-GB', {
+          dateStyle: 'full',
+          timeZone: 'Africa/Cairo',
+        }).format(now)}
+        title={
+          ar
+            ? `أهلاً، ${me.fullName.trim().split(/\s+/)[0] || me.fullName}`
+            : `Welcome back, ${me.fullName.trim().split(/\s+/)[0] || me.fullName}`
+        }
+        description={
+          ar
+            ? 'مساحة واضحة لمتابعة تعلمك، خطوة بخطوة.'
+            : 'A little clarity for your learning day. Everything you need, easy to find.'
+        }
+      />
+      <Suspense
+        fallback={
+          <section
+            className={studentCard}
+            aria-label={ar ? 'جارٍ تحميل مساحة التعلم' : 'Loading learning space'}
+          >
+            <div className="h-40 animate-pulse rounded-2xl bg-cream" />
+          </section>
+        }
+      >
+        <DashboardSummary locale={locale} me={me} now={now} />
+      </Suspense>
     </div>
   );
 }

@@ -9,7 +9,8 @@ export type ActorName =
   | 'ratingsTeacher'
   | 'ratingsStudent'
   | 'meetingTeacher'
-  | 'meetingStudent';
+  | 'meetingStudent'
+  | 'viewerStudent';
 
 const projectIndexes: Record<string, number> = {
   'en-desktop': 1,
@@ -30,6 +31,7 @@ const actorNames: ActorName[] = [
   'ratingsStudent',
   'meetingTeacher',
   'meetingStudent',
+  'viewerStudent',
 ];
 const actorIndexes: Record<ActorName, number> = {
   teacher: 1,
@@ -43,6 +45,7 @@ const actorIndexes: Record<ActorName, number> = {
   ratingsStudent: 10,
   meetingTeacher: 11,
   meetingStudent: 12,
+  viewerStudent: 13,
 };
 const password = 'E2E-local-only-2026!';
 

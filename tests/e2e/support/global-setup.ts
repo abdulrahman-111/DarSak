@@ -15,6 +15,7 @@ const actors: ActorName[] = [
   'ratingsStudent',
   'meetingTeacher',
   'meetingStudent',
+  'viewerStudent',
 ];
 
 export default async function globalSetup(config: FullConfig) {

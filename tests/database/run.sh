@@ -70,6 +70,7 @@ fixtures=(
   tests/database/group_learning_details.sql
   tests/database/unified_group_details.sql
   tests/database/student_class_workspace.sql
+  tests/database/student_class_page_reads.sql
   tests/database/attended_feedback.sql
   tests/database/feedback_prompt_notifications.sql
   tests/database/teacher_ratings.sql

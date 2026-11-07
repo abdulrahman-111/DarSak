@@ -144,3 +144,60 @@ for (const fixture of fixtures) {
     assert.ok(!sql.includes('undefined'));
   });
 }
+
+test('student recommendation fixture matches the canonical Mathematics subject label', () => {
+  const sql = seedSql('en-desktop', 1);
+  assert.ok(
+    sql.includes("set interests=array['Mathematics'],learning_goal='Practice mathematics'"),
+    'the student matching signal uses the catalog subject label read by the matching RPC',
+  );
+  assert.ok(
+    sql.includes("'E2E meeting links group'"),
+    'an un-enrolled published Mathematics group is available',
+  );
+});
+
+for (const fixture of fixtures) {
+  test(`viewer badge actor is isolated from the shared student for ${fixture.project}`, () => {
+    const sql = seedSql(fixture.project, fixture.index);
+    const projectIndex = String(fixture.index).padStart(4, '0');
+    const viewerStudentId = `e2e00000-0000-4000-8000-${projectIndex}00000013`;
+    const unreadId = `e2e00004-0000-4000-8000-${projectIndex}00000013`;
+    const groupId = `e2e00001-0000-4000-8000-${projectIndex}00000000`;
+    const usersBlock = sql.match(
+      /insert into auth\.users[^]*? values ([^]*?);\ninsert into auth\.identities/,
+    )?.[1];
+
+    assert.ok(usersBlock, 'auth.users insert is present');
+    const viewerRow = usersBlock.split(',\n').find(row => row.includes(`'${viewerStudentId}'`));
+    assert.ok(viewerRow, 'viewerStudent has a distinct auth.users row at actor index 13');
+    assert.ok(viewerRow.includes(`viewer-student+${fixture.project}@e2e.invalid`));
+    assert.ok(viewerRow.includes('"requested_role":"student"'));
+    assert.ok(viewerRow.includes('E2E Viewer Student'));
+    assert.ok(
+      sql.includes(`values('${groupId}','${viewerStudentId}','accepted')`),
+      'viewerStudent is accepted into the base Mathematics group',
+    );
+    assert.ok(
+      sql.includes(
+        `values('${unreadId}','${viewerStudentId}','lesson_rescheduled','e2e:${fixture.project}:viewer-unread'`,
+      ),
+      'the known unread notification is addressed to viewerStudent at fixed actor index 13',
+    );
+    assert.ok(
+      sql.includes(
+        `values('e2e00004-0000-4000-8000-${projectIndex}00000001','e2e00000-0000-4000-8000-${projectIndex}00000002','lesson_rescheduled','e2e:${fixture.project}:student-unread'`,
+      ),
+      'the existing shared student notification remains independently seeded',
+    );
+    assert.ok(
+      !sql.includes(
+        `'${viewerStudentId}','lesson_rescheduled','e2e:${fixture.project}:student-unread'`,
+      ),
+    );
+    assert.ok(
+      !sql.includes(`'e2e00004-0000-4000-8000-${projectIndex}00000001','${viewerStudentId}'`),
+    );
+    assert.ok(!sql.includes('undefined'));
+  });
+}

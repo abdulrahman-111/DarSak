@@ -23,7 +23,8 @@ async function actorPage(
     | 'ratingsTeacher'
     | 'ratingsStudent'
     | 'meetingTeacher'
-    | 'meetingStudent',
+    | 'meetingStudent'
+    | 'viewerStudent',
 ): Promise<ActorPage> {
   const mobile = projectName.endsWith('mobile');
   const context = await browser.newContext({
