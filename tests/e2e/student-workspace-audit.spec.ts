@@ -77,9 +77,10 @@ test('settled student workspace routes stay navigable and fit the viewport', asy
         );
         await expect(studentPage.getByRole('heading', { name: title, exact: true })).toBeVisible();
         await prepareScreenshot(studentPage, locale, mobile);
-        const classShot = await studentPage.screenshot({ fullPage: true, animations: 'disabled' });
+        const classShot = testInfo.outputPath(`${testInfo.project.name}-class-${view}.png`);
+        await studentPage.screenshot({ path: classShot, fullPage: true, animations: 'disabled' });
         await testInfo.attach(`${testInfo.project.name}-class-${view}`, {
-          body: classShot,
+          path: classShot,
           contentType: 'image/png',
         });
       }
@@ -167,11 +168,14 @@ test('settled student workspace routes stay navigable and fit the viewport', asy
     );
     results.push({ route: route.path(locale), width: dimensions.width, height: dimensions.height });
     await prepareScreenshot(studentPage, locale, mobile);
-    const screenshot = await studentPage.screenshot({ fullPage: true, animations: 'disabled' });
+    const screenshot = testInfo.outputPath(
+      `${testInfo.project.name}-${route.path(locale).split('/').filter(Boolean).slice(1).join('-') || 'dashboard'}.png`,
+    );
+    await studentPage.screenshot({ path: screenshot, fullPage: true, animations: 'disabled' });
     await testInfo.attach(
       `${testInfo.project.name}-${route.path(locale).split('/').filter(Boolean).slice(1).join('-') || 'dashboard'}`,
       {
-        body: screenshot,
+        path: screenshot,
         contentType: 'image/png',
       },
     );

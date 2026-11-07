@@ -300,7 +300,8 @@ jobs:
         with:
           name: student-workspace-audit-${{ github.run_id }}-${{ github.run_attempt }}
           path: .playwright/results/**/attachments/*.png
-          if-no-files-found: ignore
+          if-no-files-found: error
+          include-hidden-files: true
           retention-days: 7
 
       - name: Upload browser failure artifacts
