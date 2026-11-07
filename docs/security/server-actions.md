@@ -1,8 +1,8 @@
 # Server action guard scan
 
 `npm run actions:guard -- --base origin/main` inventories directly exported functions and
-function-valued exports in
-`src/features/**/actions.ts` and `apps/admin/src/**/actions.ts`. It checks new or changed exported
+function-valued exports in TypeScript and TSX modules under `src/` and `apps/admin/src/` that begin
+with a module-level `'use server'` directive. It checks new or changed exported
 actions against the selected base: a recognized authentication guard must appear before direct
 database access, and a Zod-style `.parse()` or `.safeParse()` must appear before direct table
 mutations (`insert`, `update`, `delete`, or `upsert`). CI fetches the pull request base and runs the
@@ -10,6 +10,7 @@ same scan. Referenced imports are part of the action baseline, so changing a hel
 rechecks that action. The unit tests include new-export unguarded and unvalidated negative controls,
 so either shape fails the scan.
 
+When an existing module gains its `'use server'` directive, all of its exported actions are checked.
 Existing exported actions that have not changed are inventoried but not rechecked, which keeps
 this incremental guard from turning current legacy findings into unrelated failures. The scan does
 not claim that the existing action inventory is fully compliant.

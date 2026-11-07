@@ -19,8 +19,9 @@ import { loginAction } from '@admin/app/[locale]/login/actions';
 
 const userId = '44444444-4444-4444-8444-444444444444';
 type Options = {
-  allowed?: boolean | null;
+  allowed?: unknown;
   throttleError?: boolean;
+  throttleThrows?: boolean;
   signInError?: boolean;
   role?: string;
   current?: 'aal1' | 'aal2';
@@ -31,19 +32,21 @@ function setup(options: Options = {}) {
   const {
     allowed = true,
     throttleError = false,
+    throttleThrows = false,
     signInError = false,
     role = 'admin',
     current = 'aal1',
     next = 'aal1',
     aalError = false,
   } = options;
-  const rpc = vi.fn(async (name: string) =>
-    name === 'admin_login_allowed'
+  const rpc = vi.fn(async (name: string) => {
+    if (name === 'admin_login_allowed' && throttleThrows) throw new Error('RPC failed');
+    return name === 'admin_login_allowed'
       ? throttleError
         ? { data: null, error: { message: 'missing function' } }
         : { data: allowed, error: null }
-      : { data: null, error: null },
-  );
+      : { data: null, error: null };
+  });
   const signInWithPassword = vi.fn(async () => ({
     data: {},
     error: signInError ? { message: 'Invalid login credentials' } : null,
@@ -148,10 +151,34 @@ describe('admin login flow', () => {
     });
   });
 
-  it('fails open when the limiter is unavailable so the admin is not locked out', async () => {
+  it('fails closed with an unavailable error when the limiter reports an error', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    setup({ throttleError: true, current: 'aal2', next: 'aal2' });
+    const { signInWithPassword } = setup({ throttleError: true });
+    expect(await run()).toBe('REDIRECT:/en/login?error=unavailable');
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['throws', { throttleThrows: true }],
+    ['returns null', { allowed: null }],
+    ['returns an object', { allowed: { allowed: true } }],
+    ['returns a string', { allowed: 'true' }],
+  ])('fails closed when the limiter %s', async (_label, options) => {
+    const { signInWithPassword } = setup(options);
+    expect(await run()).toBe('REDIRECT:/en/login?error=unavailable');
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it('continues to generic credentials error when limiter returns false', async () => {
+    const { signInWithPassword } = setup({ allowed: false });
+    expect(await run()).toBe('REDIRECT:/en/login?error=credentials');
+    expect(signInWithPassword).not.toHaveBeenCalled();
+  });
+
+  it('allows sign-in only when limiter returns true', async () => {
+    const { signInWithPassword } = setup({ allowed: true, current: 'aal2', next: 'aal2' });
     expect(await run()).toBe('REDIRECT:/en/admin');
+    expect(signInWithPassword).toHaveBeenCalledOnce();
   });
 
   it('rejects empty credentials before touching Supabase', async () => {

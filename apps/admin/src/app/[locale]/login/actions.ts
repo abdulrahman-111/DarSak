@@ -23,7 +23,9 @@ export async function loginAction(formData: FormData) {
   // Blocked and wrong-password attempts show the same message, so the response
   // does not reveal whether the account exists or has been throttled.
   const ip = await clientIp();
-  if (!(await loginAllowed(db, email, ip))) redirect(`/${locale}/login?error=credentials`);
+  const allowed = await loginAllowed(db, email, ip);
+  if (allowed === null) redirect(`/${locale}/login?error=unavailable`);
+  if (allowed !== true) redirect(`/${locale}/login?error=credentials`);
 
   const { error } = await db.auth.signInWithPassword({ email, password });
   if (error) {

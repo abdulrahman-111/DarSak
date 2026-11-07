@@ -1,14 +1,90 @@
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   analyzeActionSource,
   analyzeNewOrChangedActionSource,
+  actionFiles,
+  scanRepository,
 } from '../../scripts/server-action-guard.mjs';
 
 const fixture = (name: string) =>
   readFileSync(new URL(`../fixtures/server-action-guard/${name}.fixture`, import.meta.url), 'utf8');
 
 describe('server action guard scan', () => {
+  it('discovers modules by top-level use server directives and ignores other source files', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'server-action-guard-'));
+    const put = (relative: string, source: string) => {
+      const file = path.join(root, relative);
+      mkdirSync(path.dirname(file), { recursive: true });
+      writeFileSync(file, source);
+    };
+    try {
+      put(
+        'src/features/example/anything.tsx',
+        `// comment\n/* another */\n'use strict';\n'use server';\nexport async function action() {}`,
+      );
+      put('src/features/example/client.ts', `'use client';\nexport async function action() {}`);
+      put('src/features/example/nested.ts', `function local() { 'use server'; }`);
+      put('src/features/example/no-directive.ts', `export async function action() {}`);
+      put(
+        'src/features/example/late-directive.ts',
+        `import { x } from './x';\n'use server';\nexport async function action() {}`,
+      );
+      put('src/node_modules/pkg/action.ts', `'use server'; export async function action() {}`);
+      put(
+        'apps/admin/src/features/arbitrary-name.ts',
+        `\n'use server'\nexport async function action() {}`,
+      );
+
+      expect(actionFiles(root).map(file => path.relative(root, file))).toEqual([
+        'apps/admin/src/features/arbitrary-name.ts',
+        'src/features/example/anything.tsx',
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('runs the incremental guard on discovered arbitrary-name modules', () => {
+    const root = mkdtempSync(path.join(tmpdir(), 'server-action-guard-'));
+    const file = path.join(root, 'src', 'features', 'example', 'submit.tsx');
+    mkdirSync(path.dirname(file), { recursive: true });
+    writeFileSync(
+      file,
+      `'use server';\nexport async function submit() { const db = await createClient(); return db.from('items').select('id'); }`,
+    );
+    try {
+      const result = scanRepository(root, 'missing-base');
+      expect(result.findings).toContainEqual(
+        expect.objectContaining({
+          file: 'src/features/example/submit.tsx',
+          action: 'submit',
+          rule: 'authorization-before-database',
+        }),
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it('checks existing exports when a module gains its use server directive', () => {
+    const baseline = `export async function existingAction() { const db = await createClient(); return db.from('items').select('id'); }`;
+    const findings = analyzeNewOrChangedActionSource(
+      `/* module directive */\n'use server';\n${baseline}`,
+      baseline,
+      'src/features/example/arbitrary.ts',
+    );
+
+    expect(findings).toContainEqual(
+      expect.objectContaining({
+        action: 'existingAction',
+        rule: 'authorization-before-database',
+      }),
+    );
+  });
+
   it('detects a newly exported unguarded action', () => {
     const baseline = `export async function existingAction() { return 'ok'; }`;
     const findings = analyzeNewOrChangedActionSource(

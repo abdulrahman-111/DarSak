@@ -10,9 +10,14 @@ and deployed configuration are not inferred from local code or mocks.
   `apps/admin/src/lib/login-throttle.ts`. Migration
   `supabase/migrations/20261028153000_admin_login_attempts.sql` stores SHA-256
   email/IP hashes and defines public callable throttle functions. The admin
-  README documents the 5 failures per email and 20 per IP per 15 minutes limits,
-  possible temporary account lockout, and fail-open behavior if the functions
-  are missing; TOTP remains separately required.
+  README documents the 5 failures per email and 20 per IP per 15 minutes limits
+  and possible temporary account lockout. The action permits password sign-in
+  only when the RPC returns the boolean `true`; a blocked result uses the same
+  generic credentials response as a wrong password, while RPC errors, thrown
+  calls, and malformed results return the localized unavailable response. The
+  throttle remains best-effort against direct public-key RPC calls: the functions
+  are publicly callable, and concurrent failure recording is not an atomic
+  per-attempt gate. TOTP remains separately required.
 - **Problem reports:** `src/features/reports/actions.ts` requires a signed-in,
   active student or teacher and validates bounded subject, description, and page
   path input. `supabase/migrations/20261016141942_problem_reports.sql` serializes
