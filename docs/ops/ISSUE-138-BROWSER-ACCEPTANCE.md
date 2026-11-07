@@ -45,7 +45,7 @@ The `an outsider cannot see another student’s class, lesson, or private resour
 | Teaching access remains available in the approved free phase and withdrawal blocks protected reads and writes          | `tests/e2e/teacher-access.spec.ts`                                  |
 | Browser coverage runs in English and Arabic on desktop and mobile, against the production build, with retries disabled | Four Playwright projects in CI; 1280×900 desktop and 390×844 mobile |
 
-At source commit `95e0770`, the clean browser CI run [42371237124](https://github.com/DarSak-seo-entities/actions/runs/42371237124) recorded 112 passing browser tests with zero retries across those four projects. Record the exact head commit's CI result in the Issue 138 closing comment; do not substitute this baseline run for final-head evidence.
+The clean browser CI run [42371237124](https://github.com/abdulrahman-111/DarSak/actions/runs/42371237124) used head commit `b79ecfd`, whose tree is identical to the source commit `95e0770` merged into `main`. It recorded 112 passing browser tests with zero retries across the four projects. Record the exact head commit's CI result in the Issue 138 closing comment; do not substitute this baseline run for final-head evidence.
 
 Signup and production email delivery remain excluded under #90 and #143. Private upload/download acceptance remains excluded while uploads are disabled; the current cases cover links and authorization, with enabled-upload coverage tracked by #159. Axe, Lighthouse, CSP, and the separately tracked work in #139, #140, #151, and #153 remain outside this issue's acceptance scope.
 
