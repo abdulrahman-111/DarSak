@@ -37,6 +37,23 @@ async function expectKnownUnreadCount(page: import('@playwright/test').Page, pro
   }
 }
 
+async function expectUnknownUnreadCount(page: import('@playwright/test').Page, project: string) {
+  if (project.endsWith('mobile')) {
+    const more = page.locator(
+      '[data-mobile-workspace-nav] button[aria-controls="mobile-workspace-more"]',
+    );
+    await expect(more).not.toContainText(/\d/);
+    await more.click();
+    await expect(
+      page.locator('#mobile-workspace-more a[href$="/notifications"] span[aria-label]'),
+    ).toHaveCount(0);
+    await page.keyboard.press('Escape');
+  } else {
+    const notification = page.locator('aside a[href$="/notifications"] span[aria-label]');
+    await expect(notification).toHaveCount(0);
+  }
+}
+
 async function expectSettledStudentShell(page: import('@playwright/test').Page, locale: string) {
   await expect(page.locator('[data-header-account-skeleton="true"]')).toHaveCount(0);
   await expect(
@@ -59,12 +76,25 @@ test('cold 503 viewer response keeps the real student workspace usable', async (
   const project = test.info().project.name;
   const locale = localeFor(project);
   const context = await fixtureContext(browser, project, 'viewerStudent');
+  const failViewer = (route: import('@playwright/test').Route) =>
+    route.fulfill({ status: 503, body: 'unavailable' });
   try {
     const page = await context.newPage();
-    await page.route('**/api/viewer', route => route.fulfill({ status: 503, body: 'unavailable' }));
+    await page.route('**/api/viewer', failViewer);
+    const failedRead = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer' && response.status() === 503;
+    });
     await page.goto(`/${locale}/student/classes`);
+    expect((await failedRead).status()).toBe(503);
     await expect(page.getByText('E2E mathematics group', { exact: true })).toBeVisible();
     await expectSettledStudentShell(page, locale);
+    await expectUnknownUnreadCount(page, project);
+    await page.unroute('**/api/viewer', failViewer);
+    const recoveredRead = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer' && response.status() === 200;
+    });
+    await page.reload();
+    expect((await recoveredRead).status()).toBe(200);
     await expectKnownUnreadCount(page, project);
   } finally {
     await context.close();
@@ -77,12 +107,24 @@ test('cold network abort falls back to the current server-authorized student she
   const project = test.info().project.name;
   const locale = localeFor(project);
   const context = await fixtureContext(browser, project, 'viewerStudent');
+  const abortViewer = (route: import('@playwright/test').Route) => route.abort();
   try {
     const page = await context.newPage();
-    await page.route('**/api/viewer', route => route.abort());
+    await page.route('**/api/viewer', abortViewer);
+    const failedRead = page.waitForEvent('requestfailed', request => {
+      return new URL(request.url()).pathname === '/api/viewer';
+    });
     await page.goto(`/${locale}/student/classes`);
+    expect(new URL((await failedRead).url()).pathname).toBe('/api/viewer');
     await expect(page.getByText('E2E mathematics group', { exact: true })).toBeVisible();
     await expectSettledStudentShell(page, locale);
+    await expectUnknownUnreadCount(page, project);
+    await page.unroute('**/api/viewer', abortViewer);
+    const recoveredRead = page.waitForResponse(response => {
+      return new URL(response.url()).pathname === '/api/viewer' && response.status() === 200;
+    });
+    await page.reload();
+    expect((await recoveredRead).status()).toBe(200);
     await expectKnownUnreadCount(page, project);
   } finally {
     await context.close();
