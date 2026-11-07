@@ -6,7 +6,11 @@ import {
   type AssistantRequest,
   type GroupDraft,
 } from './domain';
-import { ProviderSafetyBlockedError } from './provider-errors';
+import {
+  ProviderOutputValidationError,
+  ProviderQuotaError,
+  ProviderSafetyBlockedError,
+} from './provider-errors';
 
 const MODEL = 'gemini-3.5-flash-lite';
 const ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`;
@@ -95,28 +99,31 @@ function candidateText(payload: unknown): string {
   }
   if (!candidate || candidate.finishReason !== 'STOP') throw new Error('provider failure');
   const parts = candidate.content?.parts;
-  if (!Array.isArray(parts) || parts.length === 0) throw new Error('provider failure');
-  const text = parts
-    .map(part => {
-      if (!part || typeof part !== 'object' || Array.isArray(part))
-        throw new Error('provider failure');
-      const keys = Object.keys(part);
-      if (
-        !keys.includes('text') ||
-        keys.some(key => !['text', 'thoughtSignature', 'thought'].includes(key)) ||
-        keys.length > 3 ||
-        typeof (part as { text?: unknown }).text !== 'string' ||
-        ('thoughtSignature' in part &&
-          typeof (part as { thoughtSignature?: unknown }).thoughtSignature !== 'string') ||
-        ('thought' in part && (part as { thought?: unknown }).thought !== false)
-      ) {
-        throw new Error('provider failure');
-      }
-      return (part as { text: string }).text;
-    })
-    .join('');
-  if (!text) throw new Error('provider failure');
-  return text;
+  try {
+    if (!Array.isArray(parts) || parts.length === 0) throw new Error();
+    const text = parts
+      .map(part => {
+        if (!part || typeof part !== 'object' || Array.isArray(part)) throw new Error();
+        const keys = Object.keys(part);
+        if (
+          !keys.includes('text') ||
+          keys.some(key => !['text', 'thoughtSignature', 'thought'].includes(key)) ||
+          keys.length > 3 ||
+          typeof (part as { text?: unknown }).text !== 'string' ||
+          ('thoughtSignature' in part &&
+            typeof (part as { thoughtSignature?: unknown }).thoughtSignature !== 'string') ||
+          ('thought' in part && (part as { thought?: unknown }).thought !== false)
+        ) {
+          throw new Error();
+        }
+        return (part as { text: string }).text;
+      })
+      .join('');
+    if (!text) throw new Error();
+    return text;
+  } catch {
+    throw new ProviderOutputValidationError();
+  }
 }
 
 async function generate(
@@ -153,11 +160,13 @@ async function generate(
       signal: callerSignal ? AbortSignal.any([controller.signal, callerSignal]) : controller.signal,
     });
     if (!response.ok) {
+      const quotaError = response.status === 429;
       try {
         await response.body?.cancel();
       } catch {
         /* The provider may already have closed the body. */
       }
+      if (quotaError) throw new ProviderQuotaError();
       throw new Error('provider failure');
     }
     return candidateText(await boundedJson(response));
@@ -190,7 +199,11 @@ export async function generateChat(
     `${topics}${sessionContext}`,
     signal,
   );
-  return assistantChatTextSchema.parse(text);
+  try {
+    return assistantChatTextSchema.parse(text);
+  } catch {
+    throw new ProviderOutputValidationError();
+  }
 }
 
 export async function generateGroupDraft(
@@ -207,5 +220,9 @@ export async function generateGroupDraft(
     '',
     signal,
   );
-  return generatedGroupDraftSchema.parse(JSON.parse(raw));
+  try {
+    return generatedGroupDraftSchema.parse(JSON.parse(raw));
+  } catch {
+    throw new ProviderOutputValidationError();
+  }
 }

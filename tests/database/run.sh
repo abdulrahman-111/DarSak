@@ -76,6 +76,7 @@ fixtures=(
   tests/database/links_only_launch.sql
   tests/database/launch_health.sql
   tests/database/sandak_quota.sql
+  tests/database/sanad_provider_breaker.sql
   tests/database/signup_email_availability.sql
   tests/database/rls_auth_uid_initplan.sql
   tests/database/account_deletion.sql

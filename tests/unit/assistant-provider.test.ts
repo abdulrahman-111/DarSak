@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('server-only', () => ({}));
 import { generateChat, generateGroupDraft } from '@/features/assistant/provider';
-import { ProviderSafetyBlockedError } from '@/features/assistant/provider-errors';
+import {
+  ProviderQuotaError,
+  ProviderSafetyBlockedError,
+} from '@/features/assistant/provider-errors';
 
 const chat = {
   mode: 'chat' as const,
@@ -115,7 +118,19 @@ describe('Gemini provider response validation', () => {
           response({ candidates: [{ finishReason: 'STOP', content: { parts: [part] } }] }),
         ),
     );
-    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider failure');
+    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider output invalid');
+  });
+
+  it('types empty STOP candidate content as output validation, not provider outage', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          response({ candidates: [{ finishReason: 'STOP', content: { parts: [] } }] }),
+        ),
+    );
+    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider output invalid');
   });
 
   it('accepts ordinary text with Gemini thought signature metadata but never exposes the metadata', async () => {
@@ -150,7 +165,7 @@ describe('Gemini provider response validation', () => {
         }),
       ),
     );
-    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider failure');
+    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider output invalid');
   });
 
   it('rejects provider bodies over 64 KiB', async () => {
@@ -158,12 +173,22 @@ describe('Gemini provider response validation', () => {
     await expect(generateChat('server-secret', chat)).rejects.toThrow();
   });
 
-  it('turns provider HTTP failures into a generic rejected operation', async () => {
+  it('types HTTP 429 without retaining provider response details', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(new Response('private provider detail', { status: 429 })),
     );
-    await expect(generateChat('server-secret', chat)).rejects.toThrow('provider failure');
+    await expect(generateChat('server-secret', chat)).rejects.toBeInstanceOf(ProviderQuotaError);
+  });
+
+  it('keeps other HTTP failures generic, including ambiguous 403 billing responses', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response('private provider detail', { status: 403 })),
+    );
+    const failure = generateChat('server-secret', chat);
+    await expect(failure).rejects.not.toBeInstanceOf(ProviderQuotaError);
+    await expect(failure).rejects.not.toThrow('private provider detail');
   });
 
   it('aborts a stalled provider call at the fixed 20-second deadline', async () => {
