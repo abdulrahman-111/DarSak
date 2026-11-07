@@ -143,21 +143,169 @@ describe('student reads that no longer wait on each other', () => {
     expect(rpc.mock.calls[1][1].p_offset).toBe(20);
   });
 
-  it('starts overview section reads with the access check and drops them when access fails', async () => {
+  it('starts no section reads until access is granted', async () => {
     const started: string[] = [];
     const access = deferred<{ data: unknown; error: null }>();
+    const rpc = vi.fn(() => access.promise);
     const db = {
-      rpc: () => access.promise,
+      rpc,
       from: (table: string) => builder(table, started, () => ({ data: [], error: null })),
     };
     viewer(db);
     const pending = studentClassWorkspace('en', groupId, { view: 'overview' });
     await vi.waitFor(() =>
-      expect(started).toEqual(
-        expect.arrayContaining(['lessons', 'group_schedule_slots', 'group_pinned_announcements']),
-      ),
+      expect(rpc).toHaveBeenCalledWith('student_class_overview', expect.any(Object)),
     );
+    expect(started).toEqual([]);
     access.resolve({ data: null, error: null });
     expect(await pending).toBeNull();
+    expect(started).toEqual([]);
+  });
+
+  it('uses one bounded lessons projection and rejects malformed data', async () => {
+    const rpc = vi.fn(async () => ({
+      data: {
+        group: {
+          id: groupId,
+          name: 'G',
+          teacher_id: 't',
+          enrollment_id: 'e',
+          subject: {},
+          category: {},
+          attendance: {},
+        },
+        lessons: [],
+        attendance: [],
+        page: 1,
+        total: 0,
+      },
+      error: null,
+    }));
+    viewer({
+      rpc,
+      from: vi.fn(() => {
+        throw new Error('lessons view must not issue table reads');
+      }),
+    });
+    const result = await studentClassWorkspace('en', groupId, {
+      view: 'lessons',
+      lessons: 'history',
+      page: '4',
+    });
+    expect(rpc).toHaveBeenCalledTimes(1);
+    expect(rpc).toHaveBeenCalledWith(
+      'student_class_lessons_page',
+      expect.objectContaining({
+        p_group_id: groupId,
+        p_history: true,
+        p_page: 4,
+      }),
+    );
+    expect(result).toMatchObject({ page: 1, total: 0, lessons: [], attendance: [] });
+    rpc.mockResolvedValueOnce({ data: { group: {}, lessons: null }, error: null } as never);
+    await expect(studentClassWorkspace('en', groupId, { view: 'lessons' })).rejects.toThrow(
+      'Invalid class result',
+    );
+  });
+
+  it('treats only null RPC projections as access denial', async () => {
+    const rpc = vi.fn();
+    viewer({ rpc, from: vi.fn() });
+    for (const data of [null, undefined, false, 0, '']) {
+      rpc.mockResolvedValueOnce({ data, error: null });
+      if (data === null) {
+        expect(await studentClassWorkspace('en', groupId, { view: 'lessons' })).toBeNull();
+      } else {
+        await expect(studentClassWorkspace('en', groupId, { view: 'lessons' })).rejects.toThrow(
+          'Invalid class result',
+        );
+      }
+    }
+    for (const data of [null, undefined, false, 0, '']) {
+      rpc.mockResolvedValueOnce({ data, error: null });
+      if (data === null) {
+        expect(await studentClassWorkspace('en', groupId, { view: 'overview' })).toBeNull();
+      } else {
+        await expect(studentClassWorkspace('en', groupId, { view: 'overview' })).rejects.toThrow(
+          'Invalid class result',
+        );
+      }
+    }
+  });
+
+  it('rejects malformed slots and inconsistent lessons page bounds', async () => {
+    const group = {
+      id: groupId,
+      name: 'G',
+      teacher_id: 't',
+      enrollment_id: 'e',
+      subject: {},
+      category: {},
+      attendance: {},
+    };
+    const rpc = vi.fn();
+    viewer({ rpc, from: vi.fn() });
+    rpc.mockResolvedValueOnce({
+      data: { group, next: null, slots: [null], announcement: null },
+      error: null,
+    });
+    await expect(studentClassWorkspace('en', groupId)).rejects.toThrow('Invalid class result');
+
+    for (const [page, total, lessons] of [
+      [-1, 0, []],
+      [0, 0, []],
+      [2, 0, []],
+      [3, 40, []],
+      [1, -1, []],
+      [1, 1, Array(21).fill({})],
+    ] as const) {
+      rpc.mockResolvedValueOnce({
+        data: { group, lessons, attendance: [], page, total },
+        error: null,
+      });
+      await expect(studentClassWorkspace('en', groupId, { view: 'lessons' })).rejects.toThrow(
+        'Invalid class result',
+      );
+    }
+  });
+
+  it('accepts empty overview and lessons projections with canonical bounds', async () => {
+    const group = {
+      id: groupId,
+      name: 'G',
+      teacher_id: 't',
+      enrollment_id: 'e',
+      subject: {},
+      category: {},
+      attendance: {},
+    };
+    const rpc = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: { group, next: null, slots: [], announcement: null },
+        error: null,
+      })
+      .mockResolvedValueOnce({
+        data: { group, lessons: [], attendance: [], page: 1, total: 0 },
+        error: null,
+      });
+    viewer({ rpc, from: vi.fn() });
+    expect(await studentClassWorkspace('en', groupId)).toMatchObject({
+      slots: [],
+      next: undefined,
+    });
+    expect(await studentClassWorkspace('en', groupId, { view: 'lessons' })).toMatchObject({
+      lessons: [],
+      attendance: [],
+      page: 1,
+      total: 0,
+    });
+  });
+
+  it('does not call the database for an invalid class id', async () => {
+    const rpc = vi.fn();
+    viewer({ rpc, from: vi.fn() });
+    expect(await studentClassWorkspace('en', 'bad-id', { view: 'lessons' })).toBeNull();
+    expect(rpc).not.toHaveBeenCalled();
   });
 });

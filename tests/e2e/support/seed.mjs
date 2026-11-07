@@ -54,6 +54,8 @@ function fixtureData(projectName, projectIndex) {
     meetingGroupId: `00000145-0000-4000-8000-${String(projectIndex).padStart(4, '0')}00000001`,
     meetingLessonId: `00000145-0000-4000-8000-${String(projectIndex).padStart(4, '0')}00000002`,
     futureLessonId: uuid(2, projectIndex, 1),
+    bookingSlotId: uuid(7, projectIndex, 1),
+    bookingRequestId: uuid(7, projectIndex, 2),
     endedLessonId: uuid(2, projectIndex, 2),
     accessTeacherLessonId: uuid(2, projectIndex, 8),
     ratingsFirstLessonId: uuid(6, projectIndex, 1),
@@ -174,6 +176,7 @@ update public.teacher_applications set legacy_approved=true,status='approved',re
 select public.admin_decide_teacher_review(teacher_id,request_id,'approved',null) from public.teacher_review_state where teacher_id=${sqlLiteral(meetingTeacher.id)};
 update public.teacher_profiles set headline='Synthetic meeting links teacher' where id=${sqlLiteral(meetingTeacher.id)};
 update public.student_profiles set onboarding_required=false,onboarding_completed_at=now(),age_range='18_24',education_year='E2E Grade 12' where id in (${sqlLiteral(student.id)},${sqlLiteral(outsider.id)},${sqlLiteral(passwordStudent.id)},${sqlLiteral(notificationStudent.id)},${sqlLiteral(liveNotificationStudent.id)},${sqlLiteral(ratingsStudent.id)},${sqlLiteral(meetingStudent.id)});
+update public.student_profiles set interests=array['Mathematics'],learning_goal='Practice mathematics' where id=${sqlLiteral(student.id)};
 insert into public.teacher_specializations(teacher_id,offering_id)
 select ${sqlLiteral(teacher.id)},id from public.offerings where node_id='00000000-0000-0000-0000-000000000021' and subject_id='00000000-0000-0000-0000-000000000101' and owner_teacher_id is null;
 insert into public.teacher_specializations(teacher_id,offering_id)
@@ -231,6 +234,9 @@ insert into public.lesson_attendance(lesson_id,student_id,status,recorded_by) va
 (${sqlLiteral(data.ratingsSecondLessonId)},${sqlLiteral(ratingsStudent.id)},'absent',${sqlLiteral(ratingsTeacher.id)});
 insert into public.lesson_materials(lesson_id,kind,title,url,uploaded_by) values(${sqlLiteral(data.futureLessonId)},'link','E2E algebra resource','https://en.wikipedia.org/wiki/Elementary_algebra',${sqlLiteral(teacher.id)});
 insert into public.group_assignments(id,group_id,title,instructions,resource_url,due_at) values(${sqlLiteral(data.assignmentId)},${sqlLiteral(data.groupId)},'E2E algebra assignment','Complete the practice questions.','https://en.wikipedia.org/wiki/Algebra',now()+interval '14 days');
+insert into public.booking_slots(id,group_id,teacher_id,starts_at,ends_at) values(${sqlLiteral(data.bookingSlotId)},${sqlLiteral(data.groupId)},${sqlLiteral(teacher.id)},now()+interval '10 days',now()+interval '10 days 1 hour');
+insert into public.booking_requests(id,slot_id,student_id,status) values(${sqlLiteral(data.bookingRequestId)},${sqlLiteral(data.bookingSlotId)},${sqlLiteral(student.id)},'pending');
+insert into public.user_notifications(id,recipient_id,kind,event_key,payload) values(${sqlLiteral(uuid(4, projectIndex, 1))},${sqlLiteral(student.id)},'lesson_rescheduled','e2e:${projectName}:student-unread',jsonb_build_object('title','E2E unread badge fixture'));
 insert into public.user_notifications(id,recipient_id,kind,event_key,payload) values(${sqlLiteral(data.notificationId)},${sqlLiteral(notificationStudent.id)},'lesson_rescheduled','e2e:${projectName}:lesson-notice',jsonb_build_object('lesson_id',${sqlLiteral(data.futureLessonId)},'group_id',${sqlLiteral(data.groupId)},'group_name','E2E mathematics group','title','E2E upcoming lesson','starts_at',now()+interval '7 days','ends_at',now()+interval '7 days 1 hour'));
 insert into dars_private.group_feedback(id,group_id,student_id,rating,comment,status)
 values(${sqlLiteral(data.feedbackId)},${sqlLiteral(data.groupId)},${sqlLiteral(notificationStudent.id)},5,'Synthetic approved feedback for the teacher reply browser workflow.','approved');

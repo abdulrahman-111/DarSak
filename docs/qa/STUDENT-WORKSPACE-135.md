@@ -1,0 +1,13 @@
+# Student workspace audit for #135
+
+**Status: local visual and interaction audit complete; CI remains the release gate.** Reviewed on 7 November 2026 from `fix/student-workspace-completion-135` against base `01e983002cab0ce19c1ddd15aa64731d54281531`. The local browser used existing dependencies (Next 16.4.3); CI uses the lockfile version, Next 16.4.4, and remains authoritative.
+
+Sol inspected all 28 final screenshots in `/tmp/student135-audit`: seven routes for each of `en-desktop`, `ar-desktop`, `en-mobile`, and `ar-mobile`. The route set covers dashboard, class overview, upcoming lessons, lesson history, bookings, recommendations, and timetable. Desktop used 1280×900; mobile used 390×844, touch, DPR 3. Screens follow `/tmp/student135-audit/[project]-[route].png`. The `student-workspace-audit-run-attempt7` CI artifact is reserved for immutable final CI screenshots, with seven-day retention.
+
+All 28 captures show the authenticated header; all 14 mobile captures show the fixed navigation. All four projects covered all seven routes with no page errors or horizontal overflow. Seeded bookings and recommendations are populated. Dashboard, class lesson views, and timetable show the expected seeded lesson and Cairo dates/times. Mobile More opens, focuses Close, closes with Escape, restores focus to More, and hides the menu. Focus samples show a visible 3px outline. A separate incomplete-profile browser probe confirms direct `/en/student` navigation redirects to `/en/account/setup` (`/tmp/student135-onboarding-result.json`). These are local findings; no CI pass is claimed here.
+
+The Arabic booking date input retains the browser-native `mm/dd/yyyy` placeholder under `ar-EG`; it remains usable and no clipping was observed. Track native date placeholder localization with the broader copy/ICU audit in #139. The history fixture is titled “completed” while its badge says “Scheduled”; its past `ends_at` places it in history, so this is fixture wording rather than a status finding.
+
+Source and unit evidence show class lessons reads reduced from three HTTP calls (four when clamped) to one RPC; overview reads reduced from four plus optional contacts to one RPC plus optional contacts. These are source-derived call counts, not seeded latency or p95 measurements.
+
+Final release still requires Terra review of the final browser changes, four-project Playwright CI and inspection of its immutable-head screenshots, SQL fixture and migration parity, and the remaining deployment gates. Do not infer production p95, Lighthouse scores, native VoiceOver/TalkBack behavior, measured contrast, or native-speaker review from this browser audit. Related #139, #152, and #153 remain open.

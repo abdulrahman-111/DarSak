@@ -144,3 +144,15 @@ for (const fixture of fixtures) {
     assert.ok(!sql.includes('undefined'));
   });
 }
+
+test('student recommendation fixture matches the canonical Mathematics subject label', () => {
+  const sql = seedSql('en-desktop', 1);
+  assert.ok(
+    sql.includes("set interests=array['Mathematics'],learning_goal='Practice mathematics'"),
+    'the student matching signal uses the catalog subject label read by the matching RPC',
+  );
+  assert.ok(
+    sql.includes("'E2E meeting links group'"),
+    'an un-enrolled published Mathematics group is available',
+  );
+});

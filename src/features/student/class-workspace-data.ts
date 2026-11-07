@@ -4,8 +4,53 @@ import { idSchema, type Locale } from './domain';
 import { classPage, classLessonView, classView, parseClassDetail } from './class-workspace-domain';
 import type { StudentResource } from './resource-domain';
 import { studentPageCount } from './pagination-domain';
-import { readCountedPage } from '@/lib/supabase/counted-page';
 import { getStudentAssignmentPage } from '@/features/assignments/data';
+
+type PageProjection = {
+  group: unknown;
+  lessons: Lesson[];
+  attendance: { lesson_id: string; status: string }[];
+  page: number;
+  total: number;
+};
+type OverviewProjection = {
+  group: unknown;
+  next: Lesson | null;
+  slots: Slot[];
+  announcement: { body: string; edited_at: string } | null;
+};
+
+function isLesson(value: unknown): value is Lesson {
+  if (!value || typeof value !== 'object') return false;
+  const lesson = value as Partial<Lesson>;
+  return (
+    typeof lesson.id === 'string' &&
+    typeof lesson.group_id === 'string' &&
+    typeof lesson.title === 'string' &&
+    typeof lesson.starts_at === 'string' &&
+    typeof lesson.ends_at === 'string' &&
+    typeof lesson.status === 'string'
+  );
+}
+
+function isSlot(value: unknown): value is Slot {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const slot = value as Partial<Slot>;
+  return (
+    typeof slot.id === 'string' &&
+    typeof slot.group_id === 'string' &&
+    Number.isInteger(slot.weekday) &&
+    slot.weekday! >= 0 &&
+    slot.weekday! <= 6 &&
+    typeof slot.start_time === 'string' &&
+    typeof slot.end_time === 'string' &&
+    typeof slot.timezone === 'string'
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object' && !Array.isArray(value);
+}
 
 export async function studentClassWorkspace(
   locale: Locale,
@@ -16,85 +61,96 @@ export async function studentClassWorkspace(
   if (!idSchema.safeParse(id).success) return null;
   const view = classView(query.view),
     requestedPage = classPage(query.page),
-    lessonView = classLessonView(query.lessons),
-    now = new Date().toISOString();
-  // The overview RPC is the access check, but the section reads below are scoped by RLS to the
-  // caller as well, so the ones that only need the group id start together with it instead of
-  // after it. Their results are discarded when the class is not visible to this student.
-  const overviewPromise = me.db.rpc('student_class_detail', { p_group_id: id });
-  // Each section loads only the bounded data it needs. No public discovery lookup.
-  const nextPromise =
-    view === 'overview'
-      ? me.db
-          .from('lessons')
-          .select('id,group_id,title,starts_at,ends_at,status')
-          .eq('group_id', id)
-          .eq('status', 'scheduled')
-          .gt('ends_at', now)
-          .order('starts_at')
-          .order('id')
-          .limit(1)
-      : Promise.resolve(null);
-  const slotsPromise =
-    view === 'overview'
-      ? me.db
-          .from('group_schedule_slots')
-          .select('id,group_id,weekday,start_time,end_time,timezone')
-          .eq('group_id', id)
-          .order('weekday')
-          .order('start_time')
-          .limit(100)
-      : Promise.resolve(null);
-  const announcementPromise =
-    view === 'overview'
-      ? me.db
-          .from('group_pinned_announcements')
-          .select('body,edited_at')
-          .eq('group_id', id)
-          .maybeSingle()
-      : Promise.resolve(null);
-  const lessonsPromise =
-    view === 'lessons'
-      ? readCountedPage(requestedPage, 20, (p: number) => {
-          let q = me.db
-            .from('lessons')
-            .select('id,group_id,title,starts_at,ends_at,status,notes', { count: 'exact' })
-            .eq('group_id', id);
-          q = lessonView === 'history' ? q.lt('ends_at', now) : q.gte('ends_at', now);
-          return q
-            .order('starts_at', { ascending: lessonView !== 'history' })
-            .order('id')
-            .range((p - 1) * 20, p * 20 - 1);
-        })
-      : Promise.resolve(null);
-  // Never leave an early read unobserved if the access check fails first.
-  for (const early of [nextPromise, slotsPromise, announcementPromise, lessonsPromise])
-    Promise.resolve(early).catch(() => undefined);
-  const overview = await overviewPromise;
-  if (overview.error) throw new Error('Student class could not be loaded');
-  if (!overview.data) return null;
-  const group = parseClassDetail(overview.data);
-  if (!group) throw new Error('Invalid class result');
-  let lessons: Lesson[] = [],
-    resources: StudentResource[] = [],
-    assignments: Awaited<ReturnType<typeof getStudentAssignmentPage>>['rows'] = [],
-    page = requestedPage,
-    total = 0,
-    error = false;
+    lessonView = classLessonView(query.lessons);
+  const now = new Date().toISOString();
+  let groupValue: unknown;
+  let next: Lesson | undefined;
+  let slots: Slot[] = [];
+  let announcement: OverviewProjection['announcement'] = null;
+  let lessons: Lesson[] = [];
+  let attendance: PageProjection['attendance'] = [];
+  let page = requestedPage;
+  let total = 0;
+  let error = false;
+
   if (view === 'lessons') {
-    const counted = (await lessonsPromise)!;
-    page = counted.page;
-    const result = counted.result;
-    total = result.count ?? 0;
-    lessons = (result.data ?? []) as Lesson[];
-    error = !!result.error || result.count == null;
-  } else if (view === 'materials') {
-    const fetch = (p: number) =>
+    const response = await me.db.rpc('student_class_lessons_page', {
+      p_group_id: id,
+      p_history: lessonView === 'history',
+      p_page: requestedPage,
+      p_now: now,
+    });
+    if (response.error) throw new Error('Student class could not be loaded');
+    const projection: unknown = response.data;
+    if (projection === null) return null;
+    if (
+      !isRecord(projection) ||
+      !projection.group ||
+      !Array.isArray(projection.lessons) ||
+      projection.lessons.length > 20 ||
+      !projection.lessons.every(isLesson) ||
+      !Array.isArray(projection.attendance) ||
+      !projection.attendance.every(
+        item => item && typeof item.lesson_id === 'string' && typeof item.status === 'string',
+      ) ||
+      projection.attendance.length > 20 ||
+      !Number.isSafeInteger(projection.page) ||
+      (projection.page as number) < 1 ||
+      (projection.page as number) > 50000 ||
+      !Number.isSafeInteger(projection.total) ||
+      (projection.total as number) < 0 ||
+      (projection.page as number) !==
+        Math.min(
+          requestedPage,
+          Math.min(50000, Math.max(1, Math.ceil((projection.total as number) / 20))),
+        )
+    )
+      throw new Error('Invalid class result');
+    groupValue = projection.group;
+    lessons = projection.lessons;
+    attendance = projection.attendance;
+    page = projection.page as number;
+    total = projection.total as number;
+  } else if (view === 'overview') {
+    const response = await me.db.rpc('student_class_overview', { p_group_id: id, p_now: now });
+    if (response.error) throw new Error('Student class could not be loaded');
+    const projection: unknown = response.data;
+    if (projection === null) return null;
+    if (
+      !isRecord(projection) ||
+      !projection.group ||
+      !Array.isArray(projection.slots) ||
+      projection.slots.length > 100 ||
+      !projection.slots.every(isSlot) ||
+      (projection.next !== null && !isLesson(projection.next)) ||
+      (projection.announcement !== null &&
+        (!isRecord(projection.announcement) ||
+          typeof projection.announcement.body !== 'string' ||
+          typeof projection.announcement.edited_at !== 'string'))
+    )
+      throw new Error('Invalid class result');
+    groupValue = projection.group;
+    next = (projection.next as Lesson | null) ?? undefined;
+    slots = projection.slots;
+    announcement = projection.announcement as OverviewProjection['announcement'];
+  } else {
+    const access = await me.db.rpc('student_class_detail', { p_group_id: id });
+    if (access.error) throw new Error('Student class could not be loaded');
+    if (access.data === null) return null;
+    groupValue = access.data;
+  }
+  const group = parseClassDetail(groupValue);
+  if (!group) throw new Error('Invalid class result');
+
+  let resources: StudentResource[] = [];
+  let assignments: Awaited<ReturnType<typeof getStudentAssignmentPage>>['rows'] = [];
+  if (view === 'materials') {
+    const fetch = (requested: number) =>
       me.db.rpc('student_resource_page', {
         p_group_id: id,
         p_kind: null,
         p_query: typeof query.q === 'string' ? query.q.trim().slice(0, 100) : '',
-        p_offset: (p - 1) * 20,
+        p_offset: (requested - 1) * 20,
         p_limit: 20,
       });
     let result = await fetch(page);
@@ -111,26 +167,13 @@ export async function studentClassWorkspace(
     total = result.total;
     error = !!result.error;
   }
-  const [next, slots, contacts, announcement, attendance] = await Promise.all([
-    nextPromise,
-    slotsPromise,
+  const [contacts] = await Promise.all([
     (view === 'teacher' || view === 'overview') && group.teacher_available
       ? me.db
           .from('teacher_contacts')
           .select('phone_number,whatsapp_number,contact_email')
           .eq('teacher_id', group.teacher_id)
           .maybeSingle()
-      : Promise.resolve(null),
-    announcementPromise,
-    view === 'lessons' && lessons.length
-      ? me.db
-          .from('lesson_attendance')
-          .select('lesson_id,status')
-          .eq('student_id', me.id)
-          .in(
-            'lesson_id',
-            lessons.map(l => l.id),
-          )
       : Promise.resolve(null),
   ]);
   return {
@@ -144,19 +187,11 @@ export async function studentClassWorkspace(
     page,
     total,
     pageCount: studentPageCount(total),
-    next: next?.data?.[0] as Lesson | undefined,
-    slots: (slots?.data ?? []) as Slot[],
+    next,
+    slots,
     contacts: contacts?.data ?? null,
-    announcement: announcement?.data ?? null,
-    attendance: attendance?.data ?? [],
-    error:
-      error ||
-      !!(
-        next?.error ||
-        slots?.error ||
-        contacts?.error ||
-        announcement?.error ||
-        attendance?.error
-      ),
+    announcement,
+    attendance,
+    error: error || !!contacts?.error,
   };
 }
