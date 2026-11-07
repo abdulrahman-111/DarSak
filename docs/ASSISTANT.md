@@ -47,7 +47,7 @@ Apply `supabase/migrations/20261028150000_sandak_quota.sql` and subsequent quota
 
 ## Gemini billing, terms and age
 
-- Use a **billing-enabled (paid) Gemini API key**. On the unpaid tier Google may use submitted content to improve its products and allow human review. Paid use is governed by Google's paid-services data terms. See the [Gemini API terms](https://ai.google.dev/gemini-api/terms) and additional terms.
+- Google applies different data terms to unpaid and paid Gemini API use; unpaid-tier content may be used to improve Google products and may receive human review, while paid use is governed by paid-services data terms. Review the [Gemini API terms](https://ai.google.dev/gemini-api/terms) and additional terms for the actual configuration. Choosing and provisioning a paid key, billing, and budget controls is deferred outside this phase. This deferral does not waive provider terms or establish that the current deployment complies with them.
 - The Gemini API terms require end users to be **18 or older**. The product decision is to launch for university students first. DarSak does not verify age. Before onboarding users under 18, add restrictions (for example disabling live chat for minors or requiring a compliant eligibility process) and review the provider terms again.
 - Application limits are not a monetary spending guarantee. Set a budget and alerts on the Google Cloud project that owns the key, and keep Google's own project quotas in place. No paid fallback model is configured.
 
@@ -56,6 +56,10 @@ Apply `supabase/migrations/20261028150000_sandak_quota.sql` and subsequent quota
 One server request uses the fixed `gemini-3.5-flash-lite` model with a 20-second timeout and no retries. Request bodies are limited to 24 KiB, provider responses to 64 KiB and generation to 2,048 output tokens. A chat sends at most eight messages and 8,000 characters (2,000 per message). The model has no tools, no web access and no database access, and the system prompt refuses secrets, personal data and unsupported actions.
 
 An atomic database reservation contains request volume, enforcing the configured per-user daily and per-minute limits and one active request per user, plus global daily and concurrency limits. Current database settings default to 60 accepted requests per user per UTC day, 10 per user per UTC minute, 3,000 across all users per UTC day, and 10 requests in flight globally; each user can have one request in flight. Operators can change the database settings within their schema bounds. Application and RPC caller limits can lower the current settings, never raise them. A 45-second lease recovers from crashed workers. Failed provider calls still consume the reserved attempt. Cross-origin requests are rejected. When a quota is reached the user sees a friendly "too many requests" message and the companion shows the oops mood.
+
+The persistent provider breaker opens for 15 minutes after five HTTP 429 quota responses since the last successful provider response. Other provider errors do not increment or reset that count, though an error during a recovery probe reopens the cooldown. Billing-error classification is deferred because no verified structured billing reason is currently allowlisted. Once the open period ends, one request at a time may hold a 45-second recovery probe; stale completions cannot close a newer circuit. Safety blocks and invalid generated output do not count as provider failures. When open, the endpoint returns its existing private, uncached unavailable response with the remaining wait in `Retry-After`, before reserving user quota or contacting Gemini. Breaker RPC errors fail closed while the breaker is enabled.
+
+The breaker is dormant unless the server-only `SANAD_PROVIDER_BREAKER_ENABLED=true` flag is set. Keep it false until the breaker migration is applied and `SUPABASE_SERVICE_ROLE_KEY` is provisioned to the server environment for the trusted RPC calls. Apply the migration before enabling the flag. This workspace does not establish that production has the credential or that the breaker is active there. No provider body, API key, or upstream error message is stored or returned by the breaker path.
 
 ## Data handling
 
@@ -67,6 +71,6 @@ An atomic database reservation contains request volume, enforcing the configured
 ## Operations checklist
 
 1. Apply the migration to the production database.
-2. In the production Vercel project set `GEMINI_API_KEY` (paid, billing-enabled key) and `SANAD_ENABLED=true`; optionally set the limit variables. Redeploy.
+2. In the production Vercel project set `GEMINI_API_KEY` and `SANAD_ENABLED=true`; optionally set the limit variables. Paid-key, billing, and budget setup is deferred, and provider terms/privacy obligations still apply. Enable `SANAD_PROVIDER_BREAKER_ENABLED=true` only after applying its migration and provisioning `SUPABASE_SERVICE_ROLE_KEY`. Redeploy.
 3. Confirm a student and a teacher can chat, an anonymous visitor sees only local help, and a quota breach shows the friendly message.
 4. To pause AI quickly, set `SANAD_ENABLED=false` and redeploy.

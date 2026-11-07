@@ -4,13 +4,23 @@ import {
   type AssistantErrorCode,
   type AssistantSuccess,
 } from '@/features/assistant/domain';
-import { ProviderSafetyBlockedError } from '@/features/assistant/provider-errors';
+import {
+  ProviderOutputValidationError,
+  ProviderQuotaError,
+  ProviderSafetyBlockedError,
+} from '@/features/assistant/provider-errors';
 import { getRequestViewer } from '@/features/platform/request-viewer';
 import { checkTeachingAccess } from '@/features/teacher-access/guard';
 import { getGuidanceTopics } from '@/features/assistant/guidance';
 import { getSanadConfig } from '@/features/assistant/config';
 import { generateChat, generateGroupDraft } from '@/features/assistant/provider';
 import { releaseSanadRequest, reserveSanadRequest } from '@/features/assistant/quota';
+import {
+  claimProviderAttempt,
+  finishProviderAttempt,
+  isProviderBreakerEnabled,
+  type ProviderOutcome,
+} from '@/features/assistant/breaker';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -31,7 +41,7 @@ const statusFor: Record<AssistantErrorCode, number> = {
   safety_blocked: 422,
 };
 
-function failure(code: AssistantErrorCode) {
+function failure(code: AssistantErrorCode, retryAfter?: number) {
   return NextResponse.json(
     { ok: false, code },
     {
@@ -39,6 +49,7 @@ function failure(code: AssistantErrorCode) {
       headers: {
         ...HEADERS,
         ...(code === 'rate_limited' ? { 'Retry-After': '60' } : {}),
+        ...(code === 'unavailable' && retryAfter ? { 'Retry-After': String(retryAfter) } : {}),
       },
     },
   );
@@ -148,15 +159,52 @@ export async function POST(request: NextRequest) {
     if (!canTeach) return failure('unavailable');
   }
 
+  const breakerEnabled = isProviderBreakerEnabled();
+  let attempt: string | null = null;
+  if (breakerEnabled) {
+    let claim: Awaited<ReturnType<typeof claimProviderAttempt>>;
+    try {
+      claim = await claimProviderAttempt();
+    } catch {
+      return failure('unavailable');
+    }
+    if (!claim.allowed) return failure('unavailable', claim.retryAfter);
+    attempt = claim.attempt;
+  }
+
+  const finish = async (outcome: ProviderOutcome) => {
+    if (!attempt) return;
+    const claimedAttempt = attempt;
+    attempt = null;
+    try {
+      await finishProviderAttempt(claimedAttempt, outcome);
+    } catch {
+      /* The database expires abandoned attempts and fences stale completions. */
+    }
+  };
+
+  if (request.signal.aborted) {
+    await finish('cancelled');
+    return failure('provider_unavailable');
+  }
+
   let reservation: Awaited<ReturnType<typeof reserveSanadRequest>>;
   try {
     reservation = await reserveSanadRequest(db, config.limits);
   } catch {
+    await finish('cancelled');
     return failure('unavailable');
   }
-  if (reservation.failed) return failure('unavailable');
-  if (!reservation.lease) return failure('rate_limited');
+  if (reservation.failed) {
+    await finish('cancelled');
+    return failure('unavailable');
+  }
+  if (!reservation.lease) {
+    await finish('cancelled');
+    return failure('rate_limited');
+  }
 
+  let outcome: ProviderOutcome = 'other_error';
   try {
     let result: AssistantSuccess;
     if (parsed.data.mode === 'chat') {
@@ -178,9 +226,29 @@ export async function POST(request: NextRequest) {
         draft: await generateGroupDraft(config.apiKey, parsed.data, request.signal),
       };
     }
+    if (request.signal.aborted) {
+      outcome = 'cancelled';
+      return failure('provider_unavailable');
+    }
+    outcome = 'success';
     return json(result);
   } catch (error) {
-    if (error instanceof ProviderSafetyBlockedError) return failure('safety_blocked');
+    if (request.signal.aborted) {
+      outcome = 'cancelled';
+      return failure('provider_unavailable');
+    }
+    if (error instanceof ProviderSafetyBlockedError) {
+      outcome = 'success';
+      return failure('safety_blocked');
+    }
+    if (error instanceof ProviderQuotaError) {
+      outcome = 'quota_error';
+      return failure('provider_unavailable');
+    }
+    if (error instanceof ProviderOutputValidationError) {
+      outcome = 'success';
+      return failure('provider_unavailable');
+    }
     return failure('provider_unavailable');
   } finally {
     try {
@@ -188,5 +256,7 @@ export async function POST(request: NextRequest) {
     } catch {
       /* A lease expires in the database if release fails. */
     }
+    if (request.signal.aborted) outcome = 'cancelled';
+    await finish(outcome);
   }
 }

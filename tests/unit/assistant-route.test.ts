@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
-import { ProviderSafetyBlockedError } from '@/features/assistant/provider-errors';
+import {
+  ProviderOutputValidationError,
+  ProviderQuotaError,
+  ProviderSafetyBlockedError,
+} from '@/features/assistant/provider-errors';
 
 const state = vi.hoisted(() => ({
   config: {
@@ -14,6 +18,8 @@ const state = vi.hoisted(() => ({
   } as any,
   teaching: { allowed: true } as { allowed: boolean },
   reservation: { lease: 'lease', failed: false } as { lease: string | null; failed: boolean },
+  breakerEnabled: false,
+  providerClaim: { allowed: true, attempt: '11111111-1111-4111-8111-111111111111' } as any,
 }));
 const mocks = vi.hoisted(() => ({
   generateChat: vi.fn(),
@@ -23,6 +29,9 @@ const mocks = vi.hoisted(() => ({
   getSanadConfig: vi.fn(),
   reserveSanadRequest: vi.fn(),
   releaseSanadRequest: vi.fn(),
+  claimProviderAttempt: vi.fn(),
+  finishProviderAttempt: vi.fn(),
+  isProviderBreakerEnabled: vi.fn(),
 }));
 vi.mock('server-only', () => ({}));
 vi.mock('@/features/assistant/config', () => ({ getSanadConfig: mocks.getSanadConfig }));
@@ -33,6 +42,11 @@ vi.mock('@/features/assistant/provider', () => ({
 vi.mock('@/features/assistant/quota', () => ({
   reserveSanadRequest: mocks.reserveSanadRequest,
   releaseSanadRequest: mocks.releaseSanadRequest,
+}));
+vi.mock('@/features/assistant/breaker', () => ({
+  claimProviderAttempt: mocks.claimProviderAttempt,
+  finishProviderAttempt: mocks.finishProviderAttempt,
+  isProviderBreakerEnabled: mocks.isProviderBreakerEnabled,
 }));
 vi.mock('@/features/platform/request-viewer', () => ({ getRequestViewer: mocks.getRequestViewer }));
 vi.mock('@/features/teacher-access/guard', () => ({
@@ -45,11 +59,12 @@ const chat = {
   locale: 'en',
   messages: [{ role: 'user', text: 'hello' }],
 };
-function request(body: unknown, origin = 'https://darsak.example') {
+function request(body: unknown, origin = 'https://darsak.example', signal?: AbortSignal) {
   return new NextRequest('https://darsak.example/api/assistant', {
     method: 'POST',
     headers: { origin, 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    signal,
   });
 }
 
@@ -65,11 +80,16 @@ beforeEach(() => {
   };
   state.teaching = { allowed: true };
   state.reservation = { lease: 'lease', failed: false };
+  state.breakerEnabled = false;
+  state.providerClaim = { allowed: true, attempt: '11111111-1111-4111-8111-111111111111' };
   mocks.getSanadConfig.mockImplementation(() => state.config);
   mocks.getRequestViewer.mockImplementation(async () => state.viewer);
   mocks.checkTeachingAccess.mockImplementation(async () => state.teaching);
   mocks.reserveSanadRequest.mockImplementation(async () => state.reservation);
   mocks.releaseSanadRequest.mockResolvedValue(undefined);
+  mocks.claimProviderAttempt.mockImplementation(async () => state.providerClaim);
+  mocks.finishProviderAttempt.mockResolvedValue(undefined);
+  mocks.isProviderBreakerEnabled.mockImplementation(() => state.breakerEnabled);
   mocks.generateChat.mockResolvedValue('hello');
   mocks.generateGroupDraft.mockResolvedValue({
     name: 'Math',
@@ -133,6 +153,99 @@ describe('Sanad endpoint guards', () => {
     expect(mocks.generateChat.mock.calls[0][3]).toBe(req.signal);
     expect(topics).toContain('Requests and classes');
     expect(topics).not.toContain('Create and manage groups');
+    expect(mocks.claimProviderAttempt).not.toHaveBeenCalled();
+  });
+
+  it('keeps the breaker dormant behind its server-only rollout flag', async () => {
+    expect((await POST(request(chat))).status).toBe(200);
+    expect(mocks.claimProviderAttempt).not.toHaveBeenCalled();
+    expect(mocks.finishProviderAttempt).not.toHaveBeenCalled();
+  });
+
+  it('gates before quota, returns bounded retry seconds and never calls provider while open', async () => {
+    state.breakerEnabled = true;
+    state.providerClaim = { allowed: false, attempt: null, retryAfter: 317 };
+    const response = await POST(request(chat));
+    expect(response.status).toBe(503);
+    expect(response.headers.get('Retry-After')).toBe('317');
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+    expect(await response.json()).toEqual({ ok: false, code: 'unavailable' });
+    expect(mocks.reserveSanadRequest).not.toHaveBeenCalled();
+    expect(mocks.generateChat).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on a breaker RPC error before quota or provider work', async () => {
+    state.breakerEnabled = true;
+    mocks.claimProviderAttempt.mockRejectedValueOnce(new Error('private database detail'));
+    const response = await POST(request(chat));
+    expect(response.status).toBe(503);
+    expect(await response.text()).not.toContain('private database detail');
+    expect(mocks.reserveSanadRequest).not.toHaveBeenCalled();
+    expect(mocks.generateChat).not.toHaveBeenCalled();
+  });
+
+  it('cancels a claimed attempt when user quota refuses the request', async () => {
+    state.breakerEnabled = true;
+    state.reservation = { lease: null, failed: false };
+    expect((await POST(request(chat))).status).toBe(429);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'cancelled',
+    );
+    expect(mocks.generateChat).not.toHaveBeenCalled();
+  });
+
+  it('cancels a claimed attempt when quota reservation fails or throws', async () => {
+    state.breakerEnabled = true;
+    state.reservation = { lease: null, failed: true };
+    expect((await POST(request(chat))).status).toBe(503);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'cancelled',
+    );
+    mocks.finishProviderAttempt.mockClear();
+    mocks.reserveSanadRequest.mockRejectedValueOnce(new Error('private quota detail'));
+    expect((await POST(request(chat))).status).toBe(503);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledTimes(1);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'cancelled',
+    );
+    expect(mocks.generateChat).not.toHaveBeenCalled();
+  });
+
+  it('cancels an already aborted breaker attempt without consuming quota or provider calls', async () => {
+    state.breakerEnabled = true;
+    const controller = new AbortController();
+    controller.abort();
+    expect((await POST(request(chat, 'https://darsak.example', controller.signal))).status).toBe(
+      502,
+    );
+    expect(mocks.reserveSanadRequest).not.toHaveBeenCalled();
+    expect(mocks.generateChat).not.toHaveBeenCalled();
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'cancelled',
+    );
+  });
+
+  it('marks a provider result cancelled when the caller aborts before generation resolves', async () => {
+    state.breakerEnabled = true;
+    const controller = new AbortController();
+    let resolveGeneration!: (value: string) => void;
+    mocks.generateChat.mockImplementationOnce(
+      () => new Promise<string>(resolve => (resolveGeneration = resolve)),
+    );
+    const pending = POST(request(chat, 'https://darsak.example', controller.signal));
+    await vi.waitFor(() => expect(mocks.generateChat).toHaveBeenCalledOnce());
+    controller.abort();
+    resolveGeneration('generated answer');
+    expect((await pending).status).toBe(502);
+    expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'cancelled',
+    );
   });
 
   it('serves any active student or teacher without an allowlist and passes quota limits', async () => {
@@ -226,15 +339,23 @@ describe('Sanad endpoint guards', () => {
   });
 
   it('returns generic provider errors and releases its quota lease', async () => {
+    state.breakerEnabled = true;
     mocks.generateChat.mockRejectedValue(new Error('raw provider secret error'));
     const response = await POST(request(chat));
     expect(response.status).toBe(502);
     expect(response.headers.has('Retry-After')).toBe(false);
-    expect(await response.json()).toEqual({ ok: false, code: 'provider_unavailable' });
+    const body = await response.json();
+    expect(body).toEqual({ ok: false, code: 'provider_unavailable' });
     expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'other_error',
+    );
+    expect(JSON.stringify(body)).not.toContain('raw provider secret error');
   });
 
   it('returns a safety-block response without draft content and releases the quota lease', async () => {
+    state.breakerEnabled = true;
     mocks.generateGroupDraft.mockRejectedValue(new ProviderSafetyBlockedError());
     state.viewer.profile.role = 'teacher';
     const response = await POST(
@@ -251,5 +372,49 @@ describe('Sanad endpoint guards', () => {
     expect(response.headers.has('Retry-After')).toBe(false);
     expect(await response.json()).toEqual({ ok: false, code: 'safety_blocked' });
     expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'success',
+    );
+  });
+
+  it('records provider 429 as a quota error without exposing provider details', async () => {
+    state.breakerEnabled = true;
+    mocks.generateChat.mockRejectedValue(new ProviderQuotaError());
+    const response = await POST(request(chat));
+    expect(response.status).toBe(502);
+    expect(await response.text()).not.toContain('quota');
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'quota_error',
+    );
+    expect(mocks.releaseSanadRequest).toHaveBeenCalledWith(state.viewer.db, 'lease');
+  });
+
+  it('records a cancellation that arrives while quota release is pending', async () => {
+    state.breakerEnabled = true;
+    const controller = new AbortController();
+    mocks.generateChat.mockRejectedValueOnce(new ProviderQuotaError());
+    mocks.releaseSanadRequest.mockImplementationOnce(async () => {
+      controller.abort();
+    });
+    const response = await POST(request(chat, 'https://darsak.example', controller.signal));
+    expect(response.status).toBe(502);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledTimes(1);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'cancelled',
+    );
+  });
+
+  it('does not count safety output-contract failures toward the provider breaker', async () => {
+    state.breakerEnabled = true;
+    mocks.generateChat.mockRejectedValue(new ProviderOutputValidationError());
+    const response = await POST(request(chat));
+    expect(response.status).toBe(502);
+    expect(mocks.finishProviderAttempt).toHaveBeenCalledWith(
+      state.providerClaim.attempt,
+      'success',
+    );
   });
 });
