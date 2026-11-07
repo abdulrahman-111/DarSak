@@ -34,3 +34,23 @@ drop policy e2e_negative_lesson_read on public.lessons;
 ```
 
 The `an outsider cannot see another student’s class, lesson, or private resource` test failed as expected at the outsider's direct PostgREST lesson query, receiving the foreign lesson instead of an empty result. The existing `lesson_read` policy was left unchanged; after dropping the temporary policy, the security test passed. Both restored browser checks passed together (2/2, no retries).
+
+## Acceptance ledger
+
+| Acceptance area                                                                                                        | Implementation and browser evidence                                 |
+| ---------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| Teacher-created manual lessons and moderated feedback replies persist after reload                                     | `tests/e2e/learning.spec.ts`                                        |
+| Notification read state persists; a live notification reaches the open inbox and remains recipient-scoped              | `tests/e2e/notifications.spec.ts`                                   |
+| Viewer failures recover safely across logout, account and role changes, and guest registration navigation              | `tests/e2e/viewer-state.spec.ts` and `tests/e2e/security.spec.ts`   |
+| Teaching access remains available in the approved free phase and withdrawal blocks protected reads and writes          | `tests/e2e/teacher-access.spec.ts`                                  |
+| Browser coverage runs in English and Arabic on desktop and mobile, against the production build, with retries disabled | Four Playwright projects in CI; 1280×900 desktop and 390×844 mobile |
+
+At source commit `95e0770`, the clean browser CI run [42371237124](https://github.com/DarSak-seo-entities/actions/runs/42371237124) recorded 112 passing browser tests with zero retries across those four projects. Record the exact head commit's CI result in the Issue 138 closing comment; do not substitute this baseline run for final-head evidence.
+
+Signup and production email delivery remain excluded under #90 and #143. Private upload/download acceptance remains excluded while uploads are disabled; the current cases cover links and authorization, with enabled-upload coverage tracked by #159. Axe, Lighthouse, CSP, and the separately tracked work in #139, #140, #151, and #153 remain outside this issue's acceptance scope.
+
+## CI negative-control protocol
+
+PR #207 is an intentionally unmerged negative-control demo. Its CI run 42391093011 is pending review of the actual run evidence; this document does not claim that the run failed or that both controls produced their expected browser failures. Record the observed jobs, test names, and assertion outcomes in Issue 138's closing comment after reviewing that run. Keep PR #207 unmerged and separate from the real Issue 138 change.
+
+The negative-control SQL and workflow step exist only on the demo branch for PR #207. The real Issue 138 change contains no negative-control SQL or application changes. The controls target only the fresh CI-local Supabase database at `127.0.0.1:54322`; they are not migrations or production changes. The dated local evidence above remains historical and separate from CI evidence for PR #207 and from exact-head acceptance results.
