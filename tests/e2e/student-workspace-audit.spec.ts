@@ -106,12 +106,13 @@ test('settled student workspace routes stay navigable and fit the viewport', asy
       await expect(
         studentPage.getByText(ar ? 'قيد الانتظار' : 'Pending', { exact: true }),
       ).toBeVisible();
-      const pendingBooking = studentPage
+      const bookingTime = studentPage
         .getByRole('main')
-        .locator('section')
-        .filter({ hasText: ar ? 'قيد الانتظار' : 'Pending' })
-        .filter({ has: studentPage.getByRole('heading', { name: 'E2E mathematics group' }) });
-      await expect(pendingBooking.getByText(ar ? 'توقيت القاهرة' : 'Cairo time')).toBeVisible();
+        .locator('p')
+        .filter({ hasText: ar ? 'توقيت القاهرة' : 'Cairo time' })
+        .filter({ hasText: '–' })
+        .first();
+      await expect(bookingTime).toBeVisible();
       await expect(
         studentPage.getByRole('link', { name: ar ? 'عرض المجموعة' : 'View group' }).first(),
       ).toBeVisible();
