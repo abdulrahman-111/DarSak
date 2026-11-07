@@ -12,7 +12,7 @@ function workspaceRoleLabel(locale: string, role: 'student' | 'teacher') {
 async function fixtureContext(
   browser: import('@playwright/test').Browser,
   project: string,
-  actor: 'student' | 'teacher',
+  actor: 'student' | 'teacher' | 'viewerStudent',
 ) {
   const locale = localeFor(project);
   const mobile = project.endsWith('mobile');
@@ -58,7 +58,7 @@ async function expectSettledStudentShell(page: import('@playwright/test').Page, 
 test('cold 503 viewer response keeps the real student workspace usable', async ({ browser }) => {
   const project = test.info().project.name;
   const locale = localeFor(project);
-  const context = await fixtureContext(browser, project, 'student');
+  const context = await fixtureContext(browser, project, 'viewerStudent');
   try {
     const page = await context.newPage();
     await page.route('**/api/viewer', route => route.fulfill({ status: 503, body: 'unavailable' }));
@@ -76,7 +76,7 @@ test('cold network abort falls back to the current server-authorized student she
 }) => {
   const project = test.info().project.name;
   const locale = localeFor(project);
-  const context = await fixtureContext(browser, project, 'student');
+  const context = await fixtureContext(browser, project, 'viewerStudent');
   try {
     const page = await context.newPage();
     await page.route('**/api/viewer', route => route.abort());
@@ -94,7 +94,7 @@ test('warm viewer failure preserves the verified student and recovers on the nex
 }) => {
   const project = test.info().project.name;
   const locale = localeFor(project);
-  const context = await fixtureContext(browser, project, 'student');
+  const context = await fixtureContext(browser, project, 'viewerStudent');
   let failNext = false;
   try {
     const page = await context.newPage();
@@ -364,7 +364,7 @@ test('verified unread count survives viewer outages and clears on logout/account
 }) => {
   const project = test.info().project.name;
   const locale = localeFor(project);
-  const context = await fixtureContext(browser, project, 'student');
+  const context = await fixtureContext(browser, project, 'viewerStudent');
   let failViewer = false;
   const expectUnread = async (page: import('@playwright/test').Page, count: string | null) => {
     if (project.endsWith('mobile')) {
@@ -394,6 +394,7 @@ test('verified unread count survives viewer outages and clears on logout/account
     );
     await page.goto(`/${locale}/student/classes`);
     await expect(page.getByText('E2E mathematics group', { exact: true })).toBeVisible();
+    await expect(page.getByText('E2E Viewer Student', { exact: true }).first()).toBeAttached();
     await expectUnread(page, '1');
 
     failViewer = true;
@@ -424,6 +425,7 @@ test('verified unread count survives viewer outages and clears on logout/account
     ]);
     await page.goto(`/${locale}/student/classes`);
     await expectUnread(page, null);
+    await expect(page.getByText('E2E Viewer Student', { exact: true })).toHaveCount(0);
   } finally {
     await context.close();
   }
