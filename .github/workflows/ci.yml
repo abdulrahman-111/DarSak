@@ -296,15 +296,11 @@ jobs:
             echo "Negative controls require GitHub Actions." >&2
             exit 1
           fi
-          if [[ "${GITHUB_REF:-}" != "refs/heads/test/negative-controls-138" ]]; then
+          if [[ "${GITHUB_EVENT_NAME:-}" != "pull_request" || "${GITHUB_HEAD_REF:-}" != "test/negative-controls-138" ]]; then
             echo "Negative controls are restricted to test/negative-controls-138." >&2
             exit 1
           fi
           target='postgresql://postgres:postgres@127.0.0.1:54322/postgres'
-          if [[ "$target" != 'postgresql://postgres:postgres@127.0.0.1:54322/postgres' ]]; then
-            echo "Negative controls require the fixed loopback database target." >&2
-            exit 1
-          fi
           psql "$target" --no-psqlrc --set ON_ERROR_STOP=1 \
             --file tests/e2e/support/issue-138-negative-controls.sql
 
