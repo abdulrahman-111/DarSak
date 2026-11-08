@@ -1,6 +1,11 @@
 \set ON_ERROR_STOP on
 begin;
 
+create function pg_temp.audit_action_count(p_action text,p_target uuid) returns bigint
+language sql security definer set search_path=pg_catalog,dars_private as $$
+  select count(*) from dars_private.audit_log where action=p_action and target_id=p_target
+$$;
+
 do $$ begin
   if to_regprocedure('public.cancel_teacher_group(uuid)') is null
     or to_regprocedure('public.delete_unused_teacher_group(uuid)') is null
@@ -68,6 +73,13 @@ begin
      or (select status from public.enrollments where group_id='7d100000-0000-4000-8000-000000000001' and student_id='7d000000-0000-4000-8000-000000000005')<>'rejected'
      or (select count(*) from public.lesson_materials where lesson_id='7d300000-0000-4000-8000-000000000001')<>1 then
     raise exception 'group cancellation failed to preserve history or cancel only future lessons';
+  end if;
+  if pg_temp.audit_action_count('group_archived','7d100000-0000-4000-8000-000000000001')<>1 then
+    raise exception 'group cancellation audit count wrong';
+  end if;
+  v_count:=public.cancel_teacher_group('7d100000-0000-4000-8000-000000000001');
+  if v_count<>0 or pg_temp.audit_action_count('group_archived','7d100000-0000-4000-8000-000000000001')<>1 then
+    raise exception 'no-op group cancellation emitted an audit event';
   end if;
   select count(*) into v_lesson_count from public.lessons where group_id='7d100000-0000-4000-8000-000000000001';
   begin
@@ -176,6 +188,9 @@ begin
   if exists(select 1 from public.groups where id='7d100000-0000-4000-8000-000000000003')
      or exists(select 1 from public.group_schedule_slots where id='7d200000-0000-4000-8000-000000000003') then
     raise exception 'admin delete did not remove an eligible group and its schedule';
+  end if;
+  if pg_temp.audit_action_count('group_deleted','7d100000-0000-4000-8000-000000000003')<>1 then
+    raise exception 'group deletion audit count wrong';
   end if;
 end $$;
 set local request.jwt.claims = '{}';

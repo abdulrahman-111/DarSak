@@ -3,7 +3,7 @@
 -- can be exercised without changing the persisted future activation policy.
 create extension if not exists pgtap;
 begin;
-select plan(30);
+select plan(35);
 
 select ok(not dars_private.plan_quota_active(), 'policy starts off');
 select is((select effective_at from dars_private.teacher_quota_policy where singleton), '2026-11-14 22:00:00+00'::timestamptz, 'policy earliest date is Cairo midnight 15 November');
@@ -67,12 +67,21 @@ select set_config('request.jwt.claims','{"sub":"99100000-0000-4000-8000-00000000
 select set_config('request.jwt.claim.sub','99100000-0000-4000-8000-000000000005',true);
 select is((select plan_code from public.admin_teacher_plan_status('99100000-0000-4000-8000-000000000002')),'standard','admin can read teacher plan status');
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','standard',null,'test-null-version')$$,'22023',null,'admin assignment rejects null expected version');
+select public.admin_set_teacher_quota_policy(false,greatest('2026-11-14 22:00:00+00'::timestamptz,(select effective_at from dars_private.teacher_quota_policy where singleton)));
+select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','standard',2,'test-disabled-policy')$$,'55000',null,'disabled quota policy blocks guarded plan assignment');
+select is((select count(*) from dars_private.audit_log where action='teacher_plan_assigned' and target_id='99100000-0000-4000-8000-000000000002'),0::bigint,'disabled policy rejection emits no plan assignment event');
+-- Restore the enabled, already-effective policy used by the rest of this
+-- rollback-only fixture; production's activation date remains untouched.
+update dars_private.teacher_quota_policy set quotas_enabled=true,effective_at=statement_timestamp()-interval '1 second' where singleton;
 select is((select already_recorded from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','standard',2,'test-transfer-99100002')),'false'::boolean,'admin records a verified plan assignment');
 select is((select already_recorded from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','standard',0,'test-transfer-99100002')),'true'::boolean,'duplicate reference is idempotent despite stale version');
 select is((select count(*)::integer from dars_private.teacher_plan_assignments where transaction_reference='test-transfer-99100002'),1,'duplicate reference creates one audit row');
+select is((select count(*) from dars_private.audit_log where action='teacher_plan_assigned' and target_id='99100000-0000-4000-8000-000000000002'),1::bigint,'first guarded plan assignment emits exactly one audit event including the duplicate retry');
+select is((select count(*) from dars_private.audit_log where action='teacher_plan_assigned' and target_type='teacher_plan' and target_id='99100000-0000-4000-8000-000000000002' and metadata='{"plan_code":"standard"}'::jsonb),1::bigint,'plan audit event contains only the bounded plan code and target UUID');
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','standard',2,'test-stale-version')$$,'40001',null,'stale expected version conflicts');
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000001','standard',0,'test-transfer-99100002')$$,'23505',null,'reference cannot be reused for another teacher');
 select throws_ok($$select * from public.admin_assign_teacher_plan('99100000-0000-4000-8000-000000000002','pro',3,'test-switch')$$,'55000',null,'plan switch waits for current period expiry');
+select is((select count(*) from dars_private.audit_log where action='teacher_plan_assigned' and target_id='99100000-0000-4000-8000-000000000002'),1::bigint,'failed stale/conflicting assignments emit no additional audit event');
 select is((select approved from public.teacher_profiles where id='99100000-0000-4000-8000-000000000002'),false,'plan assignment never approves the teacher');
 select set_config('request.jwt.claims','{}',true);
 select * from finish();

@@ -25,6 +25,10 @@ function env(values: Record<string, string> = {}) {
   vi.stubEnv('NEXT_PUBLIC_SITE_URL', values.NEXT_PUBLIC_SITE_URL ?? LIVE_ORIGIN);
   vi.stubEnv('VERCEL_ENV', values.VERCEL_ENV ?? 'production');
   vi.stubEnv('NODE_ENV', values.NODE_ENV ?? 'production');
+  vi.stubEnv('NEXT_PUBLIC_ADMIN_LOCAL_E2E', values.NEXT_PUBLIC_ADMIN_LOCAL_E2E ?? '');
+  vi.stubEnv('ADMIN_LOCAL_E2E', values.ADMIN_LOCAL_E2E ?? '');
+  vi.stubEnv('CI', values.CI ?? '');
+  vi.stubEnv('GITHUB_ACTIONS', values.GITHUB_ACTIONS ?? '');
 }
 
 function localEnv(values: Record<string, string> = {}) {
@@ -93,7 +97,56 @@ describe('admin Supabase application boundary', () => {
   it('rejects local mode in production and on hosted deployments', () => {
     localEnv({ NODE_ENV: 'production' });
     expect(getSupabaseConfig()).toBeNull();
+    localEnv({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true',
+      ADMIN_LOCAL_E2E: 'true',
+      CI: 'true',
+      GITHUB_ACTIONS: 'true',
+    });
+    expect(getSupabaseConfig()).toMatchObject({ projectRef: 'local', secure: false });
+    localEnv({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true',
+      ADMIN_LOCAL_E2E: 'true',
+      CI: 'true',
+      GITHUB_ACTIONS: 'true',
+      VERCEL_ENV: 'preview',
+    });
+    expect(getSupabaseConfig()).toBeNull();
+    localEnv({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true',
+      ADMIN_LOCAL_E2E: 'true',
+      GITHUB_ACTIONS: 'true',
+    });
+    expect(getSupabaseConfig()).toBeNull();
+    localEnv({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true',
+      CI: 'true',
+      GITHUB_ACTIONS: 'true',
+    });
+    expect(getSupabaseConfig()).toBeNull();
+    localEnv({
+      NODE_ENV: 'production',
+      NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true',
+      ADMIN_LOCAL_E2E: 'true',
+      CI: 'true',
+    });
+    expect(getSupabaseConfig()).toBeNull();
     localEnv({ VERCEL_ENV: 'preview' });
+    expect(getSupabaseConfig()).toBeNull();
+  });
+
+  it('keeps the compiled public local client independent from server-only CI flags', () => {
+    localEnv({
+      NODE_ENV: 'production',
+      VERCEL_ENV: '',
+      NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true',
+    });
+    vi.stubGlobal('window', { location: { origin: 'http://localhost:3000' } });
+    expect(getPublicSupabaseConfig()).toMatchObject({ projectRef: 'local', secure: false });
     expect(getSupabaseConfig()).toBeNull();
   });
 

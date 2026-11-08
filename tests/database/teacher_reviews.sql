@@ -172,6 +172,18 @@ end $$;
 set local request.jwt.claims = '{}';
 reset role;
 
+do $$
+begin
+  if (select count(*) from dars_private.audit_log where action='teacher_review_declined'
+      and target_type='teacher' and target_id='7b000000-0000-4000-8000-000000000001')<>1
+     or not exists(select 1 from dars_private.audit_log where action='teacher_review_declined'
+      and target_type='teacher' and target_id='7b000000-0000-4000-8000-000000000001'
+      and actor_id='7b000000-0000-4000-8000-000000000003' and actor_role='admin'
+      and request_id='7b100000-0000-4000-8000-000000000001' and metadata='{}'::jsonb) then
+    raise exception 'guarded teacher decline did not produce exactly one bounded admin audit row';
+  end if;
+end $$;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000001';
@@ -229,6 +241,20 @@ end $$;
 set local request.jwt.claims = '{}';
 reset role;
 
+do $$
+begin
+  if (select count(*) from dars_private.audit_log where action='teacher_review_approved'
+      and target_type='teacher' and target_id='7b000000-0000-4000-8000-000000000001')<>1
+     or not exists(select 1 from dars_private.audit_log where action='teacher_review_approved'
+      and target_type='teacher' and target_id='7b000000-0000-4000-8000-000000000001'
+      and actor_id='7b000000-0000-4000-8000-000000000003' and actor_role='admin'
+      and request_id=(select request_id from public.teacher_review_events
+        where teacher_id='7b000000-0000-4000-8000-000000000001' and kind='approved')
+      and metadata='{}'::jsonb) then
+    raise exception 'guarded teacher approval did not produce exactly one bounded admin audit row';
+  end if;
+end $$;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"7b000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
 set local request.jwt.claim.sub='7b000000-0000-4000-8000-000000000003';
@@ -249,6 +275,7 @@ end $$;
 set local request.jwt.claims = '{}';
 reset role;
 
+set local request.jwt.claim.sub='';
 set local role service_role;
 do $$
 begin
@@ -259,5 +286,17 @@ begin
   end if;
 end $$;
 reset role;
+
+do $$
+begin
+  if (select count(*) from dars_private.audit_log where action='teacher_review_declined'
+      and target_type='teacher' and target_id='7b000000-0000-4000-8000-000000000004')<>1
+     or not exists(select 1 from dars_private.audit_log where action='teacher_review_declined'
+      and target_type='teacher' and target_id='7b000000-0000-4000-8000-000000000004'
+      and actor_id is null and actor_role='system' and request_id is not null and metadata='{}'::jsonb)
+     or (select count(*) from public.teacher_review_events where teacher_id='7b000000-0000-4000-8000-000000000004' and kind='operator_sync')<>1 then
+    raise exception 'service-role approval synchronization did not create exactly one matching system audit row';
+  end if;
+end $$;
 
 rollback;

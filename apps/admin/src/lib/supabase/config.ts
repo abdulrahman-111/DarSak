@@ -12,6 +12,20 @@ const LOCAL_SITE_ORIGINS = new Set([
 ]);
 const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]']);
 
+function isLocalProductionE2EBuild() {
+  return process.env.NEXT_PUBLIC_ADMIN_LOCAL_E2E === 'true';
+}
+
+function isLocalProductionE2EServer() {
+  return (
+    isLocalProductionE2EBuild() &&
+    process.env.ADMIN_LOCAL_E2E === 'true' &&
+    process.env.CI === 'true' &&
+    process.env.GITHUB_ACTIONS === 'true' &&
+    !process.env.VERCEL_ENV
+  );
+}
+
 export type AdminSupabaseConfig = {
   url: string;
   key: string;
@@ -41,7 +55,10 @@ function isProductionConfig(urlValue: string, ref: string, siteUrl: string) {
 }
 
 function isLocalConfig(urlValue: string, ref: string, siteUrl: string) {
-  if (ref !== LOCAL_PROJECT_REF || process.env.NODE_ENV === 'production') return false;
+  if (
+    ref !== LOCAL_PROJECT_REF ||
+    (process.env.NODE_ENV === 'production' && !isLocalProductionE2EBuild())
+  ) return false;
   const url = parseUrl(urlValue);
   const site = parseUrl(siteUrl);
   return Boolean(
@@ -76,7 +93,7 @@ export function getPublicSupabaseConfig(): AdminSupabaseConfig | null {
   }
   if (
     marker === 'local' &&
-    process.env.NODE_ENV !== 'production' &&
+    (process.env.NODE_ENV !== 'production' || isLocalProductionE2EBuild()) &&
     isLocalConfig(url, expectedRef, siteUrl) &&
     isCurrentBrowserOrigin(siteUrl)
   ) {
@@ -101,7 +118,7 @@ export function getSupabaseConfig(): AdminSupabaseConfig | null {
   }
   if (
     marker === 'local' &&
-    process.env.NODE_ENV !== 'production' &&
+    (process.env.NODE_ENV !== 'production' || isLocalProductionE2EServer()) &&
     !process.env.VERCEL_ENV &&
     expectedRef === LOCAL_PROJECT_REF
   ) {

@@ -294,6 +294,88 @@ jobs:
           VERCEL: 1
         run: npm run e2e
 
+      - name: Seed local admin audit volume
+        env:
+          SUPABASE_DB_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+        run: psql "$SUPABASE_DB_URL" --no-psqlrc --set ON_ERROR_STOP=1 --file tests/integration/admin-audit-volume.sql
+
+      - name: Export local admin browser configuration
+        run: |
+          node --input-type=module <<'NODE'
+          import { appendFileSync } from 'node:fs';
+          import { execFileSync } from 'node:child_process';
+          const status = JSON.parse(execFileSync('supabase', ['status', '--output', 'json'], { encoding: 'utf8' }));
+          const values = {
+            NEXT_PUBLIC_SUPABASE_URL: status.API_URL ?? status.SUPABASE_URL,
+            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: status.ANON_KEY ?? status.PUBLISHABLE_KEY,
+            ADMIN_E2E_SUPABASE_URL: status.API_URL ?? status.SUPABASE_URL,
+            ADMIN_E2E_ANON_KEY: status.ANON_KEY ?? status.PUBLISHABLE_KEY,
+            NEXT_PUBLIC_SUPABASE_EXPECTED_PROJECT_REF: 'local',
+            SUPABASE_EXPECTED_PROJECT_REF: 'local',
+            NEXT_PUBLIC_SITE_URL: 'http://127.0.0.1:3082',
+            NEXT_PUBLIC_APP_ENV: 'local',
+            APP_ENV: 'local',
+            ADMIN_APP: 'true',
+          };
+          for (const [key, value] of Object.entries(values)) {
+            if (typeof value !== 'string' || !value) throw new Error(`Missing local admin browser setting: ${key}`);
+            if (/[\r\n]/.test(value)) throw new Error(`Invalid local admin browser setting: ${key}`);
+            appendFileSync(process.env.GITHUB_ENV, `${key}=${value}\n`);
+          }
+          NODE
+
+      - name: Build local administrator production app
+        env:
+          NEXT_PUBLIC_ADMIN_LOCAL_E2E: 'true'
+          ADMIN_LOCAL_E2E: 'true'
+          VERCEL_ENV: ''
+        run: npm run build:admin
+
+      - name: Start local administrator production app
+        env:
+          ADMIN_LOCAL_E2E: 'true'
+          VERCEL_ENV: ''
+        run: |
+          mkdir -p "$RUNNER_TEMP/admin-e2e-artifacts"
+          nohup npm run start --workspace @darsak/admin -- --hostname 127.0.0.1 --port 3082 > "$RUNNER_TEMP/admin-next-start.log" 2>&1 &
+          echo "$!" > "$RUNNER_TEMP/admin-next.pid"
+          node --input-type=module <<'NODE'
+          let last='no response';
+          for (let i=0;i<90;i++) {
+            try {
+              const response=await fetch('http://127.0.0.1:3082/en/login');
+              last=String(response.status);
+              if(response.ok) process.exit(0);
+            } catch(error) { last=error instanceof Error?error.message:String(error); }
+            await new Promise(resolve=>setTimeout(resolve,1000));
+          }
+          throw new Error(`Admin production server did not become ready: ${last}`);
+          NODE
+
+      - name: Run real admin MFA, audit, CSV & analytics browser checks
+        env:
+          ADMIN_E2E_BASE_URL: http://127.0.0.1:3082
+          ADMIN_E2E_SUPABASE_URL: ${{ env.ADMIN_E2E_SUPABASE_URL }}
+          ADMIN_E2E_ANON_KEY: ${{ env.ADMIN_E2E_ANON_KEY }}
+          ADMIN_E2E_ARTIFACT_DIR: ${{ runner.temp }}/admin-e2e-artifacts
+          PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH: /usr/bin/google-chrome
+        run: node tests/integration/admin-audit-browser.mjs
+
+      - name: Upload administrator browser evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: admin-audit-browser-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/admin-e2e-artifacts/*.png
+            ${{ runner.temp }}/admin-e2e-artifacts/admin-latency.json
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop local administrator app
+        if: always()
+        run: if test -f "$RUNNER_TEMP/admin-next.pid"; then kill "$(cat "$RUNNER_TEMP/admin-next.pid")" || true; fi
+
       - name: Upload student workspace audit screenshots
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -309,7 +391,7 @@ jobs:
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: playwright-failures-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .playwright/results/
+          path: .playwright/results/**/attachments/*.png
           if-no-files-found: ignore
           retention-days: 7
 

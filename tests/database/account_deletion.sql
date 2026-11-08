@@ -153,12 +153,21 @@ begin
   end;
 
   -- Student deletion leaves a teacher's group, lesson, and material intact.
+  perform set_config('request.jwt.claims','{"sub":"71000000-0000-4000-8000-000000000004","role":"authenticated"}',true);
+  perform set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000004',true);
   v_request := public.account_deletion_prepare('71000000-0000-4000-8000-000000000004',null,null,'password');
   if v_request->>'state'<>'queued' or exists(select 1 from public.profiles where id='71000000-0000-4000-8000-000000000004')
      or not exists(select 1 from public.groups where id='71040000-0000-4000-8000-000000000001')
      or not exists(select 1 from public.lesson_materials where id='71080000-0000-4000-8000-000000000004') then
     raise exception 'student deletion removed teacher-owned content or did not queue';
   end if;
+  if (select count(*) from dars_private.audit_log where action='account_deletion_started' and target_id='71000000-0000-4000-8000-000000000004')<>1
+     or not exists(select 1 from dars_private.audit_log where action='account_deletion_started' and target_id='71000000-0000-4000-8000-000000000004'
+       and target_type='account' and actor_id='71000000-0000-4000-8000-000000000004' and actor_role='student' and metadata='{"state":"queued"}'::jsonb) then
+    raise exception 'student deletion did not retain one queued audit event with the original actor and target';
+  end if;
+  perform set_config('request.jwt.claims','{}',true);
+  perform set_config('request.jwt.claim.sub','',true);
 
   -- Once foreign material is removed, admin deletion snapshots every UID-owned
   -- object, unusual unreferenced keys, and owned-group lesson files; profile
@@ -169,6 +178,8 @@ begin
   insert into dars_private.email_outbox(event_key,kind,fixed_admin_recipient,payload)
     values('deletion-test-same-name-unrelated','teacher_fee_announcement',true,
       jsonb_build_object('student_name','Deletion Admin'));
+  perform set_config('request.jwt.claims','{"sub":"71000000-0000-4000-8000-000000000001","role":"authenticated"}',true);
+  perform set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000001',true);
   v_intent := public.account_deletion_create_intent('71000000-0000-4000-8000-000000000001',repeat('c',64),clock_timestamp()+interval '5 minutes');
   v_request := public.account_deletion_prepare('71000000-0000-4000-8000-000000000001',null,null,'password');
   if v_request->>'state'<>'queued'
@@ -217,9 +228,20 @@ begin
   if exists(select 1 from dars_private.account_deletion_intents where user_id='71000000-0000-4000-8000-000000000001') then
     raise exception 'completed deletion retained private OAuth intent proofs';
   end if;
+  if exists(select 1 from public.profiles where id='71000000-0000-4000-8000-000000000001')
+     or (select count(*) from dars_private.audit_log where action='account_deletion_started' and target_id='71000000-0000-4000-8000-000000000001')<>1
+     or (select count(*) from dars_private.audit_log where action='account_deletion_completed' and target_id='71000000-0000-4000-8000-000000000001')<>1
+     or not exists(select 1 from dars_private.audit_log where action='account_deletion_started' and target_id='71000000-0000-4000-8000-000000000001'
+       and target_type='account' and actor_id='71000000-0000-4000-8000-000000000001' and actor_role='admin' and metadata='{"state":"queued"}'::jsonb)
+     or not exists(select 1 from dars_private.audit_log where action='account_deletion_completed' and target_id='71000000-0000-4000-8000-000000000001'
+       and target_type='account' and actor_id='71000000-0000-4000-8000-000000000001' and actor_role='system' and metadata='{"state":"completed"}'::jsonb) then
+    raise exception 'deletion history did not retain the original actor and target through completion after profile removal';
+  end if;
 
   -- Teacher-owned groups remove their lessons, materials, and enrollments but
   -- files and material rows in other teachers' groups remain intact.
+  perform set_config('request.jwt.claims','{"sub":"71000000-0000-4000-8000-000000000003","role":"authenticated"}',true);
+  perform set_config('request.jwt.claim.sub','71000000-0000-4000-8000-000000000003',true);
   v_request := public.account_deletion_prepare('71000000-0000-4000-8000-000000000003',null,null,'password');
   if exists(select 1 from public.profiles where id='71000000-0000-4000-8000-000000000003')
      or exists(select 1 from public.groups where id='71040000-0000-4000-8000-000000000002')
