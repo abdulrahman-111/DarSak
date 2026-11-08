@@ -55,7 +55,7 @@ export default async function AnalyticsPage({
     ? {
         title: 'التحليلات',
         description:
-          'ملخص مؤشرات تشغيلية للفترة المحددة. طلبات اعتماد المعلمين تعتمد أحدث محاولة مقدمة خلال الفترة وحالة الاعتماد الحالية؛ لا يحتفظ النظام بالمحاولات السابقة. الأعداد تعكس الحالات الحالية أو مجموعات الإرسال كما توضح الحالة، ولا تمثل دائمًا انتقالات تاريخية.',
+          'ملخص مؤشرات تشغيلية للفترة المحددة. طلبات اعتماد المعلمين تعتمد أحدث محاولة مقدمة خلال الفترة وحالة الاعتماد الحالية؛ لا يحتفظ النظام بالمحاولات السابقة. إجمالي المجموعات المنشورة وقائمة الانتظار يعرض الحالة الحالية ولا يقتصر على الفترة المختارة. الأعداد تعكس الحالات الحالية أو مجموعات الإرسال كما توضح الحالة، ولا تمثل دائمًا انتقالات تاريخية.',
         last7: 'آخر ٧ أيام',
         last30: 'آخر ٣٠ يومًا',
         asOf: 'حتى',
@@ -113,7 +113,7 @@ export default async function AnalyticsPage({
     : {
         title: 'Analytics',
         description:
-          'Operational indicators for the selected window. Teacher application metrics use the latest submitted attempt in the period and its current approval state; earlier attempts are not retained. Counts reflect current states or delivery batches where stated, and do not always represent historical transitions.',
+          'Operational indicators for the selected window. Teacher application metrics use the latest submitted attempt in the period and its current approval state; earlier attempts are not retained. Published groups and waitlist size are current totals, independent of the selected period. Counts reflect current states or delivery batches where stated, and do not always represent historical transitions.',
         last7: 'Last 7 days',
         last30: 'Last 30 days',
         asOf: 'As of',
