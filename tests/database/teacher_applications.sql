@@ -283,6 +283,18 @@ end $$;
 set local request.jwt.claims = '{}';
 reset role;
 
+do $$
+begin
+  if (select count(*) from dars_private.audit_log where action='teacher_application_changes_requested'
+      and target_type='teacher_application' and target_id='7c000000-0000-4000-8000-000000000001')<>1
+     or not exists(select 1 from dars_private.audit_log where action='teacher_application_changes_requested'
+      and target_type='teacher_application' and target_id='7c000000-0000-4000-8000-000000000001'
+      and actor_id='7c000000-0000-4000-8000-000000000003' and actor_role='admin'
+      and request_id is null and metadata='{}'::jsonb) then
+    raise exception 'application changes request or stale retry produced an unexpected bounded audit count';
+  end if;
+end $$;
+
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"7c000000-0000-4000-8000-000000000001","role":"authenticated"}';
 set local request.jwt.claim.sub='7c000000-0000-4000-8000-000000000001';

@@ -83,6 +83,9 @@ fixtures=(
   tests/database/account_deletion.sql
   tests/database/deletion_policy_actor.sql
   tests/database/deletion_booking_snapshots.sql
+  tests/database/audit_log.sql
+  tests/database/audit_producers.sql
+  tests/database/admin_audit_analytics.sql
 )
 
 failed=()

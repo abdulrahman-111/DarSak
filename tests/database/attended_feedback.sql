@@ -1,6 +1,11 @@
 \set ON_ERROR_STOP on
 begin;
 
+create function pg_temp.audit_action_count(p_action text,p_target uuid) returns bigint
+language sql security definer set search_path=pg_catalog,dars_private as $$
+  select count(*) from dars_private.audit_log where action=p_action and target_id=p_target
+$$;
+
 do $$
 begin
   if not exists (
@@ -112,6 +117,13 @@ set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
 do $$declare f jsonb;begin
  f:=public.manage_group_feedback_page(0)->'rows'->0;
  perform public.moderate_group_feedback((f->>'id')::uuid,'approve','private moderation note',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_approved',(f->>'id')::uuid)<>1 then raise exception 'feedback approval audit count wrong';end if;
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.moderate_group_feedback((f->>'id')::uuid,'hide','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_hidden',(f->>'id')::uuid)<>1 then raise exception 'feedback hide audit count wrong';end if;
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.moderate_group_feedback((f->>'id')::uuid,'approve','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_approved',(f->>'id')::uuid)<>2 then raise exception 'second feedback approval audit count wrong';end if;
 end $$;
 set local request.jwt.claims = '{}';
 reset role;
@@ -130,6 +142,7 @@ do $$declare f jsonb;p jsonb;begin
  p:=public.public_group_feedback((f->>'group_id')::uuid);
  if(p->>'total')::int<>1 or p::text like '%student_id%' or p::text like '%private moderation note%' then raise exception 'public projection invalid';end if;
  perform public.teacher_reply_feedback((f->>'id')::uuid,'Thank you for your thoughtful feedback.',(f->>'version')::bigint);
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
  p:=public.public_group_feedback((f->>'group_id')::uuid);
  if p->'rows'->0->>'reply_public'<>'' then raise exception 'pending reply public';end if;
  begin perform public.moderate_group_feedback((f->>'id')::uuid,'approve','','2');raise exception 'teacher moderated review';exception when insufficient_privilege then null;end;
@@ -140,7 +153,67 @@ set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","r
 set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
 do $$declare f jsonb;begin
  f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.moderate_group_feedback((f->>'id')::uuid,'hide_reply','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_reply_hidden',(f->>'id')::uuid)<>1 then raise exception 'pending-only reply hide audit count wrong';end if;
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ -- Recreate and approve the reply; the approval must remain one logical event.
+end $$;
+set local request.jwt.claims = '{}';
+reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
+do $$declare f jsonb;begin
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.teacher_reply_feedback((f->>'id')::uuid,'Thank you for your thoughtful feedback.',(f->>'version')::bigint);
+end $$;
+reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
+do $$declare f jsonb;begin
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
  perform public.moderate_group_feedback((f->>'id')::uuid,'approve_reply','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_reply_approved',(f->>'id')::uuid)<>1 then raise exception 'reply approval audit count wrong';end if;
+end $$;
+set local request.jwt.claims = '{}';
+reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
+do $$declare f jsonb;begin
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.teacher_reply_feedback((f->>'id')::uuid,'Thank you for your thoughtful feedback.',(f->>'version')::bigint);
+end $$;
+reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
+do $$declare f jsonb;begin
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.moderate_group_feedback((f->>'id')::uuid,'approve_reply','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_reply_approved',(f->>'id')::uuid)<>2 then raise exception 'identical public reply approval audit count wrong';end if;
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.moderate_group_feedback((f->>'id')::uuid,'hide_reply','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_reply_hidden',(f->>'id')::uuid)<>2 then raise exception 'public reply hide with empty pending audit count wrong';end if;
+end $$;
+set local request.jwt.claims = '{}';
+reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000001","role":"authenticated"}';
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000001';
+do $$declare f jsonb;begin
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.teacher_reply_feedback((f->>'id')::uuid,'A follow-up reply for the updated review.',(f->>'version')::bigint);
+end $$;
+reset role;
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"10000000-0000-4000-8000-000000000003","role":"authenticated","aal":"aal2"}';
+set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000003';
+do $$declare f jsonb;begin
+ f:=public.manage_group_feedback_page(0)->'rows'->0;
+ perform public.moderate_group_feedback((f->>'id')::uuid,'approve_reply','',(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_reply_approved',(f->>'id')::uuid)<>3 then raise exception 'follow-up reply approval audit count wrong';end if;
 end $$;
 set local request.jwt.claims = '{}';
 reset role;
@@ -150,8 +223,21 @@ set local request.jwt.claim.sub='10000000-0000-4000-8000-000000000002';
 do $$declare gid uuid;f jsonb;p jsonb;begin
  select group_id into gid from public.enrollments where student_id=auth.uid();
  f:=public.my_group_feedback(gid)->'own';p:=public.public_group_feedback(gid);
- if p->'rows'->0->>'reply_public'<>'Thank you for your thoughtful feedback.' then raise exception 'approved reply missing';end if;
+ if p->'rows'->0->>'reply_public'<>'A follow-up reply for the updated review.' then raise exception 'approved reply missing';end if;
+ perform public.save_group_feedback(gid,4,'I am updating this useful lesson review.',(f->>'version')::bigint);
+ f:=public.my_group_feedback(gid)->'own';p:=public.public_group_feedback(gid);
+ if p->'rows'->0->>'reply_public'<>'' or (p->>'total')::int<>0 then raise exception 'student resubmission retained public review or reply';end if;
+ if pg_temp.audit_action_count('feedback_approved',(f->>'id')::uuid)<>2
+    or pg_temp.audit_action_count('feedback_reply_approved',(f->>'id')::uuid)<>3
+    or pg_temp.audit_action_count('feedback_reply_hidden',(f->>'id')::uuid)<>2 then
+   raise exception 'student resubmission emitted an admin moderation audit event';
+ end if;
  perform public.withdraw_group_feedback((f->>'id')::uuid,(f->>'version')::bigint);
+ if pg_temp.audit_action_count('feedback_approved',(f->>'id')::uuid)<>2
+    or pg_temp.audit_action_count('feedback_reply_approved',(f->>'id')::uuid)<>3
+    or pg_temp.audit_action_count('feedback_reply_hidden',(f->>'id')::uuid)<>2 then
+   raise exception 'student withdrawal emitted an admin moderation audit event';
+ end if;
  if(public.public_group_feedback(gid)->>'total')::int<>0 then raise exception 'withdrawn review public';end if;
 end $$;
 reset role;

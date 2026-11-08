@@ -86,7 +86,7 @@ export function guidanceContent(kind: GuidancePage, locale: string) {
             ],
             [
               'إدارة الحساب وحذفه',
-              'يمكنك تعديل بياناتك من الحساب وطلب الحذف الدائم من إعداداته. يزيل الحذف الحساب والبيانات المرتبطة التي تديرها المنصة؛ لا يمحو نسخًا سبق تنزيلها أو مراسلات عبر خدمات خارجية. صفحات المساعدة والبلاغات هي مسار الاستفسار عن استخدام الحساب.',
+              'يمكنك تعديل بياناتك من الحساب وطلب الحذف الدائم من إعداداته. يزيل الحذف الحساب والبيانات المرتبطة التي تديرها المنصة؛ لا يمحو نسخًا سبق تنزيلها أو مراسلات عبر خدمات خارجية. قد يحتفظ سجل التدقيق الإداري بسجلات محدودة الهوية لمدة ٢٤ شهرًا، ثم تُحذف في التنظيف الشهري؛ ولا يمحو طلب حذف الحساب هذا السجل المحتفظ به. صفحات المساعدة والبلاغات هي مسار الاستفسار عن استخدام الحساب.',
             ],
           ]
         : [
@@ -108,7 +108,7 @@ export function guidanceContent(kind: GuidancePage, locale: string) {
             ],
             [
               'Manage or delete your account',
-              'You can edit your details under Account and request permanent account deletion in its settings. Deletion removes the account and associated platform-managed records; it cannot erase downloaded copies or conversations through external services. Use Help and the reporting workflow for account-use questions.',
+              'You can edit your details under Account and request permanent account deletion in its settings. Deletion removes the account and associated platform-managed records; it cannot erase downloaded copies or conversations through external services. The administrator audit log may retain limited-identity records for 24 months, then removes them during monthly cleanup; an account deletion request does not erase retained audit history. Use Help and the reporting workflow for account-use questions.',
             ],
           ],
     },

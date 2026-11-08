@@ -88,6 +88,10 @@ const childEnv = {
   AUTH_RECOVERY_SECRET: randomBytes(32).toString('hex'),
   NEXT_TELEMETRY_DISABLED: '1',
 };
+// These markers are reserved for the separate CI admin production-browser
+// process. Never let an inherited shell environment relax the public build.
+delete childEnv.NEXT_PUBLIC_ADMIN_LOCAL_E2E;
+delete childEnv.ADMIN_LOCAL_E2E;
 
 run('node', ['tests/e2e/support/seed.mjs'], { env: childEnv });
 run('npm', ['run', 'build'], { env: childEnv });
